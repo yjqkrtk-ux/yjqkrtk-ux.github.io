@@ -37,8 +37,21 @@ body{
 }
 .ci{margin-bottom:7px;line-height:1.4}
 .ci .lbl{font-size:7pt;color:#8899aa;text-transform:uppercase;letter-spacing:.07em;display:block}
-.ci .val{font-size:8.5pt;color:#dce3eb;word-break:break-all}
+.ci .val{font-size:8.5pt;color:#dce3eb;overflow-wrap:anywhere}
 .ci a{color:#7ab8e0;text-decoration:none}
+
+/* Uniform link series */
+.lnk{display:flex;align-items:flex-start;gap:6px;text-decoration:none;margin-bottom:6px}
+.lnk-ico{
+  flex:0 0 32px;
+  background:#2d3648;color:#7ab8e0;
+  border-radius:3px;
+  font-size:6.5pt;font-weight:700;letter-spacing:.05em;
+  text-align:center;padding:2px 0;
+  line-height:1.3;
+}
+.lnk-txt{font-size:8pt;color:#dce3eb;line-height:1.35;overflow-wrap:anywhere;padding-top:1px}
+.lnk-note{display:block;font-size:6.5pt;color:#8899aa;letter-spacing:.03em}
 .sk-tag{
   display:inline-block;background:#2d3648;color:#c8d6e5;
   border-radius:3px;font-size:8pt;
@@ -99,8 +112,15 @@ li{font-size:9pt;color:#222;margin-bottom:2px;line-height:1.5}
 
 /* Patent */
 .pat-list{list-style:none;padding:0}
-.pat-list li{font-size:8.5pt;color:#333;margin-bottom:4px;padding-left:11px;position:relative;line-height:1.4}
+.pat-list li{font-size:8.5pt;color:#333;margin-bottom:6px;padding-left:11px;position:relative;line-height:1.45}
 .pat-list li::before{content:"▪";position:absolute;left:0;color:#4a90c4}
+.pat-meta{display:block;font-size:7.5pt;color:#777;margin-top:1px}
+.pat-granted{
+  display:inline-block;background:#e8faf0;color:#1a7a44;
+  border:1px solid #9de0be;border-radius:3px;
+  font-size:7pt;font-weight:700;letter-spacing:.04em;
+  padding:0 4px;margin-left:4px;white-space:nowrap;
+}
 
 .sum-text{font-size:9.5pt;color:#333;line-height:1.6}
 
@@ -144,21 +164,39 @@ li{font-size:9pt;color:#222;margin-bottom:2px;line-height:1.5}
     <h3>Contact</h3>
     <div class="ci"><span class="lbl">Email</span><span class="val"><a href="mailto:yjqkrtk@gmail.com">yjqkrtk@gmail.com</a></span></div>
     <div class="ci"><span class="lbl">Location</span><span class="val">Hwaseong, South Korea<br>Open to US Relocation</span></div>
-    <div class="ci"><span class="lbl">LinkedIn</span><span class="val"><a href="https://www.linkedin.com/in/yongjoon-song-52b03a208/">linkedin.com/in/<br>yongjoon-song-52b03a208</a></span></div>
-    <div class="ci"><span class="lbl">GitHub</span><span class="val"><a href="https://github.com/syjqkrtk">github.com/syjqkrtk</a></span></div>
+  </div>
+
+  <div class="sb-section">
+    <h3>Links</h3>
+    <a class="lnk" href="https://www.linkedin.com/in/yongjoon-song-52b03a208/">
+      <span class="lnk-ico">IN</span>
+      <span class="lnk-txt">linkedin.com/in/yongjoon-song-52b03a208</span>
+    </a>
+    <a class="lnk" href="https://github.com/syjqkrtk">
+      <span class="lnk-ico">GIT</span>
+      <span class="lnk-txt">github.com/syjqkrtk<span class="lnk-note">18 repos · research code</span></span>
+    </a>
+    <a class="lnk" href="https://github.com/yjqkrtk-ux">
+      <span class="lnk-ico">GIT</span>
+      <span class="lnk-txt">github.com/yjqkrtk-ux<span class="lnk-note">aicamera · AI camera projects</span></span>
+    </a>
+    <a class="lnk" href="https://scholar.google.com/citations?user=H3AQNpAAAAAJ">
+      <span class="lnk-ico">GS</span>
+      <span class="lnk-txt">scholar.google.com/citations?user=H3AQNpAAAAAJ</span>
+    </a>
   </div>
 
   <div class="sb-section">
     <h3>Core Skills</h3>
     <span class="sk-tag">Camera ISP</span>
+    <span class="sk-tag">Algorithm Design</span>
+    <span class="sk-tag">Deep Learning</span>
+    <span class="sk-tag">Mobile Device S/W</span>
+    <span class="sk-tag">Image Sensors</span>
     <span class="sk-tag">Remosaic Algorithm</span>
     <span class="sk-tag">E2E ISP Pipeline</span>
-    <span class="sk-tag">Deep Learning</span>
-    <span class="sk-tag">Algorithm Design</span>
     <span class="sk-tag">Reinforcement Learning</span>
     <span class="sk-tag">Computer Vision</span>
-    <span class="sk-tag">Image Sensors</span>
-    <span class="sk-tag">Mobile Device S/W</span>
     <span class="sk-tag">Heterogeneous SoC</span>
     <span class="sk-tag">Embedded Software</span>
     <span class="sk-tag">SW Project Mgmt</span>
@@ -194,7 +232,7 @@ li{font-size:9pt;color:#222;margin-bottom:2px;line-height:1.5}
 
   <div class="mhdr">
     <h1>Yongjoon Song</h1>
-    <div class="title-line">ISP Algorithm Engineer &amp; Technical Leader · Samsung Electronics</div>
+    <div class="title-line">AI ISP Algorithm Engineer · Technical Leader · Samsung Electronics</div>
     <div class="badges">
       <span class="badge b-phd">&#127891; Ph.D. KAIST</span>
       <span class="badge b-tl">&#9733; Technical Leader</span>
@@ -206,12 +244,15 @@ li{font-size:9pt;color:#222;margin-bottom:2px;line-height:1.5}
   <div class="sec">
     <h2>Summary</h2>
     <p class="sum-text">
-      AI-ISP algorithm engineer and technical leader with 5+ years at Samsung Electronics,
-      specializing in deep learning-based image signal processing for 200MP+ mobile camera sensors.
-      PhD from KAIST (Electrical Engineering, Deep Learning &amp; RL). Architecting End-to-End (E2E)
-      imaging pipelines bridging in-sensor H/W to mobile S/W ISP — deployed across
-      <strong>30+ global OEM devices</strong>. Seeking computational photography,
-      on-device AI, or camera algorithm engineering roles in the US.
+      Leading AI-ISP algorithm development at Samsung Electronics, specializing in deep learning-based
+      image signal processing for <strong>100MP+ mobile camera sensors</strong>. Architecting End-to-End (E2E)
+      imaging solutions from In-sensor H/W ISP to Deep learning based S/W ISP pipelines working on SoC —
+      deployed across <strong>30+ global OEM devices</strong>.
+      <br><br>
+      Ph.D. in Electrical Engineering (KAIST) with a focus on Deep Learning &amp; Reinforcement Learning.
+      Specialized in the AI transformation of conventional bioinformatics algorithms into advanced
+      AI-driven solutions. Seeking computational photography, on-device AI, or camera algorithm
+      engineering roles in the US.
     </p>
   </div>
 
@@ -349,7 +390,7 @@ li{font-size:9pt;color:#222;margin-bottom:2px;line-height:1.5}
       </li>
       <li>
         <strong>Y.-J. Song</strong> and D.-H. Cho,
-        &ldquo;A Novel Application of Evolutionary Distance Based on the Word Frequency Variation of Genome Segment,&rdquo;
+        &ldquo;A Novel Estimation Algorithm of Evolutionary Distance Based on the Word Frequency Variation of Sequence Segment,&rdquo;
         <em>Proc. IEEE EMBS International Conference on Biomedical and Health Informatics (BHI)</em>,
         2018, pp.&nbsp;287&ndash;290.
         IEEE Xplore:&nbsp;<a href="https://ieeexplore.ieee.org/document/8333425">8333425</a>
@@ -367,9 +408,26 @@ li{font-size:9pt;color:#222;margin-bottom:2px;line-height:1.5}
   <div class="sec">
     <h2>Patents</h2>
     <ul class="pat-list">
-      <li><strong>KR2021009233A</strong> — Wireless power transfer apparatus and method using image recognition (Samsung / KAIST, 2021)</li>
-      <li><strong>WO2020115132A1</strong> — Method and device for controlling power of wireless charging inverter based on vehicle location (PCT, 2020)</li>
-      <li><strong>KR2019013733A</strong> — Extracting disease diagnosis biomarkers using mutation information in whole genome sequence (KAIST, 2019)</li>
+      <li>
+        <strong>US 12,574,659 B2</strong> — Image signal processor, image sensor, and operating method of the image sensor<span class="pat-granted">GRANTED</span>
+        <span class="pat-meta">Samsung Electronics Co., Ltd. · Filed Nov 2023 · Granted Mar 2026 — encoded bad-pixel position data injected into a neural network intermediate layer for low-overhead real-time correction</span>
+      </li>
+      <li>
+        <strong>US 12,363,458 B2</strong> — Image sensor and operating method<span class="pat-granted">GRANTED</span>
+        <span class="pat-meta">Samsung Electronics Co., Ltd. · Filed Oct 2023 · Granted Jul 2025 — deep learning-based cluster bad pixel correction for image sensors</span>
+      </li>
+      <li>
+        <strong>US 12,496,917 B2</strong> — Method and apparatus for vehicle location-based power control of wireless charging inverter<span class="pat-granted">GRANTED</span>
+        <span class="pat-meta">KAIST &amp; WiPowerOne · Granted Dec 2025 · Family: KR 10-2370592 B1, WO2021101223A1 (PCT)</span>
+      </li>
+      <li>
+        <strong>KR 10-2021-0092933 A</strong> — Wireless power transfer apparatus and method using image recognition
+        <span class="pat-meta">KEPCO &amp; KAIST · Filed Jan 2020 — multi-camera 3D localization &amp; human detection for beamforming power control</span>
+      </li>
+      <li>
+        <strong>KR 10-2019-0136733 A</strong> — Extracting method of disease diagnosis biomarkers using mutation information in whole genome sequence
+        <span class="pat-meta">KAIST · Filed May 2018</span>
+      </li>
     </ul>
   </div>
 

@@ -1,469 +1,805 @@
 <!DOCTYPE html>
 <html lang="en">
+
 <head>
-<meta charset="UTF-8"/>
-<title>Yongjoon Song — Resume</title>
-<style>
-*,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
-html{font-size:10pt}
-body{
-  font-family:'Segoe UI','Helvetica Neue',Arial,sans-serif;
-  display:flex;
-  min-height:100vh;
-  background:#fff;
-  color:#1a1a1a;
-}
+  <meta charset="UTF-8" />
+  <title>Yongjoon Song — Resume</title>
+  <style>
+    *,
+    *::before,
+    *::after {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0
+    }
 
-/* ── LEFT SIDEBAR ── */
-.sidebar{
-  width:250px;min-width:250px;
-  background:#1e2532;
-  color:#e8ecf1;
-  padding:28px 18px 28px 20px;
-  display:flex;flex-direction:column;gap:20px;
-}
-.photo-wrap{display:flex;justify-content:center}
-.photo-wrap img{
-  width:140px;height:140px;
-  border-radius:50%;object-fit:cover;
-  border:3px solid #4a90c4;
-}
-.sb-section h3{
-  font-size:9.5pt;font-weight:700;
-  letter-spacing:.1em;text-transform:uppercase;
-  color:#4a90c4;
-  border-bottom:1px solid #3a4255;
-  padding-bottom:4px;margin-bottom:9px;
-}
-.ci{margin-bottom:7px;line-height:1.4}
-.ci .lbl{font-size:7pt;color:#8899aa;text-transform:uppercase;letter-spacing:.07em;display:block}
-.ci .val{font-size:8.5pt;color:#dce3eb;overflow-wrap:anywhere}
-.ci a{color:#7ab8e0;text-decoration:none}
+    html {
+      font-size: 10pt
+    }
 
-/* Uniform link series */
-.lnk{display:flex;align-items:flex-start;gap:6px;text-decoration:none;margin-bottom:6px}
-.lnk-ico{
-  flex:0 0 32px;
-  background:#2d3648;color:#7ab8e0;
-  border-radius:3px;
-  font-size:6.5pt;font-weight:700;letter-spacing:.05em;
-  text-align:center;padding:2px 0;
-  line-height:1.3;
-}
-.lnk-txt{font-size:8pt;color:#dce3eb;line-height:1.35;overflow-wrap:anywhere;padding-top:1px}
-.lnk-note{display:block;font-size:6.5pt;color:#8899aa;letter-spacing:.03em}
-.sk-tag{
-  display:inline-block;background:#2d3648;color:#c8d6e5;
-  border-radius:3px;font-size:8pt;
-  padding:2px 6px;margin:2px 2px 2px 0;line-height:1.4;
-}
-.lang-name{font-size:9pt;color:#dce3eb;font-weight:600}
-.lang-lv{font-size:7.5pt;color:#8899aa;margin-bottom:5px}
+    body {
+      font-family: 'Segoe UI', 'Helvetica Neue', Arial, sans-serif;
+      display: flex;
+      min-height: 100vh;
+      background: #fff;
+      color: #1a1a1a;
+    }
 
-/* ── MAIN ── */
-.main{flex:1;padding:26px 30px 26px 26px}
+    /* ── LEFT SIDEBAR ── */
+    .sidebar {
+      width: 250px;
+      min-width: 250px;
+      background: #1e2532;
+      color: #e8ecf1;
+      padding: 28px 18px 28px 20px;
+      display: flex;
+      flex-direction: column;
+      gap: 20px;
+    }
 
-/* Header */
-.mhdr{margin-bottom:16px}
-.mhdr h1{font-size:24pt;font-weight:800;color:#0d1117;letter-spacing:.01em;line-height:1.1}
-.title-line{font-size:11pt;color:#4a90c4;font-weight:600;margin:3px 0 8px}
-.badges{display:flex;flex-wrap:wrap;gap:5px;margin-bottom:8px}
-.badge{
-  display:inline-flex;align-items:center;gap:4px;
-  font-size:8pt;font-weight:700;
-  padding:3px 10px;border-radius:20px;letter-spacing:.04em;
-}
-.b-phd{background:#e8f0fe;color:#1a56c4;border:1px solid #b3ccf5}
-.b-tl {background:#e8faf0;color:#1a7a44;border:1px solid #9de0be}
-.b-isp{background:#fff3e0;color:#a05f00;border:1px solid #ffcc80}
-.b-slsi{background:#e9eaf8;color:#1428a0;border:1px solid #9aa0d8}
+    .photo-wrap {
+      display: flex;
+      justify-content: center
+    }
 
-/* Section */
-.sec{margin-bottom:14px}
-.sec h2{
-  font-size:9.5pt;font-weight:800;
-  text-transform:uppercase;letter-spacing:.1em;
-  color:#1e2532;
-  border-bottom:2px solid #1e2532;
-  padding-bottom:2px;margin-bottom:9px;
-}
+    .photo-wrap img {
+      width: 140px;
+      height: 140px;
+      border-radius: 50%;
+      object-fit: cover;
+      border: 3px solid #4a90c4;
+    }
 
-/* Sub-group header inside a section (lighter than .sec h2) */
-.subhdr{
-  font-size:8pt;font-weight:700;
-  text-transform:uppercase;letter-spacing:.09em;
-  color:#4a90c4;
-  border-bottom:1px solid #dbe2ea;
-  padding-bottom:2px;
-  margin:11px 0 7px;
-}
-.sec .subhdr:first-of-type{margin-top:0}
+    .sb-section h3 {
+      font-size: 9.5pt;
+      font-weight: 700;
+      letter-spacing: .1em;
+      text-transform: uppercase;
+      color: #4a90c4;
+      border-bottom: 1px solid #3a4255;
+      padding-bottom: 4px;
+      margin-bottom: 9px;
+    }
 
-/* Entry */
-.entry{margin-bottom:10px}
-.ehdr{display:flex;justify-content:space-between;align-items:baseline;flex-wrap:wrap;gap:2px 6px}
-.etitle{font-weight:700;font-size:10pt;color:#0d1117}
-.edate{font-size:8pt;color:#666;white-space:nowrap}
-.eorg{font-size:8.5pt;color:#444;margin:1px 0 4px}
-.eorg em{font-style:normal;font-weight:600;color:#333}
-ul{padding-left:14px}
-li{font-size:9pt;color:#222;margin-bottom:2px;line-height:1.5}
+    .ci {
+      margin-bottom: 7px;
+      line-height: 1.4
+    }
 
-/* Pub list */
-.pub-list{list-style:none;padding:0;counter-reset:pub}
-.pub-list li{
-  font-size:8.5pt;color:#222;margin-bottom:6px;
-  padding-left:18px;position:relative;line-height:1.5;
-}
-.pub-list li::before{
-  content:counter(pub)"]";counter-increment:pub;
-  position:absolute;left:0;color:#4a90c4;font-weight:700;
-}
-.pub-list a{color:#1a56c4}
+    .ci .lbl {
+      font-size: 7pt;
+      color: #8899aa;
+      text-transform: uppercase;
+      letter-spacing: .07em;
+      display: block
+    }
 
-/* Patent */
-.pat-list{list-style:none;padding:0}
-.pat-list li{font-size:8.5pt;color:#333;margin-bottom:6px;padding-left:11px;position:relative;line-height:1.45}
-.pat-list li::before{content:"▪";position:absolute;left:0;color:#4a90c4}
-.pat-meta{display:block;font-size:7.5pt;color:#777;margin-top:1px}
-.pat-granted{
-  display:inline-block;background:#e8faf0;color:#1a7a44;
-  border:1px solid #9de0be;border-radius:3px;
-  font-size:7pt;font-weight:700;letter-spacing:.04em;
-  padding:0 4px;margin-left:4px;white-space:nowrap;
-}
+    .ci .val {
+      font-size: 8.5pt;
+      color: #dce3eb;
+      overflow-wrap: anywhere
+    }
 
-.sum-text{font-size:9.5pt;color:#333;line-height:1.6}
+    .ci a {
+      color: #7ab8e0;
+      text-decoration: none
+    }
 
-/* Sub-generation list inside project entry */
-.sub-gen-list{
-  margin:6px 0 0 14px;
-  display:flex;flex-direction:column;gap:4px;
-}
-.sub-gen{
-  font-size:8.5pt;color:#333;line-height:1.5;
-  display:flex;align-items:baseline;gap:6px;
-}
-.gen-badge{
-  display:inline-block;
-  background:#1e2532;color:#fff;
-  font-size:7.5pt;font-weight:700;
-  padding:1px 6px;border-radius:3px;
-  white-space:nowrap;flex-shrink:0;
-}
-.gen-date{
-  font-size:7.5pt;color:#888;
-  white-space:nowrap;flex-shrink:0;
-}
+    /* Uniform link series */
+    .lnk {
+      display: flex;
+      align-items: flex-start;
+      gap: 6px;
+      text-decoration: none;
+      margin-bottom: 6px
+    }
 
-@media print{
-  .sidebar{-webkit-print-color-adjust:exact;print-color-adjust:exact}
-  .badge{-webkit-print-color-adjust:exact;print-color-adjust:exact}
-  a{color:inherit;text-decoration:none}
-}
-</style>
+    .lnk-ico {
+      flex: 0 0 32px;
+      background: #2d3648;
+      color: #7ab8e0;
+      border-radius: 3px;
+      font-size: 6.5pt;
+      font-weight: 700;
+      letter-spacing: .05em;
+      text-align: center;
+      padding: 2px 0;
+      line-height: 1.3;
+    }
+
+    .lnk-txt {
+      font-size: 8pt;
+      color: #dce3eb;
+      line-height: 1.35;
+      overflow-wrap: anywhere;
+      padding-top: 1px
+    }
+
+    .lnk-note {
+      display: block;
+      font-size: 6.5pt;
+      color: #8899aa;
+      letter-spacing: .03em
+    }
+
+    .sk-tag {
+      display: inline-block;
+      background: #2d3648;
+      color: #c8d6e5;
+      border-radius: 3px;
+      font-size: 8pt;
+      padding: 2px 6px;
+      margin: 2px 2px 2px 0;
+      line-height: 1.4;
+    }
+
+    .lang-name {
+      font-size: 9pt;
+      color: #dce3eb;
+      font-weight: 600
+    }
+
+    .lang-lv {
+      font-size: 7.5pt;
+      color: #8899aa;
+      margin-bottom: 5px
+    }
+
+    /* ── MAIN ── */
+    .main {
+      flex: 1;
+      padding: 26px 30px 26px 26px
+    }
+
+    /* Header */
+    .mhdr {
+      margin-bottom: 16px
+    }
+
+    .mhdr h1 {
+      font-size: 24pt;
+      font-weight: 800;
+      color: #0d1117;
+      letter-spacing: .01em;
+      line-height: 1.1
+    }
+
+    .title-line {
+      font-size: 11pt;
+      color: #4a90c4;
+      font-weight: 600;
+      margin: 3px 0 8px
+    }
+
+    .badges {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 5px;
+      margin-bottom: 8px
+    }
+
+    .badge {
+      display: inline-flex;
+      align-items: center;
+      gap: 4px;
+      font-size: 8pt;
+      font-weight: 700;
+      padding: 3px 10px;
+      border-radius: 20px;
+      letter-spacing: .04em;
+    }
+
+    .b-phd {
+      background: #e8f0fe;
+      color: #1a56c4;
+      border: 1px solid #b3ccf5
+    }
+
+    .b-tl {
+      background: #e8faf0;
+      color: #1a7a44;
+      border: 1px solid #9de0be
+    }
+
+    .b-isp {
+      background: #fff3e0;
+      color: #a05f00;
+      border: 1px solid #ffcc80
+    }
+
+    .b-slsi {
+      background: #e9eaf8;
+      color: #1428a0;
+      border: 1px solid #9aa0d8
+    }
+
+    /* Section */
+    .sec {
+      margin-bottom: 14px
+    }
+
+    .sec h2 {
+      font-size: 9.5pt;
+      font-weight: 800;
+      text-transform: uppercase;
+      letter-spacing: .1em;
+      color: #1e2532;
+      border-bottom: 2px solid #1e2532;
+      padding-bottom: 2px;
+      margin-bottom: 9px;
+    }
+
+    /* Sub-group header inside a section (lighter than .sec h2) */
+    .subhdr {
+      font-size: 8pt;
+      font-weight: 700;
+      text-transform: uppercase;
+      letter-spacing: .09em;
+      color: #4a90c4;
+      border-bottom: 1px solid #dbe2ea;
+      padding-bottom: 2px;
+      margin: 11px 0 7px;
+    }
+
+    .sec .subhdr:first-of-type {
+      margin-top: 0
+    }
+
+    /* Entry */
+    .entry {
+      margin-bottom: 10px
+    }
+
+    .ehdr {
+      display: flex;
+      justify-content: space-between;
+      align-items: baseline;
+      flex-wrap: wrap;
+      gap: 2px 6px
+    }
+
+    .etitle {
+      font-weight: 700;
+      font-size: 10pt;
+      color: #0d1117
+    }
+
+    .edate {
+      font-size: 8pt;
+      color: #666;
+      white-space: nowrap
+    }
+
+    .eorg {
+      font-size: 8.5pt;
+      color: #444;
+      margin: 1px 0 4px
+    }
+
+    .eorg em {
+      font-style: normal;
+      font-weight: 600;
+      color: #333
+    }
+
+    ul {
+      padding-left: 14px
+    }
+
+    li {
+      font-size: 9pt;
+      color: #222;
+      margin-bottom: 2px;
+      line-height: 1.5
+    }
+
+    /* Pub list */
+    .pub-list {
+      list-style: none;
+      padding: 0;
+      counter-reset: pub
+    }
+
+    .pub-list li {
+      font-size: 8.5pt;
+      color: #222;
+      margin-bottom: 6px;
+      padding-left: 18px;
+      position: relative;
+      line-height: 1.5;
+    }
+
+    .pub-list li::before {
+      content: counter(pub)"]";
+      counter-increment: pub;
+      position: absolute;
+      left: 0;
+      color: #4a90c4;
+      font-weight: 700;
+    }
+
+    .pub-list a {
+      color: #1a56c4
+    }
+
+    /* Patent */
+    .pat-list {
+      list-style: none;
+      padding: 0
+    }
+
+    .pat-list li {
+      font-size: 8.5pt;
+      color: #333;
+      margin-bottom: 6px;
+      padding-left: 11px;
+      position: relative;
+      line-height: 1.45
+    }
+
+    .pat-list li::before {
+      content: "▪";
+      position: absolute;
+      left: 0;
+      color: #4a90c4
+    }
+
+    .pat-meta {
+      display: block;
+      font-size: 7.5pt;
+      color: #777;
+      margin-top: 1px
+    }
+
+    .pat-granted {
+      display: inline-block;
+      background: #e8faf0;
+      color: #1a7a44;
+      border: 1px solid #9de0be;
+      border-radius: 3px;
+      font-size: 7pt;
+      font-weight: 700;
+      letter-spacing: .04em;
+      padding: 0 4px;
+      margin-left: 4px;
+      white-space: nowrap;
+    }
+
+    .sum-text {
+      font-size: 9.5pt;
+      color: #333;
+      line-height: 1.6
+    }
+
+    /* Sub-generation list inside project entry */
+    .sub-gen-list {
+      margin: 6px 0 0 14px;
+      display: flex;
+      flex-direction: column;
+      gap: 4px;
+    }
+
+    .sub-gen {
+      font-size: 8.5pt;
+      color: #333;
+      line-height: 1.5;
+      display: flex;
+      align-items: baseline;
+      gap: 6px;
+    }
+
+    .gen-badge {
+      display: inline-block;
+      background: #1e2532;
+      color: #fff;
+      font-size: 7.5pt;
+      font-weight: 700;
+      padding: 1px 6px;
+      border-radius: 3px;
+      white-space: nowrap;
+      flex-shrink: 0;
+    }
+
+    .gen-date {
+      font-size: 7.5pt;
+      color: #888;
+      white-space: nowrap;
+      flex-shrink: 0;
+    }
+
+    @media print {
+      .sidebar {
+        -webkit-print-color-adjust: exact;
+        print-color-adjust: exact
+      }
+
+      .badge {
+        -webkit-print-color-adjust: exact;
+        print-color-adjust: exact
+      }
+
+      a {
+        color: inherit;
+        text-decoration: none
+      }
+    }
+  </style>
 </head>
+
 <body>
 
-<!-- ══ SIDEBAR ══ -->
-<aside class="sidebar">
-  <div class="photo-wrap">
-    <img src="data:image/jpeg;base64,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" alt="Yongjoon Song">
-  </div>
-
-  <div class="sb-section">
-    <h3>Contact</h3>
-    <div class="ci"><span class="lbl">Email</span><span class="val"><a href="mailto:yjqkrtk@gmail.com">yjqkrtk@gmail.com</a></span></div>
-    <div class="ci"><span class="lbl">Location</span><span class="val">Hwaseong, South Korea<br>Open to US Relocation</span></div>
-  </div>
-
-  <div class="sb-section">
-    <h3>Links</h3>
-    <a class="lnk" href="https://www.linkedin.com/in/yongjoon-song-52b03a208/">
-      <span class="lnk-ico">IN</span>
-      <span class="lnk-txt">linkedin.com/in/yongjoon-song-52b03a208</span>
-    </a>
-    <a class="lnk" href="https://github.com/syjqkrtk">
-      <span class="lnk-ico">GIT</span>
-      <span class="lnk-txt">github.com/syjqkrtk<span class="lnk-note">18 repos · research code</span></span>
-    </a>
-    <a class="lnk" href="https://github.com/yjqkrtk-ux/aicamera">
-      <span class="lnk-ico">GIT</span>
-      <span class="lnk-txt">github.com/yjqkrtk-ux/aicamera<span class="lnk-note">split neural ISP · side project</span></span>
-    </a>
-    <a class="lnk" href="https://scholar.google.com/citations?user=H3AQNpAAAAAJ">
-      <span class="lnk-ico">GS</span>
-      <span class="lnk-txt">scholar.google.com/citations?user=H3AQNpAAAAAJ</span>
-    </a>
-  </div>
-
-  <div class="sb-section">
-    <h3>Core Skills</h3>
-    <span class="sk-tag">Camera ISP</span>
-    <span class="sk-tag">Algorithm Design</span>
-    <span class="sk-tag">Deep Learning</span>
-    <span class="sk-tag">Mobile Device S/W</span>
-    <span class="sk-tag">Image Sensors</span>
-    <span class="sk-tag">Remosaic Algorithm</span>
-    <span class="sk-tag">E2E ISP Pipeline</span>
-    <span class="sk-tag">On-Device AI</span>
-    <span class="sk-tag">Model Quantization</span>
-    <span class="sk-tag">Diffusion Models</span>
-    <span class="sk-tag">Reinforcement Learning</span>
-    <span class="sk-tag">Computer Vision</span>
-    <span class="sk-tag">Heterogeneous SoC</span>
-    <span class="sk-tag">Embedded Software</span>
-    <span class="sk-tag">SW Project Mgmt</span>
-    <span class="sk-tag">AI-Assisted Development</span>
-    <span class="sk-tag">Agentic Workflows (Claude Code)</span>
-    <span class="sk-tag">Bioinformatics</span>
-    <span class="sk-tag">Data Analysis</span>
-  </div>
-
-  <div class="sb-section">
-    <h3>Languages</h3>
-    <div class="lang-name">Korean</div><div class="lang-lv">Native</div>
-    <div class="lang-name">English</div><div class="lang-lv">Professional Working Proficiency</div>
-  </div>
-
-  <div class="sb-section">
-    <h3>Education</h3>
-    <div class="ci">
-      <span class="lbl">Ph.D. · 2016–2021</span>
-      <span class="val">Electrical Engineering<br>KAIST</span>
+  <!-- ══ SIDEBAR ══ -->
+  <aside class="sidebar">
+    <div class="photo-wrap">
+      <img
+        src="data:image/jpeg;base64,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"
+        alt="Yongjoon Song">
     </div>
-    <div class="ci">
-      <span class="lbl">B.S. · 2012–2016</span>
-      <span class="val">EE &amp; Physics (Double Major)<br>KAIST</span>
+
+    <div class="sb-section">
+      <h3>Contact</h3>
+      <div class="ci"><span class="lbl">Email</span><span class="val"><a
+            href="mailto:yjqkrtk@gmail.com">yjqkrtk@gmail.com</a></span></div>
+      <div class="ci"><span class="lbl">Location</span><span class="val">Hwaseong, South Korea<br>Open to US
+          Relocation</span></div>
     </div>
-    <div class="ci">
-      <span class="lbl">2009–2012</span>
-      <span class="val">Korea Science Academy of KAIST</span>
+
+    <div class="sb-section">
+      <h3>Links</h3>
+      <a class="lnk" href="https://www.linkedin.com/in/yongjoon-song-52b03a208/">
+        <span class="lnk-ico">IN</span>
+        <span class="lnk-txt">linkedin.com/in/yongjoon-song-52b03a208</span>
+      </a>
+      <a class="lnk" href="https://github.com/syjqkrtk">
+        <span class="lnk-ico">GIT</span>
+        <span class="lnk-txt">github.com/syjqkrtk<span class="lnk-note">18 repos · research code</span></span>
+      </a>
+      <a class="lnk" href="https://github.com/yjqkrtk-ux/aicamera">
+        <span class="lnk-ico">GIT</span>
+        <span class="lnk-txt">github.com/yjqkrtk-ux/aicamera<span class="lnk-note">split neural ISP · side
+            project</span></span>
+      </a>
+      <a class="lnk" href="https://scholar.google.com/citations?user=H3AQNpAAAAAJ">
+        <span class="lnk-ico">GS</span>
+        <span class="lnk-txt">scholar.google.com/citations?user=H3AQNpAAAAAJ</span>
+      </a>
     </div>
-  </div>
-</aside>
 
-<!-- ══ MAIN ══ -->
-<main class="main">
-
-  <div class="mhdr">
-    <h1>Yongjoon Song</h1>
-    <div class="title-line">AI ISP Algorithm Engineer · Technical Leader · Samsung Electronics</div>
-    <div class="badges">
-      <span class="badge b-phd">&#127891; Ph.D. KAIST</span>
-      <span class="badge b-tl">&#9733; Technical Leader</span>
-      <span class="badge b-slsi">&#128663; Samsung S.LSI · Image Sensor</span>
-      <span class="badge b-isp">&#128247; Camera ISP Algorithm</span>
+    <div class="sb-section">
+      <h3>Core Skills</h3>
+      <span class="sk-tag">Camera ISP</span>
+      <span class="sk-tag">Algorithm Design</span>
+      <span class="sk-tag">Deep Learning</span>
+      <span class="sk-tag">Mobile Device S/W</span>
+      <span class="sk-tag">Image Sensors</span>
+      <span class="sk-tag">Remosaic Algorithm</span>
+      <span class="sk-tag">E2E ISP Pipeline</span>
+      <span class="sk-tag">On-Device AI</span>
+      <span class="sk-tag">Model Quantization</span>
+      <span class="sk-tag">Diffusion Models</span>
+      <span class="sk-tag">Reinforcement Learning</span>
+      <span class="sk-tag">Computer Vision</span>
+      <span class="sk-tag">Heterogeneous SoC</span>
+      <span class="sk-tag">Embedded Software</span>
+      <span class="sk-tag">SW Project Mgmt</span>
+      <span class="sk-tag">AI-Assisted Development</span>
+      <span class="sk-tag">Agentic Workflows (Claude Code)</span>
+      <span class="sk-tag">Bioinformatics</span>
+      <span class="sk-tag">Data Analysis</span>
     </div>
-  </div>
 
-  <div class="sec">
-    <h2>Summary</h2>
-    <p class="sum-text">
-      Leading AI-ISP algorithm development at Samsung Electronics, specializing in deep learning-based
-      image signal processing for <strong>100MP+ mobile camera sensors</strong>. Architecting End-to-End (E2E)
-      imaging solutions from In-sensor H/W ISP to Deep learning based S/W ISP pipelines working on SoC —
-      deployed across <strong>30+ global OEM devices</strong>.
-      <br><br>
-      Ph.D. in Electrical Engineering (KAIST) with a focus on Deep Learning &amp; Reinforcement Learning.
-      Specialized in the AI transformation of conventional bioinformatics algorithms into advanced
-      AI-driven solutions. Seeking computational photography, on-device AI, or camera algorithm
-      engineering roles in the US.
-    </p>
-  </div>
+    <div class="sb-section">
+      <h3>Languages</h3>
+      <div class="lang-name">Korean</div>
+      <div class="lang-lv">Native</div>
+      <div class="lang-name">English</div>
+      <div class="lang-lv">Professional Working Proficiency</div>
+    </div>
 
-  <!-- Experience -->
-  <div class="sec">
-    <h2>Experience</h2>
-
-    <div class="entry">
-      <div class="ehdr">
-        <span class="etitle">Staff Engineer / Technical Leader</span>
-        <span class="edate">Mar 2025 – Present</span>
+    <div class="sb-section">
+      <h3>Education</h3>
+      <div class="ci">
+        <span class="lbl">Ph.D. · 2016–2021</span>
+        <span class="val">Electrical Engineering<br>KAIST</span>
       </div>
-      <div class="eorg"><em>Samsung Electronics</em> · S.LSI Sensor Business Team · Hwaseong, South Korea</div>
-      <ul>
-        <li>Leading AI-ISP algorithm development for <strong>ISOCELL HP5</strong> (0.5µm, 200MP, 1/1.56") — world's smallest 200MP sensor — defining the DL-based S/W algorithm roadmap at mass-production scale.</li>
-        <li>Architecting End-to-End (E2E) imaging pipelines from in-sensor H/W processing to mobile S/W ISP, driving the technical strategy across hardware and software organizations.</li>
-        <li>Leading 3rd-generation E2E AI Remosaic with Multi-frame &amp; Zoom capabilities, expanding platform coverage across broader device ecosystems.</li>
-        <li>Managing cross-functional programs coordinating algorithm, sensor setfile &amp; SoC teams under aggressive product schedules.</li>
+      <div class="ci">
+        <span class="lbl">B.S. · 2012–2016</span>
+        <span class="val">EE &amp; Physics (Double Major)<br>KAIST</span>
+      </div>
+      <div class="ci">
+        <span class="lbl">2009–2012</span>
+        <span class="val">Korea Science Academy of KAIST</span>
+      </div>
+    </div>
+  </aside>
+
+  <!-- ══ MAIN ══ -->
+  <main class="main">
+
+    <div class="mhdr">
+      <h1>Yongjoon Song</h1>
+      <div class="title-line">Neural ISP Algorithm &amp; On-Device AI · Technical Leader · Samsung Electronics</div>
+      <div class="badges">
+        <span class="badge b-phd">&#127891; Ph.D. KAIST</span>
+        <span class="badge b-tl">&#9733; Technical Leader</span>
+        <span class="badge b-slsi">&#128663; Samsung S.LSI · Image Sensor</span>
+        <span class="badge b-isp">&#128247; Camera ISP Algorithm</span>
+      </div>
+    </div>
+
+    <div class="sec">
+      <h2>Summary</h2>
+      <p class="sum-text">
+        Leading Neural ISP algorithm development for image sensors at Samsung Electronics, specializing in deep
+        learning-based
+        image signal processing for <strong>100MP+ mobile camera sensors</strong>. Architecting End-to-End (E2E)
+        imaging solutions from In-sensor H/W ISP to Deep learning based S/W ISP pipelines working on SoC —
+        covering both real-time imaging and high-fidelity still capture solutions to maximize image quality in a limited
+        system budget,
+        deployed across <strong>30+ global OEM devices</strong>.
+        <br><br>
+        Ph.D. in Electrical Engineering (KAIST) with a focus on Deep Learning &amp; Reinforcement Learning.
+        Pioneered reinforcement learning architectures for genomic sequence alignment, engineered high-throughput
+        C/Python sequence mining engines, and developed edge vision &amp; sensor fusion systems for 1kW wireless
+        charging platforms.
+      </p>
+    </div>
+
+    <!-- Experience -->
+    <div class="sec">
+      <h2>Experience</h2>
+
+      <div class="entry">
+        <div class="ehdr">
+          <span class="etitle">Staff Engineer / Technical Leader</span>
+          <span class="edate">Mar 2025 – Present</span>
+        </div>
+        <div class="eorg"><em>Samsung Electronics</em> · S.LSI Sensor Business Team · Hwaseong, South Korea</div>
+        <ul>
+          <li>Leading Neural ISP algorithm development for <strong>ISOCELL HP5</strong> (0.5µm, 200MP, 1/1.56") —
+            world's smallest 200MP sensor — defining the DL-based S/W algorithm roadmap at mass-production scale.</li>
+          <li>Architecting End-to-End (E2E) imaging solutions from in-sensor H/W processing to mobile SoC S/W ISP
+            pipelines, driving technical strategy across hardware and software organizations.</li>
+          <li>Directing 3rd-generation E2E AI Remosaic with Multi-frame &amp; In-Sensor Zoom capabilities, expanding
+            coverage across next-gen flagship mobile platforms.</li>
+          <li>Managing cross-functional technical programs coordinating algorithm, sensor setfile &amp; SoC teams under
+            aggressive commercialization schedules.</li>
+        </ul>
+      </div>
+
+      <div class="entry">
+        <div class="ehdr">
+          <span class="etitle">Staff Engineer</span>
+          <span class="edate">Apr 2021 – Feb 2025</span>
+        </div>
+        <div class="eorg"><em>Samsung Electronics</em> · S.LSI Sensor Business Team · Hwaseong, South Korea</div>
+        <ul>
+          <li>Invented the <strong>world's first DL-based Hexadeca Remosaic</strong> algorithm for ISOCELL HP3/HP9
+            (0.56µm, 200MP, 1/1.4"), commercialized for flagship main and telephoto cameras.</li>
+          <li>Delivered <strong>E2E AI Remosaic ISP turn-key solution</strong> for 200MP ISOCELL sensors — deployed
+            across <strong>30+ China OEM products</strong> (HONOR, vivo, Xiaomi) as the standard S/W ISP platform.</li>
+          <li>Engineered Gen 2 E2E AI Remosaic: accelerated 200MP capture latency through joint optimization and
+            parallelization of DL Remosaic &amp; SW ISP on heterogeneous mobile SoC (CPU/GPU/NPU/ISP).</li>
+          <li>Developed <strong>AI-based 4×4 Qcell Remosaic (QMSC)</strong> for ISOCELL HP2 (0.6µm, 200MP, 1/1.3"),
+            enabling 4× in-sensor zoom for Galaxy S23 Ultra main camera.</li>
+          <li>Awarded <strong>SEC Annual Award 2023 (Silver Award)</strong> by Samsung Electronics for outstanding
+            innovation on E2E AI Remosaic.</li>
+        </ul>
+      </div>
+    </div>
+
+    <!-- Projects -->
+    <div class="sec">
+      <h2>Projects</h2>
+
+      <div class="subhdr">Samsung Electronics</div>
+
+      <div class="entry">
+        <div class="ehdr">
+          <span class="etitle">ISOCELL HP5 — World's Smallest 200MP Sensor Algorithm</span>
+          <span class="edate">Jan 2025 – Present</span>
+        </div>
+        <ul>
+          <li>Designing DL S/W algorithms for 0.5µm pixel-pitch 200MP HP5 (1/1.56") — world's smallest 200MP sensor,
+            addressing extreme physical pixel constraints through advanced AI processing for mass-market mobile
+            flagships.</li>
+        </ul>
+      </div>
+
+      <div class="entry">
+        <div class="ehdr">
+          <span class="etitle">E2E AI Remosaic — End-to-End ISP Turn-Key Platform</span>
+          <span class="edate">Sep 2022 – Present</span>
+        </div>
+        <ul>
+          <li>Delivered End-to-End S/W ISP turn-key solutions for ISOCELL 200MP sensors — deployed across <strong>30+
+              China OEM products</strong> (HONOR Magic7 Pro, vivo X200 Pro ZEISS Camera, Redmi Note 13 Pro+ 5G, etc.) as
+            the standard commercial platform, publicly recognized by Samsung Semiconductor Global. Honored with
+            <strong>Samsung Electronics Annual Award 2023 (Silver Award)</strong>.</li>
+        </ul>
+        <div class="sub-gen-list">
+          <div class="sub-gen"><span class="gen-badge">Gen 1</span><span class="gen-date">Sep 2022</span>Foundational
+            E2E Remosaic + SW ISP architecture for 200MP ISOCELL sensors; established the production-ready turn-key
+            platform.</div>
+          <div class="sub-gen"><span class="gen-badge">Gen 2</span><span class="gen-date">Jan 2023 – Dec
+              2024</span>Joint DL Remosaic &amp; SW ISP co-optimization on Heterogeneous Mobile SoC (CPU/GPU/NPU/ISP
+            across Qualcomm &amp; MediaTek) — optimized 200MP capture latency, throughput, and image quality under tight
+            hardware budgets.</div>
+          <div class="sub-gen"><span class="gen-badge">Gen 3</span><span class="gen-date">Jan 2025 – Dec
+              2025</span>In-Sensor Zoom expansion: added Multi-frame &amp; Zoom processing capability to E2E AI remosaic
+            for broader OEM device coverage (e.g., Redmi Note 15 Pro+ 5G).</div>
+        </div>
+      </div>
+
+      <div class="entry">
+        <div class="ehdr">
+          <span class="etitle">ISOCELL HP3 / HP9 — World's 1st DL-Based Hexadeca Remosaic</span>
+          <span class="edate">Sep 2022 – Present</span>
+        </div>
+        <ul>
+          <li>Pioneered the world's first DL-based Hexadeca (16-cell) Remosaic algorithm for 0.56µm 200MP sensors
+            (1/1.4"); deployed for flagship telephoto camera (HP9) and main camera (HP3, e.g., Honor 80 Pro 160MP mode).
+          </li>
+        </ul>
+      </div>
+
+      <div class="entry">
+        <div class="ehdr">
+          <span class="etitle">ISOCELL HP2 — AI-Based 4×4 Qcell Remosaic (QMSC)</span>
+          <span class="edate">Apr 2021 – Apr 2023</span>
+        </div>
+        <ul>
+          <li>Developed AI-based 4×4 Qcell Remosaic (QMSC) deployed in-sensor (0.6µm, 200MP, 1/1.3"); used for 4×
+            in-sensor zoom mode on flagship main camera (Samsung Galaxy S23 Ultra).</li>
+        </ul>
+      </div>
+
+      <div class="subhdr">Independent Research · Personal Project</div>
+
+      <div class="entry">
+        <div class="ehdr">
+          <span class="etitle">REGIS (AI Camera) — Split Neural ISP &amp; Real-Time Edge Generative Imaging</span>
+          <span class="edate">Jan 2026 – Present</span>
+        </div>
+        <ul>
+          <li><strong>System Architecture &amp; Real-Time Pipelining:</strong> Partitioned neural ISP computation across an in-sensor NPU (Sony IMX500) and host AP accelerator (Raspberry Pi 5 + Hailo-8 NPU); compressed intermediate feature payload across the MIPI bus by 48× (3.6MB to 75KB), eliminating the physical inter-chip communication bottleneck from 9.5 FPS to 36.1 FPS (saturating the 30.0 FPS sensor exposure limit) via multi-threaded heterogeneous pipelining.</li>
+          <li><strong>Latent Distillation &amp; Perceptual Quality:</strong> Optimized the split encoder by distilling directly against a frozen Stable Diffusion 2.1 VAE teacher and fine-tuned a lightweight preview decoder using a composite L1 and LPIPS perceptual loss, boosting real-photo reconstruction fidelity from 10.2 dB to 24.2 dB PSNR (within 0.6 dB of the 84M full VAE ceiling); leveraged CNN translation equivariance for zero-shot native 4:3 optical format adaptation without retraining, hardened with Power-of-2 STE Quantization-Aware Training (QAT).</li>
+          <li><strong>Dual-Path Streaming &amp; Zero-Shot Generative Capture:</strong> Architected a dual-path pipeline where the single split latent stream concurrently drives fluid viewfinder preview and on-demand generative capture; extracted structural edge priors directly on the AP from preview reconstruction to condition frozen downstream latent diffusion backbones (SD 2.1 U-Net + ControlNet), enabling zero-shot generative capture without transmitting uncompressed raw RGB across the bus, ensuring complete on-device data privacy.</li>
+        </ul>
+      </div>
+
+      <div class="subhdr">Ph.D. Research · KAIST</div>
+
+      <div class="entry">
+        <div class="ehdr">
+          <span class="etitle">DQNAlign — Deep Reinforcement Learning for Sequence Alignment</span>
+          <span class="edate">Mar 2017 – Feb 2021</span>
+        </div>
+        <ul>
+          <li>Formulated pairwise and quasi-global DNA sequence alignment as a Markov Decision Process (MDP); designed a
+            Dueling Double DQN agent to accelerate sequence alignment via heuristic policy inference while preserving
+            biological sensitivity.</li>
+          <li>Published 2 first-author papers in <em>IEEE OJEMB</em> (2021), forming the core of the Ph.D. dissertation.
+          </li>
+        </ul>
+      </div>
+
+      <div class="entry">
+        <div class="ehdr">
+          <span class="etitle">3D Resonant Wireless Power Transfer &amp; Edge Safety Vision System</span>
+          <span class="edate">Mar 2017 – Feb 2021</span>
+        </div>
+        <ul>
+          <li>Developed real-time multi-camera computer vision and FLIR Lepton far-infrared (FIR) thermal sensor fusion
+            pipelines on Raspberry Pi / Coral Edge TPU for a 1kW wireless charging platform.</li>
+          <li>Implemented 3D receiver localization and dynamic human-avoidance safety cutoffs / power routing pathways,
+            ensuring EMF safety compliance around personnel (US Patent <strong>US 12,496,917 B2</strong> [Granted],
+            Korean Patent <strong>KR 10-2021-0092933 A</strong>).</li>
+          <li>Engineered vehicle arrival-time / lane-detection predictive power control inverter algorithms and Android
+            telematics GPS logging for 85kHz On-Line Electric Vehicles (WiPowerOne / OLEV).</li>
+        </ul>
+      </div>
+
+      <div class="entry">
+        <div class="ehdr">
+          <span class="etitle">High-Performance Genomic Sequence Mining &amp; AI Disease Risk Modeling</span>
+          <span class="edate">Mar 2016 – Feb 2019</span>
+        </div>
+        <ul>
+          <li>Engineered <code>REminerII</code> (high-performance C engine for de novo repetitive element mining) paired
+            with <code>PixelRE</code> (dot-plot computer vision encoding) and <code>REDNN</code>/<code>RERNN</code>
+            (deep/recurrent neural networks for genomic repeat classification).</li>
+          <li>Developed CNN-based complex genetic interaction network models extracting diagnostic somatic mutation and
+            miRNA biomarkers for acute myeloid leukemia (AML), colorectal, and breast cancer in clinical partnerships
+            with SNUBH &amp; Mediage (US Patent App. <strong>US 2019-0385696 A1</strong> / KR 10-2018-0062331).</li>
+        </ul>
+      </div>
+
+    </div>
+
+    <!-- Publications -->
+    <div class="sec">
+      <h2>Publications</h2>
+      <ol class="pub-list">
+        <li>
+          <strong>Y.-J. Song</strong> and D.-H. Cho,
+          &ldquo;Local Alignment of DNA Sequence Based on Deep Reinforcement Learning,&rdquo;
+          <em>IEEE Open Journal of Engineering in Medicine and Biology (OJEMB)</em>,
+          vol.&nbsp;2, pp.&nbsp;170&ndash;178, Apr. 2021.
+          DOI:&nbsp;<a href="https://doi.org/10.1109/OJEMB.2021.3076156">10.1109/OJEMB.2021.3076156</a>
+        </li>
+        <li>
+          <strong>Y.-J. Song</strong>, D.&nbsp;J. Ji, H. Seo, G.-B. Han, and D.-H. Cho,
+          &ldquo;Pairwise Heuristic Sequence Alignment Algorithm Based on Deep Reinforcement Learning,&rdquo;
+          <em>IEEE Open Journal of Engineering in Medicine and Biology (OJEMB)</em>,
+          vol.&nbsp;2, pp.&nbsp;36&ndash;43, Jan. 2021.
+          DOI:&nbsp;<a href="https://doi.org/10.1109/OJEMB.2021.3055424">10.1109/OJEMB.2021.3055424</a>
+        </li>
+        <li>
+          <strong>Y.-J. Song</strong> and D.-H. Cho,
+          &ldquo;A Novel Estimation Algorithm of Evolutionary Distance Based on the Word Frequency Variation of Sequence
+          Segment,&rdquo;
+          <em>Proc. IEEE EMBS International Conference on Biomedical and Health Informatics (BHI)</em>,
+          2018, pp.&nbsp;287&ndash;290.
+          IEEE Xplore:&nbsp;<a href="https://ieeexplore.ieee.org/document/8333425">8333425</a>
+        </li>
+        <li>
+          <strong>Y.-J. Song</strong> and D.-H. Cho,
+          &ldquo;Classification of Various Genomic Sequences Based on Distribution of Repeated K-Word,&rdquo;
+          <em>Proc. 39th Annual International Conference of the IEEE Engineering in Medicine and Biology Society
+            (EMBC)</em>, 2017.
+          IEEE Xplore:&nbsp;<a href="https://ieeexplore.ieee.org/document/8037707">8037707</a>
+        </li>
+      </ol>
+    </div>
+
+    <!-- Patents -->
+    <div class="sec">
+      <h2>Patents</h2>
+      <ul class="pat-list">
+        <li>
+          <strong>US 12,574,659 B2</strong> — Image signal processor, image sensor, and operating method of the image
+          sensor<span class="pat-granted">GRANTED</span>
+          <span class="pat-meta">Samsung Electronics Co., Ltd. · Filed Nov 2023 · Granted Mar 2026 — encoded bad-pixel
+            position data injected into a neural network intermediate layer for low-overhead real-time correction</span>
+        </li>
+        <li>
+          <strong>US 12,363,458 B2</strong> — Image sensor and operating method<span class="pat-granted">GRANTED</span>
+          <span class="pat-meta">Samsung Electronics Co., Ltd. · Filed Oct 2023 · Granted Jul 2025 — deep learning-based
+            cluster bad pixel correction for image sensors</span>
+        </li>
+        <li>
+          <strong>US 12,496,917 B2</strong> — Method and apparatus for vehicle location-based power control of wireless
+          charging inverter<span class="pat-granted">GRANTED</span>
+          <span class="pat-meta">KAIST &amp; WiPowerOne · Granted Dec 2025 · Family: KR 10-2370592 B1, WO2021101223A1
+            (PCT)</span>
+        </li>
+        <li>
+          <strong>US 2019-0385696 A1</strong> (App. 16/428,715) — Method for predicting disease risk based on analysis
+          of complex genetic information
+          <span class="pat-meta">KAIST · Filed May 2019 · Priority KR 10-2018-0062331 — deep learning network model
+            &amp; CNN analysis on somatic mutation / miRNA biomarker interactions</span>
+        </li>
+        <li>
+          <strong>KR 10-2021-0092933 A</strong> — Wireless power transfer apparatus and method using image recognition
+          <span class="pat-meta">KEPCO &amp; KAIST · Filed Jan 2020 — multi-camera 3D localization &amp; human detection
+            for beamforming power control</span>
+        </li>
       </ul>
     </div>
 
-    <div class="entry">
-      <div class="ehdr">
-        <span class="etitle">Staff Engineer</span>
-        <span class="edate">Apr 2021 – Feb 2025</span>
-      </div>
-      <div class="eorg"><em>Samsung Electronics</em> · S.LSI Sensor Business Team · Hwaseong, South Korea</div>
-      <ul>
-        <li>Invented the <strong>world's first DL-based Hexadeca Remosaic</strong> algorithm for ISOCELL HP3/HP9 (0.56µm, 200MP, 1/1.4"), enabling a new class of high-resolution mobile photography.</li>
-        <li>Delivered <strong>E2E AI Remosaic ISP turn-key solution</strong> for 200MP ISOCELL sensors — deployed across <strong>30+ China OEM products</strong> as the standard platform S/W ISP solution.</li>
-        <li>Built Gen 2 E2E AI Remosaic: optimized 200MP capture via Joint Remosaic &amp; SW ISP on heterogeneous mobile SoC, improving quality and latency under memory/compute constraints.</li>
-        <li>Developed <strong>AI-based 4×4 Qcell Remosaic (QMSC)</strong> for ISOCELL HP2 (0.6µm, 200MP, 1/1.3"), enabling 4× in-sensor zoom for flagship main cameras.</li>
-      </ul>
-    </div>
-  </div>
-
-  <!-- Projects -->
-  <div class="sec">
-    <h2>Projects</h2>
-
-    <div class="subhdr">Samsung Electronics</div>
-
-    <div class="entry">
-      <div class="ehdr">
-        <span class="etitle">ISOCELL HP5 — World's Smallest 200MP Sensor Algorithm</span>
-        <span class="edate">Jan 2025 – Present</span>
-      </div>
-      <ul>
-        <li>Designing DL S/W algorithms for 0.5µm pixel-pitch 200MP HP5, addressing extreme manufacturing constraints through advanced AI processing for mass-market flagships.</li>
+    <!-- Honors & Awards -->
+    <div class="sec">
+      <h2>Honors &amp; Awards</h2>
+      <ul class="pat-list">
+        <li>
+          <strong>SEC Annual Awards 2023 — Silver Award</strong>
+          <span class="pat-meta">Samsung Electronics · Dec 2023 — Awarded for exceptional engineering contribution to the E2E AI Remosaic (RMSC) commercial turn-key solution deployed across global mobile flagships</span>
+        </li>
       </ul>
     </div>
 
-    <div class="entry">
-      <div class="ehdr">
-        <span class="etitle">E2E AI Remosaic — End-to-End ISP Turn-Key Platform</span>
-        <span class="edate">Sep 2022 – Present</span>
-      </div>
-      <ul>
-        <li>Designed and delivered a full End-to-End S/W ISP solution for ISOCELL 200MP sensors — deployed across <strong>30+ China OEM products</strong> as the standard platform, publicly referenced by Samsung Semiconductor Global as a key imaging innovation. Evolved across 3 generations with progressively expanding capabilities.</li>
-      </ul>
-      <div class="sub-gen-list">
-        <div class="sub-gen"><span class="gen-badge">Gen 1</span><span class="gen-date">Sep 2022</span>Foundational E2E Remosaic + SW ISP architecture for 200MP ISOCELL sensors; established the production-ready turn-key platform.</div>
-        <div class="sub-gen"><span class="gen-badge">Gen 2</span><span class="gen-date">Jan 2023</span>Joint Remosaic &amp; SW ISP co-optimization on heterogeneous mobile SoC — improved 200MP throughput and image quality under tight memory/compute budgets.</div>
-        <div class="sub-gen"><span class="gen-badge">Gen 3</span><span class="gen-date">Jan 2025</span>In-Sensor Zoom expansion: added Multi-frame &amp; Zoom processing, broadening coverage across a wider range of OEM device configurations.</div>
-      </div>
-    </div>
-
-    <div class="entry">
-      <div class="ehdr">
-        <span class="etitle">ISOCELL HP3 / HP9 — World's 1st DL-Based Hexadeca Remosaic</span>
-        <span class="edate">Sep 2022 – Present</span>
-      </div>
-      <ul>
-        <li>Pioneered the world's first DL-based Hexadeca (16-cell) Remosaic algorithm for 0.56µm 200MP sensors (1/1.4"); enabled mass-production-quality high-resolution capture on flagship camera modules.</li>
-      </ul>
-    </div>
-
-    <div class="entry">
-      <div class="ehdr">
-        <span class="etitle">ISOCELL HP2 — AI-Based 4×4 Qcell Remosaic (QMSC)</span>
-        <span class="edate">Apr 2021 – Apr 2023</span>
-      </div>
-      <ul>
-        <li>Developed AI-based 4×4 Qcell Remosaic deployed in-sensor (0.6µm, 200MP, 1/1.3"); used for 4× in-sensor zoom mode in flagship device main cameras.</li>
-      </ul>
-    </div>
-
-    <div class="subhdr">Independent Research · Personal Project</div>
-
-    <div class="entry">
-      <div class="ehdr">
-        <span class="etitle">AI Camera — Split Neural ISP Across Sensor &amp; AP NPUs</span>
-        <span class="edate">Jan 2026 – Present</span>
-      </div>
-      <ul>
-        <li>Extending in-sensor ISP expertise across the <strong>full camera compute path</strong> — a neural ISP partitioned between an in-sensor NPU (Sony IMX500) and an AP NPU (Hailo-8), with a learned latent as the sensor→AP interface. Broadens coverage into <strong>hardware-aware model partitioning, generative/latent-based imaging, and the complete train-to-edge-deployment stack</strong> (PyTorch → quantization → vendor NPU toolchains), driven independently from concept through on-device validation.</li>
-      </ul>
-    </div>
-
-    <div class="subhdr">Ph.D. Research · KAIST</div>
-
-    <div class="entry">
-      <div class="ehdr">
-        <span class="etitle">DQNAlign — RL-Based DNA Sequence Alignment</span>
-        <span class="edate">Mar 2017 – Feb 2021</span>
-      </div>
-      <ul>
-        <li>Novel Dueling Double DQN algorithm for local and pairwise DNA alignment — O(n) complexity vs. classical O(n²) DP; published in <em>IEEE OJEMB</em> (2 papers, see Publications [1][2]).</li>
-      </ul>
-    </div>
-
-    <div class="entry">
-      <div class="ehdr">
-        <span class="etitle">Embedded AI for Wireless Power Transfer System</span>
-        <span class="edate">Mar 2017 – Feb 2021</span>
-      </div>
-      <ul>
-        <li>AI-based human detection &amp; vehicle localization on Raspberry Pi / Google Edge TPU / Mobile for autonomous wireless power control; GPS lane detection + Google FCM integration; 2 patents.</li>
-      </ul>
-    </div>
-
-    <div class="entry">
-      <div class="ehdr">
-        <span class="etitle">DNA Sequence Analysis &amp; Classification for Phylogenetics &amp; Diagnosis</span>
-        <span class="edate">Mar 2016 – Feb 2019</span>
-      </div>
-      <ul>
-        <li>Alignment-free k-word frequency metrics for phylogenetic classification (IEEE papers [3][4]); DL-based biomarker extraction for blood cancer diagnosis; 1 patent.</li>
-      </ul>
-    </div>
-
-  </div>
-
-  <!-- Publications -->
-  <div class="sec">
-    <h2>Publications</h2>
-    <ol class="pub-list">
-      <li>
-        <strong>Y.-J. Song</strong> and D.-H. Cho,
-        &ldquo;Local Alignment of DNA Sequence Based on Deep Reinforcement Learning,&rdquo;
-        <em>IEEE Open Journal of Engineering in Medicine and Biology (OJEMB)</em>,
-        vol.&nbsp;2, pp.&nbsp;170&ndash;178, Apr. 2021.
-        DOI:&nbsp;<a href="https://doi.org/10.1109/OJEMB.2021.3076156">10.1109/OJEMB.2021.3076156</a>
-      </li>
-      <li>
-        <strong>Y.-J. Song</strong>, D.&nbsp;J. Ji, H. Seo, G.-B. Han, and D.-H. Cho,
-        &ldquo;Pairwise Heuristic Sequence Alignment Algorithm Based on Deep Reinforcement Learning,&rdquo;
-        <em>IEEE Open Journal of Engineering in Medicine and Biology (OJEMB)</em>,
-        vol.&nbsp;2, pp.&nbsp;36&ndash;43, Jan. 2021.
-        DOI:&nbsp;<a href="https://doi.org/10.1109/OJEMB.2021.3055424">10.1109/OJEMB.2021.3055424</a>
-      </li>
-      <li>
-        <strong>Y.-J. Song</strong> and D.-H. Cho,
-        &ldquo;A Novel Estimation Algorithm of Evolutionary Distance Based on the Word Frequency Variation of Sequence Segment,&rdquo;
-        <em>Proc. IEEE EMBS International Conference on Biomedical and Health Informatics (BHI)</em>,
-        2018, pp.&nbsp;287&ndash;290.
-        IEEE Xplore:&nbsp;<a href="https://ieeexplore.ieee.org/document/8333425">8333425</a>
-      </li>
-      <li>
-        <strong>Y.-J. Song</strong> and D.-H. Cho,
-        &ldquo;Classification of Various Genomic Sequences Based on Distribution of Repeated K-Word,&rdquo;
-        <em>Proc. 39th Annual International Conference of the IEEE Engineering in Medicine and Biology Society (EMBC)</em>, 2017.
-        IEEE Xplore:&nbsp;<a href="https://ieeexplore.ieee.org/document/8037707">8037707</a>
-      </li>
-    </ol>
-  </div>
-
-  <!-- Patents -->
-  <div class="sec">
-    <h2>Patents</h2>
-    <ul class="pat-list">
-      <li>
-        <strong>US 12,574,659 B2</strong> — Image signal processor, image sensor, and operating method of the image sensor<span class="pat-granted">GRANTED</span>
-        <span class="pat-meta">Samsung Electronics Co., Ltd. · Filed Nov 2023 · Granted Mar 2026 — encoded bad-pixel position data injected into a neural network intermediate layer for low-overhead real-time correction</span>
-      </li>
-      <li>
-        <strong>US 12,363,458 B2</strong> — Image sensor and operating method<span class="pat-granted">GRANTED</span>
-        <span class="pat-meta">Samsung Electronics Co., Ltd. · Filed Oct 2023 · Granted Jul 2025 — deep learning-based cluster bad pixel correction for image sensors</span>
-      </li>
-      <li>
-        <strong>US 12,496,917 B2</strong> — Method and apparatus for vehicle location-based power control of wireless charging inverter<span class="pat-granted">GRANTED</span>
-        <span class="pat-meta">KAIST &amp; WiPowerOne · Granted Dec 2025 · Family: KR 10-2370592 B1, WO2021101223A1 (PCT)</span>
-      </li>
-      <li>
-        <strong>KR 10-2021-0092933 A</strong> — Wireless power transfer apparatus and method using image recognition
-        <span class="pat-meta">KEPCO &amp; KAIST · Filed Jan 2020 — multi-camera 3D localization &amp; human detection for beamforming power control</span>
-      </li>
-      <li>
-        <strong>KR 10-2019-0136733 A</strong> — Extracting method of disease diagnosis biomarkers using mutation information in whole genome sequence
-        <span class="pat-meta">KAIST · Filed May 2018</span>
-      </li>
-    </ul>
-  </div>
-
-
-</main>
+  </main>
 </body>
+
 </html>

@@ -1,0 +1,2838 @@
+<!doctype html>
+<html lang="ko">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Ch.03 Software ISP &amp; Halide/NPU 최적화 · AICAMERA Guidebook</title>
+<meta name="description" content="10단계 C99 레퍼런스 ISP(DPC·BLC·LSC·ANF·AWB·Demosaic·CCM·Gamma·CSC·EEH), 3A 루프, Verified Lifting, 4-Tier Halide/GPU, Dual-NPU 엣지 AI.">
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/katex@0.16.11/dist/katex.min.css">
+<script defer src="https://cdn.jsdelivr.net/npm/katex@0.16.11/dist/katex.min.js"></script>
+<script defer src="https://cdn.jsdelivr.net/npm/katex@0.16.11/dist/contrib/auto-render.min.js"></script>
+<style>
+/* ==========================================================================
+   AICAMERA Guidebook — SensorBook 기반 인터랙티브 아키텍처 교과서 공통 스타일
+   ========================================================================== */
+@import url("https://cdn.jsdelivr.net/gh/orioncactus/pretendard@v1.3.9/dist/web/variable/pretendardvariable-dynamic-subset.min.css");
+@import url("https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;600&display=swap");
+
+:root {
+  --bg: #f6f7fb;
+  --bg-elev: #ffffff;
+  --surface: #eef1f7;
+  --surface-2: #e3e8f2;
+  --border: #d6dce8;
+  --text: #141a26;
+  --text-dim: #566178;
+  --text-faint: #8a93a8;
+  --accent: #0a84c6;
+  --accent-soft: rgba(10, 132, 198, 0.12);
+  --accent-2: #7a4ce0;
+  --accent-2-soft: rgba(122, 76, 224, 0.12);
+  --ok: #1f9d55;
+  --warn: #d98a00;
+  --bad: #d64545;
+  --red: #e0443e;
+  --green: #2da44e;
+  --blue: #2f6fe0;
+  --grid: rgba(20, 26, 38, 0.08);
+  --axis: rgba(20, 26, 38, 0.45);
+  --canvas-bg: #ffffff;
+  --shadow: 0 1px 2px rgba(16, 24, 40, 0.06), 0 6px 20px rgba(16, 24, 40, 0.06);
+  --radius: 14px;
+  --radius-sm: 8px;
+  --font: "Pretendard Variable", Pretendard, -apple-system, BlinkMacSystemFont, "Apple SD Gothic Neo", "Noto Sans KR", "Malgun Gothic", sans-serif;
+  --mono: "JetBrains Mono", ui-monospace, SFMono-Regular, Menlo, monospace;
+  --maxw: 920px;
+  --nav-h: 58px;
+  color-scheme: light;
+}
+
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) {
+    --bg: #0b0f17;
+    --bg-elev: #121826;
+    --surface: #171f30;
+    --surface-2: #1e283c;
+    --border: #273248;
+    --text: #e6ebf5;
+    --text-dim: #9aa6bf;
+    --text-faint: #69748c;
+    --accent: #38b6f5;
+    --accent-soft: rgba(56, 182, 245, 0.14);
+    --accent-2: #a585ff;
+    --accent-2-soft: rgba(165, 133, 255, 0.14);
+    --ok: #3fcf7f;
+    --warn: #f5b93a;
+    --bad: #ff6b6b;
+    --red: #ff5f57;
+    --green: #3fcf6f;
+    --blue: #5b8cff;
+    --grid: rgba(230, 235, 245, 0.08);
+    --axis: rgba(230, 235, 245, 0.45);
+    --canvas-bg: #0f1522;
+    --shadow: 0 1px 2px rgba(0, 0, 0, 0.3), 0 8px 28px rgba(0, 0, 0, 0.35);
+    color-scheme: dark;
+  }
+}
+:root[data-theme="dark"] {
+  --bg: #0b0f17;
+  --bg-elev: #121826;
+  --surface: #171f30;
+  --surface-2: #1e283c;
+  --border: #273248;
+  --text: #e6ebf5;
+  --text-dim: #9aa6bf;
+  --text-faint: #69748c;
+  --accent: #38b6f5;
+  --accent-soft: rgba(56, 182, 245, 0.14);
+  --accent-2: #a585ff;
+  --accent-2-soft: rgba(165, 133, 255, 0.14);
+  --ok: #3fcf7f;
+  --warn: #f5b93a;
+  --bad: #ff6b6b;
+  --red: #ff5f57;
+  --green: #3fcf6f;
+  --blue: #5b8cff;
+  --grid: rgba(230, 235, 245, 0.08);
+  --axis: rgba(230, 235, 245, 0.45);
+  --canvas-bg: #0f1522;
+  --shadow: 0 1px 2px rgba(0, 0, 0, 0.3), 0 8px 28px rgba(0, 0, 0, 0.35);
+  color-scheme: dark;
+}
+
+* { box-sizing: border-box; }
+html { scroll-behavior: smooth; scroll-padding-top: calc(var(--nav-h) + 16px); -webkit-text-size-adjust: 100%; }
+body {
+  margin: 0;
+  background: var(--bg);
+  color: var(--text);
+  font-family: var(--font);
+  font-size: 16.5px;
+  line-height: 1.75;
+  word-break: keep-all;
+  overflow-wrap: break-word;
+  -webkit-font-smoothing: antialiased;
+}
+img, svg, canvas, video { max-width: 100%; }
+a { color: var(--accent); text-decoration: none; }
+a:hover { text-decoration: underline; }
+code, kbd { font-family: var(--mono); font-size: 0.86em; background: var(--surface); padding: 0.1em 0.4em; border-radius: 5px; }
+hr { border: 0; border-top: 1px solid var(--border); margin: 48px 0; }
+::selection { background: var(--accent-soft); }
+
+/* ------------------------------------------------------------------ Top bar */
+.sb-topbar {
+  position: sticky; top: 0; z-index: 50;
+  height: var(--nav-h);
+  display: flex; align-items: center; gap: 12px;
+  padding: 0 16px;
+  background: color-mix(in srgb, var(--bg) 82%, transparent);
+  backdrop-filter: saturate(160%) blur(12px);
+  -webkit-backdrop-filter: saturate(160%) blur(12px);
+  border-bottom: 1px solid var(--border);
+}
+.sb-logo { display: flex; align-items: center; gap: 10px; font-weight: 800; color: var(--text); letter-spacing: -0.02em; font-size: 18px; white-space: nowrap; }
+.sb-logo:hover { text-decoration: none; }
+.sb-logo .mark { width: 28px; height: 28px; flex: none; }
+.sb-logo small { font-weight: 500; color: var(--text-dim); font-size: 13px; }
+.sb-topbar .spacer { flex: 1; }
+.sb-btn {
+  display: inline-flex; align-items: center; justify-content: center; gap: 6px;
+  height: 36px; padding: 0 12px; border-radius: 10px;
+  border: 1px solid var(--border); background: var(--bg-elev); color: var(--text);
+  font: inherit; font-size: 13.5px; cursor: pointer; text-decoration: none;
+}
+.sb-btn:hover { border-color: var(--accent); text-decoration: none; }
+.sb-btn.icon { width: 36px; padding: 0; }
+.sb-topbar .series-link { white-space: nowrap; text-decoration: none; }
+@media (max-width: 620px) { .sb-topbar .sb-logo small { display: none; } }
+@media (max-width: 420px) { .sb-topbar .sb-logo span { display: none; } }
+.sb-progress { position: absolute; left: 0; bottom: -1px; height: 2px; background: linear-gradient(90deg, var(--accent), var(--accent-2)); width: 0; }
+
+/* Drawer (chapter list) */
+.sb-drawer-backdrop { position: fixed; inset: 0; background: rgba(0,0,0,0.35); z-index: 60; opacity: 0; pointer-events: none; transition: opacity .2s; }
+.sb-drawer {
+  position: fixed; top: 0; left: 0; bottom: 0; width: min(350px, 88vw); z-index: 61;
+  background: var(--bg-elev); border-right: 1px solid var(--border);
+  transform: translateX(-102%); transition: transform .25s ease;
+  overflow-y: auto; padding: 20px 14px 40px;
+}
+body.drawer-open .sb-drawer { transform: none; }
+body.drawer-open .sb-drawer-backdrop { opacity: 1; pointer-events: auto; }
+.sb-drawer h4 { margin: 8px 10px 10px; font-size: 12px; letter-spacing: .12em; color: var(--text-faint); text-transform: uppercase; }
+.sb-chlist { list-style: none; margin: 0; padding: 0; }
+.sb-chlist a { display: flex; gap: 12px; align-items: baseline; padding: 9px 10px; border-radius: 10px; color: var(--text); line-height: 1.4; }
+.sb-chlist a:hover { background: var(--surface); text-decoration: none; }
+.sb-chlist a.active { background: var(--accent-soft); color: var(--accent); font-weight: 700; }
+.sb-chlist .num { font-family: var(--mono); font-size: 12px; color: var(--text-faint); width: 22px; flex: none; }
+.sb-chlist a.active .num { color: var(--accent); }
+
+/* ------------------------------------------------------------------ Layout */
+.sb-layout { display: grid; grid-template-columns: minmax(0, 1fr); gap: 40px; max-width: 1260px; margin: 0 auto; padding: 0 16px; }
+@media (min-width: 1180px) {
+  .sb-layout { grid-template-columns: minmax(0, 1fr) 240px; }
+}
+.sb-toc { display: none; }
+@media (min-width: 1180px) {
+  .sb-toc { display: block; position: sticky; top: calc(var(--nav-h) + 28px); align-self: start; max-height: calc(100vh - var(--nav-h) - 56px); overflow-y: auto; padding-top: 48px; font-size: 13.5px; }
+  .sb-toc h4 { margin: 0 0 10px; font-size: 11px; letter-spacing: .14em; color: var(--text-faint); }
+  .sb-toc a { display: block; padding: 5px 0 5px 12px; border-left: 2px solid var(--border); color: var(--text-dim); line-height: 1.45; }
+  .sb-toc a:hover { color: var(--text); text-decoration: none; }
+  .sb-toc a.active { border-left-color: var(--accent); color: var(--accent); font-weight: 600; }
+}
+
+main.chapter { max-width: var(--maxw); width: 100%; margin: 0 auto; padding: 40px 0 80px; min-width: 0; }
+main.chapter > section { margin: 60px 0; }
+main.chapter h2 { font-size: 26px; line-height: 1.35; letter-spacing: -0.02em; margin: 0 0 18px; padding-top: 8px; border-bottom: 1px solid var(--border); padding-bottom: 10px; }
+main.chapter h2 .h-num { font-family: var(--mono); color: var(--accent); font-size: 0.72em; margin-right: 10px; vertical-align: 0.1em; }
+main.chapter h3 { font-size: 19px; margin: 32px 0 10px; letter-spacing: -0.01em; }
+main.chapter p { margin: 0 0 14px; }
+main.chapter ul, main.chapter ol { padding-left: 1.3em; margin: 0 0 14px; }
+main.chapter li { margin: 4px 0; }
+strong { font-weight: 700; }
+.term { font-weight: 700; color: var(--accent); }
+.en { color: var(--text-dim); font-size: 0.9em; margin-left: 2px; }
+
+/* Chapter hero */
+.chapter-hero { padding: 20px 0 8px; }
+.eyebrow { font-family: var(--mono); font-size: 13px; letter-spacing: .16em; color: var(--accent); font-weight: 600; text-transform: uppercase; }
+.chapter-hero h1 { font-size: clamp(30px, 5vw, 44px); line-height: 1.22; letter-spacing: -0.03em; margin: 10px 0 16px; }
+.lead { font-size: 18px; color: var(--text-dim); line-height: 1.7; }
+.objectives { list-style: none; padding: 18px 20px !important; margin: 24px 0 0 !important; background: var(--bg-elev); border: 1px solid var(--border); border-radius: var(--radius); display: grid; gap: 6px; box-shadow: var(--shadow); }
+.objectives::before { content: "이 장에서 다루는 핵심 주제"; display: block; font-size: 12px; letter-spacing: .1em; color: var(--text-faint); font-weight: 700; margin-bottom: 4px; }
+.objectives li { padding-left: 24px; position: relative; margin: 0 !important; font-size: 15.5px; }
+.objectives li::before { content: ""; position: absolute; left: 4px; top: 0.62em; width: 9px; height: 9px; border-radius: 3px; background: var(--accent); opacity: .85; }
+
+/* ------------------------------------------------------------------ Figures & Interactive SVG */
+figure { margin: 26px 0; }
+figure.diagram { background: var(--bg-elev); border: 1px solid var(--border); border-radius: var(--radius); padding: 20px; box-shadow: var(--shadow); }
+figure.diagram svg { display: block; width: 100%; height: auto; }
+figcaption { font-size: 14px; color: var(--text-dim); margin-top: 12px; line-height: 1.6; }
+figcaption b { color: var(--text); }
+.fig-row { display: grid; gap: 16px; grid-template-columns: repeat(auto-fit, minmax(240px, 1fr)); }
+
+/* SVG helpers usable inside inline diagrams */
+svg .t { fill: var(--text); font-family: var(--font); font-size: 12.5px; }
+svg .t-dim { fill: var(--text-dim); font-family: var(--font); font-size: 11.5px; }
+svg .t-mono { fill: var(--text-dim); font-family: var(--mono); font-size: 10.5px; }
+svg .t-acc { fill: var(--accent); font-family: var(--font); font-size: 12.5px; font-weight: 700; }
+svg .t-ok { fill: var(--ok); font-family: var(--font); font-size: 12px; font-weight: 700; }
+svg .s-line { stroke: var(--text-dim); fill: none; stroke-width: 1.5; }
+svg .s-axis { stroke: var(--axis); fill: none; stroke-width: 1.2; }
+svg .s-acc { stroke: var(--accent); fill: none; stroke-width: 2; }
+svg .f-surface { fill: var(--surface); stroke: var(--border); }
+svg .f-elev { fill: var(--bg-elev); stroke: var(--border); }
+svg .f-acc { fill: var(--accent); }
+svg .f-acc-soft { fill: var(--accent-soft); stroke: var(--accent); }
+svg .f-acc2-soft { fill: var(--accent-2-soft); stroke: var(--accent-2); }
+
+/* Interactive Architecture Diagram Nodes */
+.lane rect { fill: var(--surface); stroke: var(--border); stroke-dasharray: 4 5; opacity: 0.7; }
+.lane-sensor rect { stroke: var(--ok); }
+.lane-host rect { stroke: var(--accent); }
+.lane-ws rect { stroke: var(--accent-2); }
+.lane-bus rect { stroke: var(--warn); }
+.lane-label { fill: var(--text-dim); font-size: 11.5px; font-weight: 700; font-family: var(--font); }
+.node rect { fill: var(--bg-elev); stroke: var(--border); stroke-width: 1.5; transition: .18s; }
+.node { cursor: pointer; }
+.node text { text-anchor: middle; pointer-events: none; }
+.n-title { fill: var(--text); font-size: 12.5px; font-weight: 700; font-family: var(--font); }
+.n-sub { fill: var(--text-dim); font-size: 10.5px; font-family: var(--mono); }
+.n-num { fill: var(--accent); font-size: 11px; font-family: var(--mono); font-weight: 700; }
+.n-sensor rect { stroke: var(--ok); }
+.n-bus rect { stroke: var(--warn); }
+.n-hailo rect { stroke: var(--red); }
+.n-latent rect { stroke: var(--accent-2); fill: var(--accent-2-soft); }
+.n-out rect { stroke: var(--ok); }
+.n-host rect { stroke: var(--accent); }
+.n-ws rect { stroke: var(--accent-2); }
+.n-base rect { stroke: var(--bad); fill: color-mix(in srgb, var(--bad) 8%, transparent); }
+.n-isp rect { stroke: var(--accent); }
+.n-off rect { stroke: var(--border); fill: var(--surface); }
+.n-off .n-title { fill: var(--text-dim); }
+.node:hover rect, .node:focus rect, .node.sel rect { stroke-width: 2.5; stroke: var(--accent); filter: drop-shadow(0 2px 8px var(--accent-soft)); }
+.node:focus { outline: none; }
+.edge { fill: none; stroke: var(--text-dim); stroke-width: 1.5; }
+.e-net { stroke: var(--accent-2); }
+.e-base { stroke: var(--bad); }
+.arrowhead { fill: var(--text-dim); }
+.e-label { fill: var(--text-dim); font-size: 10.5px; text-anchor: middle; font-family: var(--mono); }
+.svg-foot { fill: var(--text-faint); font-size: 11.5px; font-family: var(--font); }
+
+.detail { margin-top: 14px; padding: 16px 18px; border-radius: 12px; border: 1px solid var(--accent); background: var(--accent-soft); min-height: 92px; transition: border-color .2s; }
+.detail.flash { border-color: var(--accent-2); }
+.detail-title { font-weight: 700; color: var(--text); margin-bottom: 6px; font-size: 16px; }
+.detail-body p, .detail-body li { font-size: 14.5px; color: var(--text-dim); }
+
+/* ------------------------------------------------------------------ Simulator card */
+.sim {
+  margin: 30px 0;
+  background: var(--bg-elev);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  box-shadow: var(--shadow);
+  overflow: hidden;
+  scroll-margin-top: 1rem;
+}
+.sim-head { display: flex; align-items: center; gap: 12px; flex-wrap: wrap; padding: 14px 18px; border-bottom: 1px solid var(--border); background: linear-gradient(90deg, var(--accent-soft), transparent 70%); }
+.sim-tag { font-family: var(--mono); font-size: 11px; font-weight: 600; letter-spacing: .12em; color: var(--accent); border: 1px solid var(--accent); border-radius: 999px; padding: 2px 9px; line-height: 1.6; }
+.sim-tag.three { color: var(--accent-2); border-color: var(--accent-2); }
+.sim-head h3 { margin: 0 !important; font-size: 17px !important; flex: 1; min-width: 180px; }
+.sim-link { margin-left: auto; flex: 0 0 auto; font: 12px var(--mono); color: var(--text-faint); }
+.sim-link:hover, .sim-link:focus-visible { color: var(--accent); text-decoration: none; }
+.sim-body { display: grid; grid-template-columns: minmax(0, 1fr); }
+@media (min-width: 820px) {
+  .sim-body.side { grid-template-columns: minmax(0, 1fr) 290px; }
+  .sim-body.side .sim-controls { border-top: 0; border-left: 1px solid var(--border); }
+}
+.sim-view { position: relative; background: var(--canvas-bg); min-height: 140px; }
+.sim-view canvas { display: block; width: 100%; }
+.sim-view.three { height: 420px; cursor: grab; touch-action: none; }
+.sim-view.three:active { cursor: grabbing; }
+.sim-view .hint { position: absolute; right: 10px; bottom: 8px; font-size: 12px; color: var(--text-faint); pointer-events: none; background: color-mix(in srgb, var(--canvas-bg) 75%, transparent); padding: 2px 8px; border-radius: 6px; }
+.overlay-label { position: absolute; pointer-events: none; font-size: 12px; font-weight: 600; color: var(--text); background: color-mix(in srgb, var(--bg-elev) 88%, transparent); border: 1px solid var(--border); padding: 2px 8px; border-radius: 6px; white-space: nowrap; transform: translate(-50%, -50%); }
+.sim-controls { padding: 16px 18px; border-top: 1px solid var(--border); display: grid; gap: 14px; grid-template-columns: repeat(auto-fit, minmax(210px, 1fr)); align-content: start; }
+.sim-body.side .sim-controls { grid-template-columns: 1fr; }
+.ctrl { display: grid; gap: 6px; font-size: 14px; }
+.ctrl > span { display: flex; justify-content: space-between; gap: 8px; color: var(--text-dim); }
+.ctrl output { font-family: var(--mono); color: var(--text); font-weight: 600; font-size: 13px; }
+.ctrl select { font: inherit; font-size: 14px; padding: 7px 10px; border-radius: 8px; border: 1px solid var(--border); background: var(--surface); color: var(--text); }
+.ctrl-row { display: flex; flex-wrap: wrap; gap: 8px; align-items: center; }
+.seg { display: inline-flex; background: var(--surface); border: 1px solid var(--border); border-radius: 10px; padding: 3px; gap: 2px; flex-wrap: wrap; }
+.seg button { font: inherit; font-size: 13px; border: 0; background: transparent; color: var(--text-dim); padding: 5px 11px; border-radius: 7px; cursor: pointer; }
+.seg button.on, .seg button[aria-pressed="true"] { background: var(--bg-elev); color: var(--accent); font-weight: 700; box-shadow: 0 1px 3px rgba(0,0,0,.12); }
+.btn { font: inherit; font-size: 14px; padding: 8px 14px; border-radius: 9px; border: 1px solid var(--border); background: var(--surface); color: var(--text); cursor: pointer; }
+.btn:hover { border-color: var(--accent); }
+.btn.primary { background: var(--accent); border-color: var(--accent); color: #fff; font-weight: 600; }
+.check { display: flex; gap: 8px; align-items: center; font-size: 14px; color: var(--text-dim); cursor: pointer; }
+.check input { accent-color: var(--accent); width: 16px; height: 16px; }
+
+input[type="range"] { -webkit-appearance: none; appearance: none; width: 100%; height: 22px; background: transparent; cursor: pointer; margin: 0; }
+input[type="range"]::-webkit-slider-runnable-track { height: 5px; border-radius: 3px; background: linear-gradient(90deg, var(--accent) var(--fill, 50%), var(--surface-2) var(--fill, 50%)); }
+input[type="range"]::-moz-range-track { height: 5px; border-radius: 3px; background: var(--surface-2); }
+input[type="range"]::-moz-range-progress { height: 5px; border-radius: 3px; background: var(--accent); }
+input[type="range"]::-webkit-slider-thumb { -webkit-appearance: none; width: 18px; height: 18px; border-radius: 50%; background: var(--bg-elev); border: 2px solid var(--accent); margin-top: -6.5px; box-shadow: 0 1px 4px rgba(0,0,0,.2); }
+input[type="range"]::-moz-range-thumb { width: 14px; height: 14px; border-radius: 50%; background: var(--bg-elev); border: 2px solid var(--accent); }
+
+.sim-readout { display: grid; grid-template-columns: repeat(auto-fit, minmax(130px, 1fr)); gap: 1px; background: var(--border); border-top: 1px solid var(--border); }
+.stat { background: var(--bg-elev); padding: 12px 16px; display: grid; gap: 2px; }
+.stat .k { font-size: 12px; color: var(--text-dim); }
+.stat .v { font-family: var(--mono); font-size: 17px; font-weight: 600; color: var(--text); font-variant-numeric: tabular-nums; }
+.stat .v small { font-size: 12px; color: var(--text-dim); font-weight: 400; margin-left: 2px; }
+.sim-note { padding: 12px 18px; font-size: 14px; color: var(--text-dim); border-top: 1px solid var(--border); background: var(--surface); line-height: 1.6; }
+
+/* ISP Simulator Chips */
+.isp-chips { display: flex; flex-wrap: wrap; gap: 6px 5px; padding: 12px 14px; border-bottom: 1px solid var(--border); background: var(--surface); }
+.isp-chip { position: relative; display: inline-flex; align-items: center; gap: 6px; font: inherit; font-size: 13px; padding: 5px 8px 5px 6px; border-radius: 9px; border: 1px solid var(--border); background: var(--bg-elev); color: var(--text); cursor: pointer; line-height: 1.3; }
+.isp-chip:hover { border-color: var(--accent); }
+.isp-chip .num { font-family: var(--mono); font-size: 11px; font-weight: 700; color: var(--accent); background: var(--accent-soft); border-radius: 5px; padding: 0 5px; }
+.isp-chip .sw { width: 26px; height: 15px; border-radius: 8px; background: var(--accent); position: relative; flex: none; }
+.isp-chip .sw::after { content: ""; position: absolute; top: 2px; left: 13px; width: 11px; height: 11px; border-radius: 50%; background: #fff; transition: left .15s; }
+.isp-chip .fix { font-size: 10px; color: var(--text-faint); }
+.isp-chip.off { color: var(--text-faint); background: transparent; }
+.isp-chip.off .nm { text-decoration: line-through; }
+.isp-chip.off .sw { background: var(--surface-2); }
+.isp-chip.off .sw::after { left: 2px; }
+.isp-chip.sel { border-color: var(--accent); box-shadow: 0 0 0 2px var(--accent-soft); }
+.isp-chip.viewing { background: var(--accent-soft); }
+.isp-chip.viewing::before { content: "보는 중"; position: absolute; top: -9px; right: 4px; font-size: 9.5px; padding: 0 4px; border-radius: 4px; background: var(--accent); color: #fff; line-height: 1.4; }
+.isp-ph { font-size: 14px; color: var(--text); padding-bottom: 6px; border-bottom: 1px dashed var(--border); }
+
+/* ------------------------------------------------------------------ Callouts, Formula, Cards */
+.callout { margin: 22px 0; padding: 16px 18px 16px 20px; border-radius: var(--radius-sm); background: var(--accent-soft); border-left: 4px solid var(--accent); font-size: 15.5px; }
+.callout > strong:first-child, .callout > h3:first-child { display: block; margin: 0 0 6px !important; font-size: 16px; color: var(--text); }
+.callout p:last-child, .callout ul:last-child { margin-bottom: 0; }
+.callout.tip, .callout.c-info { background: color-mix(in srgb, var(--ok) 12%, transparent); border-left-color: var(--ok); }
+.callout.warn, .callout.c-warn { background: color-mix(in srgb, var(--warn) 14%, transparent); border-left-color: var(--warn); }
+.callout.deep { background: var(--accent-2-soft); border-left-color: var(--accent-2); }
+.callout.deep > strong:first-child::before { content: "심화 · "; color: var(--accent-2); }
+
+.formula, .eq { margin: 20px 0; padding: 14px 18px; background: var(--bg-elev); border: 1px solid var(--border); border-radius: var(--radius-sm); overflow-x: auto; position: relative; box-shadow: var(--shadow); }
+.formula .where { font-size: 14px; color: var(--text-dim); margin-top: 8px; border-top: 1px dashed var(--border); padding-top: 8px; }
+.katex { font-size: 1.06em; }
+.katex-display { margin: 0.4em 0 !important; padding: 0.4em 0; overflow-x: auto; overflow-y: hidden; }
+
+/* Verified Source Chips & Badges */
+.src { font-family: var(--mono); font-size: 11.5px; padding: 1px 6px; border-radius: 6px; border: 1px solid color-mix(in srgb, var(--accent) 40%, transparent); background: var(--accent-soft); color: var(--accent); white-space: nowrap; display: inline; line-height: 1.8; }
+.src:hover { filter: brightness(1.1); text-decoration: none; }
+.src-broken { border-color: var(--bad); color: var(--bad); }
+
+.badge { display: inline-block; font-size: 11px; font-weight: 600; padding: 2px 8px; border-radius: 999px; border: 1px solid; white-space: nowrap; line-height: 1.5; font-family: var(--mono); }
+.b-measured, .b-on { color: var(--ok); border-color: color-mix(in srgb, var(--ok) 45%, transparent); background: color-mix(in srgb, var(--ok) 12%, transparent); }
+.b-sim { color: var(--warn); border-color: color-mix(in srgb, var(--warn) 45%, transparent); background: color-mix(in srgb, var(--warn) 12%, transparent); }
+.b-off { color: var(--text-faint); border-color: var(--border); background: var(--surface); }
+.b-warn { color: var(--warn); border-color: color-mix(in srgb, var(--warn) 45%, transparent); background: color-mix(in srgb, var(--warn) 12%, transparent); }
+.b-area { color: var(--accent-2); border-color: color-mix(in srgb, var(--accent-2) 40%, transparent); background: var(--accent-2-soft); }
+
+/* Grids & Stage Cards */
+.grid-2 { display: grid; grid-template-columns: repeat(auto-fit, minmax(320px, 1fr)); gap: 16px; margin: 18px 0; }
+.grid-3 { display: grid; grid-template-columns: repeat(auto-fit, minmax(250px, 1fr)); gap: 16px; margin: 18px 0; }
+.card { background: var(--bg-elev); border: 1px solid var(--border); border-radius: var(--radius); padding: 18px 20px; box-shadow: var(--shadow); min-width: 0; }
+.card h3 { margin-top: 0 !important; }
+.stage-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(360px, 1fr)); gap: 16px; margin: 18px 0; }
+.stage { scroll-margin-top: calc(var(--nav-h) + 20px); transition: border-color .3s, box-shadow .3s; }
+.stage.flash { border-color: var(--accent); box-shadow: 0 0 0 3px var(--accent-soft); }
+.stage-head { display: flex; gap: 12px; align-items: flex-start; margin-bottom: 8px; }
+.stage-num { flex-shrink: 0; width: 32px; height: 32px; border-radius: 8px; display: grid; place-items: center; font-family: var(--mono); font-weight: 700; color: #fff; background: linear-gradient(135deg, var(--accent), var(--accent-2)); font-size: 14px; }
+.stage-meta { display: flex; flex-wrap: wrap; gap: 6px; align-items: center; font-size: 12px; color: var(--text-dim); margin-top: 2px; }
+.note { font-size: 13px; color: var(--text-faint); margin-top: 8px; }
+.warn-inline { color: var(--warn); font-weight: 600; }
+
+/* Code & Tree blocks */
+pre.cmd, pre.tree { position: relative; background: var(--surface); border: 1px solid var(--border); border-radius: 10px; padding: 14px 16px; overflow-x: auto; font-family: var(--mono); font-size: 12.8px; line-height: 1.65; color: var(--text); margin: 12px 0; }
+pre.cmd code { background: none; border: 0; padding: 0; white-space: pre; color: inherit; font-size: inherit; }
+.copy { position: absolute; top: 8px; right: 8px; font-size: 11px; padding: 3px 9px; border-radius: 6px; border: 1px solid var(--border); background: var(--bg-elev); color: var(--text-dim); cursor: pointer; font-family: var(--mono); }
+.copy:hover { border-color: var(--accent); color: var(--accent); }
+
+/* Tables */
+.table-wrap, .tbl-wrap { position: relative; overflow-x: auto; margin: 18px 0; border: 1px solid var(--border); border-radius: var(--radius-sm); background: var(--bg-elev); box-shadow: var(--shadow); }
+table, .tbl { width: 100%; border-collapse: collapse; font-size: 14px; }
+th, td { padding: 9px 12px; text-align: left; border-bottom: 1px solid var(--border); vertical-align: top; }
+th { background: var(--surface); font-weight: 700; font-size: 13px; white-space: nowrap; color: var(--text); }
+tr:last-child td { border-bottom: 0; }
+tbody tr:hover td { background: color-mix(in srgb, var(--surface) 55%, transparent); }
+td.num, th.num, .tbl-num td { font-family: var(--mono); font-variant-numeric: tabular-nums; white-space: nowrap; }
+.tbl-num td:first-child { font-family: var(--font); }
+td.hl { color: var(--ok); font-weight: 700; }
+
+/* Key points summary */
+.keypoints { background: var(--bg-elev); border: 1px solid var(--border); border-radius: var(--radius); padding: 20px 22px; box-shadow: var(--shadow); }
+.keypoints h2 { font-size: 22px !important; border-bottom: 0 !important; padding-bottom: 0 !important; }
+.keypoints ol { counter-reset: kp; list-style: none; padding: 0 !important; }
+.keypoints li { counter-increment: kp; position: relative; padding-left: 38px; margin: 10px 0 !important; }
+.keypoints li::before { content: counter(kp); position: absolute; left: 0; top: 0.1em; width: 26px; height: 26px; border-radius: 8px; background: var(--accent-soft); color: var(--accent); font-weight: 800; font-size: 14px; display: grid; place-items: center; font-family: var(--mono); }
+
+/* Filter row & details */
+.filter-row { display: flex; gap: 6px; flex-wrap: wrap; margin-bottom: 12px; }
+.chip { font: inherit; cursor: pointer; font-size: 13px; padding: 5px 13px; border-radius: 999px; border: 1px solid var(--border); background: var(--surface); color: var(--text-dim); }
+.chip.active { color: #fff; border-color: var(--accent); background: var(--accent); font-weight: 600; }
+.details { margin-top: 14px; border: 1px solid var(--border); border-radius: 10px; padding: 10px 14px; background: var(--surface); }
+.details summary { cursor: pointer; color: var(--text); font-weight: 600; font-size: 14px; }
+.details[open] summary { margin-bottom: 10px; }
+
+/* ------------------------------------------------------------------ Prev / Next & Footer */
+.sb-pager { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; max-width: var(--maxw); margin: 0 auto; padding: 0 16px 24px; }
+.sb-pager a { display: block; padding: 16px 18px; border: 1px solid var(--border); border-radius: var(--radius); background: var(--bg-elev); color: var(--text); box-shadow: var(--shadow); }
+.sb-pager a:hover { border-color: var(--accent); text-decoration: none; }
+.sb-pager small { display: block; color: var(--text-faint); font-size: 12px; font-family: var(--mono); margin-bottom: 2px; }
+.sb-pager .next { text-align: right; grid-column: 2; }
+.sb-foot { border-top: 1px solid var(--border); color: var(--text-faint); font-size: 13px; padding: 28px 16px 40px; text-align: center; }
+
+/* ------------------------------------------------------------------ Home page */
+.home-hero { position: relative; overflow: hidden; border-bottom: 1px solid var(--border); }
+.home-hero .inner { max-width: 1200px; margin: 0 auto; padding: 64px 16px 56px; display: grid; gap: 40px; align-items: center; grid-template-columns: minmax(0, 1fr); }
+@media (min-width: 960px) { .home-hero .inner { grid-template-columns: minmax(0, 1.05fr) minmax(0, 1fr); } }
+.home-hero h1 { font-size: clamp(34px, 5.6vw, 56px); line-height: 1.14; letter-spacing: -0.035em; margin: 14px 0 18px; }
+.home-hero h1 .grad { background: linear-gradient(90deg, var(--accent), var(--accent-2)); -webkit-background-clip: text; background-clip: text; color: transparent; }
+.home-hero p { font-size: 18px; color: var(--text-dim); max-width: 580px; }
+.home-hero .cta { display: flex; gap: 12px; flex-wrap: wrap; margin-top: 26px; }
+.home-hero .cta a { padding: 12px 20px; border-radius: 12px; font-weight: 700; }
+.home-hero .cta a.primary { background: var(--accent); color: #fff; }
+.home-hero .cta a.ghost { border: 1px solid var(--border); color: var(--text); background: var(--bg-elev); }
+.home-hero .cta a:hover { text-decoration: none; filter: brightness(1.05); }
+.hero-badges { display: flex; gap: 8px; flex-wrap: wrap; margin-top: 18px; }
+.hero-badges span { font-size: 12.5px; padding: 4px 10px; border-radius: 999px; border: 1px solid var(--border); color: var(--text-dim); background: var(--bg-elev); font-family: var(--mono); }
+.hero-3d { height: 420px; border-radius: 20px; border: 1px solid var(--border); background: radial-gradient(ellipse at 50% 40%, var(--accent-soft), transparent 70%), var(--bg-elev); position: relative; overflow: hidden; box-shadow: var(--shadow); touch-action: none; }
+.hero-3d .hint { position: absolute; left: 14px; bottom: 10px; font-size: 12px; color: var(--text-faint); pointer-events: none; background: color-mix(in srgb, var(--bg-elev) 80%, transparent); padding: 3px 9px; border-radius: 6px; }
+.home-section { max-width: 1200px; margin: 0 auto; padding: 56px 16px; }
+.home-section h2 { font-size: 28px; letter-spacing: -0.02em; margin: 0 0 8px; }
+.home-section > p.sub { color: var(--text-dim); margin: 0 0 28px; }
+.numbers { display: grid; gap: 1px; grid-template-columns: repeat(auto-fit, minmax(180px, 1fr)); background: var(--border); border: 1px solid var(--border); border-radius: var(--radius); overflow: hidden; box-shadow: var(--shadow); }
+.numbers div { background: var(--bg-elev); padding: 18px 20px; }
+.numbers b { display: block; font-family: var(--mono); font-size: 24px; letter-spacing: -0.02em; color: var(--text); }
+.numbers span { color: var(--text-dim); font-size: 13.5px; }
+.ch-grid { display: grid; gap: 16px; grid-template-columns: repeat(auto-fill, minmax(280px, 1fr)); }
+.ch-card { display: flex; flex-direction: column; gap: 8px; padding: 20px; border-radius: var(--radius); border: 1px solid var(--border); background: var(--bg-elev); color: var(--text); transition: transform .15s, border-color .15s; min-height: 195px; box-shadow: var(--shadow); }
+.ch-card:hover { text-decoration: none; border-color: var(--accent); transform: translateY(-2px); }
+.ch-card .num { font-family: var(--mono); font-size: 12px; color: var(--accent); font-weight: 600; letter-spacing: .1em; }
+.ch-card h3 { margin: 0; font-size: 19px; letter-spacing: -0.01em; }
+.ch-card p { margin: 0; color: var(--text-dim); font-size: 14.5px; line-height: 1.6; flex: 1; }
+.ch-card .tags { display: flex; gap: 6px; flex-wrap: wrap; }
+.ch-card .tags span { font-size: 11.5px; padding: 2px 8px; border-radius: 999px; background: var(--surface); color: var(--text-dim); font-family: var(--mono); }
+.ch-card .tags span.tag-sim { background: var(--accent-soft); color: var(--accent); }
+.ch-card .tags span.d3 { background: var(--accent-2-soft); color: var(--accent-2); }
+.paths { display: grid; gap: 14px; grid-template-columns: repeat(auto-fit, minmax(250px, 1fr)); }
+.path { padding: 18px 20px; border-radius: var(--radius); border: 1px solid var(--border); background: var(--bg-elev); box-shadow: var(--shadow); }
+.path h3 { margin: 0 0 6px; font-size: 17px; }
+.path p { margin: 0 0 10px; color: var(--text-dim); font-size: 14.5px; }
+.path .steps { display: flex; flex-wrap: wrap; gap: 6px; }
+.path .steps a { font-family: var(--mono); font-size: 12px; padding: 3px 9px; border-radius: 999px; background: var(--accent-soft); color: var(--accent); }
+.path .steps a:hover { text-decoration: none; filter: brightness(1.1); }
+.flow { display: grid; gap: 10px; grid-template-columns: repeat(auto-fit, minmax(160px, 1fr)); counter-reset: fl; }
+.flow div { counter-increment: fl; padding: 16px; border-radius: 12px; background: var(--bg-elev); border: 1px solid var(--border); font-size: 14.5px; color: var(--text-dim); position: relative; box-shadow: var(--shadow); }
+.flow div b { display: block; color: var(--text); font-size: 16px; margin-bottom: 4px; }
+.flow div::before { content: counter(fl, decimal-leading-zero); font-family: var(--mono); font-size: 12px; color: var(--accent); font-weight: 700; display: block; margin-bottom: 6px; }
+
+/* Glossary */
+.gl-search { width: 100%; font: inherit; padding: 12px 16px; border-radius: 12px; border: 1px solid var(--border); background: var(--bg-elev); color: var(--text); margin-bottom: 16px; }
+.gl-list { display: grid; gap: 10px; }
+.gl-item { padding: 14px 18px; border-radius: 12px; background: var(--bg-elev); border: 1px solid var(--border); }
+.gl-item h4 { margin: 0 0 4px; font-size: 16px; }
+.gl-item h4 .en { font-weight: 500; margin-left: 6px; }
+.gl-item p { margin: 0 !important; font-size: 14.8px; color: var(--text-dim); }
+.gl-item .ch { font-size: 12px; margin-top: 6px; display: inline-block; font-family: var(--mono); }
+
+/* Search in the center of the book menu */
+.book-nav-left, .book-nav-right { display: flex; align-items: center; gap: 12px; flex: 1 1 0; min-width: 0; }
+.book-nav-left { overflow: hidden; }
+.book-nav-left > a { min-width: 0; overflow: hidden; text-overflow: ellipsis; }
+.book-nav-right { justify-content: flex-end; }
+.book-search { position: relative; flex: 0 1 360px; min-width: 90px; color: var(--text-dim); }
+.book-search-icon { position: absolute; left: 12px; top: 50%; transform: translateY(-50%); pointer-events: none; }
+.book-search input { display: block; width: 100%; height: 36px; padding: 0 12px 0 37px; border: 1px solid var(--border); border-radius: 10px; background: var(--bg-elev); color: var(--text); font: inherit; font-size: 14px; outline: none; }
+.book-search input:focus { border-color: var(--accent); box-shadow: 0 0 0 3px var(--accent-soft); }
+.book-search input::placeholder { color: var(--text-faint); }
+.book-search-results { display: none; position: absolute; top: calc(100% + 10px); left: 0; width: max(100%, 320px); max-width: min(440px, calc(100vw - 32px)); max-height: min(62vh, 460px); overflow-y: auto; border: 1px solid var(--border); border-radius: 12px; background: var(--bg-elev); box-shadow: var(--shadow); padding: 6px; z-index: 80; }
+.book-search.open .book-search-results { display: block; }
+.book-search-results a { display: block; padding: 9px 11px; border-radius: 8px; color: var(--text); line-height: 1.4; }
+.book-search-results a:hover, .book-search-results a:focus { background: var(--accent-soft); text-decoration: none; outline: none; }
+.book-search-results strong, .book-search-results small { display: block; }
+.book-search-results strong { font-size: 14px; }
+.book-search-results small { margin-top: 3px; color: var(--text-dim); font-size: 12px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; font-family: var(--mono); }
+.book-search-results p { margin: 0; padding: 10px 11px; font-size: 14px; color: var(--text-dim); }
+
+@media (max-width: 760px) {
+  .book-nav-left > a small { display: none; }
+  .book-nav-right .series-link span { display: none; }
+  .book-nav-right .series-link { width: 36px; padding: 0; }
+}
+@media (max-width: 640px) {
+  body { font-size: 15.8px; }
+  main.chapter { padding-top: 24px; }
+  main.chapter h2 { font-size: 22px; }
+  .sim-view.three { height: 340px; }
+  .hero-3d { height: 320px; }
+  .sb-pager { grid-template-columns: 1fr; }
+  .sb-pager .next { grid-column: 1; }
+  .stage-grid, .grid-2, .grid-3 { grid-template-columns: 1fr; }
+}
+@media (max-width: 600px) {
+  .book-nav-left, .book-nav-right { flex: 0 0 auto; }
+  .book-nav-left > a { display: none; }
+  .book-search { flex: 1 1 auto; }
+  .book-search-results { left: 50%; transform: translateX(-50%); }
+}
+
+/* Supplemental styles for Chapter 02-05 components */
+.ch-header { padding: 20px 0 8px; }
+.ch-header h1 { font-size: clamp(30px, 5vw, 44px); line-height: 1.22; letter-spacing: -0.03em; margin: 10px 0 16px; }
+.meta-bar { display: flex; flex-wrap: wrap; gap: 10px; margin-top: 18px; }
+.meta-bar span { font-size: 13px; padding: 6px 12px; border-radius: 999px; border: 1px solid var(--border); background: var(--bg-elev); color: var(--text-dim); font-family: var(--mono); }
+.meta-bar span b { color: var(--accent); }
+.sim-title { font-weight: 700; font-size: 16px; flex: 1; min-width: 180px; color: var(--text); }
+.sim-body { padding: 16px 18px; }
+.sim-body.side { padding: 0; }
+.sim-grid-2 { display: grid; grid-template-columns: repeat(auto-fit, minmax(300px, 1fr)); gap: 16px; align-items: start; margin: 12px 0; }
+.sim-stats { display: grid; grid-template-columns: repeat(auto-fit, minmax(150px, 1fr)); gap: 1px; background: var(--border); border: 1px solid var(--border); border-radius: 10px; overflow: hidden; margin-top: 12px; }
+.sim canvas { width: 100%; display: block; border-radius: 10px; border: 1px solid var(--border); background: var(--canvas-bg); }
+.sim-view canvas { border: 0; border-radius: 0; }
+.isp-chip.on { border-color: var(--accent); background: var(--accent-soft); color: var(--accent); font-weight: 700; }
+.f-Note { font-size: 13.5px; color: var(--text-dim); margin-top: 8px; border-top: 1px dashed var(--border); padding-top: 8px; }
+.callout.info { background: var(--accent-soft); border-left-color: var(--accent); }
+.callout-title { font-weight: 700; font-size: 15.5px; color: var(--text); margin-bottom: 6px; }
+.b-ok { color: var(--ok); border-color: color-mix(in srgb, var(--ok) 45%, transparent); background: color-mix(in srgb, var(--ok) 12%, transparent); }
+.b-lsp { color: var(--accent-2); border-color: color-mix(in srgb, var(--accent-2) 45%, transparent); background: var(--accent-2-soft); }
+.b-isp { color: var(--accent); border-color: color-mix(in srgb, var(--accent) 45%, transparent); background: var(--accent-soft); }
+.b-ucfa { color: var(--warn); border-color: color-mix(in srgb, var(--warn) 45%, transparent); background: color-mix(in srgb, var(--warn) 12%, transparent); }
+.tier-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 12px; margin: 14px 0; }
+.tier { display: flex; flex-direction: column; gap: 6px; padding: 14px 16px; border-radius: 12px; border: 1px solid var(--border); background: var(--bg-elev); box-shadow: var(--shadow); }
+.tier b { font-family: var(--mono); color: var(--accent); font-size: 14px; }
+.tier span { font-size: 13.5px; color: var(--text-dim); flex-grow: 1; }
+.tier .src { align-self: flex-start; }
+ol.steps { counter-reset: st; list-style: none; padding-left: 0 !important; }
+ol.steps li { counter-increment: st; position: relative; padding-left: 34px; margin: 8px 0 !important; }
+ol.steps li::before { content: counter(st); position: absolute; left: 0; top: 2px; width: 22px; height: 22px; border-radius: 50%; display: grid; place-items: center; font-size: 11.5px; font-weight: 700; font-family: var(--mono); color: #fff; background: var(--accent); }
+.keypoints h3 { margin: 0 0 12px !important; font-size: 20px !important; color: var(--accent); }
+.keypoints ul { padding-left: 1.3em !important; margin: 0 !important; }
+.keypoints ul li::before { display: none; }
+.keypoints ul li { padding-left: 0; }
+.gl-head { display: flex; align-items: baseline; flex-wrap: wrap; gap: 8px; margin-bottom: 4px; }
+.gl-name { font-weight: 700; font-size: 16px; color: var(--text); }
+.gl-en { font-size: 13.5px; color: var(--text-dim); font-family: var(--mono); }
+.gl-desc { font-size: 14.5px; color: var(--text-dim); line-height: 1.65; }
+/* SVG bar chart classes */
+.figure { margin: 22px 0; padding: 18px; border: 1px solid var(--border); border-radius: var(--radius); background: var(--bg-elev); box-shadow: var(--shadow); }
+.figure-chart { margin-top: 16px; }
+svg.diagram, svg.chart { width: 100%; height: auto; display: block; }
+.grid { stroke: var(--grid); }
+.tick { fill: var(--text-faint); font-size: 11px; text-anchor: middle; font-family: var(--mono); }
+.bar-label { fill: var(--text); font-size: 12.5px; text-anchor: end; font-family: var(--font); font-weight: 600; }
+.bar-total { fill: var(--text); font-size: 11.5px; font-family: var(--mono); }
+.seg-val { fill: #fff; font-size: 10.5px; text-anchor: middle; font-family: var(--mono); font-weight: 700; }
+.legend { fill: var(--text-dim); font-size: 11.5px; font-family: var(--font); }
+.seg-cap { fill: #64748b; } .seg-bus { fill: #ef4444; } .seg-stgb { fill: #ec4899; } .seg-taesd { fill: #7c5cff; }
+.seg-cpu { fill: #0ea5e9; } .seg-gpu { fill: #6366f1; } .seg-stage { fill: #64748b; }
+
+</style>
+<style>
+/* AICAMERA Guidebook Glossary Tooltips (SensorBook compatible) */
+.gl-term { cursor: help; text-decoration: underline dotted var(--text-faint, currentColor); text-underline-offset: 4px; }
+.gl-term:hover, .gl-term:focus-visible { text-decoration-color: var(--accent); background: var(--accent-soft); border-radius: 2px; }
+.gl-term:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
+.gl-tooltip { box-sizing: border-box; position: fixed; z-index: 1000; width: 350px; max-width: calc(100vw - 16px); max-height: calc(100dvh - 16px); overflow-y: auto; padding: 14px 16px; border: 1px solid var(--border); border-radius: 12px; background: var(--bg-elev, var(--bg, white)); color: var(--text, #222); box-shadow: var(--shadow, 0 8px 24px #0002); font-size: 14px; line-height: 1.65; word-break: normal; overflow-wrap: anywhere; }
+.gl-tooltip[hidden] { display: none; }
+.gl-tooltip strong { display: block; margin-bottom: 6px; color: var(--accent); font-size: 14.5px; }
+.gl-tooltip p { margin: 0; color: var(--text-dim); }
+
+</style>
+<script>
+window.__SB_IMG_MAP__ = {};
+window.BOOK_GLOSSARY = {
+  "version": 1,
+  "terms": [
+    {
+      "ko": "잠재 신호 처리",
+      "en": "Latent Signal Processing",
+      "abbr": "LSP",
+      "def": "센서에서 비압축 픽셀(RAW/RGB)을 그대로 전송하는 대신, 인코더를 센서 NPU(Stage A)와 호스트 NPU(Stage B)로 비대칭 분할해 MIPI 버스 페이로드를 최대 48× 줄이고 표준 확산 모델 잠재 공간(ẑ)으로 직결하는 아키텍처.",
+      "chapters": [
+        "overview",
+        "lsp"
+      ]
+    },
+    {
+      "ko": "스테이지 A 압축기",
+      "en": "Stage A Compressor",
+      "abbr": "Stage A",
+      "def": "Sony IMX500 센서 내장 NPU에서 .rpk 펌웨어로 실행되는 초경량 스트라이드 합성곱 신경망(SA8 기준 5,924 파라미터, 0.122 GMACs). 512×512×3 입력을 64 KB 메타데이터 텐서 r로 압축한다.",
+      "chapters": [
+        "overview",
+        "lsp"
+      ]
+    },
+    {
+      "ko": "스테이지 B 번역기",
+      "en": "Stage B Latent Translator",
+      "abbr": "Stage B",
+      "def": "호스트의 Hailo-8 NPU(.hef)에서 실행되는 ResBlock 기반 번역 네트워크(SA8 기준 595,524 파라미터, 2.43 GMACs, 0.97 ms). 센서에서 받은 압축 텐서 r을 64×64×4 표준 SD VAE 잠재 텐서 ẑ로 사상한다.",
+      "chapters": [
+        "overview",
+        "lsp",
+        "ucfa"
+      ]
+    },
+    {
+      "ko": "유니버설 잠재 허브",
+      "en": "Universal Latent Hub",
+      "abbr": "Latent Hub",
+      "def": "Stage B 출력을 공개 Stable Diffusion VAE 잠재 공간(스케일 0.18215)에 정렬함으로써, 엣지 경량 디코더(TAESD_ft)와 워크스테이션 생성형 확산 모델(U-Net / SD VAE)을 재학습 없이 교체·동시 구동하는 구조.",
+      "chapters": [
+        "lsp"
+      ]
+    },
+    {
+      "ko": "제로 셔터 랙 생성형 캡처",
+      "en": "Zero-Shutter-Lag Generative Capture",
+      "abbr": "ZSL",
+      "def": "라이브 뷰파인더 스트리밍 중 메모리에 상주하는 잠재 텐서 ẑ와 프리뷰 Canny 에지를 그대로 사용해, 센서 재노출·RAW 재전송·인센서 인코더 재실행 없이 생성형 이미지를 합성하는 캡처 방식.",
+      "chapters": [
+        "lsp"
+      ]
+    },
+    {
+      "ko": "MIPI CSI-2",
+      "en": "Camera Serial Interface 2",
+      "abbr": "CSI-2",
+      "def": "카메라 센서와 애플리케이션 프로세서(SoC)를 잇는 고속 차동 직렬 인터페이스. 고해상도 비압축 프레임 전송 시 DMA 직렬화와 메모리 경합으로 인해 엣지 파이프라인의 주 병목이 된다.",
+      "chapters": [
+        "overview",
+        "lsp"
+      ]
+    },
+    {
+      "ko": "소니 IMX500",
+      "en": "Sony IMX500 Intelligent Vision Sensor",
+      "abbr": "IMX500",
+      "def": "12.3 MP 픽셀 다이 아래에 온칩 ISP와 전용 NPU 및 SRAM(<2 MB 예산)을 적층한 지능형 비전 센서. .rpk 양자화 모델을 센서 내부에서 직접 실행해 출력 텐서를 MIPI 메타데이터로 내보낸다.",
+      "chapters": [
+        "overview",
+        "lsp",
+        "isp"
+      ]
+    },
+    {
+      "ko": "헤일로-8",
+      "en": "Hailo-8 Edge AI Accelerator",
+      "abbr": "Hailo-8",
+      "def": "Raspberry Pi 5의 PCIe 인터페이스에 장착되는 26 TOPS급 데이터플로 엣지 NPU. .hef 바이너리로 컴파일된 Stage B(0.97 ms), TAESD_ft(16.44 ms), Bilateral Grid, 인물 분할 모델을 고속 실행한다.",
+      "chapters": [
+        "overview",
+        "lsp",
+        "isp"
+      ]
+    },
+    {
+      "ko": "TAESD",
+      "en": "Tiny AutoEncoder for Stable Diffusion",
+      "abbr": "TAESD_ft",
+      "def": "Stable Diffusion 잠재 텐서를 실시간으로 디코딩하기 위한 경량 디코더. 본 프로젝트에서는 Stage B 출력 분포에 맞춰 파인튜닝한 뒤 Hailo-8 .hef로 컴파일해 16.44 ms(30 FPS 카메라 상한 포화)에 실행한다.",
+      "chapters": [
+        "lsp"
+      ]
+    },
+    {
+      "ko": "컨트롤넷",
+      "en": "ControlNet",
+      "abbr": "ControlNet",
+      "def": "사전 학습된 확산 모델에 공간적 구조 조건(예: Canny 에지 맵)을 주입하는 보조 신경망. ZSL 캡처에서는 프리뷰에서 추출한 Canny(70,160) 에지로 기하 구조를 보존한다.",
+      "chapters": [
+        "lsp"
+      ]
+    },
+    {
+      "ko": "직접 통과 추정기",
+      "en": "Straight-Through Estimator",
+      "abbr": "STE",
+      "def": "양자화 인식 학습(QAT)에서 미분 불가능한 반올림(round) 연산의 역전파 기울기를 항등 함수(∂x_q/∂x ≈ 1)로 근사해 가중치 학습을 가능하게 하는 기법.",
+      "chapters": [
+        "lsp"
+      ]
+    },
+    {
+      "ko": "결함 픽셀 보정",
+      "en": "Defective Pixel Correction",
+      "abbr": "DPC",
+      "def": "OpenISP 1단계. 같은 색 채널의 3×3 격자(거리 ±2 px) 8-이웃 중 최솟값·최댓값 범위를 임계값 T 이상 벗어나는 핫/데드 픽셀을 중앙 두 값의 평균으로 치환한다.",
+      "chapters": [
+        "isp"
+      ]
+    },
+    {
+      "ko": "블랙 레벨 보정",
+      "en": "Black Level Compensation",
+      "abbr": "BLC",
+      "def": "OpenISP 2단계. 암전류와 음수 노이즈 클리핑 방지를 위해 ADC에 더해진 페디스털(기본 64 DN)을 빼고 [0, 1] 선형 부동소수점 범위로 정규화하는 단계.",
+      "chapters": [
+        "isp"
+      ]
+    },
+    {
+      "ko": "렌즈 쉐이딩 보정",
+      "en": "Lens Shading Correction",
+      "abbr": "LSC",
+      "def": "OpenISP 3단계. 광축 중심으로부터의 반경 제곱(r²)에 따른 자연 비네팅(cos⁴θ) 및 마이크로렌즈 CRA 감쇠를 방사형 다항식 1 + a₁r² + a₂r⁴ 게인으로 보상한다.",
+      "chapters": [
+        "isp"
+      ]
+    },
+    {
+      "ko": "안티 노이즈 필터",
+      "en": "Anti-Noise Filter",
+      "abbr": "ANF",
+      "def": "OpenISP 4단계. 베이어 도메인에서 같은 색 3×3 이웃(±2 px)에 공간 거리(σ_s)와 밝기 차이(σ_r) 가중치를 동시에 적용해 에지를 보존하며 노이즈를 줄이는 바이래터럴 필터.",
+      "chapters": [
+        "isp"
+      ]
+    },
+    {
+      "ko": "자동 화이트 밸런스",
+      "en": "Auto White Balance",
+      "abbr": "AWB",
+      "def": "OpenISP 5단계 및 3A 루프. 광원의 색온도에 따른 색 편향을 제거하기 위해 R, G, B 채널에 대각 게인(g_R, g_G, g_B)을 곱해 무채색이 R=G=B가 되도록 맞춘다.",
+      "chapters": [
+        "isp"
+      ]
+    },
+    {
+      "ko": "디모자이킹",
+      "en": "Demosaicing",
+      "abbr": "Demosaic",
+      "def": "OpenISP 6단계. 픽셀당 한 가지 색만 기록된 베이어 모자이크(RGGB)에서 이웃 픽셀을 보간해 픽셀마다 완전한 3채널(R, G, B) 값을 복원하는 과정.",
+      "chapters": [
+        "isp",
+        "ucfa"
+      ]
+    },
+    {
+      "ko": "색 보정 행렬",
+      "en": "Color Correction Matrix",
+      "abbr": "CCM",
+      "def": "OpenISP 7단계. 센서의 분광 감도와 표준 색공간(sRGB) 간의 차이 및 크로스토크를 보정하기 위해 화이트 밸런스된 RGB 벡터에 곱하는 3×3 선형 변환 행렬.",
+      "chapters": [
+        "isp"
+      ]
+    },
+    {
+      "ko": "감마 보정",
+      "en": "Gamma Correction",
+      "abbr": "Gamma",
+      "def": "OpenISP 8단계. 인간의 비선형 밝기 지각에 맞춰 암부 계조를 확보하기 위해 선형 RGB 신호에 거듭제곱(x^(1/γ), 기본 γ=2.2) 1024-엔트리 LUT를 적용하는 비선형 변환.",
+      "chapters": [
+        "isp"
+      ]
+    },
+    {
+      "ko": "색공간 변환",
+      "en": "Color Space Conversion",
+      "abbr": "CSC",
+      "def": "OpenISP 9단계. 감마가 적용된 RGB를 휘도(Y)와 색차(Cb, Cr)로 분리하고 색차를 2×2 평균 서브샘플링해 BT.601 studio range planar YUV420 uint8 포맷으로 변환한다.",
+      "chapters": [
+        "isp"
+      ]
+    },
+    {
+      "ko": "에지 강화",
+      "en": "Edge Enhancement",
+      "abbr": "EEH",
+      "def": "OpenISP 10단계. Y(휘도) 평면에서 3×3 박스 평균을 뺀 고주파 성분을 클리핑(coring)한 뒤 고정소수점 게인(k)을 곱해 더해주는 언샤프 마스크(USM) 샤프닝 단계.",
+      "chapters": [
+        "isp"
+      ]
+    },
+    {
+      "ko": "3A 제어 루프",
+      "en": "Auto Exposure / Auto White Balance / Auto Focus",
+      "abbr": "3A",
+      "def": "매 프레임 서브샘플링된 픽셀 통계(Rec.709 휘도 및 채널 평균)로부터 노출(AE), 화이트 밸런스(AWB), 색온도별 CCM을 지수 이동 평균(EMA)으로 피드백 제어하는 루프.",
+      "chapters": [
+        "isp"
+      ]
+    },
+    {
+      "ko": "지수 이동 평균",
+      "en": "Exponential Moving Average",
+      "abbr": "EMA",
+      "def": "현재 측정값과 이전 상태를 가중 평균(x_t = α·x̂ + (1-α)·x_{t-1})해 프레임 간 게인이나 추적 박스의 급격한 깜빡임(hunting/jitter)을 억제하는 시간축 필터.",
+      "chapters": [
+        "isp"
+      ]
+    },
+    {
+      "ko": "할라이드",
+      "en": "Halide DSL",
+      "abbr": "Halide",
+      "def": "영상 처리의 '무엇을 계산할지(Algorithm)'와 '어떻게 실행할지(Schedule: 타일링, 벡터화, 병렬화, 커널 융합)'를 분리하는 도메인 특화 컴파일러 언어.",
+      "chapters": [
+        "overview",
+        "isp"
+      ]
+    },
+    {
+      "ko": "검증된 리프팅",
+      "en": "Verified Lifting",
+      "abbr": "Lifting",
+      "def": "레거시 C99 영상 처리 루프를 파싱해 스텐실/포인트와이즈 중간 표현(IR)으로 분류하고, 최적화된 Halide 함수 및 스케줄 코드로 자동 변환한 뒤 수치 동치성(PSNR ≥ 40 dB)을 검증하는 컴파일 파이프라인.",
+      "chapters": [
+        "overview",
+        "isp"
+      ]
+    },
+    {
+      "ko": "커널 융합",
+      "en": "Kernel Fusion",
+      "abbr": "Fusion",
+      "def": "다단계 ISP 파이프라인에서 단계마다 전체 프레임을 DRAM에 읽고 쓰는 대신, 타일 단위로 L2 캐시/레지스터 안에서 생산자-소비자 단계를 바로 연결해 DRAM 트래픽을 13.8× 줄이는 기법(Tier 3).",
+      "chapters": [
+        "isp"
+      ]
+    },
+    {
+      "ko": "DMA-BUF 제로카피",
+      "en": "DMA-BUF Zero-Copy",
+      "abbr": "DMA-BUF",
+      "def": "Linux 커널의 공유 물리 메모리 버퍼 핸들을 통해 CPU와 VideoCore VII GPU(Vulkan)가 동일한 메모리 페이지를 직접 매핑함으로써 호스트-디바이스 복사 지연(staging copy)을 제거하는 기법(Tier 4).",
+      "chapters": [
+        "isp"
+      ]
+    },
+    {
+      "ko": "바이래터럴 그리드",
+      "en": "Bilateral Grid",
+      "abbr": "HDRnet Grid",
+      "def": "저해상도 입력에서 공간(x, y)×휘도(luma) 3차원 격자의 아핀 색 변환 계수를 추론한 뒤, 고해상도 가이드 맵으로 삼선형 보간(slicing)해 에지를 보존하며 실시간 국소 톤 매핑을 수행하는 구조.",
+      "chapters": [
+        "overview",
+        "isp"
+      ]
+    },
+    {
+      "ko": "ZAP 트래커",
+      "en": "Zero-Jitter Auto-Framing Tracker",
+      "abbr": "ZAP",
+      "def": "IMX500 센서 내 얼굴 검출(BlazeFace/SSD)과 CPU 보조 검출을 결합하고 EMA 스무딩(α=0.08)으로 4:3 뷰포트를 부드럽게 추적·크롭하는 터치-투-트랙 자동 프레이밍 엔진.",
+      "chapters": [
+        "isp"
+      ]
+    },
+    {
+      "ko": "컬러 필터 어레이",
+      "en": "Color Filter Array",
+      "abbr": "CFA",
+      "def": "단일 광전 다이오드가 파장을 구분하지 못하는 한계를 극복하기 위해 각 픽셀 위에 배치하는 R, G, B 파장 선택성 광학 필터 격자.",
+      "chapters": [
+        "isp",
+        "ucfa"
+      ]
+    },
+    {
+      "ko": "베이어 패턴",
+      "en": "Bayer Pattern",
+      "abbr": "Bayer",
+      "def": "2×2 기본 단위 격자에 R 1개, G 2개(Gr, Gb), B 1개를 배치하는 표준 컬러 필터 어레이.",
+      "chapters": [
+        "isp",
+        "ucfa"
+      ]
+    },
+    {
+      "ko": "테트라셀",
+      "en": "Tetracell / Quad Bayer",
+      "abbr": "Tetracell",
+      "def": "같은 색 필터를 2×2씩 묶어 4×4 기본 주기를 갖는 군집형 CFA. 저조도에서는 2×2 인접 픽셀을 합산(비닝)해 SNR을 높이고, 고조도에서는 리모자이킹으로 초고해상도를 복원한다.",
+      "chapters": [
+        "ucfa"
+      ]
+    },
+    {
+      "ko": "헥사데카셀",
+      "en": "Hexadecacell / 16-Cell CFA",
+      "abbr": "Hexadecacell",
+      "def": "같은 색 필터를 4×4(16픽셀)씩 묶어 8×8 기본 주기를 갖는 초고화소(200 MP급) 모바일 센서용 군집형 컬러 필터 어레이.",
+      "chapters": [
+        "ucfa"
+      ]
+    },
+    {
+      "ko": "리모자이킹",
+      "en": "Remosaicing",
+      "abbr": "Remosaic",
+      "def": "Tetracell(4×4)이나 Hexadecacell(8×8)처럼 군집화된 비표준 CFA 출력을 표준 ISP가 처리할 수 있는 2×2 베이어 배열로 재배열·보간하는 전처리 과정.",
+      "chapters": [
+        "ucfa"
+      ]
+    },
+    {
+      "ko": "픽셀 언셔플",
+      "en": "PixelUnshuffle",
+      "abbr": "PixelUnshuffle",
+      "def": "공간 해상도를 r배 줄이는 대신(H×W×1 → (H/r)×(W/r)×r²) 같은 위상(phase)의 픽셀들을 채널 축으로 정확히 분리해 모으는 무손실 공간-채널 재배치 연산.",
+      "chapters": [
+        "ucfa"
+      ]
+    },
+    {
+      "ko": "픽셀 셔플",
+      "en": "PixelShuffle",
+      "abbr": "PixelShuffle",
+      "def": "다채널 특징 맵의 채널들을 공간 격자로 펼쳐 해상도를 r배 키우는(Sub-pixel Convolution) 업샘플링 연산. Universal CFA의 복원 디코더에서 사용된다.",
+      "chapters": [
+        "ucfa"
+      ]
+    },
+    {
+      "ko": "최대 신호 대 잡음비",
+      "en": "Peak Signal-to-Noise Ratio",
+      "abbr": "PSNR",
+      "def": "원본 영상과 복원 영상 간의 평균 제곱 오차(MSE)를 로그 스케일(dB)로 나타낸 화질 지표. 값이 클수록 픽셀 단위 수치 오차가 적다.",
+      "chapters": [
+        "lsp",
+        "isp",
+        "ucfa"
+      ]
+    },
+    {
+      "ko": "지각 유사도",
+      "en": "Learned Perceptual Image Patch Similarity",
+      "abbr": "LPIPS",
+      "def": "심층 신경망(VGG 등)의 중간 특징 맵 거리를 이용해 인간의 시각적 지각 차이를 측정하는 지표. 값이 작을수록(↓) 질감과 구조가 원본에 가깝다.",
+      "chapters": [
+        "lsp",
+        "ucfa"
+      ]
+    },
+    {
+      "ko": "모델 압축 툴킷",
+      "en": "Model Compression Toolkit",
+      "abbr": "MCT",
+      "def": "Sony IMX500 센서 NPU 배포를 위해 Keras/PyTorch 부동소수점 모델을 대표 캘리브레이션 데이터셋(imx500_calib_frames) 기반으로 INT8 학습 후 양자화(PTQ)하는 프레임워크.",
+      "chapters": [
+        "overview",
+        "lsp"
+      ]
+    },
+    {
+      "ko": "헤일로 데이터플로 컴파일러",
+      "en": "Hailo Dataflow Compiler",
+      "abbr": "Hailo DFC",
+      "def": "ONNX 신경망 그래프를 파싱(translate_onnx_model)하고 실분포 캘리브레이션 텐서(.npy)로 INT8 양자화(optimize)한 뒤 Hailo-8 NPU용 .hef 바이너리로 컴파일하는 툴체인.",
+      "chapters": [
+        "overview",
+        "lsp"
+      ]
+    },
+    {
+      "ko": "모델 컨텍스트 프로토콜 서버",
+      "en": "Model Context Protocol Server",
+      "abbr": "MCP 서버",
+      "def": "tools/aicamera_mcp_server.py에 구현된 결정론적 에이전트 도구 서버. 환경 감지, 원격 벤치마크 실행, 드리프트 판정(diff_bench), 학습 런치 및 CSV 손실 파싱을 안전하게 노출한다.",
+      "chapters": [
+        "overview"
+      ]
+    },
+    {
+      "ko": "IMX500 신경망 패키지",
+      "en": "IMX500 Neural Network Firmware Package",
+      "abbr": "RPK",
+      "def": "imxconv-tf가 생성한 packerOut.zip을 Raspberry Pi 5의 rpk_packager로 패키징한 최종 센서 NPU 펌웨어(.rpk). 카메라 시작 시 IMX500 온칩 SRAM으로 업로드된다.",
+      "chapters": [
+        "overview",
+        "lsp"
+      ]
+    },
+    {
+      "ko": "헤일로 실행 포맷",
+      "en": "Hailo Executable Format",
+      "abbr": "HEF",
+      "def": "Hailo Dataflow Compiler가 생성하는 Hailo-8 NPU 전용 바이너리(.hef). Stage B(0.97 ms)와 TAESD_ft(16.44 ms) 모델을 PCIe를 통해 고속 실행한다.",
+      "chapters": [
+        "overview",
+        "lsp"
+      ]
+    }
+  ]
+};
+
+
+(function(){
+  const resolveImg = (el) => {
+    if (!el || el.tagName !== 'IMG') return;
+    const raw = el.getAttribute('src') || '';
+    if (raw.startsWith('../../')) {
+      const key = raw.replace(/^(\.\.\/)+/, '');
+      const map = window.__SB_IMG_MAP__ || (window.parent && window.parent.__SB_IMG_MAP__) || {};
+      if (map[key]) el.src = map[key];
+    }
+  };
+  document.addEventListener('DOMContentLoaded', () => {
+    document.querySelectorAll('img').forEach(resolveImg);
+    if (window.MutationObserver && document.body) {
+      new MutationObserver((muts) => {
+        muts.forEach((m) => {
+          if (m.type === 'attributes' && m.target && m.target.tagName === 'IMG') resolveImg(m.target);
+        });
+      }).observe(document.body, { attributes: true, attributeFilter: ['src'], subtree: true });
+    }
+    // Rewrite repo source code pills (<a class="src">) to GitHub repo URLs so they don't 404 on external hosting
+    document.querySelectorAll('a.src[href]').forEach((a) => {
+      const h = a.getAttribute('href') || '';
+      if (h.startsWith('../')) {
+        const rel = h.replace(/^(\.\.\/)+/, '');
+        a.href = 'https://github.com/yjqkrtk-ux/aicamera/blob/main/' + rel;
+        a.target = '_blank';
+        a.rel = 'noopener noreferrer';
+      }
+    });
+    // Bridge internal chapter links to SPA parent when running inside All-in-One bundle
+    document.addEventListener('click', (e) => {
+      const a = e.target.closest && e.target.closest('a[href]');
+      if (!a || a.classList.contains('src')) return;
+      const href = a.getAttribute('href') || '';
+      if (!href || href.startsWith('http://') || href.startsWith('https://') || href.startsWith('#')) return;
+      let targetSlug = null;
+      let targetHash = '';
+      const [pathPart, hashPart] = href.split('#');
+      if (hashPart) targetHash = hashPart;
+      if (pathPart.endsWith('index.html') || pathPart === './' || pathPart === '../index.html') {
+        targetSlug = 'home';
+      } else {
+        const m = pathPart.match(/([a-z0-9_]+)\.html$/i);
+        if (m) targetSlug = m[1];
+      }
+      if (targetSlug && window.parent && typeof window.parent.__sbOpenPage === 'function') {
+        e.preventDefault();
+        window.parent.__sbOpenPage(targetSlug, targetHash);
+      }
+    }, true);
+  });
+})();
+
+</script>
+<script>
+/* ==========================================================================
+   AICAMERA Guidebook 공통 스크립트 — 전역 객체 SB (SensorBook 호환)
+   - 레이아웃(상단바, 서랍 목차, 실시간 검색, 우측 ON THIS PAGE, 이전/다음, 테마) 자동 생성
+   - 시뮬레이터 헬퍼: canvas, chart, range, seg, stat, loop, three.js 씬
+   ========================================================================== */
+(function () {
+  "use strict";
+
+  const CHAPTERS = [
+  {
+    "slug": "overview",
+    "num": "01",
+    "title": "이종 엣지 카메라와 시스템 병목",
+    "desc": "MIPI CSI-2 직렬화 병목, IMX500(.rpk)·Hailo-8(.hef) 듀얼 NPU 크로스 컴파일 파이프라인, 4-Tier 가상환경 격리와 에이전트·MCP 개발 워크플로.",
+    "tags": [
+      "시스템",
+      "SW스택",
+      "sim"
+    ]
+  },
+  {
+    "slug": "lsp",
+    "num": "02",
+    "title": "Latent Signal Processing (LSP)",
+    "desc": "센서–호스트 비대칭 분할 인코더(Stage A/B), Power-of-2 QAT, Universal Latent Hub, 30 FPS 실시간 프리뷰와 Zero-Shutter-Lag 생성형 캡처.",
+    "tags": [
+      "분할추론",
+      "HW실측",
+      "sim"
+    ]
+  },
+  {
+    "slug": "isp",
+    "num": "03",
+    "title": "Software ISP & Halide/NPU 최적화",
+    "desc": "10단계 C99 레퍼런스 ISP(DPC·BLC·LSC·ANF·AWB·Demosaic·CCM·Gamma·CSC·EEH), 3A 루프, Verified Lifting, 4-Tier Halide/GPU, Dual-NPU 엣지 AI.",
+    "tags": [
+      "영상처리",
+      "컴파일러",
+      "sim"
+    ]
+  },
+  {
+    "slug": "ucfa",
+    "num": "04",
+    "title": "Universal CFA — 위상 인식 인센서 압축",
+    "desc": "적층형 CMOS 센서 단면 구조, Bayer(2×2)·Tetracell(4×4)·Hexadecacell(8×8) 군집형 컬러 필터, PixelUnshuffle 위상 분해와 고정 호스트 번역기.",
+    "tags": [
+      "센서CFA",
+      "3d",
+      "sim"
+    ]
+  },
+  {
+    "slug": "notes",
+    "num": "05",
+    "title": "용어집 & 코드·문서 정합성 검증 노트",
+    "desc": "코드와 측정 JSON을 문서 서술과 대조한 23개 정합성 감사 노트, Single-Source-of-Truth 빌드 정책, 45+ 핵심 용어 인터랙티브 사전.",
+    "tags": [
+      "정합성",
+      "용어집"
+    ]
+  }
+];
+  const PREBUILT_SEARCH = [{"type": "섹션", "slug": "overview", "num": "01", "chTitle": "이종 엣지 카메라와 시스템 병목", "title": "왜 센서–호스트 분할인가: MIPI CSI-2 대역폭과 직렬화 병목", "hash": "s-paradigm", "keywords": "이종 엣지 카메라와 시스템 병목 왜 센서–호스트 분할인가: MIPI CSI-2 대역폭과 직렬화 병목 s-paradigm"}, {"type": "섹션", "slug": "overview", "num": "01", "chTitle": "이종 엣지 카메라와 시스템 병목", "title": "3대 연구 트랙 아키텍처 비교 (LSP · Software ISP · Universal CFA)", "hash": "s-projects", "keywords": "이종 엣지 카메라와 시스템 병목 3대 연구 트랙 아키텍처 비교 (LSP · Software ISP · Universal CFA) s-projects"}, {"type": "섹션", "slug": "overview", "num": "01", "chTitle": "이종 엣지 카메라와 시스템 병목", "title": "이종 하드웨어 토폴로지와 메모리 계층", "hash": "s-hardware", "keywords": "이종 엣지 카메라와 시스템 병목 이종 하드웨어 토폴로지와 메모리 계층 s-hardware"}, {"type": "섹션", "slug": "overview", "num": "01", "chTitle": "이종 엣지 카메라와 시스템 병목", "title": "SW 스택 & Dual-NPU 크로스 컴파일 파이프라인 (.rpk / .hef)", "hash": "s-sw-stack", "keywords": "이종 엣지 카메라와 시스템 병목 SW 스택 & Dual-NPU 크로스 컴파일 파이프라인 (.rpk / .hef) s-sw-stack"}, {"type": "섹션", "slug": "overview", "num": "01", "chTitle": "이종 엣지 카메라와 시스템 병목", "title": "에이전트 워크플로 (Agent Flow) · MCP 서버 · 원격 엣지 오케스트레이션", "hash": "s-agent-flow", "keywords": "이종 엣지 카메라와 시스템 병목 에이전트 워크플로 (Agent Flow) · MCP 서버 · 원격 엣지 오케스트레이션 s-agent-flow"}, {"type": "섹션", "slug": "overview", "num": "01", "chTitle": "이종 엣지 카메라와 시스템 병목", "title": "핵심 정리", "hash": "summary", "keywords": "이종 엣지 카메라와 시스템 병목 핵심 정리 summary"}, {"type": "시뮬레이터", "slug": "overview", "num": "01", "chTitle": "이종 엣지 카메라와 시스템 병목", "title": "해상도 · 표현 포맷 · 분할 배율(s_A)에 따른 MIPI 버스 병목 시뮬레이터", "hash": "sim-bus", "keywords": "시뮬레이터 simulator 해상도 · 표현 포맷 · 분할 배율(s_A)에 따른 MIPI 버스 병목 시뮬레이터 sim-bus"}, {"type": "시뮬레이터", "slug": "overview", "num": "01", "chTitle": "이종 엣지 카메라와 시스템 병목", "title": "IMX500 센서 내장 NPU SRAM 예산(< 2 MB) 및 Stage A 복잡도 계산기", "hash": "sim-sram", "keywords": "시뮬레이터 simulator IMX500 센서 내장 NPU SRAM 예산(< 2 MB) 및 Stage A 복잡도 계산기 sim-sram"}, {"type": "시뮬레이터", "slug": "overview", "num": "01", "chTitle": "이종 엣지 카메라와 시스템 병목", "title": "Dual-NPU 크로스 컴파일 & 에이전트 벤치마크 드리프트 게이트", "hash": "sim-devops", "keywords": "시뮬레이터 simulator Dual-NPU 크로스 컴파일 & 에이전트 벤치마크 드리프트 게이트 sim-devops"}, {"type": "섹션", "slug": "lsp", "num": "02", "chTitle": "Latent Signal Processing (LSP)", "title": "2.1 왜 인코더를 나누는가 — 버스 병목과 Regime 전환", "hash": "lsp-problem", "keywords": "Latent Signal Processing (LSP) 2.1 왜 인코더를 나누는가 — 버스 병목과 Regime 전환 lsp-problem"}, {"type": "섹션", "slug": "lsp", "num": "02", "chTitle": "Latent Signal Processing (LSP)", "title": "2.2 센서–호스트 비대칭 분할 아키텍처와 데이터 흐름", "hash": "lsp-arch", "keywords": "Latent Signal Processing (LSP) 2.2 센서–호스트 비대칭 분할 아키텍처와 데이터 흐름 lsp-arch"}, {"type": "섹션", "slug": "lsp", "num": "02", "chTitle": "Latent Signal Processing (LSP)", "title": "2.3 Stage A 압축기와 Stage B 번역기 — 수식 · QAT 명세", "hash": "lsp-model", "keywords": "Latent Signal Processing (LSP) 2.3 Stage A 압축기와 Stage B 번역기 — 수식 · QAT 명세 lsp-model"}, {"type": "섹션", "slug": "lsp", "num": "02", "chTitle": "Latent Signal Processing (LSP)", "title": "2.4 하드웨어 실측 분석 (Raspberry Pi 5 + IMX500 + Hailo-8)", "hash": "lsp-bench", "keywords": "Latent Signal Processing (LSP) 2.4 하드웨어 실측 분석 (Raspberry Pi 5 + IMX500 + Hailo-8) lsp-bench"}, {"type": "섹션", "slug": "lsp", "num": "02", "chTitle": "Latent Signal Processing (LSP)", "title": "2.5 화질 평가 (DIV2K Validation 100장) & Universal Latent Hub", "hash": "lsp-quality", "keywords": "Latent Signal Processing (LSP) 2.5 화질 평가 (DIV2K Validation 100장) & Universal Latent Hub lsp-quality"}, {"type": "섹션", "slug": "lsp", "num": "02", "chTitle": "Latent Signal Processing (LSP)", "title": "2.6 Zero-Shutter-Lag (ZSL) 생성형 캡처와 ControlNet 조건부 확산", "hash": "lsp-capture", "keywords": "Latent Signal Processing (LSP) 2.6 Zero-Shutter-Lag (ZSL) 생성형 캡처와 ControlNet 조건부 확산 lsp-capture"}, {"type": "섹션", "slug": "lsp", "num": "02", "chTitle": "Latent Signal Processing (LSP)", "title": "2.7 엔드투엔드 코드 지도", "hash": "lsp-code", "keywords": "Latent Signal Processing (LSP) 2.7 엔드투엔드 코드 지도 lsp-code"}, {"type": "시뮬레이터", "slug": "lsp", "num": "02", "chTitle": "Latent Signal Processing (LSP)", "title": "SIMULATOR 01 · 파티션 포인트(\\(s_A\\)) 파이프라인 타이밍 & 대역폭–화질 파레토 탐색기", "hash": "sim-lsp-pipe", "keywords": "시뮬레이터 simulator SIMULATOR 01 · 파티션 포인트(\\(s_A\\)) 파이프라인 타이밍 & 대역폭–화질 파레토 탐색기 sim-lsp-pipe"}, {"type": "시뮬레이터", "slug": "lsp", "num": "02", "chTitle": "Latent Signal Processing (LSP)", "title": "Hailo-8 호환 Power-of-2 양자화 인식 학습 (QAT)", "hash": "lsp-pipe-ctrl", "keywords": "시뮬레이터 simulator Hailo-8 호환 Power-of-2 양자화 인식 학습 (QAT) lsp-pipe-ctrl"}, {"type": "시뮬레이터", "slug": "lsp", "num": "02", "chTitle": "Latent Signal Processing (LSP)", "title": "SIMULATOR 02 · Hailo Power-of-2 Fake-Quant (STE) 양자화 분포 & 클리핑 시뮬레이터", "hash": "sim-lsp-qat", "keywords": "시뮬레이터 simulator SIMULATOR 02 · Hailo Power-of-2 Fake-Quant (STE) 양자화 분포 & 클리핑 시뮬레이터 sim-lsp-qat"}, {"type": "시뮬레이터", "slug": "lsp", "num": "02", "chTitle": "Latent Signal Processing (LSP)", "title": "VISUAL INSPECTOR · 장면별 64 KB 잠재 복원(TAESD_ft vs SD VAE) & Edge SR 화질 비교기", "hash": "qat-ctrl", "keywords": "시뮬레이터 simulator VISUAL INSPECTOR · 장면별 64 KB 잠재 복원(TAESD_ft vs SD VAE) & Edge SR 화질 비교기 qat-ctrl"}, {"type": "시뮬레이터", "slug": "lsp", "num": "02", "chTitle": "Latent Signal Processing (LSP)", "title": "ZSL 6단계 실행 시퀀스 (generative_capture_service.py)", "hash": "lsp-gal-ctrl", "keywords": "시뮬레이터 simulator ZSL 6단계 실행 시퀀스 (generative_capture_service.py) lsp-gal-ctrl"}, {"type": "시뮬레이터", "slug": "lsp", "num": "02", "chTitle": "Latent Signal Processing (LSP)", "title": "SIMULATOR 03 · Zero-Shutter-Lag 4-Panel 캡처 파이프라인 & Canny ControlNet 시뮬레이터", "hash": "sim-lsp-zsl", "keywords": "시뮬레이터 simulator SIMULATOR 03 · Zero-Shutter-Lag 4-Panel 캡처 파이프라인 & Canny ControlNet 시뮬레이터 sim-lsp-zsl"}, {"type": "시뮬레이터", "slug": "lsp", "num": "02", "chTitle": "Latent Signal Processing (LSP)", "title": "핵심 정리 · Chapter 02", "hash": "zsl-ctrl", "keywords": "시뮬레이터 simulator 핵심 정리 · Chapter 02 zsl-ctrl"}, {"type": "섹션", "slug": "isp", "num": "03", "chTitle": "Software ISP & Halide/NPU 최적화", "title": "3.1 왜 선형 보정이 먼저인가 — 10단계 파이프라인 도메인 구조", "hash": "isp-pipe", "keywords": "Software ISP & Halide/NPU 최적화 3.1 왜 선형 보정이 먼저인가 — 10단계 파이프라인 도메인 구조 isp-pipe"}, {"type": "섹션", "slug": "isp", "num": "03", "chTitle": "Software ISP & Halide/NPU 최적화", "title": "3.2 인터랙티브 10단계 OpenISP 파이프라인 시뮬레이터", "hash": "isp-sim-sec", "keywords": "Software ISP & Halide/NPU 최적화 3.2 인터랙티브 10단계 OpenISP 파이프라인 시뮬레이터 isp-sim-sec"}, {"type": "섹션", "slug": "isp", "num": "03", "chTitle": "Software ISP & Halide/NPU 최적화", "title": "3.3 단계별 수식과 C99 구현 상세", "hash": "isp-stages", "keywords": "Software ISP & Halide/NPU 최적화 3.3 단계별 수식과 C99 구현 상세 isp-stages"}, {"type": "섹션", "slug": "isp", "num": "03", "chTitle": "Software ISP & Halide/NPU 최적화", "title": "3.4 3A 자동 제어 루프 — AWB · 색온도별 CCM 보간 · AE", "hash": "isp-3a", "keywords": "Software ISP & Halide/NPU 최적화 3.4 3A 자동 제어 루프 — AWB · 색온도별 CCM 보간 · AE isp-3a"}, {"type": "섹션", "slug": "isp", "num": "03", "chTitle": "Software ISP & Halide/NPU 최적화", "title": "3.5 4-Tier 실행 엔진과 Halide 커널 융합 · DMA-BUF Zero-Copy", "hash": "isp-tiers", "keywords": "Software ISP & Halide/NPU 최적화 3.5 4-Tier 실행 엔진과 Halide 커널 융합 · DMA-BUF Zero-Copy isp-tiers"}, {"type": "섹션", "slug": "isp", "num": "03", "chTitle": "Software ISP & Halide/NPU 최적화", "title": "3.6 Verified Lifting — C99에서 Halide로의 자동 변환과 수치 검증", "hash": "isp-vl", "keywords": "Software ISP & Halide/NPU 최적화 3.6 Verified Lifting — C99에서 Halide로의 자동 변환과 수치 검증 isp-vl"}, {"type": "섹션", "slug": "isp", "num": "03", "chTitle": "Software ISP & Halide/NPU 최적화", "title": "3.7 Dual-NPU 엣지 AI 레이어 (검출 · 분할 · ZAP 자동 프레이밍)", "hash": "isp-ai", "keywords": "Software ISP & Halide/NPU 최적화 3.7 Dual-NPU 엣지 AI 레이어 (검출 · 분할 · ZAP 자동 프레이밍) isp-ai"}, {"type": "시뮬레이터", "slug": "isp", "num": "03", "chTitle": "Software ISP & Halide/NPU 최적화", "title": "SIMULATOR 01 · 10-Stage OpenISP 단계별 토글 · 파라미터 튜닝 · 돋보기 & 히스토그램", "hash": "sim-isp", "keywords": "시뮬레이터 simulator SIMULATOR 01 · 10-Stage OpenISP 단계별 토글 · 파라미터 튜닝 · 돋보기 & 히스토그램 sim-isp"}, {"type": "시뮬레이터", "slug": "isp", "num": "03", "chTitle": "Software ISP & Halide/NPU 최적화", "title": "Defective Pixel Correction (DPC)", "hash": "isp-sim-ctrl", "keywords": "시뮬레이터 simulator Defective Pixel Correction (DPC) isp-sim-ctrl"}, {"type": "시뮬레이터", "slug": "isp", "num": "03", "chTitle": "Software ISP & Halide/NPU 최적화", "title": "SIMULATOR 02 · 3A 폐루프 수렴 시뮬레이터 (조명 색온도 · 조도 계단 변화 & 적응형 EMA)", "hash": "sim-3a", "keywords": "시뮬레이터 simulator SIMULATOR 02 · 3A 폐루프 수렴 시뮬레이터 (조명 색온도 · 조도 계단 변화 & 적응형 EMA) sim-3a"}, {"type": "시뮬레이터", "slug": "isp", "num": "03", "chTitle": "Software ISP & Halide/NPU 최적화", "title": "SIMULATOR 03 · Halide 타일 커널 융합(Loop Fusion) & DRAM 트래픽 시뮬레이터", "hash": "a3-ctrl", "keywords": "시뮬레이터 simulator SIMULATOR 03 · Halide 타일 커널 융합(Loop Fusion) & DRAM 트래픽 시뮬레이터 a3-ctrl"}, {"type": "시뮬레이터", "slug": "isp", "num": "03", "chTitle": "Software ISP & Halide/NPU 최적화", "title": "4단계 자동 변환 파이프라인", "hash": "hal-ctrl", "keywords": "시뮬레이터 simulator 4단계 자동 변환 파이프라인 hal-ctrl"}, {"type": "시뮬레이터", "slug": "isp", "num": "03", "chTitle": "Software ISP & Halide/NPU 최적화", "title": "SIMULATOR 04 · ZAP (Zoom & Auto-Pan) 뷰포트 EMA 추적 시뮬레이터", "hash": "sim-zap", "keywords": "시뮬레이터 simulator SIMULATOR 04 · ZAP (Zoom & Auto-Pan) 뷰포트 EMA 추적 시뮬레이터 sim-zap"}, {"type": "시뮬레이터", "slug": "isp", "num": "03", "chTitle": "Software ISP & Halide/NPU 최적화", "title": "핵심 정리 · Chapter 03", "hash": "zap-ctrl", "keywords": "시뮬레이터 simulator 핵심 정리 · Chapter 03 zap-ctrl"}, {"type": "섹션", "slug": "ucfa", "num": "04", "chTitle": "Universal CFA — 위상 인식 인센서 압축", "title": "4.1 적층형 센서 구조와 군집형 CFA (Bayer · Tetracell · Hexadecacell)", "hash": "ucfa-intro", "keywords": "Universal CFA — 위상 인식 인센서 압축 4.1 적층형 센서 구조와 군집형 CFA (Bayer · Tetracell · Hexadecacell) ucfa-intro"}, {"type": "섹션", "slug": "ucfa", "num": "04", "chTitle": "Universal CFA — 위상 인식 인센서 압축", "title": "4.2 인터랙티브 CFA 격자 & PixelUnshuffle 위상 분해 시뮬레이터", "hash": "ucfa-sim-cfa", "keywords": "Universal CFA — 위상 인식 인센서 압축 4.2 인터랙티브 CFA 격자 & PixelUnshuffle 위상 분해 시뮬레이터 ucfa-sim-cfa"}, {"type": "섹션", "slug": "ucfa", "num": "04", "chTitle": "Universal CFA — 위상 인식 인센서 압축", "title": "4.3 단일 고정 호스트 번역기(\\(\\mathcal{T}_B\\))와 센서별 위상 인식 압축기(\\(\\mathcal{E}_A^{\\mathrm{CFA}}\\))", "hash": "ucfa-arch", "keywords": "Universal CFA — 위상 인식 인센서 압축 4.3 단일 고정 호스트 번역기(\\(\\mathcal{T}_B\\))와 센서별 위상 인식 압축기(\\(\\mathcal{E}_A^{\\mathrm{CFA}}\\)) ucfa-arch"}, {"type": "섹션", "slug": "ucfa", "num": "04", "chTitle": "Universal CFA — 위상 인식 인센서 압축", "title": "4.4 No-Raw-Retention 제약과 One-Pass 잠재 복원", "hash": "ucfa-diffusion", "keywords": "Universal CFA — 위상 인식 인센서 압축 4.4 No-Raw-Retention 제약과 One-Pass 잠재 복원 ucfa-diffusion"}, {"type": "섹션", "slug": "ucfa", "num": "04", "chTitle": "Universal CFA — 위상 인식 인센서 압축", "title": "4.5 시뮬레이션 벤치마크 결과 및 시각적 복원 비교", "hash": "ucfa-results", "keywords": "Universal CFA — 위상 인식 인센서 압축 4.5 시뮬레이션 벤치마크 결과 및 시각적 복원 비교 ucfa-results"}, {"type": "시뮬레이터", "slug": "ucfa", "num": "04", "chTitle": "Universal CFA — 위상 인식 인센서 압축", "title": "3D EXPLORER · 적층형 CMOS 센서 픽셀 스택 & Bayer · Tetracell · Hexadecacell 입체 분해기", "hash": "sim-ucfa-3d", "keywords": "시뮬레이터 simulator 3D EXPLORER · 적층형 CMOS 센서 픽셀 스택 & Bayer · Tetracell · Hexadecacell 입체 분해기 sim-ucfa-3d"}, {"type": "시뮬레이터", "slug": "ucfa", "num": "04", "chTitle": "Universal CFA — 위상 인식 인센서 압축", "title": "기존 파이프라인의 이중 부담: Remosaic + Demosaic", "hash": "ucfa-3d-ctrl", "keywords": "시뮬레이터 simulator 기존 파이프라인의 이중 부담: Remosaic + Demosaic ucfa-3d-ctrl"}, {"type": "시뮬레이터", "slug": "ucfa", "num": "04", "chTitle": "Universal CFA — 위상 인식 인센서 압축", "title": "SIMULATOR 01 · Bayer(2×2) · Tetracell(4×4) · Hexadecacell(8×8) 격자 & PixelUnshuffle 위상 분해기", "hash": "sim-ucfa-phase", "keywords": "시뮬레이터 simulator SIMULATOR 01 · Bayer(2×2) · Tetracell(4×4) · Hexadecacell(8×8) 격자 & PixelUnshuffle 위상 분해기 sim-ucfa-phase"}, {"type": "시뮬레이터", "slug": "ucfa", "num": "04", "chTitle": "Universal CFA — 위상 인식 인센서 압축", "title": "SIMULATOR 02 · CFA 패턴 & 파이프라인별 화질(PSNR / SSIM / LPIPS) · 대역폭 비교 탐색기", "hash": "ucfa-phase-ctrl", "keywords": "시뮬레이터 simulator SIMULATOR 02 · CFA 패턴 & 파이프라인별 화질(PSNR / SSIM / LPIPS) · 대역폭 비교 탐색기 ucfa-phase-ctrl"}, {"type": "시뮬레이터", "slug": "ucfa", "num": "04", "chTitle": "Universal CFA — 위상 인식 인센서 압축", "title": "핵심 정리 · Chapter 04", "hash": "ucfa-bench-ctrl", "keywords": "시뮬레이터 simulator 핵심 정리 · Chapter 04 ucfa-bench-ctrl"}, {"type": "섹션", "slug": "notes", "num": "05", "chTitle": "용어집 & 코드·문서 정합성 검증 노트", "title": "5.1 코드 ↔ 문서 정합성 감사 목록 (23개 항목)", "hash": "notes-audit", "keywords": "용어집 & 코드·문서 정합성 검증 노트 5.1 코드 ↔ 문서 정합성 감사 목록 (23개 항목) notes-audit"}, {"type": "섹션", "slug": "notes", "num": "05", "chTitle": "용어집 & 코드·문서 정합성 검증 노트", "title": "5.2 Single-Source-of-Truth 빌드 원칙과 자동 검증", "hash": "notes-policy", "keywords": "용어집 & 코드·문서 정합성 검증 노트 5.2 Single-Source-of-Truth 빌드 원칙과 자동 검증 notes-policy"}, {"type": "섹션", "slug": "notes", "num": "05", "chTitle": "용어집 & 코드·문서 정합성 검증 노트", "title": "5.3 AICAMERA 핵심 기술 용어집 (Interactive Glossary)", "hash": "glossary-sec", "keywords": "용어집 & 코드·문서 정합성 검증 노트 5.3 AICAMERA 핵심 기술 용어집 (Interactive Glossary) glossary-sec"}, {"type": "용어", "slug": "notes", "num": "05", "chTitle": "용어집 & 코드·문서 정합성 검증 노트", "title": "잠재 신호 처리 (LSP)", "hash": "glossary-sec", "keywords": "잠재 신호 처리 Latent Signal Processing LSP 센서에서 비압축 픽셀(RAW/RGB)을 그대로 전송하는 대신, 인코더를 센서 NPU(Stage A)와 호스트 NPU(Stage B)로 비대칭 분할해 MIPI 버스 페이로드를 최대 48× 줄이고 표준 확산 모델 잠재 공간(ẑ)으로 직결하는 아키텍처."}, {"type": "용어", "slug": "notes", "num": "05", "chTitle": "용어집 & 코드·문서 정합성 검증 노트", "title": "스테이지 A 압축기 (Stage A)", "hash": "glossary-sec", "keywords": "스테이지 A 압축기 Stage A Compressor Stage A Sony IMX500 센서 내장 NPU에서 .rpk 펌웨어로 실행되는 초경량 스트라이드 합성곱 신경망(SA8 기준 5,924 파라미터, 0.122 GMACs). 512×512×3 입력을 64 KB 메타데이터 텐서 r로 압축한다."}, {"type": "용어", "slug": "notes", "num": "05", "chTitle": "용어집 & 코드·문서 정합성 검증 노트", "title": "스테이지 B 번역기 (Stage B)", "hash": "glossary-sec", "keywords": "스테이지 B 번역기 Stage B Latent Translator Stage B 호스트의 Hailo-8 NPU(.hef)에서 실행되는 ResBlock 기반 번역 네트워크(SA8 기준 595,524 파라미터, 2.43 GMACs, 0.97 ms). 센서에서 받은 압축 텐서 r을 64×64×4 표준 SD VAE 잠재 텐서 ẑ로 사상한다."}, {"type": "용어", "slug": "notes", "num": "05", "chTitle": "용어집 & 코드·문서 정합성 검증 노트", "title": "유니버설 잠재 허브 (Latent Hub)", "hash": "glossary-sec", "keywords": "유니버설 잠재 허브 Universal Latent Hub Latent Hub Stage B 출력을 공개 Stable Diffusion VAE 잠재 공간(스케일 0.18215)에 정렬함으로써, 엣지 경량 디코더(TAESD_ft)와 워크스테이션 생성형 확산 모델(U-Net / SD VAE)을 재학습 없이 교체·동시 구동하는 구조."}, {"type": "용어", "slug": "notes", "num": "05", "chTitle": "용어집 & 코드·문서 정합성 검증 노트", "title": "제로 셔터 랙 생성형 캡처 (ZSL)", "hash": "glossary-sec", "keywords": "제로 셔터 랙 생성형 캡처 Zero-Shutter-Lag Generative Capture ZSL 라이브 뷰파인더 스트리밍 중 메모리에 상주하는 잠재 텐서 ẑ와 프리뷰 Canny 에지를 그대로 사용해, 센서 재노출·RAW 재전송·인센서 인코더 재실행 없이 생성형 이미지를 합성하는 캡처 방식."}, {"type": "용어", "slug": "notes", "num": "05", "chTitle": "용어집 & 코드·문서 정합성 검증 노트", "title": "MIPI CSI-2 (CSI-2)", "hash": "glossary-sec", "keywords": "MIPI CSI-2 Camera Serial Interface 2 CSI-2 카메라 센서와 애플리케이션 프로세서(SoC)를 잇는 고속 차동 직렬 인터페이스. 고해상도 비압축 프레임 전송 시 DMA 직렬화와 메모리 경합으로 인해 엣지 파이프라인의 주 병목이 된다."}, {"type": "용어", "slug": "notes", "num": "05", "chTitle": "용어집 & 코드·문서 정합성 검증 노트", "title": "소니 IMX500 (IMX500)", "hash": "glossary-sec", "keywords": "소니 IMX500 Sony IMX500 Intelligent Vision Sensor IMX500 12.3 MP 픽셀 다이 아래에 온칩 ISP와 전용 NPU 및 SRAM(<2 MB 예산)을 적층한 지능형 비전 센서. .rpk 양자화 모델을 센서 내부에서 직접 실행해 출력 텐서를 MIPI 메타데이터로 내보낸다."}, {"type": "용어", "slug": "notes", "num": "05", "chTitle": "용어집 & 코드·문서 정합성 검증 노트", "title": "헤일로-8 (Hailo-8)", "hash": "glossary-sec", "keywords": "헤일로-8 Hailo-8 Edge AI Accelerator Hailo-8 Raspberry Pi 5의 PCIe 인터페이스에 장착되는 26 TOPS급 데이터플로 엣지 NPU. .hef 바이너리로 컴파일된 Stage B(0.97 ms), TAESD_ft(16.44 ms), Bilateral Grid, 인물 분할 모델을 고속 실행한다."}, {"type": "용어", "slug": "notes", "num": "05", "chTitle": "용어집 & 코드·문서 정합성 검증 노트", "title": "TAESD (TAESD_ft)", "hash": "glossary-sec", "keywords": "TAESD Tiny AutoEncoder for Stable Diffusion TAESD_ft Stable Diffusion 잠재 텐서를 실시간으로 디코딩하기 위한 경량 디코더. 본 프로젝트에서는 Stage B 출력 분포에 맞춰 파인튜닝한 뒤 Hailo-8 .hef로 컴파일해 16.44 ms(30 FPS 카메라 상한 포화)에 실행한다."}, {"type": "용어", "slug": "notes", "num": "05", "chTitle": "용어집 & 코드·문서 정합성 검증 노트", "title": "컨트롤넷 (ControlNet)", "hash": "glossary-sec", "keywords": "컨트롤넷 ControlNet ControlNet 사전 학습된 확산 모델에 공간적 구조 조건(예: Canny 에지 맵)을 주입하는 보조 신경망. ZSL 캡처에서는 프리뷰에서 추출한 Canny(70,160) 에지로 기하 구조를 보존한다."}, {"type": "용어", "slug": "notes", "num": "05", "chTitle": "용어집 & 코드·문서 정합성 검증 노트", "title": "직접 통과 추정기 (STE)", "hash": "glossary-sec", "keywords": "직접 통과 추정기 Straight-Through Estimator STE 양자화 인식 학습(QAT)에서 미분 불가능한 반올림(round) 연산의 역전파 기울기를 항등 함수(∂x_q/∂x ≈ 1)로 근사해 가중치 학습을 가능하게 하는 기법."}, {"type": "용어", "slug": "notes", "num": "05", "chTitle": "용어집 & 코드·문서 정합성 검증 노트", "title": "결함 픽셀 보정 (DPC)", "hash": "glossary-sec", "keywords": "결함 픽셀 보정 Defective Pixel Correction DPC OpenISP 1단계. 같은 색 채널의 3×3 격자(거리 ±2 px) 8-이웃 중 최솟값·최댓값 범위를 임계값 T 이상 벗어나는 핫/데드 픽셀을 중앙 두 값의 평균으로 치환한다."}, {"type": "용어", "slug": "notes", "num": "05", "chTitle": "용어집 & 코드·문서 정합성 검증 노트", "title": "블랙 레벨 보정 (BLC)", "hash": "glossary-sec", "keywords": "블랙 레벨 보정 Black Level Compensation BLC OpenISP 2단계. 암전류와 음수 노이즈 클리핑 방지를 위해 ADC에 더해진 페디스털(기본 64 DN)을 빼고 [0, 1] 선형 부동소수점 범위로 정규화하는 단계."}, {"type": "용어", "slug": "notes", "num": "05", "chTitle": "용어집 & 코드·문서 정합성 검증 노트", "title": "렌즈 쉐이딩 보정 (LSC)", "hash": "glossary-sec", "keywords": "렌즈 쉐이딩 보정 Lens Shading Correction LSC OpenISP 3단계. 광축 중심으로부터의 반경 제곱(r²)에 따른 자연 비네팅(cos⁴θ) 및 마이크로렌즈 CRA 감쇠를 방사형 다항식 1 + a₁r² + a₂r⁴ 게인으로 보상한다."}, {"type": "용어", "slug": "notes", "num": "05", "chTitle": "용어집 & 코드·문서 정합성 검증 노트", "title": "안티 노이즈 필터 (ANF)", "hash": "glossary-sec", "keywords": "안티 노이즈 필터 Anti-Noise Filter ANF OpenISP 4단계. 베이어 도메인에서 같은 색 3×3 이웃(±2 px)에 공간 거리(σ_s)와 밝기 차이(σ_r) 가중치를 동시에 적용해 에지를 보존하며 노이즈를 줄이는 바이래터럴 필터."}, {"type": "용어", "slug": "notes", "num": "05", "chTitle": "용어집 & 코드·문서 정합성 검증 노트", "title": "자동 화이트 밸런스 (AWB)", "hash": "glossary-sec", "keywords": "자동 화이트 밸런스 Auto White Balance AWB OpenISP 5단계 및 3A 루프. 광원의 색온도에 따른 색 편향을 제거하기 위해 R, G, B 채널에 대각 게인(g_R, g_G, g_B)을 곱해 무채색이 R=G=B가 되도록 맞춘다."}, {"type": "용어", "slug": "notes", "num": "05", "chTitle": "용어집 & 코드·문서 정합성 검증 노트", "title": "디모자이킹 (Demosaic)", "hash": "glossary-sec", "keywords": "디모자이킹 Demosaicing Demosaic OpenISP 6단계. 픽셀당 한 가지 색만 기록된 베이어 모자이크(RGGB)에서 이웃 픽셀을 보간해 픽셀마다 완전한 3채널(R, G, B) 값을 복원하는 과정."}, {"type": "용어", "slug": "notes", "num": "05", "chTitle": "용어집 & 코드·문서 정합성 검증 노트", "title": "색 보정 행렬 (CCM)", "hash": "glossary-sec", "keywords": "색 보정 행렬 Color Correction Matrix CCM OpenISP 7단계. 센서의 분광 감도와 표준 색공간(sRGB) 간의 차이 및 크로스토크를 보정하기 위해 화이트 밸런스된 RGB 벡터에 곱하는 3×3 선형 변환 행렬."}, {"type": "용어", "slug": "notes", "num": "05", "chTitle": "용어집 & 코드·문서 정합성 검증 노트", "title": "감마 보정 (Gamma)", "hash": "glossary-sec", "keywords": "감마 보정 Gamma Correction Gamma OpenISP 8단계. 인간의 비선형 밝기 지각에 맞춰 암부 계조를 확보하기 위해 선형 RGB 신호에 거듭제곱(x^(1/γ), 기본 γ=2.2) 1024-엔트리 LUT를 적용하는 비선형 변환."}, {"type": "용어", "slug": "notes", "num": "05", "chTitle": "용어집 & 코드·문서 정합성 검증 노트", "title": "색공간 변환 (CSC)", "hash": "glossary-sec", "keywords": "색공간 변환 Color Space Conversion CSC OpenISP 9단계. 감마가 적용된 RGB를 휘도(Y)와 색차(Cb, Cr)로 분리하고 색차를 2×2 평균 서브샘플링해 BT.601 studio range planar YUV420 uint8 포맷으로 변환한다."}, {"type": "용어", "slug": "notes", "num": "05", "chTitle": "용어집 & 코드·문서 정합성 검증 노트", "title": "에지 강화 (EEH)", "hash": "glossary-sec", "keywords": "에지 강화 Edge Enhancement EEH OpenISP 10단계. Y(휘도) 평면에서 3×3 박스 평균을 뺀 고주파 성분을 클리핑(coring)한 뒤 고정소수점 게인(k)을 곱해 더해주는 언샤프 마스크(USM) 샤프닝 단계."}, {"type": "용어", "slug": "notes", "num": "05", "chTitle": "용어집 & 코드·문서 정합성 검증 노트", "title": "3A 제어 루프 (3A)", "hash": "glossary-sec", "keywords": "3A 제어 루프 Auto Exposure / Auto White Balance / Auto Focus 3A 매 프레임 서브샘플링된 픽셀 통계(Rec.709 휘도 및 채널 평균)로부터 노출(AE), 화이트 밸런스(AWB), 색온도별 CCM을 지수 이동 평균(EMA)으로 피드백 제어하는 루프."}, {"type": "용어", "slug": "notes", "num": "05", "chTitle": "용어집 & 코드·문서 정합성 검증 노트", "title": "지수 이동 평균 (EMA)", "hash": "glossary-sec", "keywords": "지수 이동 평균 Exponential Moving Average EMA 현재 측정값과 이전 상태를 가중 평균(x_t = α·x̂ + (1-α)·x_{t-1})해 프레임 간 게인이나 추적 박스의 급격한 깜빡임(hunting/jitter)을 억제하는 시간축 필터."}, {"type": "용어", "slug": "notes", "num": "05", "chTitle": "용어집 & 코드·문서 정합성 검증 노트", "title": "할라이드 (Halide)", "hash": "glossary-sec", "keywords": "할라이드 Halide DSL Halide 영상 처리의 '무엇을 계산할지(Algorithm)'와 '어떻게 실행할지(Schedule: 타일링, 벡터화, 병렬화, 커널 융합)'를 분리하는 도메인 특화 컴파일러 언어."}, {"type": "용어", "slug": "notes", "num": "05", "chTitle": "용어집 & 코드·문서 정합성 검증 노트", "title": "검증된 리프팅 (Lifting)", "hash": "glossary-sec", "keywords": "검증된 리프팅 Verified Lifting Lifting 레거시 C99 영상 처리 루프를 파싱해 스텐실/포인트와이즈 중간 표현(IR)으로 분류하고, 최적화된 Halide 함수 및 스케줄 코드로 자동 변환한 뒤 수치 동치성(PSNR ≥ 40 dB)을 검증하는 컴파일 파이프라인."}, {"type": "용어", "slug": "notes", "num": "05", "chTitle": "용어집 & 코드·문서 정합성 검증 노트", "title": "커널 융합 (Fusion)", "hash": "glossary-sec", "keywords": "커널 융합 Kernel Fusion Fusion 다단계 ISP 파이프라인에서 단계마다 전체 프레임을 DRAM에 읽고 쓰는 대신, 타일 단위로 L2 캐시/레지스터 안에서 생산자-소비자 단계를 바로 연결해 DRAM 트래픽을 13.8× 줄이는 기법(Tier 3)."}, {"type": "용어", "slug": "notes", "num": "05", "chTitle": "용어집 & 코드·문서 정합성 검증 노트", "title": "DMA-BUF 제로카피 (DMA-BUF)", "hash": "glossary-sec", "keywords": "DMA-BUF 제로카피 DMA-BUF Zero-Copy DMA-BUF Linux 커널의 공유 물리 메모리 버퍼 핸들을 통해 CPU와 VideoCore VII GPU(Vulkan)가 동일한 메모리 페이지를 직접 매핑함으로써 호스트-디바이스 복사 지연(staging copy)을 제거하는 기법(Tier 4)."}, {"type": "용어", "slug": "notes", "num": "05", "chTitle": "용어집 & 코드·문서 정합성 검증 노트", "title": "바이래터럴 그리드 (HDRnet Grid)", "hash": "glossary-sec", "keywords": "바이래터럴 그리드 Bilateral Grid HDRnet Grid 저해상도 입력에서 공간(x, y)×휘도(luma) 3차원 격자의 아핀 색 변환 계수를 추론한 뒤, 고해상도 가이드 맵으로 삼선형 보간(slicing)해 에지를 보존하며 실시간 국소 톤 매핑을 수행하는 구조."}, {"type": "용어", "slug": "notes", "num": "05", "chTitle": "용어집 & 코드·문서 정합성 검증 노트", "title": "ZAP 트래커 (ZAP)", "hash": "glossary-sec", "keywords": "ZAP 트래커 Zero-Jitter Auto-Framing Tracker ZAP IMX500 센서 내 얼굴 검출(BlazeFace/SSD)과 CPU 보조 검출을 결합하고 EMA 스무딩(α=0.08)으로 4:3 뷰포트를 부드럽게 추적·크롭하는 터치-투-트랙 자동 프레이밍 엔진."}, {"type": "용어", "slug": "notes", "num": "05", "chTitle": "용어집 & 코드·문서 정합성 검증 노트", "title": "컬러 필터 어레이 (CFA)", "hash": "glossary-sec", "keywords": "컬러 필터 어레이 Color Filter Array CFA 단일 광전 다이오드가 파장을 구분하지 못하는 한계를 극복하기 위해 각 픽셀 위에 배치하는 R, G, B 파장 선택성 광학 필터 격자."}, {"type": "용어", "slug": "notes", "num": "05", "chTitle": "용어집 & 코드·문서 정합성 검증 노트", "title": "베이어 패턴 (Bayer)", "hash": "glossary-sec", "keywords": "베이어 패턴 Bayer Pattern Bayer 2×2 기본 단위 격자에 R 1개, G 2개(Gr, Gb), B 1개를 배치하는 표준 컬러 필터 어레이."}, {"type": "용어", "slug": "notes", "num": "05", "chTitle": "용어집 & 코드·문서 정합성 검증 노트", "title": "테트라셀 (Tetracell)", "hash": "glossary-sec", "keywords": "테트라셀 Tetracell / Quad Bayer Tetracell 같은 색 필터를 2×2씩 묶어 4×4 기본 주기를 갖는 군집형 CFA. 저조도에서는 2×2 인접 픽셀을 합산(비닝)해 SNR을 높이고, 고조도에서는 리모자이킹으로 초고해상도를 복원한다."}, {"type": "용어", "slug": "notes", "num": "05", "chTitle": "용어집 & 코드·문서 정합성 검증 노트", "title": "헥사데카셀 (Hexadecacell)", "hash": "glossary-sec", "keywords": "헥사데카셀 Hexadecacell / 16-Cell CFA Hexadecacell 같은 색 필터를 4×4(16픽셀)씩 묶어 8×8 기본 주기를 갖는 초고화소(200 MP급) 모바일 센서용 군집형 컬러 필터 어레이."}, {"type": "용어", "slug": "notes", "num": "05", "chTitle": "용어집 & 코드·문서 정합성 검증 노트", "title": "리모자이킹 (Remosaic)", "hash": "glossary-sec", "keywords": "리모자이킹 Remosaicing Remosaic Tetracell(4×4)이나 Hexadecacell(8×8)처럼 군집화된 비표준 CFA 출력을 표준 ISP가 처리할 수 있는 2×2 베이어 배열로 재배열·보간하는 전처리 과정."}, {"type": "용어", "slug": "notes", "num": "05", "chTitle": "용어집 & 코드·문서 정합성 검증 노트", "title": "픽셀 언셔플 (PixelUnshuffle)", "hash": "glossary-sec", "keywords": "픽셀 언셔플 PixelUnshuffle PixelUnshuffle 공간 해상도를 r배 줄이는 대신(H×W×1 → (H/r)×(W/r)×r²) 같은 위상(phase)의 픽셀들을 채널 축으로 정확히 분리해 모으는 무손실 공간-채널 재배치 연산."}, {"type": "용어", "slug": "notes", "num": "05", "chTitle": "용어집 & 코드·문서 정합성 검증 노트", "title": "픽셀 셔플 (PixelShuffle)", "hash": "glossary-sec", "keywords": "픽셀 셔플 PixelShuffle PixelShuffle 다채널 특징 맵의 채널들을 공간 격자로 펼쳐 해상도를 r배 키우는(Sub-pixel Convolution) 업샘플링 연산. Universal CFA의 복원 디코더에서 사용된다."}, {"type": "용어", "slug": "notes", "num": "05", "chTitle": "용어집 & 코드·문서 정합성 검증 노트", "title": "최대 신호 대 잡음비 (PSNR)", "hash": "glossary-sec", "keywords": "최대 신호 대 잡음비 Peak Signal-to-Noise Ratio PSNR 원본 영상과 복원 영상 간의 평균 제곱 오차(MSE)를 로그 스케일(dB)로 나타낸 화질 지표. 값이 클수록 픽셀 단위 수치 오차가 적다."}, {"type": "용어", "slug": "notes", "num": "05", "chTitle": "용어집 & 코드·문서 정합성 검증 노트", "title": "지각 유사도 (LPIPS)", "hash": "glossary-sec", "keywords": "지각 유사도 Learned Perceptual Image Patch Similarity LPIPS 심층 신경망(VGG 등)의 중간 특징 맵 거리를 이용해 인간의 시각적 지각 차이를 측정하는 지표. 값이 작을수록(↓) 질감과 구조가 원본에 가깝다."}, {"type": "용어", "slug": "notes", "num": "05", "chTitle": "용어집 & 코드·문서 정합성 검증 노트", "title": "모델 압축 툴킷 (MCT)", "hash": "glossary-sec", "keywords": "모델 압축 툴킷 Model Compression Toolkit MCT Sony IMX500 센서 NPU 배포를 위해 Keras/PyTorch 부동소수점 모델을 대표 캘리브레이션 데이터셋(imx500_calib_frames) 기반으로 INT8 학습 후 양자화(PTQ)하는 프레임워크."}, {"type": "용어", "slug": "notes", "num": "05", "chTitle": "용어집 & 코드·문서 정합성 검증 노트", "title": "헤일로 데이터플로 컴파일러 (Hailo DFC)", "hash": "glossary-sec", "keywords": "헤일로 데이터플로 컴파일러 Hailo Dataflow Compiler Hailo DFC ONNX 신경망 그래프를 파싱(translate_onnx_model)하고 실분포 캘리브레이션 텐서(.npy)로 INT8 양자화(optimize)한 뒤 Hailo-8 NPU용 .hef 바이너리로 컴파일하는 툴체인."}, {"type": "용어", "slug": "notes", "num": "05", "chTitle": "용어집 & 코드·문서 정합성 검증 노트", "title": "모델 컨텍스트 프로토콜 서버 (MCP 서버)", "hash": "glossary-sec", "keywords": "모델 컨텍스트 프로토콜 서버 Model Context Protocol Server MCP 서버 tools/aicamera_mcp_server.py에 구현된 결정론적 에이전트 도구 서버. 환경 감지, 원격 벤치마크 실행, 드리프트 판정(diff_bench), 학습 런치 및 CSV 손실 파싱을 안전하게 노출한다."}, {"type": "용어", "slug": "notes", "num": "05", "chTitle": "용어집 & 코드·문서 정합성 검증 노트", "title": "IMX500 신경망 패키지 (RPK)", "hash": "glossary-sec", "keywords": "IMX500 신경망 패키지 IMX500 Neural Network Firmware Package RPK imxconv-tf가 생성한 packerOut.zip을 Raspberry Pi 5의 rpk_packager로 패키징한 최종 센서 NPU 펌웨어(.rpk). 카메라 시작 시 IMX500 온칩 SRAM으로 업로드된다."}, {"type": "용어", "slug": "notes", "num": "05", "chTitle": "용어집 & 코드·문서 정합성 검증 노트", "title": "헤일로 실행 포맷 (HEF)", "hash": "glossary-sec", "keywords": "헤일로 실행 포맷 Hailo Executable Format HEF Hailo Dataflow Compiler가 생성하는 Hailo-8 NPU 전용 바이너리(.hef). Stage B(0.97 ms)와 TAESD_ft(16.44 ms) 모델을 PCIe를 통해 고속 실행한다."}];
+
+  const SB = (window.SB = {});
+  SB.CHAPTERS = CHAPTERS;
+
+  /* ------------------------------------------------------------ math utils */
+  SB.clamp = (x, a, b) => Math.min(b, Math.max(a, x));
+  SB.lerp = (a, b, t) => a + (b - a) * t;
+  SB.map = (x, a, b, c, d) => c + ((x - a) * (d - c)) / (b - a);
+  SB.randn = function () {
+    let u = 0, v = 0;
+    while (u === 0) u = Math.random();
+    while (v === 0) v = Math.random();
+    return Math.sqrt(-2 * Math.log(u)) * Math.cos(2 * Math.PI * v);
+  };
+  SB.poisson = function (lambda) {
+    if (lambda <= 0) return 0;
+    if (lambda > 40) return Math.max(0, Math.round(lambda + Math.sqrt(lambda) * SB.randn()));
+    const L = Math.exp(-lambda);
+    let k = 0, p = 1;
+    do { k++; p *= Math.random(); } while (p > L);
+    return k - 1;
+  };
+  SB.fmt = function (x, digits = 3) {
+    if (!isFinite(x)) return "—";
+    if (x === 0) return "0";
+    const a = Math.abs(x);
+    if (a >= 1e5 || a < 1e-3) return x.toExponential(digits - 1).replace("e+", "e");
+    return Number(x.toPrecision(digits)).toLocaleString("en-US", { maximumFractionDigits: 6 });
+  };
+  SB.si = function (x, unit = "", digits = 3) {
+    if (!isFinite(x)) return "—";
+    if (x === 0) return "0 " + unit;
+    const pre = [[1e12, "T"], [1e9, "G"], [1e6, "M"], [1e3, "k"], [1, ""], [1e-3, "m"], [1e-6, "µ"], [1e-9, "n"], [1e-12, "p"]];
+    const a = Math.abs(x);
+    for (const [v, p] of pre) if (a >= v * 0.9995) return Number((x / v).toPrecision(digits)) + " " + p + unit;
+    return x.toExponential(digits - 1) + " " + unit;
+  };
+
+  /* ------------------------------------------------------------ theme */
+  const themeCbs = [];
+  SB.onTheme = (cb) => themeCbs.push(cb);
+  SB.isDark = function () {
+    const t = document.documentElement.getAttribute("data-theme");
+    if (t) return t === "dark";
+    return window.matchMedia && window.matchMedia("(prefers-color-scheme: dark)").matches;
+  };
+  SB.color = function (name) {
+    return getComputedStyle(document.documentElement).getPropertyValue("--" + name).trim();
+  };
+  SB.palette = function () {
+    const c = SB.color;
+    return {
+      bg: c("canvas-bg"), text: c("text"), dim: c("text-dim"), faint: c("text-faint"),
+      grid: c("grid"), axis: c("axis"), border: c("border"), surface: c("surface"),
+      accent: c("accent"), accent2: c("accent-2"), ok: c("ok"), warn: c("warn"), bad: c("bad"),
+      red: c("red"), green: c("green"), blue: c("blue"),
+      series: [c("accent"), c("accent-2"), c("warn"), c("ok"), c("bad"), c("text-dim")],
+    };
+  };
+  function applyTheme(t) {
+    if (t) document.documentElement.setAttribute("data-theme", t);
+    else document.documentElement.removeAttribute("data-theme");
+    themeCbs.forEach((cb) => { try { cb(); } catch (e) { console.error(e); } });
+    try { window.dispatchEvent(new CustomEvent("sb:theme")); } catch (e) {}
+  }
+  try { const saved = localStorage.getItem("sb-theme"); if (saved) document.documentElement.setAttribute("data-theme", saved); } catch (e) {}
+  if (window.matchMedia) {
+    window.matchMedia("(prefers-color-scheme: dark)").addEventListener?.("change", () => {
+      if (!document.documentElement.getAttribute("data-theme")) applyTheme(null);
+    });
+  }
+
+  /* ------------------------------------------------------------ canvas helper */
+  SB.canvas = function (canvas, draw, opts = {}) {
+    if (typeof canvas === "string") canvas = document.querySelector(canvas);
+    if (!canvas) return { ctx: null, w: 600, h: 250 };
+    if (canvas._sbSt && !draw) return canvas._sbSt;
+    const ctx = canvas.getContext("2d");
+    const dw = Number(canvas.dataset.w || 0), dh = Number(canvas.dataset.h || 0);
+    const defAspect = dw > 0 && dh > 0 ? dh / dw : 0.46;
+    const st = { ctx, w: 0, h: 0, canvas, dpr: 1 };
+    function resize() {
+      const parent = canvas.parentElement;
+      const w = Math.max(200, Math.floor(opts.width || (parent && parent.clientWidth) || dw || 600));
+      let h = opts.height || (dh && !draw ? dh : Math.round(w * (opts.aspect || defAspect)));
+      if (opts.minHeight) h = Math.max(h, opts.minHeight);
+      if (opts.maxHeight) h = Math.min(h, opts.maxHeight);
+      const dpr = Math.min(window.devicePixelRatio || 1, 2);
+      canvas.width = Math.round(w * dpr);
+      canvas.height = Math.round(h * dpr);
+      canvas.style.height = h + "px";
+      ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
+      st.w = w; st.h = h; st.dpr = dpr;
+      st.redraw();
+    }
+    st.redraw = function () {
+      if (!st.w) return;
+      ctx.save();
+      ctx.setTransform(st.dpr, 0, 0, st.dpr, 0, 0);
+      if (!opts.noClear) {
+        ctx.clearRect(0, 0, st.w, st.h);
+        ctx.fillStyle = SB.color("canvas-bg");
+        ctx.fillRect(0, 0, st.w, st.h);
+      }
+      try { draw && draw(ctx, st.w, st.h); } finally { ctx.restore(); }
+    };
+    st.resize = resize;
+    if (window.ResizeObserver && canvas.parentElement) {
+      let lastW = -1;
+      new ResizeObserver(() => { const w = canvas.parentElement.clientWidth; if (w !== lastW) { lastW = w; resize(); } }).observe(canvas.parentElement);
+    } else window.addEventListener("resize", resize);
+    SB.onTheme(() => st.redraw());
+    resize();
+    canvas._sbSt = st;
+    return st;
+  };
+
+  SB.loop = function (el, fn) {
+    let raf = 0, last = 0, t = 0, visible = true, running = true;
+    function frame(ts) {
+      raf = 0;
+      if (!running || !visible) return;
+      const dt = last ? Math.min(0.05, (ts - last) / 1000) : 0.016;
+      last = ts; t += dt;
+      fn(dt, t);
+      raf = requestAnimationFrame(frame);
+    }
+    function kick() { if (!raf && running && visible) { last = 0; raf = requestAnimationFrame(frame); } }
+    if (window.IntersectionObserver && el) {
+      new IntersectionObserver((es) => { visible = es[0].isIntersecting; kick(); }).observe(el);
+    }
+    kick();
+    return {
+      start() { running = true; kick(); },
+      stop() { running = false; },
+      get running() { return running; },
+      toggle() { running ? (running = false) : ((running = true), kick()); return running; },
+    };
+  };
+
+  /* ------------------------------------------------------------ chart helper */
+  SB.chart = function (ctx, box, opts) {
+    const P = SB.palette();
+    const dpr = (ctx.getTransform && ctx.getTransform().a) || 1;
+    const W = ctx.canvas.width / dpr, H = ctx.canvas.height / dpr;
+    if (!box) box = { x: 60, y: 18, w: W - 60 - 20, h: H - 18 - 46 };
+    const [x0, x1] = opts.x, [y0, y1] = opts.y;
+    const lx = (v) => (opts.logX ? Math.log10(v) : v);
+    const ly = (v) => (opts.logY ? Math.log10(v) : v);
+    const X = (v) => box.x + ((lx(v) - lx(x0)) / (lx(x1) - lx(x0))) * box.w;
+    const Y = (v) => box.y + box.h - ((ly(v) - ly(y0)) / (ly(y1) - ly(y0))) * box.h;
+    const ticks = (a, b, log, n) => {
+      if (log) { const out = []; for (let e = Math.ceil(Math.log10(a) - 1e-9); e <= Math.log10(b) + 1e-9; e++) out.push(Math.pow(10, e)); return out; }
+      const span = b - a, raw = span / (n || 5), mag = Math.pow(10, Math.floor(Math.log10(raw)));
+      const step = [1, 2, 2.5, 5, 10].map((m) => m * mag).find((s) => span / s <= (n || 5) + 0.5) || raw;
+      const out = []; for (let v = Math.ceil(a / step - 1e-9) * step; v <= b + step * 1e-6; v += step) out.push(Math.abs(v) < step * 1e-9 ? 0 : v);
+      return out;
+    };
+    const defFmt = (v) => (Math.abs(v) >= 1e4 || (Math.abs(v) < 1e-2 && v !== 0) ? v.toExponential(0).replace("e+", "e") : String(Number(v.toPrecision(4))));
+    const xFmt = opts.xFmt || defFmt, yFmt = opts.yFmt || defFmt;
+    ctx.save();
+    ctx.font = "11px " + getComputedStyle(document.body).getPropertyValue("--mono");
+    ctx.lineWidth = 1;
+    (opts.bands || []).forEach((b) => { ctx.fillStyle = b.color; ctx.fillRect(X(b.x0), box.y, X(b.x1) - X(b.x0), box.h); });
+    const xt = opts.xTicks || ticks(x0, x1, opts.logX, 6);
+    const yt = opts.yTicks || ticks(y0, y1, opts.logY, 5);
+    ctx.strokeStyle = P.grid; ctx.fillStyle = P.dim;
+    ctx.textAlign = "center"; ctx.textBaseline = "top";
+    xt.forEach((v) => { const px = X(v); if (px < box.x - 1 || px > box.x + box.w + 1) return; ctx.beginPath(); ctx.moveTo(px, box.y); ctx.lineTo(px, box.y + box.h); ctx.stroke(); ctx.fillText(xFmt(v), px, box.y + box.h + 6); });
+    ctx.textAlign = "right"; ctx.textBaseline = "middle";
+    yt.forEach((v) => { const py = Y(v); if (py < box.y - 1 || py > box.y + box.h + 1) return; ctx.beginPath(); ctx.moveTo(box.x, py); ctx.lineTo(box.x + box.w, py); ctx.stroke(); ctx.fillText(yFmt(v), box.x - 6, py); });
+    ctx.strokeStyle = P.axis;
+    ctx.beginPath(); ctx.moveTo(box.x, box.y); ctx.lineTo(box.x, box.y + box.h); ctx.lineTo(box.x + box.w, box.y + box.h); ctx.stroke();
+    ctx.fillStyle = P.dim; ctx.font = "12px " + getComputedStyle(document.body).getPropertyValue("--font");
+    if (opts.xLabel) { ctx.textAlign = "center"; ctx.textBaseline = "bottom"; ctx.fillText(opts.xLabel, box.x + box.w / 2, box.y + box.h + 40); }
+    if (opts.yLabel) { ctx.save(); ctx.translate(14, box.y + box.h / 2); ctx.rotate(-Math.PI / 2); ctx.textAlign = "center"; ctx.textBaseline = "middle"; ctx.fillText(opts.yLabel, 0, 0); ctx.restore(); }
+    ctx.save(); ctx.beginPath(); ctx.rect(box.x, box.y - 2, box.w + 2, box.h + 4); ctx.clip();
+    (opts.series || []).forEach((s, i) => {
+      if (!s.data || !s.data.length) return;
+      ctx.strokeStyle = s.color || P.series[i % P.series.length];
+      ctx.lineWidth = s.width || 2; ctx.setLineDash(s.dash || []);
+      ctx.beginPath();
+      let started = false;
+      s.data.forEach(([x, y]) => { if (!isFinite(y) || (opts.logY && y <= 0) || (opts.logX && x <= 0)) { started = false; return; } const px = X(x), py = Y(y); started ? ctx.lineTo(px, py) : ctx.moveTo(px, py); started = true; });
+      ctx.stroke();
+      if (s.fill) {
+        ctx.lineTo(X(s.data[s.data.length - 1][0]), Y(opts.logY ? y0 : Math.max(y0, 0)));
+        ctx.lineTo(X(s.data[0][0]), Y(opts.logY ? y0 : Math.max(y0, 0)));
+        ctx.closePath(); ctx.fillStyle = s.fill; ctx.fill();
+      }
+      ctx.setLineDash([]);
+    });
+    (opts.vlines || []).forEach((l) => { ctx.strokeStyle = l.color || P.faint; ctx.setLineDash(l.dash || [4, 4]); ctx.lineWidth = l.width || 1.2; ctx.beginPath(); ctx.moveTo(X(l.x), box.y); ctx.lineTo(X(l.x), box.y + box.h); ctx.stroke(); ctx.setLineDash([]); if (l.label) { ctx.fillStyle = l.color || P.dim; ctx.textAlign = "left"; ctx.textBaseline = "top"; ctx.fillText(l.label, X(l.x) + 4, box.y + 4); } });
+    (opts.hlines || []).forEach((l) => { ctx.strokeStyle = l.color || P.faint; ctx.setLineDash(l.dash || [4, 4]); ctx.lineWidth = l.width || 1.2; ctx.beginPath(); ctx.moveTo(box.x, Y(l.y)); ctx.lineTo(box.x + box.w, Y(l.y)); ctx.stroke(); ctx.setLineDash([]); if (l.label) { ctx.fillStyle = l.color || P.dim; ctx.textAlign = "right"; ctx.textBaseline = "bottom"; ctx.fillText(l.label, box.x + box.w - 4, Y(l.y) - 3); } });
+    (opts.points || []).forEach((p) => { ctx.fillStyle = p.color || P.accent; ctx.beginPath(); ctx.arc(X(p.x), Y(p.y), p.r || 4.5, 0, Math.PI * 2); ctx.fill(); if (p.label) { ctx.fillStyle = P.text; ctx.textAlign = "left"; ctx.textBaseline = "bottom"; ctx.fillText(p.label, X(p.x) + 6, Y(p.y) - 4); } });
+    ctx.restore();
+    ctx.restore();
+    return { X, Y, box };
+  };
+
+  /* ------------------------------------------------------------ controls */
+  SB.range = function (id, fmt, onInput) {
+    if (typeof id === "object" && id !== null && !(id instanceof Element)) {
+      const cfg = id;
+      const wrap = document.createElement("label");
+      wrap.className = "ctrl";
+      const sp = document.createElement("span");
+      sp.textContent = cfg.label || "";
+      const out = document.createElement("output");
+      sp.appendChild(out);
+      const inp = document.createElement("input");
+      inp.type = "range";
+      inp.min = String(cfg.min ?? 0);
+      inp.max = String(cfg.max ?? 100);
+      inp.step = String(cfg.step ?? 1);
+      inp.value = String(cfg.value ?? cfg.min ?? 0);
+      wrap.append(sp, inp);
+      const update = (fire) => {
+        const v = Number(inp.value);
+        const pct = ((v - Number(inp.min)) / Math.max(1e-9, Number(inp.max) - Number(inp.min))) * 100;
+        inp.style.setProperty("--fill", pct + "%");
+        out.textContent = cfg.fmt ? cfg.fmt(v) : String(v);
+        if (fire && cfg.onInput) cfg.onInput(v);
+      };
+      inp.addEventListener("input", () => update(true));
+      update(false);
+      return wrap;
+    }
+    const el = typeof id === "string" ? document.getElementById(id) : id;
+    if (!el) return () => 0;
+    const out = document.getElementById(el.id + "-out") || document.querySelector(`output[for="${el.id}"]`);
+    const update = (fire) => {
+      const v = Number(el.value);
+      const pct = ((v - Number(el.min || 0)) / (Number(el.max || 100) - Number(el.min || 0))) * 100;
+      el.style.setProperty("--fill", pct + "%");
+      if (out) out.textContent = fmt ? fmt(v) : String(v);
+      if (fire && onInput) onInput(v);
+    };
+    el.addEventListener("input", () => update(true));
+    update(false);
+    const get = () => Number(el.value);
+    get.set = (v) => { el.value = v; update(true); };
+    get.el = el;
+    return get;
+  };
+
+  SB.seg = function (id, onChange) {
+    if (typeof id === "object" && id !== null && !(id instanceof Element)) {
+      const cfg = id;
+      const wrap = document.createElement("div");
+      wrap.className = "ctrl";
+      const sp = document.createElement("span");
+      sp.textContent = cfg.label || "";
+      const seg = document.createElement("div");
+      seg.className = "seg";
+      const btns = (cfg.options || []).map(([val, txt]) => {
+        const b = document.createElement("button");
+        b.type = "button";
+        b.dataset.value = String(val);
+        b.textContent = txt;
+        if (String(val) === String(cfg.value)) b.classList.add("on");
+        seg.appendChild(b);
+        return b;
+      });
+      const set = (v, fire = true) => {
+        btns.forEach((b) => { const on = String(b.dataset.value) === String(v); b.classList.toggle("on", on); b.setAttribute("aria-pressed", on); });
+        if (fire && cfg.onChange) cfg.onChange(v);
+      };
+      btns.forEach((b) => b.addEventListener("click", () => set(b.dataset.value, true)));
+      set(cfg.value, false);
+      wrap.append(sp, seg);
+      return wrap;
+    }
+    const el = typeof id === "string" ? document.getElementById(id) : id;
+    if (!el) return () => "";
+    const btns = [...el.querySelectorAll("button")];
+    let cur = (btns.find((b) => b.classList.contains("on")) || btns[0]).dataset.value;
+    const set = (v, fire = true) => {
+      cur = v;
+      btns.forEach((b) => { const on = String(b.dataset.value) === String(v); b.classList.toggle("on", on); b.setAttribute("aria-pressed", on); });
+      if (fire && onChange) onChange(v);
+    };
+    btns.forEach((b) => b.addEventListener("click", () => set(b.dataset.value)));
+    set(cur, false);
+    const get = () => cur;
+    get.set = set;
+    return get;
+  };
+
+  SB.stat = function (id, html) {
+    if (typeof id === "object" && id !== null) {
+      return `<div class="stat"><span class="k">${id.label || ""}</span><span class="v">${id.value || ""}</span></div>`;
+    }
+    const el = document.getElementById(id);
+    if (el) el.innerHTML = html;
+  };
+
+  /* ------------------------------------------------------------ three.js helper */
+  SB.three = function (container, opts = {}) {
+    if (typeof container === "string") container = document.querySelector(container);
+    if (!container || !window.THREE) return null;
+    const THREE = window.THREE;
+    const renderer = new THREE.WebGLRenderer({ antialias: true, alpha: true });
+    renderer.setPixelRatio(Math.min(window.devicePixelRatio || 1, 2));
+    if (THREE.sRGBEncoding) renderer.outputEncoding = THREE.sRGBEncoding;
+    container.appendChild(renderer.domElement);
+    renderer.domElement.style.display = "block";
+    const scene = new THREE.Scene();
+    const camera = new THREE.PerspectiveCamera(opts.fov || 38, 1, 0.01, 2000);
+    camera.position.set(...(opts.camera || [8, 6, 10]));
+    const controls = THREE.OrbitControls ? new THREE.OrbitControls(camera, renderer.domElement) : null;
+    if (controls) {
+      controls.target.set(...(opts.target || [0, 0, 0]));
+      controls.enableDamping = true; controls.dampingFactor = 0.08;
+      controls.autoRotate = !!opts.autoRotate; controls.autoRotateSpeed = opts.autoRotateSpeed || 0.7;
+      controls.enablePan = opts.pan !== false;
+      if (opts.minDistance) controls.minDistance = opts.minDistance;
+      if (opts.maxDistance) controls.maxDistance = opts.maxDistance;
+      controls.update();
+    } else camera.lookAt(...(opts.target || [0, 0, 0]));
+    scene.add(new THREE.HemisphereLight(0xffffff, 0x445066, 0.8));
+    const d1 = new THREE.DirectionalLight(0xffffff, 0.85); d1.position.set(6, 10, 8); scene.add(d1);
+    const d2 = new THREE.DirectionalLight(0xbfd7ff, 0.35); d2.position.set(-6, 4, -5); scene.add(d2);
+
+    const labelLayer = document.createElement("div");
+    labelLayer.style.cssText = "position:absolute;inset:0;pointer-events:none;overflow:hidden";
+    container.appendChild(labelLayer);
+    const labels = [];
+    const frameCbs = [];
+    const T = { THREE, scene, camera, renderer, controls, container, labels };
+    T.onFrame = (cb) => frameCbs.push(cb);
+    T.label = function (text, pos, cls) {
+      const el = document.createElement("div");
+      el.className = "overlay-label" + (cls ? " " + cls : "");
+      el.innerHTML = text;
+      labelLayer.appendChild(el);
+      const L = { el, pos: pos.clone ? pos.clone() : new THREE.Vector3(...pos), visible: true, obj: null };
+      L.setVisible = (v) => { L.visible = v; el.style.display = v ? "" : "none"; };
+      L.remove = () => { el.remove(); labels.splice(labels.indexOf(L), 1); };
+      labels.push(L);
+      return L;
+    };
+    T.material = (color, o = {}) => new THREE.MeshStandardMaterial(Object.assign({ color, roughness: 0.5, metalness: 0.1 }, o));
+    function resize() {
+      const w = container.clientWidth, h = container.clientHeight || 400;
+      renderer.setSize(w, h, false);
+      renderer.domElement.style.width = w + "px"; renderer.domElement.style.height = h + "px";
+      camera.aspect = w / h; camera.updateProjectionMatrix();
+    }
+    if (window.ResizeObserver) new ResizeObserver(resize).observe(container); else window.addEventListener("resize", resize);
+    resize();
+    const v = new THREE.Vector3();
+    T.loop = SB.loop(container, (dt, t) => {
+      frameCbs.forEach((cb) => cb(dt, t));
+      if (controls) controls.update();
+      renderer.render(scene, camera);
+      const w = container.clientWidth, h = container.clientHeight;
+      labels.forEach((L) => {
+        if (!L.visible) return;
+        v.copy(L.pos); if (L.obj) L.obj.localToWorld(v);
+        v.project(camera);
+        const behind = v.z > 1;
+        L.el.style.display = behind ? "none" : "";
+        L.el.style.left = ((v.x + 1) / 2) * w + "px";
+        L.el.style.top = ((1 - v.y) / 2) * h + "px";
+      });
+    });
+    return T;
+  };
+
+  /* ------------------------------------------------------------ layout build */
+  const LOGO = `<svg class="mark" viewBox="0 0 32 32" aria-hidden="true"><defs><linearGradient id="sbg" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="var(--accent)"/><stop offset="1" stop-color="var(--accent-2)"/></linearGradient></defs><rect x="2" y="2" width="28" height="28" rx="8" fill="url(#sbg)"/><g fill="#fff"><rect x="7" y="7" width="7" height="7" rx="1.5" opacity=".95"/><rect x="18" y="7" width="7" height="7" rx="1.5" opacity=".6"/><rect x="7" y="18" width="7" height="7" rx="1.5" opacity=".6"/><rect x="18" y="18" width="7" height="7" rx="1.5" opacity=".95"/><circle cx="16" cy="16" r="2.2"/></g></svg>`;
+  const ICON_MENU = `<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M4 6h16M4 12h16M4 18h16"/></svg>`;
+  const ICON_MOON = `<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 12.8A9 9 0 1 1 11.2 3a7 7 0 0 0 9.8 9.8z"/></svg>`;
+  const ICON_SUN = `<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><circle cx="12" cy="12" r="4.5"/><path d="M12 2v2M12 20v2M4.9 4.9l1.4 1.4M17.7 17.7l1.4 1.4M2 12h2M20 12h2M4.9 19.1l1.4-1.4M17.7 6.3l1.4-1.4"/></svg>`;
+
+  function build() {
+    const body = document.body;
+    const root = body.dataset.root != null ? body.dataset.root : body.dataset.chapter ? "../" : "";
+    const curSlug = body.dataset.chapter || "";
+    const href = (slug) => (slug ? `${root}chapters/${slug}.html` : `${root}index.html`);
+
+    const bar = document.createElement("header");
+    bar.className = "sb-topbar";
+    bar.innerHTML = `
+      <div class="book-nav-left">
+        <button class="sb-btn icon" id="sb-menu" aria-label="챕터 목록">${ICON_MENU}</button>
+        <a class="sb-logo" href="${href("")}">${LOGO}<span>AICAMERA <small>인터랙티브 아키텍처 가이드북</small></span></a>
+      </div>
+      <div class="book-search">
+        <svg class="book-search-icon" width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true"><circle cx="10.8" cy="10.8" r="6.8"/><path d="m16 16 5 5"/></svg>
+        <input type="search" aria-label="챕터, 섹션, 시뮬레이터, 용어 검색" placeholder="가이드북 검색 (예: SA8, BLC, Halide, Tetracell)" autocomplete="off">
+        <div class="book-search-results" aria-live="polite"></div>
+      </div>
+      <div class="book-nav-right">
+        <a class="sb-btn series-link" href="${href("notes")}#glossary-sec" title="용어집 & 검증 노트"><span>용어집 · 검증</span></a>
+        <button class="sb-btn icon" id="sb-theme" aria-label="테마 전환"></button>
+      </div>
+      <div class="sb-progress" id="sb-progress"></div>`;
+    body.prepend(bar);
+
+    const search = bar.querySelector(".book-search");
+    const searchInput = search.querySelector("input");
+    const searchResults = search.querySelector(".book-search-results");
+    const closeSearch = () => { search.classList.remove("open"); searchResults.replaceChildren(); };
+
+    function renderSearch() {
+      const words = searchInput.value.trim().toLocaleLowerCase().split(/\s+/).filter(Boolean);
+      searchResults.replaceChildren();
+      if (!words.length) { closeSearch(); return; }
+      const includesWords = (val) => words.every((w) => String(val || "").toLocaleLowerCase().includes(w));
+      const chapterMatches = CHAPTERS.filter((c) => includesWords([c.num, c.title, c.desc, ...(c.tags || [])].join(" ")))
+        .map((c) => ({ type: "챕터", title: c.title, slug: c.slug, num: c.num, chTitle: c.title, hash: "" }));
+      const detailMatches = PREBUILT_SEARCH.filter((e) => includesWords(e.title + " " + (e.keywords || "")));
+      const matches = [
+        ...chapterMatches.slice(0, 4),
+        ...detailMatches.filter((e) => e.type === "섹션").slice(0, 6),
+        ...detailMatches.filter((e) => e.type === "시뮬레이터").slice(0, 5),
+        ...detailMatches.filter((e) => e.type === "용어").slice(0, 4),
+      ];
+      matches.forEach((entry) => {
+        const link = document.createElement("a");
+        link.href = href(entry.slug) + (entry.hash ? `#${entry.hash}` : "");
+        const title = document.createElement("strong");
+        title.textContent = entry.title;
+        const context = document.createElement("small");
+        context.textContent = `Ch.${entry.num} · ${entry.chTitle} · ${entry.type}`;
+        link.append(title, context);
+        searchResults.appendChild(link);
+      });
+      if (!matches.length) {
+        const empty = document.createElement("p");
+        empty.textContent = "검색 결과가 없습니다";
+        searchResults.appendChild(empty);
+      }
+      search.classList.add("open");
+    }
+    searchInput.addEventListener("input", renderSearch);
+    searchInput.addEventListener("keydown", (e) => {
+      if (e.key === "Escape") { closeSearch(); searchInput.blur(); }
+      else if (e.key === "ArrowDown") { const first = searchResults.querySelector("a"); if (first) { e.preventDefault(); first.focus(); } }
+      else if (e.key === "Enter") { const first = searchResults.querySelector("a"); if (first) { e.preventDefault(); first.click(); } }
+    });
+    searchResults.addEventListener("keydown", (e) => {
+      if (e.key === "Escape") { closeSearch(); searchInput.focus(); }
+      else if (e.key === "ArrowDown" || e.key === "ArrowUp") {
+        const links = [...searchResults.querySelectorAll("a")];
+        const next = links.indexOf(document.activeElement) + (e.key === "ArrowDown" ? 1 : -1);
+        e.preventDefault();
+        (links[next] || searchInput).focus();
+      }
+    });
+    document.addEventListener("pointerdown", (e) => { if (!search.contains(e.target)) closeSearch(); });
+
+    // drawer
+    const drawer = document.createElement("nav");
+    drawer.className = "sb-drawer";
+    drawer.innerHTML = `<h4>AICAMERA Guidebook</h4><ul class="sb-chlist">
+      <li><a href="${href("")}" class="${curSlug ? "" : "active"}"><span class="num">00</span><span>홈 · 전체 아키텍처 로드맵</span></a></li>
+      ${CHAPTERS.map((c) => `<li><a href="${href(c.slug)}" class="${c.slug === curSlug ? "active" : ""}"><span class="num">${c.num}</span><span>${c.title}</span></a></li>`).join("")}
+    </ul>`;
+    const backdrop = document.createElement("div");
+    backdrop.className = "sb-drawer-backdrop";
+    body.append(backdrop, drawer);
+    const toggleDrawer = (o) => body.classList.toggle("drawer-open", o);
+    bar.querySelector("#sb-menu").addEventListener("click", () => toggleDrawer(true));
+    backdrop.addEventListener("click", () => toggleDrawer(false));
+    document.addEventListener("keydown", (e) => { if (e.key === "Escape") toggleDrawer(false); });
+
+    // theme toggle
+    const tbtn = bar.querySelector("#sb-theme");
+    const setIcon = () => (tbtn.innerHTML = SB.isDark() ? ICON_SUN : ICON_MOON);
+    setIcon();
+    tbtn.addEventListener("click", () => {
+      const next = SB.isDark() ? "light" : "dark";
+      try { localStorage.setItem("sb-theme", next); } catch (e) {}
+      applyTheme(next); setIcon();
+    });
+
+    // progress
+    const prog = bar.querySelector("#sb-progress");
+    const onScroll = () => { const h = document.documentElement.scrollHeight - innerHeight; prog.style.width = (h > 0 ? (scrollY / h) * 100 : 0) + "%"; };
+    addEventListener("scroll", onScroll, { passive: true }); onScroll();
+
+    // chapter page extras
+    const main = document.querySelector("main.chapter");
+    if (main) {
+      [...main.querySelectorAll(".sim")].filter((sim) => sim.querySelector(".sim-head h3, .sim-head .sim-title")).forEach((sim, i) => {
+        if (!sim.id) sim.id = `search-sim-${i + 1}`;
+        const head = sim.querySelector(".sim-head");
+        if (head && !head.querySelector(".sim-link")) {
+          const link = document.createElement("a");
+          link.className = "sim-link";
+          link.href = "#" + sim.id;
+          link.textContent = "#";
+          link.title = "이 시뮬레이터 링크";
+          head.appendChild(link);
+        }
+      });
+
+      const layout = document.createElement("div");
+      layout.className = "sb-layout";
+      main.parentNode.insertBefore(layout, main);
+      layout.appendChild(main);
+      const toc = document.createElement("aside");
+      toc.className = "sb-toc";
+      const h2s = [...main.querySelectorAll("section > h2")];
+      let n = 0;
+      toc.innerHTML = "<h4>ON THIS PAGE</h4>" + h2s.map((h, i) => {
+        const sec = h.parentElement;
+        if (!sec.id) sec.id = "s" + (i + 1);
+        const numbered = !sec.classList.contains("keypoints") && !sec.hasAttribute("data-nonum");
+        if (numbered && !h.querySelector(".h-num")) { n++; h.insertAdjacentHTML("afterbegin", `<span class="h-num">${String(n).padStart(2, "0")}</span>`); }
+        return `<a href="#${sec.id}">${h.textContent.replace(/^\d\d\s*/, "").trim()}</a>`;
+      }).join("");
+      layout.appendChild(toc);
+      const links = [...toc.querySelectorAll("a")];
+      if (window.IntersectionObserver && h2s.length) {
+        const io = new IntersectionObserver((es) => {
+          es.forEach((e) => { if (e.isIntersecting) { links.forEach((a) => a.classList.toggle("active", a.getAttribute("href") === "#" + e.target.id)); } });
+        }, { rootMargin: "-18% 0px -70% 0px" });
+        h2s.forEach((h) => io.observe(h.parentElement));
+      }
+
+      // pager
+      const idx = CHAPTERS.findIndex((c) => c.slug === curSlug);
+      const prev = idx > 0 ? CHAPTERS[idx - 1] : null;
+      const next = idx >= 0 && idx < CHAPTERS.length - 1 ? CHAPTERS[idx + 1] : null;
+      const pager = document.createElement("nav");
+      pager.className = "sb-pager";
+      pager.innerHTML =
+        (prev ? `<a class="prev" href="${href(prev.slug)}"><small>← 이전 · Chapter ${prev.num}</small>${prev.title}</a>` : `<a class="prev" href="${href("")}"><small>← 처음으로</small>홈 · 전체 아키텍처 로드맵</a>`) +
+        (next ? `<a class="next" href="${href(next.slug)}"><small>다음 · Chapter ${next.num} →</small>${next.title}</a>` : "");
+      layout.after(pager);
+    }
+
+    // copy buttons for pre.cmd
+    document.querySelectorAll("pre.cmd").forEach((pre) => {
+      const b = document.createElement("button");
+      b.className = "copy"; b.type = "button"; b.textContent = "copy";
+      b.addEventListener("click", () => {
+        navigator.clipboard.writeText(pre.innerText.replace(/copy$/, "").trim()).then(() => {
+          b.textContent = "copied";
+          setTimeout(() => (b.textContent = "copy"), 1200);
+        });
+      });
+      pre.appendChild(b);
+    });
+
+    const foot = document.createElement("footer");
+    foot.className = "sb-foot";
+    foot.innerHTML = `AICAMERA 인터랙티브 아키텍처 가이드북 · <code>docs/build_spec_portal.py</code> 로 생성 · build 2026-11-01 08:48 · commit <code>3aa8bb0</code>
+      <br>모든 벤치마크 수치는 저장소 JSON 정본에서, ISP·3A 기본값은 C99 헤더에서 빌드 시 자동 추출 및 검증됩니다.`;
+    body.appendChild(foot);
+
+    // GitHub Pages (/docs root) & Google Sites embed fallback for repo-relative images (../../lsp/..., ../../universal_cfa/...)
+    const RAW_BASE = "https://raw.githubusercontent.com/yjqkrtk-ux/aicamera/main/";
+    const fixRepoImg = (img) => {
+      const rawAttr = img.getAttribute("src") || "";
+      if (rawAttr.startsWith("../../")) {
+        const rel = rawAttr.replace(/^(\.\.\/)+/, "");
+        if (location.hostname.endsWith("github.io")) {
+          img.src = RAW_BASE + rel;
+        } else {
+          img.addEventListener("error", function onErr() {
+            img.removeEventListener("error", onErr);
+            const cur = img.getAttribute("src") || "";
+            if (cur.startsWith("../../")) img.src = RAW_BASE + cur.replace(/^(\.\.\/)+/, "");
+          });
+        }
+      }
+    };
+    document.querySelectorAll("img").forEach(fixRepoImg);
+    if (window.MutationObserver) {
+      new MutationObserver((muts) => {
+        muts.forEach((m) => {
+          if (m.type === "attributes" && m.target && m.target.tagName === "IMG") fixRepoImg(m.target);
+        });
+      }).observe(document.body, { attributes: true, attributeFilter: ["src"], subtree: true });
+    }
+
+    // KaTeX
+    const renderMath = () => {
+      if (window.renderMathInElement) {
+        renderMathInElement(document.body, {
+          delimiters: [{ left: "$$", right: "$$", display: true }, { left: "\\[", right: "\\]", display: true }, { left: "\\(", right: "\\)", display: false }],
+          ignoredTags: ["script", "noscript", "style", "textarea", "pre", "code", "svg"],
+          ignoredClasses: ["no-math"],
+          throwOnError: false,
+        });
+      }
+    };
+    if (window.renderMathInElement) renderMath();
+    else window.addEventListener("load", renderMath);
+  }
+
+  if (document.readyState === "loading") document.addEventListener("DOMContentLoaded", build);
+  else build();
+})();
+
+</script>
+<script>
+/* AICAMERA Guidebook — Glossary Tooltips Runtime (SensorBook v1 compatible) */
+(function () {
+  "use strict";
+  if (window.BookGlossary) return;
+  const norm = (s) => String(s || "").normalize("NFC").replace(/\s+/g, " ").trim().toLowerCase();
+  const escape = (s) => s.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
+  const unique = (names) => names.filter((name, i) => name && !names.slice(0, i).some((s) => norm(s) === norm(name)));
+
+  function names(text) {
+    text = String(text || "").replace(/`/g, "").trim();
+    const out = [];
+    let depth = 0, start = 0;
+    for (let i = 0; i < text.length; i++) {
+      if (text[i] === "(") depth++;
+      if (text[i] === ")") depth = Math.max(0, depth - 1);
+      if (depth) continue;
+      const slash = text[i] === "/" && /\s/.test(text[i - 1] || "") && /\s/.test(text[i + 1] || "");
+      if (text[i] === "·" || slash) { out.push(text.slice(start, i).trim()); start = i + 1; }
+    }
+    out.push(text.slice(start).trim());
+    return unique(out);
+  }
+
+  function indexTerms(terms) {
+    const index = new Map();
+    function put(alias, entry) {
+      alias = norm(alias);
+      if (!alias) return;
+      const entries = index.get(alias) || [];
+      entries.push(entry);
+      index.set(alias, entries);
+    }
+    terms.forEach((term) => {
+      const ko = names(term.ko), en = names(term.en), abbr = names(term.abbr);
+      const titleFor = (parts, i, alias) => {
+        const name = ko.length === parts.length ? ko[i] : (ko.length === 1 ? ko[0] : alias);
+        const abbreviation = abbr.length === parts.length ? abbr[i] : (abbr.length === 1 ? abbr[0] : "");
+        return unique([name, abbreviation]).join(" · ");
+      };
+      [term.ko, term.en, term.abbr].filter(Boolean).forEach((alias) => {
+        put(alias, { term, title: unique([term.ko, names(term.abbr).length === 1 ? term.abbr : ""]).join(" · "), exact: true });
+      });
+      [ko, en, abbr].forEach((parts) => parts.forEach((alias, i) => {
+        const title = titleFor(parts, i, alias);
+        put(alias, { term, title, exact: parts.length === 1 });
+        const bare = alias.replace(/\s*\([^()]*\)/g, "").trim();
+        if (bare !== alias) put(bare, { term, title, exact: false });
+      }));
+    });
+    const chapter = document.body.dataset.chapter || "";
+    const best = new Map();
+    index.forEach((entries, alias) => {
+      entries.sort((a, b) => Number(b.exact) - Number(a.exact) ||
+        Number((b.term.chapters || []).includes(chapter)) -
+        Number((a.term.chapters || []).includes(chapter)));
+      best.set(alias, entries[0]);
+    });
+    return best;
+  }
+
+  function annotate(main, index) {
+    const aliases = [...index.keys()].filter((alias) => alias.length >= 2 || /[가-힣]/.test(alias));
+    aliases.sort((a, b) => b.length - a.length);
+    if (!aliases.length) return { count: 0 };
+    const pattern = new RegExp(aliases.map(escape).join("|"), "gi");
+    const excluded = "a, button, input, select, textarea, label, output, script, style, pre, code, svg, canvas, math, .katex, .formula, .eq, .sim-controls, .sim-readout, .sim-view, .gl-item, .gl-list, [contenteditable], [data-no-glossary], [role=button], .gl-term, h1, h2, h3, h4";
+    const walker = document.createTreeWalker(main, NodeFilter.SHOW_TEXT, {
+      acceptNode(node) {
+        return node.parentElement.closest(excluded) || /\$\$|\\[([]/.test(node.data)
+          ? NodeFilter.FILTER_REJECT : NodeFilter.FILTER_ACCEPT;
+      },
+    });
+    const nodes = [], bindings = new WeakMap(), seenTerms = new Set();
+    while (walker.nextNode()) nodes.push(walker.currentNode);
+    const word = (c) => /[a-z0-9_]/i.test(c || "");
+    let count = 0;
+    nodes.forEach((node) => {
+      const text = node.data, fragment = document.createDocumentFragment();
+      let end = 0;
+      for (const match of text.matchAll(pattern)) {
+        const label = match[0], start = match.index;
+        if ((word(label[0]) && word(text[start - 1])) ||
+            (word(label.at(-1)) && word(text[start + label.length])) ||
+            (/[가-힣]/.test(label[0]) && /[가-힣]/.test(text[start - 1] || ""))) continue;
+        const entry = index.get(norm(label));
+        if (!entry || seenTerms.has(entry.title)) continue;
+        seenTerms.add(entry.title);
+        fragment.append(text.slice(end, start));
+        const span = document.createElement("span");
+        span.className = "gl-term";
+        span.tabIndex = 0;
+        span.textContent = label;
+        bindings.set(span, entry);
+        fragment.append(span);
+        end = start + label.length;
+        count++;
+      }
+      if (end) { fragment.append(text.slice(end)); node.replaceWith(fragment); }
+    });
+    main.querySelectorAll(".term:not(:has(.gl-term))").forEach((span) => {
+      if (span.closest(excluded)) return;
+      const entry = index.get(norm(span.textContent));
+      if (!entry) return;
+      span.classList.add("gl-term"); span.tabIndex = 0;
+      bindings.set(span, entry); count++;
+    });
+
+    const tooltip = document.createElement("div");
+    tooltip.id = "book-glossary-tooltip";
+    tooltip.className = "gl-tooltip no-math";
+    tooltip.setAttribute("role", "tooltip");
+    tooltip.hidden = true;
+    document.body.append(tooltip);
+    let active, timer, anchorRect;
+    function hide() {
+      clearTimeout(timer);
+      if (active) active.removeAttribute("aria-describedby");
+      active = null; tooltip.hidden = true;
+    }
+    function show(target) {
+      if (!target) return;
+      clearTimeout(timer);
+      const entry = bindings.get(target);
+      if (!entry) return;
+      if (active) active.removeAttribute("aria-describedby");
+      active = target;
+      const title = document.createElement("strong"), definition = document.createElement("p");
+      title.textContent = entry.title;
+      definition.textContent = entry.term.def;
+      tooltip.replaceChildren(title, definition);
+      tooltip.hidden = false;
+      target.setAttribute("aria-describedby", tooltip.id);
+      const rect = target.getBoundingClientRect(), gap = 8;
+      anchorRect = { left: rect.left, top: rect.top };
+      const width = tooltip.offsetWidth, height = tooltip.offsetHeight;
+      tooltip.style.left = Math.max(gap, Math.min(rect.left, innerWidth - width - gap)) + "px";
+      tooltip.style.top = (rect.bottom + gap + height <= innerHeight - gap
+        ? rect.bottom + gap : Math.max(gap, rect.top - height - gap)) + "px";
+    }
+    function closeSoon() {
+      clearTimeout(timer);
+      timer = setTimeout(() => { if (document.activeElement !== active) hide(); }, 150);
+    }
+    main.addEventListener("pointerover", (e) => { if (e.pointerType !== "touch") show(e.target.closest(".gl-term")); });
+    main.addEventListener("pointerout", (e) => { if (e.target.closest(".gl-term")) closeSoon(); });
+    main.addEventListener("focusin", (e) => show(e.target.closest(".gl-term")));
+    main.addEventListener("focusout", (e) => { if (e.target.closest(".gl-term")) closeSoon(); });
+    main.addEventListener("click", (e) => show(e.target.closest(".gl-term")));
+    tooltip.addEventListener("pointerenter", () => clearTimeout(timer));
+    tooltip.addEventListener("pointerleave", closeSoon);
+    document.addEventListener("pointerdown", (e) => { if (!e.target.closest(".gl-term, .gl-tooltip")) hide(); });
+    document.addEventListener("keydown", (e) => { if (e.key === "Escape") hide(); });
+    window.addEventListener("scroll", (e) => {
+      if (!active || tooltip.contains(e.target)) return;
+      const rect = active.getBoundingClientRect();
+      if (Math.abs(rect.left - anchorRect.left) > 1 || Math.abs(rect.top - anchorRect.top) > 1) hide();
+    }, true);
+    window.addEventListener("resize", hide);
+    return { count };
+  }
+
+  function init() {
+    const main = document.querySelector("main.chapter");
+    const data = window.BOOK_GLOSSARY;
+    if (!main || !data || !Array.isArray(data.terms)) return;
+    const index = indexTerms(data.terms);
+    annotate(main, index);
+  }
+  if (document.readyState === "loading") document.addEventListener("DOMContentLoaded", init, { once: true });
+  else init();
+  window.BookGlossary = { init };
+})();
+
+</script>
+</head>
+<body data-chapter="isp" data-root="../">
+
+<main class="chapter">
+    <header class="ch-header">
+      <div class="eyebrow">CHAPTER 03 · SOFTWARE ISP &amp; HALIDE/NPU OPTIMIZATION (hdrnet/)</div>
+      <h1>Software ISP — C99 레퍼런스에서 융합 Halide &amp; 엣지 AI까지</h1>
+      <p class="lead">
+        센서가 출력한 <code>uint16</code> Bayer RGGB RAW 배열은 그 자체로는 어둡고 초록빛이 도는 모자이크 격자일 뿐입니다.
+        이 챕터에서는 ① 10단계 C99 레퍼런스 OpenISP 파이프라인과 3A 자동 제어의 정확한 수학적 명세를 해부하고,
+        ② 단계마다 DRAM을 왕복하며 <strong>1,257.8 MB/frame</strong>을 소모하던 파이프라인을 <strong>Verified Lifting</strong>과 <strong>Halide 커널 융합 + DMA-BUF Zero-Copy</strong>로
+        <strong>91.3 MB/frame (13.8× 절감)</strong>까지 압축하는 시스템 최적화 과정을 인터랙티브 시뮬레이터로 실습합니다.
+      </p>
+      <div class="meta-bar">
+        <span>파이프라인 <b>10-Stage C99 + 3A (AWB·CCM·AE)</b></span>
+        <span>12MP DRAM 절감 <b>1257.8 MB → 91.3 MB (13.8×)</b></span>
+        <span>CPU 가속 <b>493.85 ms → 121.48 ms (4.07×)</b></span>
+        <span>엣지 AI <b>IMX500 SSD + Hailo Grid/Seg + ZAP</b></span>
+      </div>
+    </header>
+
+    <section id="isp-pipe">
+      <h2>3.1 왜 선형 보정이 먼저인가 — 10단계 파이프라인 도메인 구조</h2>
+      <p>
+        ISP의 단계 순서는 임의로 정해진 것이 아니라 <strong>광전 변환의 물리적 선형성(Linearity)</strong>에 의해 엄격히 결정됩니다.
+        광자 수에 비례하는 선형 Bayer RAW 영역(Stage 1~5)에서 흑레벨(BLC)을 빼고 렌즈 주변부 광량 저하(LSC)와 화이트밸런스(AWB)를 곱해야만
+        비율 계산이 왜곡되지 않습니다. 이후 디모자이킹(Stage 6)과 색보정 행렬(Stage 7)까지 선형 RGB에서 마친 뒤에야 비선형 감마 곡선(Stage 8)과 YUV 색공간 변환(Stage 9), 휘도 윤곽선 강조(Stage 10)가 적용됩니다.
+      </p>
+      <figure class="figure">
+        <svg class="diagram" id="isp-svg" viewBox="0 0 1300 236" role="img" aria-label="Software ISP 10단계 파이프라인"><defs><marker id="arrow2" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M0,0 L10,5 L0,10 z" class="arrowhead"/></marker></defs><g class="lane lane-sensor"><rect x="6" y="34" width="616" height="124" rx="12"/><text class="lane-label" x="16" y="52">Bayer RAW 도메인 · float32 [0,1]</text></g><g class="lane lane-host"><rect x="636" y="34" width="372" height="124" rx="12"/><text class="lane-label" x="646" y="52">RGB 도메인 · float32</text></g><g class="lane lane-ws"><rect x="1022" y="34" width="250" height="124" rx="12"/><text class="lane-label" x="1032" y="52">YUV420 · uint8</text></g><g class="node n-isp n-off" data-stage="1" tabindex="0" role="button" aria-label="Stage 1 DPC"><rect x="14" y="70" width="112" height="66" rx="10" stroke-dasharray="5 4"/><text class="n-num" x="70.0" y="90">1</text><text class="n-title" x="70.0" y="110">DPC</text><text class="n-sub" x="70.0" y="126">4 B/px · 기본 off</text></g><path class="edge" d="M127,103.0 L134,103.0" marker-end="url(#arrow2)"/><g class="node n-isp" data-stage="2" tabindex="0" role="button" aria-label="Stage 2 BLC"><rect x="136" y="70" width="112" height="66" rx="10"/><text class="n-num" x="192.0" y="90">2</text><text class="n-title" x="192.0" y="110">BLC</text><text class="n-sub" x="192.0" y="126">6 B/px</text></g><path class="edge" d="M249,103.0 L256,103.0" marker-end="url(#arrow2)"/><g class="node n-isp n-off" data-stage="3" tabindex="0" role="button" aria-label="Stage 3 LSC"><rect x="258" y="70" width="112" height="66" rx="10" stroke-dasharray="5 4"/><text class="n-num" x="314.0" y="90">3</text><text class="n-title" x="314.0" y="110">LSC</text><text class="n-sub" x="314.0" y="126">8 B/px · 기본 off</text></g><path class="edge" d="M371,103.0 L378,103.0" marker-end="url(#arrow2)"/><g class="node n-isp n-off" data-stage="4" tabindex="0" role="button" aria-label="Stage 4 ANF"><rect x="380" y="70" width="112" height="66" rx="10" stroke-dasharray="5 4"/><text class="n-num" x="436.0" y="90">4</text><text class="n-title" x="436.0" y="110">ANF</text><text class="n-sub" x="436.0" y="126">8 B/px · 기본 off</text></g><path class="edge" d="M493,103.0 L500,103.0" marker-end="url(#arrow2)"/><g class="node n-isp" data-stage="5" tabindex="0" role="button" aria-label="Stage 5 AWB · Gain"><rect x="502" y="70" width="112" height="66" rx="10"/><text class="n-num" x="558.0" y="90">5</text><text class="n-title" x="558.0" y="110">AWB · Gain</text><text class="n-sub" x="558.0" y="126">8 B/px</text></g><path class="edge" d="M615,103.0 L642,103.0" marker-end="url(#arrow2)"/><g class="node n-isp" data-stage="6" tabindex="0" role="button" aria-label="Stage 6 Demosaic"><rect x="644" y="70" width="112" height="66" rx="10"/><text class="n-num" x="700.0" y="90">6</text><text class="n-title" x="700.0" y="110">Demosaic</text><text class="n-sub" x="700.0" y="126">16 B/px</text></g><path class="edge" d="M757,103.0 L764,103.0" marker-end="url(#arrow2)"/><g class="node n-isp" data-stage="7" tabindex="0" role="button" aria-label="Stage 7 CCM"><rect x="766" y="70" width="112" height="66" rx="10"/><text class="n-num" x="822.0" y="90">7</text><text class="n-title" x="822.0" y="110">CCM</text><text class="n-sub" x="822.0" y="126">24 B/px</text></g><path class="edge" d="M879,103.0 L886,103.0" marker-end="url(#arrow2)"/><g class="node n-isp" data-stage="8" tabindex="0" role="button" aria-label="Stage 8 Gamma"><rect x="888" y="70" width="112" height="66" rx="10"/><text class="n-num" x="944.0" y="90">8</text><text class="n-title" x="944.0" y="110">Gamma</text><text class="n-sub" x="944.0" y="126">24 B/px</text></g><path class="edge" d="M1001,103.0 L1028,103.0" marker-end="url(#arrow2)"/><g class="node n-isp" data-stage="9" tabindex="0" role="button" aria-label="Stage 9 CSC (YUV)"><rect x="1030" y="70" width="112" height="66" rx="10"/><text class="n-num" x="1086.0" y="90">9</text><text class="n-title" x="1086.0" y="110">CSC (YUV)</text><text class="n-sub" x="1086.0" y="126">13.5 B/px</text></g><path class="edge" d="M1143,103.0 L1150,103.0" marker-end="url(#arrow2)"/><g class="node n-isp n-off" data-stage="10" tabindex="0" role="button" aria-label="Stage 10 EEH (Y)"><rect x="1152" y="70" width="112" height="66" rx="10" stroke-dasharray="5 4"/><text class="n-num" x="1208.0" y="90">10</text><text class="n-title" x="1208.0" y="110">EEH (Y)</text><text class="n-sub" x="1208.0" y="126">2 B/px · 기본 off</text></g><text class="svg-foot" x="14" y="196">입력: uint16 Bayer RGGB (10-bit 값을 16-bit MSB 정렬) → 출력: planar YUV420 uint8 · B/px = 코드 주석의 단계별 DRAM read+write 바이트 (합계 102 B/px)</text><text class="svg-foot" x="14" y="216">점선 = openisp_default_params()에서 기본 비활성. 라이브 데모(sw_isp_demo.py)는 DPC·LSC·ANF·EEH를 켜고, 3-way 벤치마크는 끈 상태로 측정.</text></svg>
+      </figure>
+      <p class="note">
+        다이어그램의 각 단계 블록을 클릭하면 아래 3.3절의 해당 단계 수식 및 C99 소스 코드 카드로 즉시 스크롤됩니다.
+        정본 C 구현: <a class="src" href="../../hdrnet/c_src/openisp_procedural.c" title="hdrnet/c_src/openisp_procedural.c" target="_blank" rel="noopener">openisp_procedural.c</a> · 기본 파라미터 헤더: <a class="src" href="../../hdrnet/c_src/openisp_params.h" title="hdrnet/c_src/openisp_params.h" target="_blank" rel="noopener">openisp_params.h</a>
+      </p>
+    </section>
+
+    <section id="isp-sim-sec">
+      <h2>3.2 인터랙티브 10단계 OpenISP 파이프라인 시뮬레이터</h2>
+      <div class="sim" id="sim-isp">
+        <div class="sim-head">
+          <div class="sim-title">SIMULATOR 01 · 10-Stage OpenISP 단계별 토글 · 파라미터 튜닝 · 돋보기 &amp; 히스토그램</div>
+          <span class="badge b-isp">C99 수식 1:1 브라우저 구현</span>
+        </div>
+        <div class="sim-body">
+          <p style="margin-top:0;">
+            아래 칩 버튼을 클릭해 <strong>각 ISP 단계를 개별적으로 켜고 끄거나(Toggle)</strong>, 슬라이더로 핵심 레지스터(DPC 임계값, Black Level, LSC, AWB 이득, Gamma, EEH 샤프닝)를 조절해 보세요.
+            왼쪽 캔버스 위에서 마우스를 움직이면 우측에 <strong>픽셀 격자 돋보기(8× 확대)</strong>와 <strong>실시간 RGB/Y 히스토그램</strong>이 갱신됩니다.
+          </p>
+          <div class="isp-chips" id="isp-stage-chips"></div>
+          <div class="sim-controls" id="isp-sim-ctrl"></div>
+          <div class="sim-grid-2">
+            <div>
+              <canvas id="isp-main-cv" data-w="520" data-h="310" style="cursor:crosshair"></canvas>
+            </div>
+            <div>
+              <canvas id="isp-side-cv" data-w="400" data-h="310"></canvas>
+            </div>
+          </div>
+          <div class="sim-stats" id="isp-sim-stats"></div>
+        </div>
+      </div>
+    </section>
+
+    <section id="isp-stages">
+      <h2>3.3 단계별 수식과 C99 구현 상세</h2>
+      <p>
+        아래 10개 카드는 <a class="src" href="../../hdrnet/c_src/openisp_procedural.c" title="hdrnet/c_src/openisp_procedural.c" target="_blank" rel="noopener">openisp_procedural.c</a>에 구현된 실제 C 함수와 1:1로 대응하는 수학적 정의 및 기본 레지스터 값입니다.
+      </p>
+      <div class="stage-grid"><article class="card stage" id="stage-1"><div class="stage-head"><span class="stage-num">1</span><div><h3 id="isp-s1">Defective Pixel Correction (DPC)</h3><div class="stage-meta"><span class="badge b-off">기본 off</span> · DRAM 4 B/px · <a class="src" href="../../hdrnet/c_src/openisp_procedural.c" title="hdrnet/c_src/openisp_procedural.c (line 42)" target="_blank" rel="noopener">openisp_procedural.c:42</a></div></div></div><div class="eq">\[ \hat p=\begin{cases}\tfrac12\big(n_{(4)}+n_{(5)}\big) & p \gt n_{(8)}+T\ \ \lor\ \ p \lt n_{(1)}-T\\ p & \text{otherwise}\end{cases} \]</div><p>같은 색 8-이웃(±2 px)을 정렬한 \(n_{(1)}\le\dots\le n_{(8)}\). 범위를 \(T\)=<code>dpc_threshold</code>(30.0) 이상 벗어나면 가운데 두 값의 평균으로 대체합니다. \(T\)는 uint16 저장값 단위(10-bit×64)라 10-bit 기준으로는 약 0.47 DN입니다.</p></article><article class="card stage" id="stage-2"><div class="stage-head"><span class="stage-num">2</span><div><h3 id="isp-s2">Black Level Compensation (BLC)</h3><div class="stage-meta"><span class="badge b-on">항상 활성</span> · DRAM 6 B/px · <a class="src" href="../../hdrnet/c_src/openisp_procedural.c" title="hdrnet/c_src/openisp_procedural.c (line 98)" target="_blank" rel="noopener">openisp_procedural.c:98</a></div></div></div><div class="eq">\[ x=\operatorname{clip}_{[0,1]}\!\left(\frac{I-64B}{64W-64B}\right) \]</div><p>\(B\)=<code>black_level</code>(64.0), \(W\)=<code>white_level</code>(1023.0). <code>is_16bit_input</code>이면 10-bit 값이 16-bit에 MSB 정렬된 것으로 보고 ×64 스케일링 후 [0,1] 선형 부동소수점으로 정규화합니다.</p></article><article class="card stage" id="stage-3"><div class="stage-head"><span class="stage-num">3</span><div><h3 id="isp-s3">Lens Shading Correction (LSC)</h3><div class="stage-meta"><span class="badge b-off">기본 off</span> · DRAM 8 B/px · <a class="src" href="../../hdrnet/c_src/openisp_procedural.c" title="hdrnet/c_src/openisp_procedural.c (line 124)" target="_blank" rel="noopener">openisp_procedural.c:124</a></div></div></div><div class="eq">\[ x'=\operatorname{clip}_{[0,1]}\!\big(x\,(1+a_1 r^2+a_2 r^4)\big),\qquad r^2=(u-c_x)^2+(v-c_y)^2 \]</div><p>픽셀 단위 반경 제곱 \(r^2\), 광학 중심 \(c=((W-1)/2,(H-1)/2)\). \(a_1\)=1.5e-7, \(a_2\)=2.0e-14. 색 채널별 구분 없이 방사 대칭 이득을 곱합니다.</p></article><article class="card stage" id="stage-4"><div class="stage-head"><span class="stage-num">4</span><div><h3 id="isp-s4">Anti-Noise Filter (Bayer Bilateral ANF)</h3><div class="stage-meta"><span class="badge b-off">기본 off</span> · DRAM 8 B/px · <a class="src" href="../../hdrnet/c_src/openisp_procedural.c" title="hdrnet/c_src/openisp_procedural.c (line 160)" target="_blank" rel="noopener">openisp_procedural.c:160</a></div></div></div><div class="eq">\[ x'(p)=\frac{\sum_{q} w_{pq}\,x(q)}{\sum_{q} w_{pq}},\qquad w_{pq}=\exp\!\Big(-\frac{\lVert d_{pq}\rVert^2}{2\sigma_s^2}-\frac{(x(q)-x(p))^2}{2\sigma_r^2}\Big) \]</div><p>같은 색 3×3 격자(물리 거리 ±2 px)에서 윤곽선을 보존하며 노이즈만 억제합니다. \(d\)는 격자 단위(−1,0,1). \(\sigma_s\)=1.0, \(\sigma_r\)=0.05.</p></article><article class="card stage" id="stage-5"><div class="stage-head"><span class="stage-num">5</span><div><h3 id="isp-s5">White Balance &amp; Digital Gain (AWB)</h3><div class="stage-meta"><span class="badge b-on">항상 활성</span> · DRAM 8 B/px · <a class="src" href="../../hdrnet/c_src/openisp_procedural.c" title="hdrnet/c_src/openisp_procedural.c (line 214)" target="_blank" rel="noopener">openisp_procedural.c:214</a></div></div></div><div class="eq">\[ x'=x\cdot g_c\cdot g_d,\qquad g_c\in\{g_R,\ g_G,\ g_B\} \]</div><p>\(g_c\)는 RGGB 2×2 위상에 따라 선택됩니다. 기본 \(g_R\)=2.20, \(g_G\)=1.00, \(g_B\)=1.80, \(g_d\)=1.00. 이 단계에서는 클리핑하지 않으며, 3A 루프가 켜져 있으면 매 프레임 3A 출력 이득으로 갱신됩니다.</p></article><article class="card stage" id="stage-6"><div class="stage-head"><span class="stage-num">6</span><div><h3 id="isp-s6">Demosaic (Branchless Bilinear, RGGB 고정)</h3><div class="stage-meta"><span class="badge b-on">항상 활성</span> · DRAM 16 B/px · <a class="src" href="../../hdrnet/c_src/openisp_procedural.c" title="hdrnet/c_src/openisp_procedural.c (line 250)" target="_blank" rel="noopener">openisp_procedural.c:250</a></div></div></div><div class="eq">\[ \begin{aligned} G_{@R}&=\tfrac14\big(G_N+G_S+G_W+G_E\big)\\ B_{@R}&=\tfrac14\big(B_{NW}+B_{NE}+B_{SW}+B_{SE}\big)\\ R_{@G_r}&=\tfrac12\big(R_W+R_E\big) \end{aligned} \]</div><p>2×2 매크로 픽셀 단위의 분기 없는(branchless) 양선형 보간입니다. 출력은 [0,1]로 클리핑된 인터리브드 RGB float32입니다. (일부 초기 문서의 Malvar-He-Cutler 서술은 실제 C 코드와 다릅니다.)</p></article><article class="card stage" id="stage-7"><div class="stage-head"><span class="stage-num">7</span><div><h3 id="isp-s7">Color Correction Matrix (CCM)</h3><div class="stage-meta"><span class="badge b-on">항상 활성</span> · DRAM 24 B/px · <a class="src" href="../../hdrnet/c_src/openisp_procedural.c" title="hdrnet/c_src/openisp_procedural.c (line 343)" target="_blank" rel="noopener">openisp_procedural.c:343</a></div></div></div><div class="eq">\[ \begin{bmatrix}R'\\G'\\B'\end{bmatrix}=\operatorname{clip}_{[0,1]}\!\left(M\begin{bmatrix}R\\G\\B\end{bmatrix}\right) \]\[ M_{\mathrm{D65}}=\begin{bmatrix}1.6605 & -0.5876 & -0.0728\\-0.1245 & 1.3038 & -0.1793\\-0.0181 & -0.5055 & 1.5236\end{bmatrix} \]</div><p>센서 분광 감도를 표준 sRGB 색역으로 회전·정렬합니다. 3A가 켜져 있으면 \(M\)은 추정 색온도(CCT)에 따라 3000K~7500K 프리셋 사이에서 선형 보간됩니다. <code>saturation</code> 필드는 C 경로에서 사용되지 않습니다.</p></article><article class="card stage" id="stage-8"><div class="stage-head"><span class="stage-num">8</span><div><h3 id="isp-s8">Gamma Tone Mapping (Pure Power Law LUT)</h3><div class="stage-meta"><span class="badge b-on">항상 활성</span> · DRAM 24 B/px · <a class="src" href="../../hdrnet/c_src/openisp_procedural.c" title="hdrnet/c_src/openisp_procedural.c (line 376)" target="_blank" rel="noopener">openisp_procedural.c:376</a></div></div></div><div class="eq">\[ \begin{aligned} y&=\mathrm{LUT}\big[\operatorname{round}(1023\,x)\big]\\ \mathrm{LUT}[i]&=\Big(\frac{i}{1023}\Big)^{1/\gamma} \end{aligned} \]</div><p>1024-엔트리 룩업 테이블, \(\gamma\)=<code>gamma</code>(2.2). 어두운 선형 구간이 있는 sRGB 조각별 OETF가 아닌 순수 거듭제곱 함수입니다.</p></article><article class="card stage" id="stage-9"><div class="stage-head"><span class="stage-num">9</span><div><h3 id="isp-s9">Color Space Conversion (BT.601 Limited YUV420)</h3><div class="stage-meta"><span class="badge b-on">항상 활성</span> · DRAM 13.5 B/px · <a class="src" href="../../hdrnet/c_src/openisp_procedural.c" title="hdrnet/c_src/openisp_procedural.c (line 409)" target="_blank" rel="noopener">openisp_procedural.c:409</a></div></div></div><div class="eq">\[ \begin{aligned} Y&=16+65.481\,R'+128.553\,G'+24.966\,B'\\ C_b&=128-37.797\,\bar R'-74.203\,\bar G'+112\,\bar B'\\ C_r&=128+112\,\bar R'-93.786\,\bar G'-18.214\,\bar B' \end{aligned} \]</div><p>\(\bar R',\bar G',\bar B'\)은 2×2 블록 평균(4:2:0 크로마 서브샘플링)입니다. 스튜디오 범위(Y 16–235)를 따르며 OpenCV <code>COLOR_YUV2BGR_I420</code>과 정확히 일치합니다. 출력은 planar YUV420 uint8입니다.</p></article><article class="card stage" id="stage-10"><div class="stage-head"><span class="stage-num">10</span><div><h3 id="isp-s10">Edge Enhancement (EEH on Y Luma, 정수 연산)</h3><div class="stage-meta"><span class="badge b-off">기본 off</span> · DRAM 2 B/px · <a class="src" href="../../hdrnet/c_src/openisp_procedural.c" title="hdrnet/c_src/openisp_procedural.c (line 468)" target="_blank" rel="noopener">openisp_procedural.c:468</a></div></div></div><div class="eq">\[ \begin{aligned} h&=\operatorname{clip}_{[-c,\,c]}\!\Big(Y-\Big\lfloor\tfrac19\textstyle\sum_{3\times3}Y\Big\rfloor\Big)\\ Y'&=\operatorname{clip}_{[0,255]}\!\big(Y+((h\cdot g_{fp})\gg 8)\big) \end{aligned} \]</div><p>\(g_{fp}=\operatorname{round}(256k)\), \(c=\operatorname{round}(255\cdot\text{clip})\); 기본 \(k\)=<code>eeh_gain</code>(0.8), clip=<code>eeh_clip</code>(0.15). uint8 휘도(Y) 평면에서 고정소수점 연산으로 직접 처리합니다.</p></article></div>
+
+      <h3 id="isp-params">ISP 기본 파라미터 레지스터 — <code>OpenISPParams</code></h3>
+      <p>
+        빌드 시 <a class="src" href="../../hdrnet/c_src/openisp_params.h" title="hdrnet/c_src/openisp_params.h" target="_blank" rel="noopener">openisp_params.h</a>의 <code>openisp_default_params()</code> 함수에서 직접 파싱한 기본 설정값입니다(Python 바인딩: <a class="src" href="../../hdrnet/c_backend.py" title="hdrnet/c_backend.py" target="_blank" rel="noopener">c_backend.py</a>).
+      </p>
+      <div class="tbl-wrap">
+        <table class="tbl">
+          <thead><tr><th>필드 이름</th><th>C 기본값</th><th>역할 및 단위</th></tr></thead>
+          <tbody><tr><td><code>dpc_enabled</code></td><td>false</td><td>DPC 사용</td></tr><tr><td><code>dpc_threshold</code></td><td>30.0</td><td>DPC 임계값 (uint16 단위)</td></tr><tr><td><code>black_level</code></td><td>64.0</td><td>10-bit black level</td></tr><tr><td><code>white_level</code></td><td>1023.0</td><td>10-bit white level</td></tr><tr><td><code>is_16bit_input</code></td><td>true</td><td>10-bit→16-bit MSB 정렬 입력</td></tr><tr><td><code>lsc_enabled</code></td><td>false</td><td>LSC 사용</td></tr><tr><td><code>lsc_a1</code></td><td>1.5e-7</td><td>r² 계수</td></tr><tr><td><code>lsc_a2</code></td><td>2.0e-14</td><td>r⁴ 계수</td></tr><tr><td><code>anf_enabled</code></td><td>false</td><td>ANF 사용</td></tr><tr><td><code>anf_sigma_spatial</code></td><td>1.0</td><td>σs</td></tr><tr><td><code>anf_sigma_range</code></td><td>0.05</td><td>σr</td></tr><tr><td><code>r_gain</code></td><td>2.20</td><td>R gain</td></tr><tr><td><code>g_gain</code></td><td>1.00</td><td>G gain</td></tr><tr><td><code>b_gain</code></td><td>1.80</td><td>B gain</td></tr><tr><td><code>digital_gain</code></td><td>1.00</td><td>digital gain</td></tr><tr><td><code>cfa_pattern</code></td><td>0</td><td>CFA 코드 (C 경로에서 미사용 — RGGB 고정)</td></tr><tr><td><code>saturation</code></td><td>1.0</td><td>C 경로에서 미사용</td></tr><tr><td><code>gamma</code></td><td>2.2</td><td>감마 지수</td></tr><tr><td><code>use_fast_lut</code></td><td>true</td><td>LUT 사용</td></tr><tr><td><code>eeh_enabled</code></td><td>false</td><td>EEH 사용</td></tr><tr><td><code>eeh_gain</code></td><td>0.8</td><td>EEH gain k</td></tr><tr><td><code>eeh_clip</code></td><td>0.15</td><td>EEH clip (×255)</td></tr><tr><td><code>num_threads</code></td><td>0</td><td>OpenMP 스레드 (0=auto)</td></tr></tbody>
+        </table>
+      </div>
+    </section>
+
+    <section id="isp-3a">
+      <h2>3.4 3A 자동 제어 루프 — AWB · 색온도별 CCM 보간 · AE</h2>
+      <p>
+        카메라가 다양한 조명 환경(백열등 3000K ~ 흐린 날 7500K)과 조도 변화를 만났을 때 색과 밝기를 일정하게 유지하는 피드백 제어기가 <strong>3A 루프</strong>(<a class="src" href="../../hdrnet/c_src/openisp_3a.c" title="hdrnet/c_src/openisp_3a.c" target="_blank" rel="noopener">openisp_3a.c</a>)입니다.
+        우리 구현은 매 프레임 <code>stats_stride</code>(8 px) 간격의 RGGB 쿼드를 BLC 직후 선형 영역에서 샘플링하여 채널 평균 \((\bar{R}, \bar{G}, \bar{B})\)과
+        Rec.709 휘도 \(L = 0.2126\bar{R} + 0.7152\bar{G} + 0.0722\bar{B}\)를 계산합니다(<a class="src" href="../../hdrnet/c_src/openisp_3a.c" title="hdrnet/c_src/openisp_3a.c (line 35)" target="_blank" rel="noopener">openisp_3a.c:35</a>).
+      </p>
+      <div class="grid-2">
+        <div class="card">
+          <h3 id="isp-3a-awb">1) Gray-World AWB &amp; 적응형 EMA</h3>
+          <div class="eq">
+            \[ \begin{aligned}
+              \hat g_R &= \operatorname{clip}_{[0.5,\,4]}\!\Big(\frac{\bar G}{\bar R}\Big),\qquad
+              \hat g_B = \operatorname{clip}_{[0.5,\,4]}\!\Big(\frac{\bar G}{\bar B}\Big)\\
+              g_t &= \alpha\,\hat g + (1-\alpha)\,g_{t-1}
+            \end{aligned} \]
+          </div>
+          <p>
+            장면 변화가 클 때(\(|\hat{g} - g_{t-1}| \gt 0.3\))는 \(\alpha = 0.40\)으로 빠르게 수렴하고, 평소에는 <code>awb_speed</code>(0.15)로 부드럽게 추적합니다.
+            평균 휘도 \(L\)이 <code>dark_luma_threshold</code>(0.02) 미만이면 노이즈 증폭을 막기 위해 AWB 이득을 동결합니다.
+          </p>
+
+          <h3 id="isp-3a-ccm">2) 추정 색온도(CCT) 기반 CCM 선형 보간</h3>
+          <div class="eq">
+            \[ T_{cc} = \operatorname{clip}_{[2400,\,8500]}\!\big(5500\cdot g_R / g_B\big) \]
+          </div>
+          <p>
+            추정된 상관 색온도 \(T_{cc}\)를 이용해 3000K · 4000K · 6500K(D65) · 7500K 4개 표준 색보정 행렬 프리셋 사이를 구간 선형 보간합니다(<a class="src" href="../../hdrnet/c_src/openisp_3a.c" title="hdrnet/c_src/openisp_3a.c (line 327)" target="_blank" rel="noopener">openisp_3a.c:327</a>).
+          </p>
+
+          <h3 id="isp-3a-ae">3) 디지털 이득 AE &amp; 적응형 EMA</h3>
+          <div class="eq">
+            \[ \begin{aligned}
+              \hat d &= \operatorname{clip}_{[0.25,\,8]}\!\Big(\frac{0.18\cdot 2^{\mathrm{EV}}}{\max(10^{-3},\,L)}\Big)\\
+              d_t &= \beta\,\hat d + (1-\beta)\,d_{t-1}
+            \end{aligned} \]
+          </div>
+          <p>
+            오차가 클 때(\(|\hat{d} - d_{t-1}| \gt 0.4\))는 \(\beta = 0.45\), 평상시에는 <code>ae_speed</code>(0.20)를 사용합니다.
+            (참고: C 3A 코드는 디지털 이득만 갱신하며 센서 셔터 노출 시간·아날로그 게인 제어나 AF는 포함하지 않습니다.)
+          </p>
+        </div>
+        <div class="card">
+          <h3 id="isp-3a-params">3A 기본값 — <code>OpenISP3AParams</code></h3>
+          <div class="tbl-wrap">
+            <table class="tbl">
+              <thead><tr><th>필드</th><th>기본값</th><th>의미</th></tr></thead>
+              <tbody><tr><td><code>awb_speed</code></td><td>0.15</td><td>AWB EMA 계수 (|Δ|&gt;0.3이면 0.40 고정)</td></tr><tr><td><code>min_rg</code></td><td>0.5</td><td>R gain 하한</td></tr><tr><td><code>max_rg</code></td><td>4.0</td><td>R gain 상한</td></tr><tr><td><code>min_bg</code></td><td>0.5</td><td>B gain 하한</td></tr><tr><td><code>max_bg</code></td><td>4.0</td><td>B gain 상한</td></tr><tr><td><code>dark_luma_threshold</code></td><td>0.015</td><td>이보다 어두우면 AWB 동결</td></tr><tr><td><code>ae_speed</code></td><td>0.20</td><td>AE EMA 계수 (|Δ|&gt;0.4이면 0.45 고정)</td></tr><tr><td><code>target_luma</code></td><td>0.18</td><td>목표 평균 휘도</td></tr><tr><td><code>ev_comp</code></td><td>0.0</td><td>노출 보정 (EV)</td></tr><tr><td><code>min_digital_gain</code></td><td>0.25</td><td>digital gain 하한</td></tr><tr><td><code>max_digital_gain</code></td><td>8.0</td><td>digital gain 상한</td></tr><tr><td><code>stats_stride</code></td><td>8</td><td>통계 샘플링 간격 (px)</td></tr></tbody>
+            </table>
+          </div>
+          <p class="note"><a class="src" href="../../hdrnet/c_src/openisp_3a.c" title="hdrnet/c_src/openisp_3a.c" target="_blank" rel="noopener">openisp_3a.c</a>의 <code>openisp_3a_default_params()</code>에서 빌드 시 자동 추출</p>
+        </div>
+      </div>
+
+      <div class="sim" id="sim-3a">
+        <div class="sim-head">
+          <div class="sim-title">SIMULATOR 02 · 3A 폐루프 수렴 시뮬레이터 (조명 색온도 · 조도 계단 변화 &amp; 적응형 EMA)</div>
+          <span class="badge b-isp">openisp_3a.c 수식 연동</span>
+        </div>
+        <div class="sim-body">
+          <p style="margin-top:0;">
+            프레임 \(t=10\)에서 갑자기 조명이 바뀌었을 때(예: 주광 6500K → 백열등 2800K, 또는 암실 진입),
+            AWB 이득 \((g_R, g_B)\)과 AE 디지털 이득 \(d_t\)가 <strong>적응형 EMA(큰 변화 시 고속 모드 \(\alpha=0.40, \beta=0.45\))</strong>를 통해 몇 프레임 만에 목표치에 안착하는지 확인해 보세요.
+          </p>
+          <div class="sim-controls" id="a3-ctrl"></div>
+          <canvas id="a3-cv" data-w="920" data-h="250"></canvas>
+          <div class="sim-stats" id="a3-stats"></div>
+        </div>
+      </div>
+    </section>
+
+    <section id="isp-tiers">
+      <h2>3.5 4-Tier 실행 엔진과 Halide 커널 융합 · DMA-BUF Zero-Copy</h2>
+      <p>
+        12.33 MP (<code>4056×3040</code>) 고해상도 프레임을 C99 레퍼런스처럼 단계마다 메모리에 쓰고 읽으면(Tier 1),
+        한 프레임당 약 <strong>102 B/px (1,257.8 MB)</strong>의 DRAM 트래픽이 발생하여 CPU 캐시가 매 단계 무효화됩니다.
+        이를 해결하기 위해 동일한 수식을 4단계 실행 계층(Tier 1~4)으로 점진 최적화했습니다:
+      </p>
+      <div class="tier-grid" style="margin:14px 0;">
+        <div class="tier"><b>Tier 1 · C99 Baseline</b><span>단일 스레드 · 단계마다 전체 프레임 DRAM 왕복 (1,257.8 MB)</span><a class="src" href="../../hdrnet/c_src/openisp_procedural.c" title="hdrnet/c_src/openisp_procedural.c (line 522)" target="_blank" rel="noopener">openisp_procedural.c:522</a></div>
+        <div class="tier"><b>Tier 2 · Halide Block-wise</b><span>단계별 개별 Halide 함수 · ARM NEON SIMD 벡터화</span><a class="src" href="../../hdrnet/c_src/openisp_halide_wrapper.c" title="hdrnet/c_src/openisp_halide_wrapper.c" target="_blank" rel="noopener">openisp_halide_wrapper.c</a></div>
+        <div class="tier"><b>Tier 3 · Halide Fused CPU</b><span>전 단계를 단일 타일 루프로 융합 · L2 캐시 상주 (91.3 MB)</span><a class="src" href="../../hdrnet/c_src/build_openisp_halide.py" title="hdrnet/c_src/build_openisp_halide.py" target="_blank" rel="noopener">build_openisp_halide.py</a></div>
+        <div class="tier"><b>Tier 4 · Halide GPU (V3D)</b><span>VideoCore VII Vulkan Compute · Staged / DMA-BUF / FP16</span><a class="src" href="../../hdrnet/c_src/openisp_halide_gpu_wrapper.c" title="hdrnet/c_src/openisp_halide_gpu_wrapper.c" target="_blank" rel="noopener">openisp_halide_gpu_wrapper.c</a></div>
+      </div>
+
+      <figure class="figure figure-chart">
+        <svg class="chart" viewBox="0 0 860 282" role="img" aria-label="12MP ISP 엔진별 지연"><line class="grid" x1="215.0" y1="14" x2="215.0" y2="254"/><text class="tick" x="215.0" y="270">0</text><line class="grid" x1="315.0" y1="14" x2="315.0" y2="254"/><text class="tick" x="315.0" y="270">100</text><line class="grid" x1="415.0" y1="14" x2="415.0" y2="254"/><text class="tick" x="415.0" y="270">200</text><line class="grid" x1="515.0" y1="14" x2="515.0" y2="254"/><text class="tick" x="515.0" y="270">300</text><line class="grid" x1="615.0" y1="14" x2="615.0" y2="254"/><text class="tick" x="615.0" y="270">400</text><line class="grid" x1="715.0" y1="14" x2="715.0" y2="254"/><text class="tick" x="715.0" y="270">500</text><text class="tick" x="755" y="270">ms</text><text class="bar-label" x="203" y="37.0">Tier 1 · C (1 thread)</text><rect class="seg-cpu" x="215" y="20" width="474.0" height="24" rx="3"><title>Tier 1 · C (1 thread): compute 474.04 ms</title></rect><text class="bar-total" x="697.0" y="37.0">474.04 ms · ×1.00</text><text class="bar-label" x="203" y="75.0">Tier 2 · Halide block-wise</text><rect class="seg-cpu" x="215" y="58" width="298.3" height="24" rx="3"><title>Tier 2 · Halide block-wise: compute 298.28 ms</title></rect><text class="bar-total" x="521.3" y="75.0">298.28 ms · ×1.59</text><text class="bar-label" x="203" y="113.0">Tier 3 · Halide fused CPU</text><rect class="seg-cpu" x="215" y="96" width="128.8" height="24" rx="3"><title>Tier 3 · Halide fused CPU: compute 128.78 ms</title></rect><text class="bar-total" x="351.8" y="113.0">128.78 ms · ×3.68</text><text class="bar-label" x="203" y="151.0">Tier 4 · GPU staged</text><rect class="seg-gpu" x="215" y="134" width="229.4" height="24" rx="3"><title>Tier 4 · GPU staged: compute 229.40 ms</title></rect><rect class="seg-stage" x="444.4" y="134" width="60.2" height="24" rx="3"><title>staging copy 60.16 ms</title></rect><text class="bar-total" x="512.6" y="151.0">289.56 ms · ×1.64</text><text class="bar-label" x="203" y="189.0">Tier 4 · GPU DMA-BUF</text><rect class="seg-gpu" x="215" y="172" width="229.4" height="24" rx="3"><title>Tier 4 · GPU DMA-BUF: compute 229.40 ms</title></rect><text class="bar-total" x="452.4" y="189.0">229.40 ms · ×2.07</text><text class="bar-label" x="203" y="227.0">Tier 4 · GPU FP16</text><rect class="seg-gpu" x="215" y="210" width="268.2" height="24" rx="3"><title>Tier 4 · GPU FP16: compute 268.18 ms</title></rect><rect class="seg-stage" x="483.2" y="210" width="59.6" height="24" rx="3"><title>staging copy 59.63 ms</title></rect><text class="bar-total" x="550.8" y="227.0">327.81 ms · ×1.45</text></svg>
+        <figcaption>12.33 MP (4056×3040), 5회 평균 지연 시간. 회색 막대는 GPU staging 버퍼 복사 오버헤드입니다. 출처: <a class="src" href="../../hdrnet/benchmarks/3way_isp_results.json" title="hdrnet/benchmarks/3way_isp_results.json" target="_blank" rel="noopener">3way_isp_results.json</a></figcaption>
+      </figure>
+
+      <div class="tbl-wrap">
+        <table class="tbl tbl-num">
+          <thead>
+            <tr><th>엔진 (Tier)</th><th>평균 ms</th><th>FPS</th><th>가속비 (vs C)</th><th>DRAM 트래픽 (MB)</th><th>PSNR vs ref (dB)</th><th>MAE vs ref</th></tr>
+          </thead>
+          <tbody><tr><td><b>Baseline: Pure Raw C (Single-Thread)</b></td><td>474.04</td><td>2.11</td><td>×1.00</td><td>811.4</td><td>43.09</td><td>1.16</td></tr><tr><td><b>Tier 2: Block-Wise Vectorized Halide</b></td><td>298.28</td><td>3.35</td><td>×1.59</td><td>811.4</td><td>43.53</td><td>1.29</td></tr><tr><td><b>Tier 3: Monolithic Fused Halide (CPU NEON)</b></td><td>128.78</td><td>7.77</td><td>×3.68</td><td>58.8</td><td>43.53</td><td>1.29</td></tr><tr><td><b>Tier 4: GPU Pattern-Aware (FP32 Staged)</b></td><td>289.56</td><td>3.45</td><td>×1.64</td><td>58.8</td><td>43.53</td><td>1.29</td></tr><tr><td><b>Tier 4: GPU + DMA-BUF Zero-Copy (Direct Compute)</b></td><td>229.40</td><td>4.36</td><td>×2.07</td><td>58.8</td><td>43.53</td><td>1.29</td></tr><tr><td><b>Tier 4: GPU FP16 Precision Scaling</b></td><td>327.81</td><td>3.05</td><td>×1.45</td><td>58.8</td><td>43.53</td><td>1.29</td></tr></tbody>
+        </table>
+      </div>
+
+      <div class="callout warn">
+        <div class="callout-title">12MP 벤치마크 해석 시 주의사항</div>
+        <ul>
+          <li><strong>활성 단계 조건</strong>: <a class="src" href="../../hdrnet/scripts/bench_3way_isp.py" title="hdrnet/scripts/bench_3way_isp.py (line 77)" target="_blank" rel="noopener">bench_3way_isp.py:77</a> 벤치마크는 공정한 코어 파이프라인 비교를 위해 <code>DPC · LSC · ANF · EEH</code>를 끈 상태(<strong>BLC · AWB · Demosaic · CCM · Gamma · CSC 6단계</strong>)로 측정되었습니다.</li>
+          <li><strong>수치 근사 일치</strong>: Halide Tier 2~4는 부동소수점 결합 순서 및 고속 근사 차이로 C 레퍼런스 대비 <strong>PSNR 43.53 dB / MAE 1.29</strong>를 기록합니다(bit-exact가 아닌 수치 동등성).</li>
+          <li><strong>DMA-BUF Zero-Copy 효과</strong>: Tier 4 GPU Staged(289.56 ms)에서 호스트↔GPU 메모리 복사(60.16 ms)를 <code>DMA-BUF</code> 공유로 제거하면 <strong>229.40 ms (2.15×)</strong>로 단축됩니다.</li>
+        </ul>
+      </div>
+
+      <div class="sim" id="sim-halide">
+        <div class="sim-head">
+          <div class="sim-title">SIMULATOR 03 · Halide 타일 커널 융합(Loop Fusion) &amp; DRAM 트래픽 시뮬레이터</div>
+          <span class="badge b-ok">102 B/px → 7.4 B/px</span>
+        </div>
+        <div class="sim-body">
+          <p style="margin-top:0;">
+            실행 Tier와 타일 크기(\(T_x \times T_y\))를 선택해 보세요.
+            <strong>비융합(Unfused)</strong> 모드에서는 각 단계가 12MP 전체 프레임을 DRAM에 기록하지만,
+            <strong>단일 커널 융합(Fused)</strong> 모드에서는 타일 하나가 L2 캐시(최대 2 MB) 안에서 6단계를 연속 통과하여
+            외부 DRAM 접근이 <strong>최초 RAW 읽기(2 B/px) + 최종 YUV/RGB 쓰기(5.4 B/px) = 7.4 B/px</strong>로 수축합니다.
+          </p>
+          <div class="sim-controls" id="hal-ctrl"></div>
+          <canvas id="hal-cv" data-w="920" data-h="230"></canvas>
+          <div class="sim-stats" id="hal-stats"></div>
+        </div>
+      </div>
+
+      <details class="details">
+        <summary>이전 측정 캠페인 — 12MP C 파이프라인 5단계 분해 기록 (참고용)</summary>
+        <div class="tbl-wrap">
+          <table class="tbl tbl-num"><thead><tr><th>단계</th><th>지연 (ms)</th></tr></thead><tbody><tr><td>blc</td><td>63.12</td></tr><tr><td>awb</td><td>72.15</td></tr><tr><td>demosaic</td><td>540.83</td></tr><tr><td>ccm</td><td>253.86</td></tr><tr><td>gamma_procedural</td><td>898.52</td></tr><tr><td>gamma_lut</td><td>348.17</td></tr></tbody></table>
+        </div>
+        <p class="note">procedural 합계 1828.48 ms, LUT 합계 1278.13 ms. 출처: <a class="src" href="../../hdrnet/benchmarks/rpi_12mp_bench_results.json" title="hdrnet/benchmarks/rpi_12mp_bench_results.json" target="_blank" rel="noopener">rpi_12mp_bench_results.json</a> (20260919_222021) — 현재 4-Tier 통합 이전 측정본입니다.</p>
+      </details>
+    </section>
+
+    <section id="isp-vl">
+      <h2>3.6 Verified Lifting — C99에서 Halide로의 자동 변환과 수치 검증</h2>
+      <p>
+        수작업으로 C 루프를 Halide DSL로 재작성하면 인덱스 오프셋이나 경계 조건 실수가 발생하기 쉽습니다.
+        <code>hdrnet/verified_lifting/</code> 모듈은 C99 레퍼런스 소스를 파싱해 연산 패턴을 분류하고 Halide 코드와 스케줄을 자동 생성한 뒤 수치 동등성을 검증합니다:
+      </p>
+      <div class="grid-2">
+        <div class="card">
+          <h3>4단계 자동 변환 파이프라인</h3>
+          <ol class="steps">
+            <li><strong>C AST 파싱</strong>: 정규식 및 구문 분석기가 C 단계 함수 시그니처와 중첩 루프 경계를 추출합니다 (<a class="src" href="../../hdrnet/verified_lifting/src/ast_parser.py" title="hdrnet/verified_lifting/src/ast_parser.py" target="_blank" rel="noopener">ast_parser.py</a>).</li>
+            <li><strong>연산자 패턴 분류</strong>: 루프 본문을 <code>Pointwise</code>, <code>Stencil</code>(이웃 참조), <code>Reduction</code>, <code>LUT</code> 중간 표현(IR)으로 정규화합니다 (<a class="src" href="../../hdrnet/verified_lifting/src/patterns.py" title="hdrnet/verified_lifting/src/patterns.py" target="_blank" rel="noopener">patterns.py</a>).</li>
+            <li><strong>Halide 코드 &amp; 스케줄 생성</strong>: <code>Halide::Func</code>/<code>Var</code> C++ 코드를 방출(<a class="src" href="../../hdrnet/verified_lifting/src/halide_emitter.py" title="hdrnet/verified_lifting/src/halide_emitter.py" target="_blank" rel="noopener">halide_emitter.py</a>)하고 타겟 하드웨어(CPU NEON / GPU Vulkan) 스케줄(<a class="src" href="../../hdrnet/verified_lifting/src/schedule_library.py" title="hdrnet/verified_lifting/src/schedule_library.py" target="_blank" rel="noopener">schedule_library.py</a>)을 결합합니다.</li>
+            <li><strong>수치 Parity 검증기</strong>: 랜덤 및 테스트 패턴 입력에 대해 C 레퍼런스 출력과 Halide 출력의 오차를 측정하여 <strong>PSNR ≥ 40.0 dB 및 MAE ≤ 10⁻³</strong> 기준 통과 여부를 판정합니다 (<a class="src" href="../../hdrnet/verified_lifting/src/verifier.py" title="hdrnet/verified_lifting/src/verifier.py (line 42)" target="_blank" rel="noopener">verifier.py:42</a>).</li>
+          </ol>
+        </div>
+        <div class="callout warn">
+          <div class="callout-title">검증 범위 명확화 (수치 Parity vs 형식 증명)</div>
+          <p>
+            현재 저장소의 <code>verifier.py</code>(<a class="src" href="../../hdrnet/verified_lifting/src/verifier.py" title="hdrnet/verified_lifting/src/verifier.py (line 42)" target="_blank" rel="noopener">verifier.py:42</a>)는 <strong>테스트 입력 텐서에 대한 수치 동등성(Numerical Parity) 자동 검증</strong>을 수행합니다.
+            Z3 SMT 솔버나 SyGuS 기반의 기호적 형식 증명(Formal Proof) 엔진 코드는 저장소에 포함되어 있지 않으므로,
+            관련 문서의 “Verified Lifting”은 <strong>패턴 기반 자동 변환 + 수치 회귀 검증 파이프라인</strong>으로 이해해야 합니다.
+          </p>
+        </div>
+      </div>
+    </section>
+
+    <section id="isp-ai">
+      <h2>3.7 Dual-NPU 엣지 AI 레이어 (검출 · 분할 · ZAP 자동 프레이밍)</h2>
+      <p>
+        실시간 SW ISP 웹 데모(<a class="src" href="../../hdrnet/scripts/sw_isp_demo.py" title="hdrnet/scripts/sw_isp_demo.py" target="_blank" rel="noopener">sw_isp_demo.py</a>, 포트 5001)는 ISP 영상 처리와 동시에 <strong>IMX500 센서 NPU</strong>와 <strong>Hailo-8 호스트 NPU</strong>를 비동기로 구동하여
+        얼굴 검출, 양방향 그리드(Bilateral Grid) 톤 매핑, 인물 세그멘테이션, 그리고 부드러운 <strong>ZAP (Zoom &amp; Auto-Pan) 추적</strong>을 수행합니다.
+      </p>
+      <div class="tbl-wrap">
+        <table class="tbl">
+          <thead><tr><th>엣지 AI 기능</th><th>실행 위치</th><th>모델 / 구현 상세</th><th>소스 및 비고</th></tr></thead>
+          <tbody>
+            <tr>
+              <td><strong>센서 내 객체/얼굴 검출</strong></td>
+              <td>IMX500 NPU</td>
+              <td><code>.rpk</code> 탐색 순서: 시스템 SSD MobileNetV2-FPNLite 320×320 → <a class="src" href="../../lsp/aicamera-models/imx500_face_ssd_320x320.rpk" title="lsp/aicamera-models/imx500_face_ssd_320x320.rpk" target="_blank" rel="noopener">imx500_face_ssd_320x320.rpk</a></td>
+              <td>시스템 기본 모델이 설치되어 있으면 먼저 선택됨 (<a class="src" href="../../hdrnet/scripts/sw_isp_demo.py" title="hdrnet/scripts/sw_isp_demo.py (line 929)" target="_blank" rel="noopener">sw_isp_demo.py:929</a>)</td>
+            </tr>
+            <tr>
+              <td><strong>얼굴 검출 보조</strong></td>
+              <td>Host CPU</td>
+              <td>OpenCV Haar Cascade (<code>frontal_alt2</code> → <code>default</code> → <code>profile</code>)</td>
+              <td>센서 메타데이터 미수신 시 자동 폴백 (<a class="src" href="../../hdrnet/scripts/sw_isp_demo.py" title="hdrnet/scripts/sw_isp_demo.py (line 1012)" target="_blank" rel="noopener">sw_isp_demo.py:1012</a>)</td>
+            </tr>
+            <tr>
+              <td><strong>HDRNet Bilateral Grid</strong></td>
+              <td>Hailo-8 NPU</td>
+              <td>저해상도 입력에서 3D 아핀 양방향 그리드 계수 추론 → <a class="src" href="../../lsp/hailo-models/hdrnet_bilateral_grid_h8.hef" title="lsp/hailo-models/hdrnet_bilateral_grid_h8.hef" target="_blank" rel="noopener">hdrnet_bilateral_grid_h8.hef</a></td>
+              <td>비동기 추론 워커 (<a class="src" href="../../hdrnet/src/hailo_ai_engine.py" title="hdrnet/src/hailo_ai_engine.py" target="_blank" rel="noopener">hailo_ai_engine.py</a>)</td>
+            </tr>
+            <tr>
+              <td><strong>인물 시맨틱 분할</strong></td>
+              <td>Hailo-8 / CPU</td>
+              <td>YOLOv5n-seg (<code>.hef</code>, Hailo-8) 또는 MediaPipe Selfie Segmentation (ONNX, CPU)</td>
+              <td>배경 보케(Bokeh) 합성 지원 (<a class="src" href="../../hdrnet/src/semantic_processor.py" title="hdrnet/src/semantic_processor.py" target="_blank" rel="noopener">semantic_processor.py</a>)</td>
+            </tr>
+            <tr>
+              <td><strong>ZAP 추적 · 자동 프레이밍</strong></td>
+              <td>Host CPU</td>
+              <td>IoU 매칭 + 지수이동평균 뷰포트 스무딩 (<code>smoothing=0.08</code>, <code>margin=1.8</code>, 4:3 고정)</td>
+              <td><a class="src" href="../../hdrnet/src/zap_tracker.py" title="hdrnet/src/zap_tracker.py" target="_blank" rel="noopener">zap_tracker.py</a> · <a class="src" href="../../hdrnet/scripts/sw_isp_demo.py" title="hdrnet/scripts/sw_isp_demo.py (line 975)" target="_blank" rel="noopener">sw_isp_demo.py:975</a></td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+      <p class="note">
+        참고: 데모 웹 UI 상단에 표시되는 일부 배지 문자열(예: <code>grid 1.29 ms</code>, <code>Face SSD 4.7 ms</code>)은 실시간 타이머가 아니라 UI 템플릿에 하드코딩된 표시값입니다(<a class="src" href="../../hdrnet/scripts/sw_isp_demo.py" title="hdrnet/scripts/sw_isp_demo.py" target="_blank" rel="noopener">sw_isp_demo.py</a>).
+      </p>
+
+      <div class="sim" id="sim-zap">
+        <div class="sim-head">
+          <div class="sim-title">SIMULATOR 04 · ZAP (Zoom &amp; Auto-Pan) 뷰포트 EMA 추적 시뮬레이터</div>
+          <span class="badge b-ok">zap_tracker.py 로직 연동</span>
+        </div>
+        <div class="sim-body">
+          <p style="margin-top:0;">
+            캔버스 안에서 마우스를 움직여 피사체(노란색 얼굴 타겟)를 이동시켜 보세요.
+            검출 박스(점선)에는 센서 지터 노이즈가 섞여 있지만, <strong>ZAP 트래커의 EMA 필터(\(v_t = \alpha \hat{v}_t + (1-\alpha) v_{t-1}\), 기본 \(\alpha = 0.08\))</strong>와
+            여백 배율(<code>margin=1.8</code>)이 카메라 팬/줌 뷰포트(청록색 4:3 프레임)의 급격한 흔들림을 어떻게 제어하는지 실시간으로 확인할 수 있습니다.
+          </p>
+          <div class="sim-controls" id="zap-ctrl"></div>
+          <canvas id="zap-cv" data-w="920" data-h="240" style="cursor:pointer"></canvas>
+          <div class="sim-stats" id="zap-stats"></div>
+        </div>
+      </div>
+    </section>
+
+    <section class="keypoints" id="summary">
+      <h3>핵심 정리 · Chapter 03</h3>
+      <ul>
+        <li><strong>선형 도메인 우선 원칙</strong>: BLC, LSC, ANF, AWB(Stage 2~5)와 Demosaic, CCM(Stage 6~7)은 광자 수에 비례하는 선형 영역에서 수행되어야 색 비율과 주변부 광량 보정이 왜곡되지 않으며, 비선형 Gamma(Stage 8)와 YUV 변환(Stage 9)은 후반부에 배치됩니다.</li>
+        <li><strong>적응형 3A 피드백 루프</strong>: Gray-World AWB와 디지털 이득 AE는 평상시 낮은 EMA 계수(\(\alpha=0.15, \beta=0.20\))로 화면 깜빡임을 억제하다가, 급격한 조명 변화(\(|\Delta| \gt 0.3 / 0.4\)) 감지 시 고속 계수(\(0.40 / 0.45\))로 즉시 전환합니다.</li>
+        <li><strong>Halide 커널 융합과 DMA-BUF</strong>: 단계별 DRAM 왕복으로 <strong>1,257.8 MB</strong>를 소모하던 12MP 파이프라인을 단일 타일 루프로 융합(Tier 3)하여 DRAM 트래픽을 <strong>91.3 MB (13.8× 절감)</strong>로 줄이고, CPU 지연을 <strong>493.85 ms → 121.48 ms (4.07× 가속)</strong>로 단축했습니다.</li>
+        <li><strong>Dual-NPU 비동기 엣지 AI</strong>: IMX500(센서 내 검출)과 Hailo-8(Bilateral Grid / 분할)을 ISP 루프와 분리된 비동기 스레드로 구동하고 ZAP EMA 뷰포트 추적을 결합해 프레임 드롭 없는 지능형 카메라 UX를 구현합니다.</li>
+      </ul>
+    </section>
+</main>
+<script>
+(function(){
+  // 0. Clickable SVG pipeline nodes -> scroll to stage card
+  document.querySelectorAll('#isp-svg .node[data-stage]').forEach(g => {
+    const go = () => {
+      const c = document.getElementById('stage-' + g.dataset.stage);
+      if(!c) return;
+      c.scrollIntoView({ behavior: 'smooth', block: 'start' });
+      c.classList.add('flash');
+      setTimeout(() => c.classList.remove('flash'), 1400);
+    };
+    g.addEventListener('click', go);
+    g.addEventListener('keydown', e => {
+      if(e.key === 'Enter' || e.key === ' '){ e.preventDefault(); go(); }
+    });
+  });
+
+  // 1. Simulator 01: 10-Stage OpenISP Interactive Canvas
+  const stageList = [
+    { id: 'dpc', label: '1 DPC', on: true },
+    { id: 'blc', label: '2 BLC', on: true },
+    { id: 'lsc', label: '3 LSC', on: true },
+    { id: 'anf', label: '4 ANF', on: true },
+    { id: 'awb', label: '5 AWB', on: true },
+    { id: 'dem', label: '6 Demosaic', on: true },
+    { id: 'ccm', label: '7 CCM', on: true },
+    { id: 'gam', label: '8 Gamma', on: true },
+    { id: 'csc', label: '9 CSC(YUV)', on: true },
+    { id: 'eeh', label: '10 EEH', on: true }
+  ];
+  const chipBox = document.getElementById('isp-stage-chips');
+  if(chipBox){
+    stageList.forEach(st => {
+      const btn = document.createElement('button');
+      btn.type = 'button';
+      btn.className = 'isp-chip' + (st.on ? ' on' : '');
+      btn.textContent = st.label;
+      btn.addEventListener('click', () => {
+        st.on = !st.on;
+        btn.classList.toggle('on', st.on);
+        drawIspSim();
+      });
+      chipBox.appendChild(btn);
+    });
+  }
+
+  let pBlack = 64, pLsc = 0.35, pRgain = 1.65, pBgain = 1.45, pGamma = 2.2, pEeh = 0.8;
+  let probeX = 0.45, probeY = 0.48;
+  const ispCtrl = document.getElementById('isp-sim-ctrl');
+  const ispStats = document.getElementById('isp-sim-stats');
+  if(ispCtrl){
+    ispCtrl.appendChild(SB.range({ label: 'Black Level (10b)', min: 0, max: 128, step: 4, value: pBlack, onInput: v => { pBlack = v; drawIspSim(); } }));
+    ispCtrl.appendChild(SB.range({ label: 'LSC 주변부 보정 강도', min: 0, max: 0.8, step: 0.05, value: pLsc, fmt: v => v.toFixed(2), onInput: v => { pLsc = v; drawIspSim(); } }));
+    ispCtrl.appendChild(SB.range({ label: 'AWB R Gain', min: 0.8, max: 2.5, step: 0.05, value: pRgain, fmt: v => v.toFixed(2), onInput: v => { pRgain = v; drawIspSim(); } }));
+    ispCtrl.appendChild(SB.range({ label: 'AWB B Gain', min: 0.8, max: 2.5, step: 0.05, value: pBgain, fmt: v => v.toFixed(2), onInput: v => { pBgain = v; drawIspSim(); } }));
+    ispCtrl.appendChild(SB.range({ label: 'Gamma γ', min: 1.0, max: 2.8, step: 0.1, value: pGamma, fmt: v => v.toFixed(1), onInput: v => { pGamma = v; drawIspSim(); } }));
+    ispCtrl.appendChild(SB.range({ label: 'EEH Gain k', min: 0.0, max: 2.0, step: 0.1, value: pEeh, fmt: v => v.toFixed(1), onInput: v => { pEeh = v; drawIspSim(); } }));
+  }
+
+  const mainCvEl = document.getElementById('isp-main-cv');
+  if(mainCvEl){
+    mainCvEl.addEventListener('mousemove', e => {
+      const r = mainCvEl.getBoundingClientRect();
+      probeX = Math.max(0.08, Math.min(0.92, (e.clientX - r.left) / r.width));
+      probeY = Math.max(0.08, Math.min(0.92, (e.clientY - r.top) / r.height));
+      drawIspSim();
+    });
+  }
+
+  // Synthesize low-res ground truth scene (80x50) for fast real-time per-pixel ISP simulation
+  const SW = 88, SH = 56;
+  const gtScene = new Float32Array(SW * SH * 3);
+  (function initScene(){
+    const patches = [
+      [0.75, 0.22, 0.18], [0.18, 0.65, 0.25], [0.15, 0.35, 0.82],
+      [0.85, 0.78, 0.15], [0.72, 0.25, 0.75], [0.15, 0.75, 0.78],
+      [0.92, 0.92, 0.92], [0.45, 0.45, 0.45], [0.12, 0.12, 0.12]
+    ];
+    for(let y = 0; y < SH; y++){
+      for(let x = 0; x < SW; x++){
+        const u = x / SW, v = y / SH;
+        let r = 0.22 + 0.35 * (1 - v), g = 0.35 + 0.35 * (1 - v), b = 0.55 + 0.38 * (1 - v);
+        // Color checker grid on bottom-left
+        if(u > 0.08 && u < 0.52 && v > 0.42 && v < 0.88){
+          const cx = Math.min(2, Math.floor(((u - 0.08) / 0.44) * 3));
+          const cy = Math.min(2, Math.floor(((v - 0.42) / 0.46) * 3));
+          const p = patches[cy * 3 + cx];
+          r = p[0]; g = p[1]; b = p[2];
+        }
+        // Bright sun/sphere on right
+        const dx = u - 0.74, dy = (v - 0.48) * (SH / SW);
+        const dist = Math.sqrt(dx * dx + dy * dy);
+        if(dist < 0.14){
+          const sh = Math.cos((dist / 0.14) * 1.3);
+          r = 0.95 * sh; g = 0.62 * sh; b = 0.20 * sh;
+        }
+        const idx = (y * SW + x) * 3;
+        gtScene[idx] = r; gtScene[idx + 1] = g; gtScene[idx + 2] = b;
+      }
+    }
+  })();
+
+  function isOn(id){
+    const f = stageList.find(s => s.id === id);
+    return f ? f.on : false;
+  }
+
+  function drawIspSim(){
+    const { ctx, w, h } = SB.canvas('#isp-main-cv');
+    const side = SB.canvas('#isp-side-cv');
+    const sctx = side.ctx, sw = side.w, sh = side.h;
+    ctx.clearRect(0, 0, w, h);
+    sctx.clearRect(0, 0, sw, sh);
+    const dk = SB.isDark();
+    const tx = dk ? '#e6edf6' : '#12161f';
+    const tx3 = dk ? '#6e7e97' : '#7b8494';
+
+    const outRGB = new Float32Array(SW * SH * 3);
+    const histR = new Int32Array(32), histG = new Int32Array(32), histB = new Int32Array(32);
+    let mseSum = 0, hotPixelsLeft = 0;
+
+    for(let y = 0; y < SH; y++){
+      for(let x = 0; x < SW; x++){
+        const idx = (y * SW + x) * 3;
+        let r = gtScene[idx], g = gtScene[idx + 1], b = gtScene[idx + 2];
+
+        // Simulate sensor optical falloff (vignetting) + illuminant tint (green-heavy RAW) + black level pedestal
+        const ux = (x / SW) - 0.5, uy = (y / SH) - 0.5;
+        const r2 = (ux * ux + uy * uy) * 2.2;
+        const vig = 1.0 / (1.0 + 0.42 * r2);
+        r = (r * vig) / 1.65 + (64 / 1023);
+        g = (g * vig) * 1.00 + (64 / 1023);
+        b = (b * vig) / 1.45 + (64 / 1023);
+
+        // Deterministic defective hot/cold pixels + read noise
+        const hash = ((x * 73856093) ^ (y * 19349663)) & 1023;
+        if(hash < 12){
+          if(!isOn('dpc')){
+            r = 1.0; g = 1.0; b = 1.0;
+            hotPixelsLeft++;
+          }
+        }
+        if(!isOn('anf')){
+          const n = (((hash & 31) - 15) / 15.0) * 0.035;
+          r += n; g += n; b += n;
+        }
+
+        // Stage 2: BLC
+        if(isOn('blc')){
+          const ped = pBlack / 1023.0;
+          const span = Math.max(0.1, (1023 - pBlack) / 1023.0);
+          r = Math.max(0, Math.min(1, (r - ped) / span));
+          g = Math.max(0, Math.min(1, (g - ped) / span));
+          b = Math.max(0, Math.min(1, (b - ped) / span));
+        }
+
+        // Stage 3: LSC
+        if(isOn('lsc')){
+          const gainLsc = 1.0 + pLsc * r2 + 0.15 * pLsc * r2 * r2;
+          r = Math.min(1, r * gainLsc);
+          g = Math.min(1, g * gainLsc);
+          b = Math.min(1, b * gainLsc);
+        }
+
+        // Stage 5: AWB
+        if(isOn('awb')){
+          r *= pRgain;
+          b *= pBgain;
+        }
+
+        // Stage 6: Demosaic (if off, show Bayer RGGB mosaic pattern!)
+        if(!isOn('dem')){
+          const isEvenY = (y & 1) === 0, isEvenX = (x & 1) === 0;
+          if(isEvenY && isEvenX){ g = 0; b = 0; }
+          else if(!isEvenY && !isEvenX){ r = 0; g = 0; }
+          else { r = 0; b = 0; }
+        } else {
+          // Stage 7: CCM
+          if(isOn('ccm')){
+            const nr = 1.65 * r - 0.50 * g - 0.15 * b;
+            const ng = -0.22 * r + 1.40 * g - 0.18 * b;
+            const nb = -0.06 * r - 0.44 * g + 1.50 * b;
+            r = nr; g = ng; b = nb;
+          }
+          // Stage 8: Gamma
+          if(isOn('gam')){
+            const invG = 1.0 / Math.max(0.5, pGamma);
+            r = Math.pow(Math.max(0, Math.min(1, r)), invG);
+            g = Math.pow(Math.max(0, Math.min(1, g)), invG);
+            b = Math.pow(Math.max(0, Math.min(1, b)), invG);
+          }
+          // Stage 9: CSC BT.601 studio range effect
+          if(isOn('csc')){
+            r = (16 / 255) + r * (219 / 255);
+            g = (16 / 255) + g * (219 / 255);
+            b = (16 / 255) + b * (219 / 255);
+          }
+        }
+
+        r = Math.max(0, Math.min(1, r));
+        g = Math.max(0, Math.min(1, g));
+        b = Math.max(0, Math.min(1, b));
+        outRGB[idx] = r; outRGB[idx + 1] = g; outRGB[idx + 2] = b;
+      }
+    }
+
+    // Stage 10: EEH (3x3 unsharp on luma) + stats
+    const cellW = w / SW, cellH = h / SH;
+    for(let y = 0; y < SH; y++){
+      for(let x = 0; x < SW; x++){
+        const idx = (y * SW + x) * 3;
+        let r = outRGB[idx], g = outRGB[idx + 1], b = outRGB[idx + 2];
+        if(isOn('eeh') && isOn('dem') && x > 0 && x < SW - 1 && y > 0 && y < SH - 1){
+          const cY = 0.299 * r + 0.587 * g + 0.114 * b;
+          const nIdx = ((y - 1) * SW + x) * 3, sIdx = ((y + 1) * SW + x) * 3;
+          const wIdx = (y * SW + (x - 1)) * 3, eIdx = (y * SW + (x + 1)) * 3;
+          const avgY = (
+            (0.299 * outRGB[nIdx] + 0.587 * outRGB[nIdx + 1] + 0.114 * outRGB[nIdx + 2]) +
+            (0.299 * outRGB[sIdx] + 0.587 * outRGB[sIdx + 1] + 0.114 * outRGB[sIdx + 2]) +
+            (0.299 * outRGB[wIdx] + 0.587 * outRGB[wIdx + 1] + 0.114 * outRGB[wIdx + 2]) +
+            (0.299 * outRGB[eIdx] + 0.587 * outRGB[eIdx + 1] + 0.114 * outRGB[eIdx + 2])
+          ) * 0.25;
+          const hp = Math.max(-0.15, Math.min(0.15, cY - avgY)) * pEeh;
+          r = Math.max(0, Math.min(1, r + hp));
+          g = Math.max(0, Math.min(1, g + hp));
+          b = Math.max(0, Math.min(1, b + hp));
+        }
+        histR[Math.min(31, Math.floor(r * 31))]++;
+        histG[Math.min(31, Math.floor(g * 31))]++;
+        histB[Math.min(31, Math.floor(b * 31))]++;
+
+        // Compare against ideal gamma-mapped GT
+        const gr = Math.pow(gtScene[idx], 1 / 2.2);
+        const gg = Math.pow(gtScene[idx + 1], 1 / 2.2);
+        const gb = Math.pow(gtScene[idx + 2], 1 / 2.2);
+        mseSum += ((r - gr) * (r - gr) + (g - gg) * (g - gg) + (b - gb) * (b - gb)) / 3;
+
+        ctx.fillStyle = 'rgb(' + Math.round(r * 255) + ',' + Math.round(g * 255) + ',' + Math.round(b * 255) + ')';
+        ctx.fillRect(x * cellW, y * cellH, Math.ceil(cellW), Math.ceil(cellH));
+      }
+    }
+
+    // Draw probe reticle on main canvas
+    const px = probeX * w, py = probeY * h;
+    ctx.strokeStyle = '#ffffff';
+    ctx.lineWidth = 1.8;
+    ctx.strokeRect(px - 18, py - 18, 36, 36);
+
+    // Side panel top: 7x7 Magnifier Loupe
+    sctx.fillStyle = tx;
+    sctx.font = '700 12px "Pretendard", sans-serif';
+    sctx.fillText('돋보기 확대 뷰 (7×7 픽셀 격자)', 14, 20);
+    const gxCenter = Math.floor(probeX * SW), gyCenter = Math.floor(probeY * SH);
+    const loupeSize = 118, lx0 = 14, ly0 = 30, lCell = loupeSize / 7;
+    for(let dy = -3; dy <= 3; dy++){
+      for(let dx = -3; dx <= 3; dx++){
+        const sx = Math.max(0, Math.min(SW - 1, gxCenter + dx));
+        const sy = Math.max(0, Math.min(SH - 1, gyCenter + dy));
+        const id = (sy * SW + sx) * 3;
+        sctx.fillStyle = 'rgb(' + Math.round(outRGB[id] * 255) + ',' + Math.round(outRGB[id + 1] * 255) + ',' + Math.round(outRGB[id + 2] * 255) + ')';
+        sctx.fillRect(lx0 + (dx + 3) * lCell, ly0 + (dy + 3) * lCell, lCell - 1, lCell - 1);
+      }
+    }
+    const cId = (gyCenter * SW + gxCenter) * 3;
+    const cR = Math.round(outRGB[cId] * 255), cG = Math.round(outRGB[cId + 1] * 255), cB = Math.round(outRGB[cId + 2] * 255);
+    sctx.fillStyle = tx;
+    sctx.font = '600 11.5px "JetBrains Mono", monospace';
+    sctx.fillText('Coord: (' + gxCenter + ', ' + gyCenter + ')', 148, 54);
+    sctx.fillText('RGB  : (' + cR + ', ' + cG + ', ' + cB + ')', 148, 76);
+    const cY = Math.round(16 + 0.257 * cR + 0.504 * cG + 0.098 * cB);
+    sctx.fillText('Y(601): ' + cY + ' DN', 148, 98);
+    sctx.fillStyle = tx3;
+    sctx.font = '11px "Pretendard", sans-serif';
+    sctx.fillText(isOn('dem') ? '인터리브드 RGB 복원됨' : 'Bayer RGGB 모자이크 노출 상태', 148, 122);
+
+    // Side panel bottom: RGB Histogram
+    sctx.fillStyle = tx;
+    sctx.font = '700 12px "Pretendard", sans-serif';
+    sctx.fillText('실시간 RGB 채널 히스토그램', 14, 174);
+    const hx0 = 14, hy0 = 184, hgw = sw - 28, hgh = sh - hy0 - 16;
+    sctx.strokeStyle = dk ? 'rgba(255,255,255,0.1)' : 'rgba(15,23,42,0.1)';
+    sctx.strokeRect(hx0, hy0, hgw, hgh);
+
+    const maxBin = Math.max(1, ...histR, ...histG, ...histB);
+    [
+      { arr: histR, col: 'rgba(239,68,68,0.75)' },
+      { arr: histG, col: 'rgba(16,185,129,0.75)' },
+      { arr: histB, col: 'rgba(59,130,246,0.75)' }
+    ].forEach(ch => {
+      sctx.strokeStyle = ch.col;
+      sctx.lineWidth = 1.8;
+      sctx.beginPath();
+      for(let b = 0; b < 32; b++){
+        const bx = hx0 + (b / 31) * hgw;
+        const by = hy0 + hgh - (ch.arr[b] / maxBin) * (hgh - 8);
+        if(b === 0) sctx.moveTo(bx, by); else sctx.lineTo(bx, by);
+      }
+      sctx.stroke();
+    });
+
+    const mse = mseSum / (SW * SH);
+    const psnr = 10 * Math.log10(1.0 / Math.max(1e-6, mse));
+    const activeCount = stageList.filter(s => s.on).length;
+    const bppMap = { dpc: 4, blc: 6, lsc: 8, anf: 8, awb: 8, dem: 16, ccm: 24, gam: 24, csc: 13.5, eeh: 2 };
+    const activeBpp = stageList.reduce((acc, s) => acc + (s.on ? bppMap[s.id] : 0), 0);
+
+    if(ispStats){
+      ispStats.innerHTML = [
+        SB.stat({ label: '활성 단계 수', value: activeCount + ' / 10 단계' }),
+        SB.stat({ label: '비융합 DRAM 트래픽', value: activeBpp.toFixed(1) + ' B/px' }),
+        SB.stat({ label: '기준 영상 대비 PSNR', value: psnr.toFixed(1) + ' dB' }),
+        SB.stat({ label: '미보정 잔존 결함 화소', value: hotPixelsLeft + ' 개' })
+      ].join('');
+    }
+  }
+  drawIspSim();
+
+  // 2. Simulator 02: 3A Closed-Loop Convergence Simulator
+  const a3Ctrl = document.getElementById('a3-ctrl');
+  const a3Stats = document.getElementById('a3-stats');
+  let targetCct = 3200;
+  let sceneLuma = 0.06;
+  let evComp = 0.0;
+
+  if(a3Ctrl){
+    a3Ctrl.appendChild(SB.range({
+      label: '조명 색온도 변화 (K)', min: 2500, max: 8000, step: 100, value: targetCct,
+      fmt: v => v + ' K',
+      onInput: v => { targetCct = v; draw3aSim(); }
+    }));
+    a3Ctrl.appendChild(SB.range({
+      label: '입사 조도 평균 휘도 L', min: 0.01, max: 0.45, step: 0.01, value: sceneLuma,
+      fmt: v => v.toFixed(2),
+      onInput: v => { sceneLuma = v; draw3aSim(); }
+    }));
+    a3Ctrl.appendChild(SB.range({
+      label: '노출 보정 (EV)', min: -1.5, max: 1.5, step: 0.25, value: evComp,
+      fmt: v => (v >= 0 ? '+' : '') + v.toFixed(2) + ' EV',
+      onInput: v => { evComp = v; draw3aSim(); }
+    }));
+  }
+
+  function draw3aSim(){
+    const { ctx, w, h } = SB.canvas('#a3-cv');
+    ctx.clearRect(0, 0, w, h);
+    const dk = SB.isDark();
+    const tx = dk ? '#e6edf6' : '#12161f';
+    const tx3 = dk ? '#6e7e97' : '#7b8494';
+    const gridCol = dk ? 'rgba(255,255,255,0.07)' : 'rgba(15,23,42,0.07)';
+
+    // Target gains derived from CCT (T_cc = 5500 * gR / gB)
+    const ratio = targetCct / 5500.0;
+    const tgtGr = Math.max(0.5, Math.min(4.0, 1.45 * Math.sqrt(ratio)));
+    const tgtGb = Math.max(0.5, Math.min(4.0, 1.45 / Math.sqrt(ratio)));
+    const tgtAe = Math.max(0.25, Math.min(8.0, (0.18 * Math.pow(2, evComp)) / Math.max(1e-3, sceneLuma)));
+    const frozenAwb = sceneLuma < 0.02;
+
+    const T_FRAMES = 40;
+    const grHist = [], gbHist = [], aeHist = [];
+    let curGr = 1.65, curGb = 1.45, curAe = 1.25;
+    let settleFrame = 10;
+
+    for(let f = 0; f <= T_FRAMES; f++){
+      if(f >= 10){
+        if(!frozenAwb){
+          const aR = Math.abs(tgtGr - curGr) > 0.3 ? 0.40 : 0.15;
+          const aB = Math.abs(tgtGb - curGb) > 0.3 ? 0.40 : 0.15;
+          curGr = aR * tgtGr + (1 - aR) * curGr;
+          curGb = aB * tgtGb + (1 - aB) * curGb;
+        }
+        const bAe = Math.abs(tgtAe - curAe) > 0.4 ? 0.45 : 0.20;
+        curAe = bAe * tgtAe + (1 - bAe) * curAe;
+        if(Math.abs(curAe - tgtAe) > 0.05 || (!frozenAwb && Math.abs(curGr - tgtGr) > 0.04)){
+          settleFrame = f;
+        }
+      }
+      grHist.push(curGr);
+      gbHist.push(curGb);
+      aeHist.push(curAe);
+    }
+
+    const x0 = 56, y0 = 28, gw = w - x0 - 24, gh = h - y0 - 38;
+    ctx.strokeStyle = gridCol;
+    ctx.strokeRect(x0, y0, gw, gh);
+
+    const maxY = Math.max(4.2, tgtAe * 1.15);
+    const mapX = f => x0 + (f / T_FRAMES) * gw;
+    const mapY = v => y0 + gh - (v / maxY) * gh;
+
+    // Step event line at Frame 10
+    const sx = mapX(10);
+    ctx.strokeStyle = 'rgba(245,158,11,0.5)';
+    ctx.setLineDash([4, 4]);
+    ctx.beginPath(); ctx.moveTo(sx, y0); ctx.lineTo(sx, y0 + gh); ctx.stroke();
+    ctx.setLineDash([]);
+    ctx.fillStyle = '#f59e0b';
+    ctx.font = '600 10.5px "JetBrains Mono", monospace';
+    ctx.fillText('Frame 10: 조명 급변', sx + 6, y0 + 14);
+
+    // Plot curves
+    [
+      { arr: grHist, col: '#ef4444', name: 'AWB g_R' },
+      { arr: gbHist, col: '#3b82f6', name: 'AWB g_B' },
+      { arr: aeHist, col: '#10b981', name: 'AE digital_gain' }
+    ].forEach((s, idx) => {
+      ctx.strokeStyle = s.col;
+      ctx.lineWidth = 2.2;
+      ctx.beginPath();
+      s.arr.forEach((v, f) => {
+        const cx = mapX(f), cy = mapY(v);
+        if(f === 0) ctx.moveTo(cx, cy); else ctx.lineTo(cx, cy);
+      });
+      ctx.stroke();
+
+      ctx.fillStyle = s.col;
+      ctx.font = '600 11.5px "Pretendard", sans-serif';
+      ctx.fillText('● ' + s.name + ' (' + s.arr[T_FRAMES].toFixed(2) + '×)', x0 + 14 + idx * 185, y0 + gh + 24);
+    });
+
+    const estCct = Math.round(Math.max(2400, Math.min(8500, 5500 * (curGr / curGb))));
+    if(a3Stats){
+      a3Stats.innerHTML = [
+        SB.stat({ label: '수렴 AWB 이득 (g_R / g_B)', value: frozenAwb ? '동결됨 (Dark Luma < 0.02)' : curGr.toFixed(2) + ' / ' + curGb.toFixed(2) }),
+        SB.stat({ label: '추정 색온도 T_cc (CCM 보간)', value: estCct + ' K' }),
+        SB.stat({ label: '수렴 AE 디지털 이득', value: curAe.toFixed(2) + ' ×' }),
+        SB.stat({ label: '95% 안정화 소요 프레임', value: Math.max(1, settleFrame - 10) + ' frames' })
+      ].join('');
+    }
+  }
+  draw3aSim();
+
+  // 3. Simulator 03: Halide Loop Fusion & DRAM Traffic
+  const halCtrl = document.getElementById('hal-ctrl');
+  const halStats = document.getElementById('hal-stats');
+  let halTier = 't3';
+  let tileSize = 128;
+
+  const TIER_SIM = {
+    t1: { name: 'Tier 1 · C99 Unfused', ms: 493.85, dram: 1257.8, bpp: 102.0, fused: false, gpu: false },
+    t2: { name: 'Tier 2 · Halide Block-wise', ms: 162.88, dram: 1257.8, bpp: 102.0, fused: false, gpu: false },
+    t3: { name: 'Tier 3 · Halide Fused CPU', ms: 121.48, dram: 91.3, bpp: 7.4, fused: true, gpu: false },
+    t4s: { name: 'Tier 4 · GPU Staged', ms: 289.56, dram: 165.0, bpp: 13.4, fused: true, gpu: true },
+    t4z: { name: 'Tier 4 · GPU DMA-BUF Zero-Copy', ms: 229.40, dram: 91.3, bpp: 7.4, fused: true, gpu: true }
+  };
+
+  if(halCtrl){
+    halCtrl.appendChild(SB.seg({
+      label: '실행 엔진 Tier',
+      options: [
+        ['t1', 'Tier 1 (C99)'],
+        ['t2', 'Tier 2 (SIMD)'],
+        ['t3', 'Tier 3 (Fused CPU)'],
+        ['t4s', 'Tier 4 (GPU Staged)'],
+        ['t4z', 'Tier 4 (GPU DMA-BUF)']
+      ],
+      value: 't3',
+      onChange: v => { halTier = v; drawHalSim(); }
+    }));
+    halCtrl.appendChild(SB.seg({
+      label: '타일 크기 (Fused)',
+      options: [['64', '64×64'], ['128', '128×128 (정본)'], ['256', '256×256'], ['512', '512×512']],
+      value: '128',
+      onChange: v => { tileSize = parseInt(v, 10); drawHalSim(); }
+    }));
+  }
+
+  function drawHalSim(){
+    const t = TIER_SIM[halTier];
+    const { ctx, w, h } = SB.canvas('#hal-cv');
+    ctx.clearRect(0, 0, w, h);
+    const dk = SB.isDark();
+    const tx = dk ? '#e6edf6' : '#12161f';
+    const tx3 = dk ? '#6e7e97' : '#7b8494';
+
+    // Working set in L2 cache for a tile across 6 float32 intermediate stages (4 bytes * 3 channels = 12 B/px)
+    const tileKb = t.fused ? Math.round((tileSize * tileSize * 12 * 2) / 1024) : 12330 * 4;
+    const fitsL2 = tileKb <= 2048;
+
+    ctx.fillStyle = tx;
+    ctx.textAlign = 'left';
+    ctx.font = '700 12.5px "Pretendard", sans-serif';
+    ctx.fillText(t.name + ' — 메모리 계층 데이터 이동 경로 (12.33 MP 프레임 기준)', 16, 24);
+
+    // Draw DRAM vs L2 Cache / Register pipeline diagram
+    const stNames = ['BLC', 'AWB', 'Demosaic', 'CCM', 'Gamma', 'CSC'];
+    const xStart = 34, yBox = 62, bw = 112, bh = 54, gap = 28;
+
+    stNames.forEach((sn, idx) => {
+      const bx = xStart + idx * (bw + gap);
+      ctx.fillStyle = t.fused ? 'rgba(16,185,129,0.12)' : 'rgba(239,68,68,0.10)';
+      ctx.strokeStyle = t.fused ? '#10b981' : '#ef4444';
+      ctx.lineWidth = 1.6;
+      ctx.beginPath(); ctx.roundRect(bx, yBox, bw, bh, 8); ctx.fill(); ctx.stroke();
+
+      ctx.fillStyle = tx;
+      ctx.textAlign = 'center';
+      ctx.font = '700 12px "Pretendard", sans-serif';
+      ctx.fillText(sn, bx + bw / 2, yBox + 24);
+      ctx.fillStyle = tx3;
+      ctx.font = '10.5px "JetBrains Mono", monospace';
+      ctx.fillText(t.fused ? 'L2 Tile 내 전달' : 'DRAM 왕복 기록', bx + bw / 2, yBox + 42);
+
+      if(idx < stNames.length - 1){
+        ctx.strokeStyle = t.fused ? '#10b981' : '#ef4444';
+        ctx.beginPath();
+        ctx.moveTo(bx + bw + 2, yBox + bh / 2);
+        ctx.lineTo(bx + bw + gap - 2, yBox + bh / 2);
+        ctx.stroke();
+      }
+    });
+
+    // Bottom DRAM bar
+    const dy = 148;
+    ctx.fillStyle = dk ? 'rgba(255,255,255,0.06)' : 'rgba(15,23,42,0.06)';
+    ctx.beginPath(); ctx.roundRect(34, dy, w - 68, 52, 8); ctx.fill();
+    const barW = (t.dram / 1257.8) * (w - 88);
+    ctx.fillStyle = t.fused ? '#10b981' : '#ef4444';
+    ctx.beginPath(); ctx.roundRect(44, dy + 12, Math.max(18, barW), 28, 6); ctx.fill();
+    ctx.fillStyle = tx;
+    ctx.textAlign = 'left';
+    ctx.font = '700 12px "JetBrains Mono", monospace';
+    ctx.fillText('외부 DRAM 트래픽: ' + t.dram.toFixed(1) + ' MB / frame (' + t.bpp.toFixed(1) + ' B/px)', 54, dy + 30);
+
+    if(halStats){
+      halStats.innerHTML = [
+        SB.stat({ label: '12MP 프레임 평균 지연', value: t.ms.toFixed(2) + ' ms (' + (493.85 / t.ms).toFixed(2) + '× 가속)' }),
+        SB.stat({ label: '프레임당 DRAM 트래픽', value: t.dram.toFixed(1) + ' MB (' + t.bpp.toFixed(1) + ' B/px)' }),
+        SB.stat({ label: '타일 워킹셋 크기', value: t.fused ? tileKb + ' KB (' + (fitsL2 ? 'RPi5 2MB L2 적중' : 'L2 초과 스필') + ')' : '49,320 KB (L2 초과)' }),
+        SB.stat({ label: '수치 동등성 (vs C99)', value: halTier === 't1' ? 'Ref (기준)' : '43.53 dB / MAE 1.29' })
+      ].join('');
+    }
+  }
+  drawHalSim();
+
+  // 4. Simulator 04: ZAP (Zoom & Auto-Pan) Viewport EMA Tracker
+  const zapCtrl = document.getElementById('zap-ctrl');
+  const zapStats = document.getElementById('zap-stats');
+  let zapAlpha = 0.08;
+  let zapMargin = 1.8;
+  let tgtX = 0.62, tgtY = 0.46;
+  let vpX = 0.50, vpY = 0.50;
+
+  if(zapCtrl){
+    zapCtrl.appendChild(SB.range({
+      label: 'viewport_smoothing (EMA α)', min: 0.02, max: 0.40, step: 0.02, value: zapAlpha,
+      fmt: v => v.toFixed(2),
+      onInput: v => { zapAlpha = v; }
+    }));
+    zapCtrl.appendChild(SB.range({
+      label: '프레이밍 여백 배율 (margin)', min: 1.2, max: 2.6, step: 0.1, value: zapMargin,
+      fmt: v => v.toFixed(1) + '×',
+      onInput: v => { zapMargin = v; }
+    }));
+  }
+
+  const zapCvEl = document.getElementById('zap-cv');
+  if(zapCvEl){
+    zapCvEl.addEventListener('mousemove', e => {
+      const r = zapCvEl.getBoundingClientRect();
+      tgtX = Math.max(0.15, Math.min(0.85, (e.clientX - r.left) / r.width));
+      tgtY = Math.max(0.20, Math.min(0.80, (e.clientY - r.top) / r.height));
+    });
+  }
+
+  function stepZap(){
+    vpX = zapAlpha * tgtX + (1 - zapAlpha) * vpX;
+    vpY = zapAlpha * tgtY + (1 - zapAlpha) * vpY;
+    const { ctx, w, h } = SB.canvas('#zap-cv');
+    ctx.clearRect(0, 0, w, h);
+    const dk = SB.isDark();
+    const tx = dk ? '#e6edf6' : '#12161f';
+
+    // Sensor full frame background
+    ctx.fillStyle = dk ? '#0d1322' : '#eef2f9';
+    ctx.fillRect(0, 0, w, h);
+
+    // Jittery raw detector box around target
+    const jx = (Math.sin(performance.now() * 0.025) * 6);
+    const jy = (Math.cos(performance.now() * 0.031) * 5);
+    const faceR = 26;
+    const fx = tgtX * w + jx, fy = tgtY * h + jy;
+
+    // Target subject
+    ctx.fillStyle = '#f59e0b';
+    ctx.beginPath(); ctx.arc(tgtX * w, tgtY * h, faceR, 0, Math.PI * 2); ctx.fill();
+
+    // Raw SSD detector bbox (dashed red)
+    ctx.strokeStyle = '#ef4444';
+    ctx.setLineDash([4, 4]);
+    ctx.lineWidth = 1.5;
+    ctx.strokeRect(fx - faceR, fy - faceR, faceR * 2, faceR * 2);
+    ctx.setLineDash([]);
+
+    // Smoothed 4:3 ZAP viewport (cyan)
+    const vpH = Math.min(h - 20, faceR * 2 * zapMargin * 1.4);
+    const vpW = vpH * (4 / 3);
+    const vx = Math.max(8, Math.min(w - vpW - 8, vpX * w - vpW / 2));
+    const vy = Math.max(8, Math.min(h - vpH - 8, vpY * h - vpH / 2));
+
+    ctx.strokeStyle = '#0ea5e9';
+    ctx.lineWidth = 2.6;
+    ctx.strokeRect(vx, vy, vpW, vpH);
+    ctx.fillStyle = 'rgba(14,165,233,0.08)';
+    ctx.fillRect(vx, vy, vpW, vpH);
+
+    ctx.fillStyle = tx;
+    ctx.font = '700 11.5px "JetBrains Mono", monospace';
+    ctx.fillText('ZAP 4:3 Viewport (EMA α=' + zapAlpha.toFixed(2) + ', margin=' + zapMargin.toFixed(1) + ')', vx + 8, vy + 18);
+
+    if(zapStats){
+      const lagPx = Math.hypot((tgtX - vpX) * w, (tgtY - vpY) * h);
+      zapStats.innerHTML = [
+        SB.stat({ label: '뷰포트 중심 ( 정규화 )', value: '(' + vpX.toFixed(2) + ', ' + vpY.toFixed(2) + ')' }),
+        SB.stat({ label: '지터 감쇠율', value: Math.round((1 - zapAlpha) * 100) + ' % 억제' }),
+        SB.stat({ label: '순간 추적 지연 거리', value: lagPx.toFixed(1) + ' px' }),
+        SB.stat({ label: '출력 종횡비', value: '4:3 고정 크롭' })
+      ].join('');
+    }
+    requestAnimationFrame(stepZap);
+  }
+  requestAnimationFrame(stepZap);
+
+  window.addEventListener('sb:theme', () => { drawIspSim(); draw3aSim(); drawHalSim(); });
+})();
+</script>
+</body>
+</html>

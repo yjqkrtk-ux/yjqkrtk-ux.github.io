@@ -697,10 +697,26 @@
         </table>
       </div>
 
-      <h2>2. 16-Channel Latent Space Geometry (<code>Linear Sensor RGB</code> vs. <code>sRGB</code>) &amp; Block-by-Block Pipeline</h2>
+      <h2>2. Theoretical Foundation: From <em>The Latent Color Subspace</em> to 16-Channel Curved Manifold &amp; Jacobian Translation</h2>
+      <h3>2.1 Emergent 3D Color Subspace vs. 13D Spatial Edge Fiber ($\mathbb{{R}}^{{16}} = \mathcal{{S}}_{{\text{{DC}}}} \oplus \mathcal{{S}}_{{\text{{AC}}}}$)</h3>
       <p>
-        Sweeping radiometric luminance $Y \in [0, 1]$ shows that <code>Linear Sensor RGB</code> and display <code>sRGB</code> inhabit the <strong>exact same curved 3D polynomial submanifold</strong> $\mathcal{{M}}_{{\text{{DC}}}} \subset \mathbb{{R}}^{{16}}$, reparameterized by $Y \mapsto Y^{{1/\gamma}}$ (<strong>Fig. 1A</strong>). Unprocessed Bayer RAW latents ($\mathbf{{z}}_0$) start in the green-biased dark quadrant ($\mathbf{{u}}_{{\text{{DC}},G}} \gg \mathbf{{u}}_{{\text{{DC}},R}}$), move radially outward under <code>Stage 1 (BLC + Gain)</code>, shear onto the neutral gray diagonal ($R=G$) under <code>Stage 2 (Authentic WB)</code>, expand primary chroma under <code>Stage 3 (3&times;3 CCM)</code>, and stretch along the neutral manifold under <code>Stage 4 (Gamma sRGB)</code> (<strong>Fig. 1B&ndash;D</strong>, <strong>Fig. 2</strong>).
+        Pach et al. (<em>&ldquo;The Latent Color Subspace: Emergent Order in High-Dimensional Chaos,&rdquo;</em> 2026 [4]) demonstrated that although a 16-channel VAE encoder $\mathcal{{E}}$ compresses each $8\times 8\times 3$ patch ($192$ values) into an entangled vector $\mathbf{{z}} \in \mathbb{{R}}^{{16}}$, uniform color patches align along an emergent <strong>3-dimensional linear color subspace</strong> governed by a readout matrix $W_{{\text{{DC}}}} \in \mathbb{{R}}^{{3\times 16}}$ and its right pseudoinverse $W_{{\text{{DC}}}}^+ \in \mathbb{{R}}^{{16\times 3}}$ ($W_{{\text{{DC}}}} W_{{\text{{DC}}}}^+ = I_3$). Using biorthogonal oblique projectors:
       </p>
+      <div class="equation">
+        $$P_{{\text{{DC}}}} = W_{{\text{{DC}}}}^+ W_{{\text{{DC}}}}, \qquad P_{{\text{{AC}}}} = I_{{16}} - P_{{\text{{DC}}}}, \qquad \mathbf{{z}}_0 = \underbrace{{P_{{\text{{DC}}}}\mathbf{{z}}_0}}_{{\text{{3D Patch Mean Color (DC)}}}} + \underbrace{{\mathbf{{z}}_{{\text{{AC}}}}}}_{{\text{{13D Intra-Patch Edge/Texture (AC)}}}}$$
+      </div>
+      <p>
+        While flat linear steering ($\mathbf{{z}}_{{\text{{new}}}} = \mathbf{{z}}_0 + W_{{\text{{DC}}}}^+ \Delta\bar{{\mathbf{{c}}}}$) suffices for small artistic tint shifts in sRGB, it fails on camera sensor RAW ISPs for two mathematical reasons:
+      </p>
+      <ul>
+        <li><strong>Curved 3D Color Submanifold ($\mathcal{{M}}_{{\text{{DC}}}} \subset \mathbb{{R}}^{{16}}$):</strong> Due to internal <code>SiLU</code> and <code>GroupNorm</code> activations, sweeping luminance $Y \in [0, 1]$ bends the 3D color locus into a curved degree-3 polynomial manifold $\boldsymbol{{\mu}}_{{\text{{DC}}}}(\bar{{\mathbf{{c}}}}) \in \mathbb{{R}}^{{16}}$ ($R^2 = 0.9797$ degree-3 vs. $0.9100$ flat linear, <strong>Fig. 1A</strong>). Both <code>Linear Sensor RGB</code> and display <code>sRGB</code> lie on this exact same curved manifold, reparameterized by $Y \mapsto Y^{{1/\gamma}}$.</li>
+        <li><strong>Why Jacobian Translation of the 13D AC Subspace Is Required:</strong> For a textured $8\times 8$ patch $\mathbf{{x}}(u,v) = \bar{{\mathbf{{c}}}}_0 + \Delta\mathbf{{x}}(u,v)$, a non-linear point ISP operator $f_{{\text{{ISP}}}}(\cdot)$ transforms pixels according to a first-order Taylor expansion around the patch mean $\bar{{\mathbf{{c}}}}_0$:
+          <div class="equation">
+            $$f_{{\text{{ISP}}}}\!\big(\bar{{\mathbf{{c}}}}_0 + \Delta\mathbf{{x}}(u,v)\big) \;\approx\; \underbrace{{\overline{{f_{{\text{{ISP}}}}(\mathbf{{x}})}}_{{\text{{New Patch DC }} \bar{{\mathbf{{c}}}}_{{\text{{new}}}}}} \;+\; \underbrace{{\frac{{\partial f_{{\text{{ISP}}}}}}{{\partial \mathbf{{c}}}}\Big|_{{\bar{{\mathbf{{c}}}}_0}}}}_{{J_{{3\times 3}} \in \mathbb{{R}}^{{3\times 3}}}} \Delta\mathbf{{x}}(u,v).$$
+          </div>
+          Because raw silicon Bayer sensors are green-dominant, raw intra-patch edges $\Delta\mathbf{{x}}(u,v)$ (encoded in $\mathbf{{z}}_{{\text{{AC}}}}$) have $\Delta G \gg \Delta R, \Delta B$. Translating only the 3D DC color while leaving $\mathbf{{z}}_{{\text{{AC}}}}$ unscaled leaves high-frequency edges with raw green contrast and uncompensated shadow slopes. <strong>Jacobian Translation</strong> multiplies the R, G, B spatial gradient/curvature fibers inside $\mathbf{{z}}_{{\text{{AC}}}}$ by the $3\times 3$ Jacobian matrix $J_{{3\times 3}}$ so that intra-patch edges scale by White Balance gains, rotate across R/G/B under the $3\times 3$ CCM, and stretch by the local Gamma derivative $\frac{{1}}{{\gamma}}c^{{1/\gamma - 1}}$.
+        </li>
+      </ul>
 
       <div class="span-all figure-card">
         <img src="figures/comp_fig6_latent_geometry_linear_vs_srgb.webp" alt="16-Channel VAE Latent Geometry: Linear Sensor RGB vs. sRGB">
@@ -712,20 +728,50 @@
       <div class="span-all figure-card">
         <img src="figures/comp_fig8_pipeline_block_by_block_flow.webp" alt="Unified Block-by-Block Latent Pipeline and Step-by-Step Visual Evolution">
         <div class="figure-caption">
-          <strong>Fig. 2. Unified Block-by-Block Latent Pipeline Diagram &amp; Step-by-Step Visual Evolution Across 3 Genuine Hardware Camera Captures.</strong> <strong>(Row 1)</strong> The 6 sequential pipeline blocks (<code>Block 0: Sensor RAW Encoder</code> &rarr; <code>Block 1: BLC &amp; Gain</code> &rarr; <code>Block 2: Authentic WB</code> &rarr; <code>Block 3: Authentic 3&times;3 CCM</code> &rarr; <code>Block 4: Gamma Tone Curve (0-Net)</code> &rarr; <code>Block 5: 4-Step Iterative Refiner &amp; Frozen Decoder</code>) with their exact 3-Point Gauss-Legendre Quadrature DC equations, $3\times 3$ Secant Jacobian AC operators, and 4-step damped $3\times 3$ cross-cell flow; <strong>(Rows 2&ndash;4)</strong> Decoded image $\mathcal{{D}}(\mathbf{{z}}_k)$, PSNR vs. block Ground Truth, and R/G/B level bars for <code>Nikon D700</code>, <code>Canon EOS 40D</code>, and Official <code>OpenISP test.RAW</code>; <strong>(Row 5)</strong> 16-channel latent activation barcode $\mathbf{{z}}_k \in \mathbb{{R}}^{{16}}$ and <code>R/G</code>, <code>B/G</code> telemetry.
+          <strong>Fig. 2. Unified Block-by-Block Latent Pipeline Diagram &amp; Step-by-Step Visual Evolution Across 3 Genuine Hardware Camera Captures.</strong> <strong>(Row 1)</strong> The 6 sequential pipeline blocks (<code>Block 0: Sensor RAW Encoder</code> &rarr; <code>Block 1: BLC &amp; Gain</code> &rarr; <code>Block 2: Authentic WB</code> &rarr; <code>Block 3: Authentic 3&times;3 CCM</code> &rarr; <code>Block 4: Gamma Tone Curve (0-Net)</code> &rarr; <code>Block 5: 4-Step Iterative Refiner &amp; Frozen Decoder</code>); <strong>(Rows 2&ndash;4)</strong> Decoded image $\mathcal{{D}}(\mathbf{{z}}_k)$, PSNR vs. block Ground Truth, and R/G/B level bars for <code>Nikon D700</code>, <code>Canon EOS 40D</code>, and Official <code>OpenISP test.RAW</code>; <strong>(Row 5)</strong> 16-channel latent activation barcode $\mathbf{{z}}_k \in \mathbb{{R}}^{{16}}$ and <code>R/G</code>, <code>B/G</code> telemetry.
         </div>
       </div>
 
       <!-- BEGIN_SECTION_7_INTERACTIVE_SIMULATOR -->
-      <h2>3. Step-by-Step Numerical Execution Inside an $8\times 8$ Patch Latent ($\mathbf{z} \in \mathbb{R}^{16}$), Authentic Camera ISP Parameters &amp; 1-Step vs. $N$-Step ($N=4$) Refinement</h2>
+      <h2>3. Unpacked 4-Step Patch Equations ($\mathbf{z} \in \mathbb{R}^{16}$), Authentic Camera ISP Parameters &amp; 1-Step vs. 4-Step Refinement</h2>
       <p>
-        We verify two core properties across <strong>10 genuine hardware camera sensor RAWs</strong> (<code>OpenISP</code> 10-bit RGGB <code>.RAW</code>, <code>MIT-Adobe FiveK</code> 12/14-bit DSLR <code>.DNG</code>, and <code>Google Pixel</code> 14-bit mobile <code>.DNG</code>): (1) using each camera's authentic embedded As-Shot White Balance gains (<code>rp.camera_whitebalance</code>, where $w_R$ reaches $2.724\times$ on Canon 5D and $w_B$ reaches $2.633\times$ on Pixel Indoor) and authentic $3\times 3$ Color Correction Matrix (<code>rp.color_matrix</code>), a single universal calibration checkpoint (<code>flux_16ch_jet_calib_v2.pt</code>) eliminates the raw Bayer green cast across all 10 cameras ($R^2 = 0.9978$, mean RGB error $0.0055$); and (2) replacing unconstrained 1-step pointwise refinement ($\mathcal{R}_{1\text{-step}}$, mean $25.29\text{ dB}$) with our <strong>4-Step Damped Iterative Refiner ($\mathcal{R}_{4\text{-step}}$, $N=4$ steps with $3\times 3$ cross-cell spatial convolutions)</strong> eliminates $8\times 8$ patch boundary artifacts and boosts mean PSNR from <strong>$25.04\text{ dB}$ (0-Net) $\to 27.18\text{ dB}$ (4-Step)</strong> ($+2.14\text{ dB}$).
+        For each $8\times 8$ patch latent $\mathbf{z}_0 \in \mathbb{R}^{16}$ (e.g., patch $(y=7, x=8)$ of <code>Nikon D700</code> with authentic DNG parameters $b=0.01$, $g=1.02\times$, $\text{WB}=[2.129, 1.0, 1.547]$, native $3\times 3$ CCM, and $\gamma=2.0$), our operator executes in four explicit equations:
+      </p>
+      <p>
+        <strong>Step 1 (Subspace Readout of Patch Mean RGB $\bar{\mathbf{c}}_0$ &amp; Intra-Patch AC Spread $\boldsymbol{\sigma}_{\text{AC}}$):</strong> Using our $3\times 3$ neighbor-aware polynomial readout $\psi_{\text{DC}}$ and orthonormal Legendre AC norm $\psi_\sigma$, we extract the green-biased linear RAW mean color and intra-patch standard deviation:
+      </p>
+      <div class="equation">
+        $$\bar{\mathbf{c}}_0 = \psi_{\text{DC}}(\mathbf{z}_0) = [0.1774,\; 0.2956,\; 0.1471]^T, \qquad \boldsymbol{\sigma}_{\text{AC}} = \psi_\sigma(\mathbf{z}_{\text{AC}}) = [0.027,\; 0.028,\; 0.022]^T, \qquad \boldsymbol{\delta} = \sqrt{1.5}\,\boldsymbol{\sigma}_{\text{AC}}.$$
+      </div>
+      <p>
+        <strong>Step 2 (3-Point Gauss-Legendre Quadrature for Non-Linear DC Color $\bar{\mathbf{c}}_{\text{new}}$):</strong> Because $f_{\text{ISP}}(\bar{\mathbf{c}}_0) \neq \overline{f_{\text{ISP}}(\mathbf{x})}$ under concave gamma and highlight clipping, we integrate $f_{\text{ISP}}(\cdot)$ across three quadrature nodes $\mathbf{c}_- = \bar{\mathbf{c}}_0 - \boldsymbol{\delta}$, $\mathbf{c}_0 = \bar{\mathbf{c}}_0$, and $\mathbf{c}_+ = \bar{\mathbf{c}}_0 + \boldsymbol{\delta}$ with weights $(\tfrac{1}{6}, \tfrac{4}{6}, \tfrac{1}{6})$:
+      </p>
+      <div class="equation">
+        $$\bar{\mathbf{c}}_{\text{new}} = \frac{1}{6}\,f_{\text{ISP}}(\bar{\mathbf{c}}_0 - \boldsymbol{\delta}) + \frac{4}{6}\,f_{\text{ISP}}(\bar{\mathbf{c}}_0) + \frac{1}{6}\,f_{\text{ISP}}(\bar{\mathbf{c}}_0 + \boldsymbol{\delta}) = [0.6314,\; 0.5473,\; 0.4338]^T \quad (\text{True } 8\times 8\text{ GT: } [0.6306,\; 0.5460,\; 0.4339]^T).$$
+      </div>
+      <p>
+        <strong>Step 3 ($3\times 3$ Secant Jacobian Matrix $J_{3\times 3}$ for AC Edge Translation):</strong> Each column $b \in \{R, G, B\}$ of the patch Jacobian is computed via central finite differences across the quadrature excursion $\delta_b\mathbf{e}_b$ and smoothed with its $3\times 3$ spatial neighbors:
+      </p>
+      <div class="equation">
+        $$J_{3\times 3}[:, b] = \operatorname{Smooth}_{3\times 3}\!\left(\frac{f_{\text{ISP}}(\bar{\mathbf{c}}_0 + \delta_b\mathbf{e}_b) - f_{\text{ISP}}(\bar{\mathbf{c}}_0 - \delta_b\mathbf{e}_b)}{2\,\delta_b}\right) = \begin{bmatrix} +2.697 & -0.342 & -0.144 \\ -0.016 & +1.226 & -0.412 \\ +0.029 & -0.253 & +2.219 \end{bmatrix},$$
+      </div>
+      <p>
+        where the diagonal entries ($+2.697, +1.226, +2.219$, <strong>Fig. 3A</strong>) capture the compounded Gain $\times$ WB ($w_R=2.129$) $\times$ Gamma slope, and the off-diagonal entries capture $R \leftrightarrow G \leftrightarrow B$ edge cross-mixing from the camera's $3\times 3$ CCM.
+      </p>
+      <p>
+        <strong>Step 4 (Coupled 16-Ch Reconstruction &amp; 4-Step Damped Iterative Refiner $\mathcal{R}_{4\text{-step}}$):</strong> Combining the polynomial DC shift $\Delta\bar{\mathbf{c}}$, directional neighbor DC gradients $(\partial_x\Delta\bar{\mathbf{c}}, \partial_y\Delta\bar{\mathbf{c}})$, and the Kronecker product $\mathbf{z}_{\text{AC}} \otimes \operatorname{vec}(J_{3\times 3} - I_3)$ into feature vector $\boldsymbol{\phi}(\mathbf{z}_0, \bar{\mathbf{c}}_0, \bar{\mathbf{c}}_{\text{new}}, J_{3\times 3}) \in \mathbb{R}^{230}$ yields the zero-network latent $\mathbf{z}_{\text{comp}} = \mathbf{z}_0 + W_{\text{trans}}^T \boldsymbol{\phi}$ (<code>Stage 4: 0-Net</code>, mean $25.04\text{ dB}$). Finally, to resolve cross-patch receptive field shifts without the $8\times 8$ block-boundary ringing of a single unconstrained jump (<code>Stage 5: +1-Step</code>, $25.29\text{ dB}$), we integrate $N=4$ damped Euler steps with $3\times 3$ spatial residual convolutions and step-phase FiLM conditioning $\tau_k = k/N$:
+      </p>
+      <div class="equation">
+        $$\mathbf{z}^{(0)} = \mathbf{z}_{\text{comp}}, \qquad \mathbf{z}^{(k+1)} = \mathbf{z}^{(k)} + \frac{g(\Theta_{\text{ISP}})}{4}\,\mathcal{F}_\theta\!\left(\mathbf{z}^{(k)},\, \mathbf{z}_0,\, \bar{\mathbf{c}}_0,\, \bar{\mathbf{c}}_{\text{new}},\, \nabla_{3\times 3}\mathbf{z}^{(k)},\, \tau_k\right), \quad k = 0, 1, 2, 3,$$
+      </div>
+      <p>
+        reaching <strong>$27.18\text{ dB}$ mean PSNR</strong> across all 10 hardware cameras (<strong>Fig. 3B&ndash;D</strong>).
       </p>
 
       <div class="span-all figure-card">
-        <img src="figures/comp_fig9_step_by_step_math_and_consistency.webp" alt="Inside a Single 8x8 Patch Latent: Authentic Camera ISP Math and 1-Step vs 4-Step Iterative Refiner">
+        <img src="figures/comp_fig9_step_by_step_math_and_consistency.webp" alt="Patch-Level Latent ISP Verification: 3x3 Jacobian Heatmap, 16-Ch Match and 10-Camera PSNR">
         <div class="figure-caption">
-          <strong>Fig. 3. Inside a Single $8\times 8$ Patch Latent ($\mathbf{z} \in \mathbb{R}^{16}$): Authentic Camera ISP Math &amp; 1-Step vs. $N$-Step ($N=4$) Iterative Refinement.</strong> <strong>(A)</strong> Exact numerical trace of Steps 1&ndash;4 on patch $(y=7, x=8)$ of <code>Nikon D700</code> using its authentic DNG metadata (<code>WB=[2.129, 1.0, 1.547]</code>, native $3\times 3$ CCM, $\gamma=2.0$); <strong>(B)</strong> 16-channel latent vector comparison between 0-Net math, +1-Step Refiner, +4-Step Iterative Refiner, and true VAE-encoded ground truth $\mathcal{E}(\mathbf{x}_{\text{gt}})$; <strong>(C)</strong> Cross-scene mean RGB consistency across all 10 hardware camera RAWs $\times$ 6 stages ($R^2 = 0.9978$, MAE $= 0.0055$); <strong>(D)</strong> Full-pipeline sRGB PSNR comparing 0-Net Pure Math ($25.04\text{ dB}$), +1-Step Refiner ($25.29\text{ dB}$), and +4-Step Iterative Refiner ($27.18\text{ dB}$) across all 10 cameras.
+          <strong>Fig. 3. Patch-Level Latent ISP Verification ($\mathbf{z} \in \mathbb{R}^{16}$): $3\times 3$ Secant Jacobian, 16-Channel Vector Match &amp; 10-Camera PSNR.</strong> <strong>(A)</strong> Visual heatmap of the $3\times 3$ Secant Jacobian matrix $J_{3\times 3}$ at patch $(y=7, x=8)$ of <code>Nikon D700</code>, showing diagonal WB/Gamma slope amplification ($+2.697$ on Red, $+2.219$ on Blue) and off-diagonal $3\times 3$ CCM edge mixing; <strong>(B)</strong> 16-channel latent vector match ($c_0 \dots c_{15}$) comparing 0-Net math, +1-Step Refiner, +4-Step Iterative Refiner, and true VAE-encoded ground truth $\mathcal{E}(\mathbf{x}_{\text{gt}})$; <strong>(C)</strong> 10-camera mean RGB consistency ($R^2 = 0.9978$, MAE $= 0.0055$); <strong>(D)</strong> Full-pipeline sRGB PSNR comparing 0-Net ($25.04\text{ dB}$), +1-Step ($25.29\text{ dB}$), and +4-Step Refiner ($27.18\text{ dB}$) across all 10 cameras.
         </div>
       </div>
 

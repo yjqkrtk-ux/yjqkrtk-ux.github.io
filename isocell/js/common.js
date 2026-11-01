@@ -1,292 +1,380 @@
 /* ==========================================================================
-   Samsung S.LSI — ISOCELL 200MP & E2E AI Remosaic Guidebook Common Runtime
+   Samsung S.LSI ISOCELL 200MP & E2E AI Remosaic Guidebook — Exact SensorBook Runtime
    ========================================================================== */
 (function () {
   "use strict";
 
-  const CHAPTERS = [{"num": 1, "slug": "isocell_sensors", "title": "200MP ISOCELL Sensor Development — Remosaic Principle & Sensor History (HP2 · HP3/HP9 · HP5)", "part": "PILLAR 1 · 200MP ISOCELL SENSOR DEVELOPMENT", "summary": "Core principle of Non-Bayer (4×4 / 2×2) to Bayer Remosaic, chronological development history across ISOCELL HP2 (0.6µm, QMSC), HP3/HP9 (0.56µm, World-1st DL Hexadeca Remosaic), and HP5 (0.5µm, World's Smallest 200MP), and commercialized flagship devices."}, {"num": 2, "slug": "e2e_remosaic", "title": "E2E AI Remosaic (Gen 1–4) — Heterogeneous SoC Parallelization on the ISP Pipeline", "part": "PILLAR 2 · E2E AI REMOSAIC TURN-KEY PLATFORM", "summary": "Distributing DL Remosaic and Camera ISP workloads across CPU/GPU/NPU/ISP mounted directly on the Camera ISP pipeline (~3× faster 200MP capture), Gen 1 → Gen 4 feature evolution history, SEC 2023 Silver Award, and commercial product table (30+ OEM models)."}];
-  const SEARCH_INDEX = [{"type": "Section", "slug": "isocell_sensors", "num": 1, "chTitle": "200MP ISOCELL Sensor Development — Remosaic Principle & Sensor History (HP2 · HP3/HP9 · HP5)", "title": "What Is Remosaic? (Core Principle &amp; Multi-Mode Readout)", "hash": "sec-remosaic-principle", "keywords": "200MP ISOCELL Sensor Development — Remosaic Principle & Sensor History (HP2 · HP3/HP9 · HP5) What Is Remosaic? (Core Principle &amp; Multi-Mode Readout) sec-remosaic-principle"}, {"type": "Section", "slug": "isocell_sensors", "num": 1, "chTitle": "200MP ISOCELL Sensor Development — Remosaic Principle & Sensor History (HP2 · HP3/HP9 · HP5)", "title": "Chronological Sensor Development History (2021 – Present)", "hash": "sec-sensor-history", "keywords": "200MP ISOCELL Sensor Development — Remosaic Principle & Sensor History (HP2 · HP3/HP9 · HP5) Chronological Sensor Development History (2021 – Present) sec-sensor-history"}, {"type": "Section", "slug": "isocell_sensors", "num": 1, "chTitle": "200MP ISOCELL Sensor Development — Remosaic Principle & Sensor History (HP2 · HP3/HP9 · HP5)", "title": "200MP ISOCELL Sensor Lineup &amp; Commercial Product Table", "hash": "sec-sensor-products", "keywords": "200MP ISOCELL Sensor Development — Remosaic Principle & Sensor History (HP2 · HP3/HP9 · HP5) 200MP ISOCELL Sensor Lineup &amp; Commercial Product Table sec-sensor-products"}, {"type": "Section", "slug": "isocell_sensors", "num": 1, "chTitle": "200MP ISOCELL Sensor Development — Remosaic Principle & Sensor History (HP2 · HP3/HP9 · HP5)", "title": "Chapter 01 Summary", "hash": "summary", "keywords": "200MP ISOCELL Sensor Development — Remosaic Principle & Sensor History (HP2 · HP3/HP9 · HP5) Chapter 01 Summary summary"}, {"type": "Section", "slug": "e2e_remosaic", "num": 2, "chTitle": "E2E AI Remosaic (Gen 1–4) — Heterogeneous SoC Parallelization on the ISP Pipeline", "title": "How Heterogeneous Parallelization Works on the Camera ISP Pipeline", "hash": "sec-isp-parallelization", "keywords": "E2E AI Remosaic (Gen 1–4) — Heterogeneous SoC Parallelization on the ISP Pipeline How Heterogeneous Parallelization Works on the Camera ISP Pipeline sec-isp-parallelization"}, {"type": "Section", "slug": "e2e_remosaic", "num": 2, "chTitle": "E2E AI Remosaic (Gen 1–4) — Heterogeneous SoC Parallelization on the ISP Pipeline", "title": "Chronological Feature Evolution History (Gen 1 – Gen 4)", "hash": "sec-e2e-history", "keywords": "E2E AI Remosaic (Gen 1–4) — Heterogeneous SoC Parallelization on the ISP Pipeline Chronological Feature Evolution History (Gen 1 – Gen 4) sec-e2e-history"}, {"type": "Section", "slug": "e2e_remosaic", "num": 2, "chTitle": "E2E AI Remosaic (Gen 1–4) — Heterogeneous SoC Parallelization on the ISP Pipeline", "title": "Commercial Products &amp; Deployment Lineup (Table &amp; List)", "hash": "sec-commercial-products", "keywords": "E2E AI Remosaic (Gen 1–4) — Heterogeneous SoC Parallelization on the ISP Pipeline Commercial Products &amp; Deployment Lineup (Table &amp; List) sec-commercial-products"}, {"type": "Section", "slug": "e2e_remosaic", "num": 2, "chTitle": "E2E AI Remosaic (Gen 1–4) — Heterogeneous SoC Parallelization on the ISP Pipeline", "title": "Chapter 02 Summary", "hash": "summary", "keywords": "E2E AI Remosaic (Gen 1–4) — Heterogeneous SoC Parallelization on the ISP Pipeline Chapter 02 Summary summary"}, {"type": "Concept", "slug": "e2e_remosaic", "num": 2, "chTitle": "E2E AI Remosaic & Sensor Guidebook", "title": "Remosaic (Non-Bayer to Bayer Conversion) — Algorithmic conversion of a non-Bayer multi-cell color filter array (2×2 Tetra or 4×4 Hexadeca) into a standard 2×2 Bayer (RGGB) pattern required by the Camera ISP.", "hash": "sec-commercial-products", "keywords": "Remosaic (Non-Bayer to Bayer Conversion) Core Principle Remosaic|remosaic|remosaicing|QMSC|Hexadeca Remosaic Algorithmic conversion of a non-Bayer multi-cell color filter array (2×2 Tetra or 4×4 Hexadeca) into a standard 2×2 Bayer (RGGB) pattern required by the Camera ISP."}, {"type": "Concept", "slug": "e2e_remosaic", "num": 2, "chTitle": "E2E AI Remosaic & Sensor Guidebook", "title": "Tetra²pixel (4×4 Hexadeca CFA) — Samsung's 16-cell (4×4) non-Bayer Color Filter Array grouping 16 same-color photodiodes per color block.", "hash": "sec-commercial-products", "keywords": "Tetra²pixel (4×4 Hexadeca CFA) ISOCELL CFA Tetra²pixel|Hexadeca|16-cell|4x4 Q-cell|Q-cell Samsung's 16-cell (4×4) non-Bayer Color Filter Array grouping 16 same-color photodiodes per color block."}, {"type": "Concept", "slug": "e2e_remosaic", "num": 2, "chTitle": "E2E AI Remosaic & Sensor Guidebook", "title": "E2E AI Remosaic — Samsung's End-to-End 200MP S/W ISP turn-key platform mounting distributed DL Remosaic and Camera ISP execution across CPU/GPU/NPU/ISP onto the ISP pipeline.", "hash": "sec-commercial-products", "keywords": "E2E AI Remosaic Turn-Key Platform E2E AI Remosaic|E2E AI remosaic|E2E Remosaic|cfa2yuv Samsung's End-to-End 200MP S/W ISP turn-key platform mounting distributed DL Remosaic and Camera ISP execution across CPU/GPU/NPU/ISP onto the ISP pipeline."}, {"type": "Concept", "slug": "e2e_remosaic", "num": 2, "chTitle": "E2E AI Remosaic & Sensor Guidebook", "title": "QMSC (AI 4×4 Q-Cell Remosaic) — AI-based 4×4 Q-cell Remosaic algorithm deployed in-sensor on ISOCELL HP2 (0.6µm, 200MP) for Galaxy S23 Ultra.", "hash": "sec-commercial-products", "keywords": "QMSC (AI 4×4 Q-Cell Remosaic) In-Sensor IP QMSC AI-based 4×4 Q-cell Remosaic algorithm deployed in-sensor on ISOCELL HP2 (0.6µm, 200MP) for Galaxy S23 Ultra."}, {"type": "Concept", "slug": "e2e_remosaic", "num": 2, "chTitle": "E2E AI Remosaic & Sensor Guidebook", "title": "Heterogeneous SoC Parallelization — Partitioning and scheduling Camera ISP and DL Remosaic stages concurrently across mobile CPU, GPU, NPU, and ISP engines.", "hash": "sec-commercial-products", "keywords": "Heterogeneous SoC Parallelization System Architecture Heterogeneous SoC|heterogeneous SoC|CPU/GPU/NPU/ISP Partitioning and scheduling Camera ISP and DL Remosaic stages concurrently across mobile CPU, GPU, NPU, and ISP engines."}];
+  const SB = (window.SB = window.SB || {});
 
-  function inChaptersDir() {
-    return /\/chapters\//.test(location.pathname);
+  SB.CHAPTERS = [
+  {
+    "slug": "isocell_sensors",
+    "num": "01",
+    "title": "200MP ISOCELL Sensor Development (HP2 · HP3/HP9 · HP5)",
+    "desc": "Core principle of Non-Bayer (4×4 Hexadeca / 2×2 Q-cell) to Bayer Remosaic, chronological development history across ISOCELL HP2 (0.6µm, QMSC), HP3/HP9 (0.56µm, World-1st DL Hexadeca Remosaic), and HP5 (0.5µm, World's Smallest 200MP), and commercialized flagship devices.",
+    "tags": [
+      "Remosaic Principle",
+      "HP2 · QMSC",
+      "HP3/HP9 · 1st DL 16-Cell",
+      "HP5 · 0.5µm Tech Lead"
+    ]
+  },
+  {
+    "slug": "e2e_remosaic",
+    "num": "02",
+    "title": "E2E AI Remosaic (Gen 1–4) — Heterogeneous Parallelization on the ISP Pipeline",
+    "desc": "Distributing DL Remosaic and Camera ISP workloads across CPU/GPU/NPU/ISP mounted directly on the Camera ISP pipeline (~3× faster 200MP capture), Gen 1 → Gen 4 feature evolution history, SEC 2023 Silver Award, and commercial product table (30+ OEM models).",
+    "tags": [
+      "ISP Pipeline Parallelization",
+      "CPU/GPU/NPU/ISP",
+      "Gen 1–4 History",
+      "30+ OEM Products"
+    ]
   }
+];
+  const PREBUILT_SEARCH = [{"type": "Section", "slug": "isocell_sensors", "num": "01", "chTitle": "200MP ISOCELL Sensor Development (HP2 · HP3/HP9 · HP5)", "title": "What Is Remosaic? (Core Principle &amp; Multi-Mode Readout)", "hash": "sec-remosaic-principle", "keywords": "200MP ISOCELL Sensor Development (HP2 · HP3/HP9 · HP5) What Is Remosaic? (Core Principle &amp; Multi-Mode Readout) sec-remosaic-principle"}, {"type": "Section", "slug": "isocell_sensors", "num": "01", "chTitle": "200MP ISOCELL Sensor Development (HP2 · HP3/HP9 · HP5)", "title": "Chronological Sensor Development History (2021 – Present)", "hash": "sec-sensor-history", "keywords": "200MP ISOCELL Sensor Development (HP2 · HP3/HP9 · HP5) Chronological Sensor Development History (2021 – Present) sec-sensor-history"}, {"type": "Section", "slug": "isocell_sensors", "num": "01", "chTitle": "200MP ISOCELL Sensor Development (HP2 · HP3/HP9 · HP5)", "title": "200MP ISOCELL Sensor Lineup &amp; Commercial Product Table", "hash": "sec-sensor-products", "keywords": "200MP ISOCELL Sensor Development (HP2 · HP3/HP9 · HP5) 200MP ISOCELL Sensor Lineup &amp; Commercial Product Table sec-sensor-products"}, {"type": "Section", "slug": "isocell_sensors", "num": "01", "chTitle": "200MP ISOCELL Sensor Development (HP2 · HP3/HP9 · HP5)", "title": "Chapter 01 Summary", "hash": "summary", "keywords": "200MP ISOCELL Sensor Development (HP2 · HP3/HP9 · HP5) Chapter 01 Summary summary"}, {"type": "Section", "slug": "e2e_remosaic", "num": "02", "chTitle": "E2E AI Remosaic (Gen 1–4) — Heterogeneous Parallelization on the ISP Pipeline", "title": "How Heterogeneous Parallelization Works on the Camera ISP Pipeline", "hash": "sec-isp-parallelization", "keywords": "E2E AI Remosaic (Gen 1–4) — Heterogeneous Parallelization on the ISP Pipeline How Heterogeneous Parallelization Works on the Camera ISP Pipeline sec-isp-parallelization"}, {"type": "Section", "slug": "e2e_remosaic", "num": "02", "chTitle": "E2E AI Remosaic (Gen 1–4) — Heterogeneous Parallelization on the ISP Pipeline", "title": "Chronological Feature Evolution History (Gen 1 – Gen 4)", "hash": "sec-e2e-history", "keywords": "E2E AI Remosaic (Gen 1–4) — Heterogeneous Parallelization on the ISP Pipeline Chronological Feature Evolution History (Gen 1 – Gen 4) sec-e2e-history"}, {"type": "Section", "slug": "e2e_remosaic", "num": "02", "chTitle": "E2E AI Remosaic (Gen 1–4) — Heterogeneous Parallelization on the ISP Pipeline", "title": "Commercial Products &amp; Deployment Lineup (Table &amp; List)", "hash": "sec-commercial-products", "keywords": "E2E AI Remosaic (Gen 1–4) — Heterogeneous Parallelization on the ISP Pipeline Commercial Products &amp; Deployment Lineup (Table &amp; List) sec-commercial-products"}, {"type": "Section", "slug": "e2e_remosaic", "num": "02", "chTitle": "E2E AI Remosaic (Gen 1–4) — Heterogeneous Parallelization on the ISP Pipeline", "title": "Chapter 02 Summary", "hash": "summary", "keywords": "E2E AI Remosaic (Gen 1–4) — Heterogeneous Parallelization on the ISP Pipeline Chapter 02 Summary summary"}, {"type": "Concept", "slug": "e2e_remosaic", "num": "02", "chTitle": "E2E AI Remosaic & Sensor Guidebook", "title": "Remosaic (Non-Bayer to Bayer Conversion) (Remosaic)", "hash": "sec-commercial-products", "keywords": "Remosaic (Non-Bayer to Bayer Conversion) Remosaic Algorithm Remosaic Algorithmic conversion of a non-Bayer multi-cell color filter array (2×2 Q-cell / 4×4 Hexadeca) into a standard 2×2 Bayer (RGGB) pattern required by the Camera ISP for 200MP full-resolution capture and 2×/4× In-Sensor Zoom."}, {"type": "Concept", "slug": "e2e_remosaic", "num": "02", "chTitle": "E2E AI Remosaic & Sensor Guidebook", "title": "Tetra²pixel (4×4 Hexadeca CFA) (Tetra²pixel)", "hash": "sec-commercial-products", "keywords": "Tetra²pixel (4×4 Hexadeca CFA) 16-Cell Non-Bayer Color Filter Array Tetra²pixel Samsung's 16-cell (4×4) non-Bayer Color Filter Array grouping 16 neighboring photodiodes under the same color filter—enabling 12.5MP (4×4 binning), 50MP (2×2 binning), and 200MP full-res / 4× zoom via Remosaic."}, {"type": "Concept", "slug": "e2e_remosaic", "num": "02", "chTitle": "E2E AI Remosaic & Sensor Guidebook", "title": "QMSC (AI 4×4 Q-Cell Remosaic) (QMSC)", "hash": "sec-commercial-products", "keywords": "QMSC (AI 4×4 Q-Cell Remosaic) In-Sensor AI 4×4 Q-Cell Remosaic QMSC AI-based 4×4 Q-cell Remosaic algorithm deployed in-sensor on ISOCELL HP2 (0.6µm, 200MP), enabling 200MP full-res capture and lossless 12MP 4× In-Sensor Zoom on Samsung Galaxy S23 Ultra."}, {"type": "Concept", "slug": "e2e_remosaic", "num": "02", "chTitle": "E2E AI Remosaic & Sensor Guidebook", "title": "E2E AI Remosaic (E2E AI RMSC)", "hash": "sec-commercial-products", "keywords": "E2E AI Remosaic End-to-End 200MP S/W ISP Turn-Key Platform E2E AI RMSC Samsung's End-to-End S/W ISP turn-key solution that distributes DL Remosaic and Camera ISP workloads across CPU/GPU/NPU/ISP and mounts them onto the Camera ISP pipeline—accelerating 200MP cfa2yuv capture up to 3× faster (3s → 1s @ SM8550) across 30+ OEM products."}, {"type": "Concept", "slug": "e2e_remosaic", "num": "02", "chTitle": "E2E AI Remosaic & Sensor Guidebook", "title": "Heterogeneous SoC Parallelization (HetSoC)", "hash": "sec-commercial-products", "keywords": "Heterogeneous SoC Parallelization CPU / GPU / NPU / ISP Pipeline Distribution HetSoC Partitioning and scheduling DL Remosaic and S/W ISP stages concurrently across mobile CPU, GPU, NPU, and H/W ISP engines mounted on the Camera ISP pipeline (Qualcomm Snapdragon & MediaTek Dimensity)."}];
+
+  const LOGO = `<svg viewBox="0 0 28 28" fill="none" aria-hidden="true">
+    <rect x="2" y="2" width="11" height="11" rx="3" fill="#e0443e"/>
+    <rect x="15" y="2" width="11" height="11" rx="3" fill="#2da44e"/>
+    <rect x="2" y="15" width="11" height="11" rx="3" fill="#2da44e" opacity=".82"/>
+    <rect x="15" y="15" width="11" height="11" rx="3" fill="#2f6fe0"/>
+  </svg>`;
+
   function rootPrefix() {
-    return inChaptersDir() ? "../" : "";
-  }
-  function chapterHref(slug) {
-    return inChaptersDir() ? (slug + ".html") : ("chapters/" + slug + ".html");
-  }
-  function homeHref() {
-    return rootPrefix() + "index.html";
+    const b = document.body;
+    if (b && b.dataset.root) return b.dataset.root;
+    return location.pathname.includes("/chapters/") ? "../" : "";
   }
   function currentSlug() {
-    const m = location.pathname.match(/\/chapters\/([^/.]+)\.html/);
+    const b = document.body;
+    if (b && b.dataset.chapter) return b.dataset.chapter;
+    const m = location.pathname.match(/\/chapters\/([^\/]+)\.html/);
     return m ? m[1] : "index";
   }
 
-  const THEME_KEY = "sb-theme";
-  function getInitialTheme() {
-    const saved = localStorage.getItem(THEME_KEY);
-    if (saved === "light" || saved === "dark") return saved;
-    return "light";
-  }
+  // ---------- Theme ----------
+  const THEME_KEY = "kaist-grad-works-book-theme";
+  function getSavedTheme() { try { return localStorage.getItem(THEME_KEY); } catch { return null; } }
   function applyTheme(t) {
-    document.documentElement.setAttribute("data-theme", t);
-    const btn = document.getElementById("sb-theme-btn");
-    if (btn) {
-      btn.innerHTML = (t === "dark" ? "☀️" : "🌙") + '<span class="lbl">' + (t === "dark" ? "Light" : "Dark") + "</span>";
+    if (t === "light" || t === "dark") {
+      document.documentElement.setAttribute("data-theme", t);
+    } else {
+      document.documentElement.removeAttribute("data-theme");
     }
-    window.dispatchEvent(new CustomEvent("sb:themechange", { detail: { theme: t } }));
+    window.dispatchEvent(new CustomEvent("sb:theme"));
   }
-  function toggleTheme() {
-    const cur = document.documentElement.getAttribute("data-theme") || "light";
-    const next = cur === "dark" ? "light" : "dark";
-    localStorage.setItem(THEME_KEY, next);
-    applyTheme(next);
-  }
-  applyTheme(getInitialTheme());
+  const saved = getSavedTheme();
+  if (saved) applyTheme(saved);
 
+  SB.isDark = function () {
+    const attr = document.documentElement.getAttribute("data-theme");
+    if (attr === "dark") return true;
+    if (attr === "light") return false;
+    return window.matchMedia && window.matchMedia("(prefers-color-scheme: dark)").matches;
+  };
+
+  // ---------- Mount Topbar + Drawer (Exact SensorBook DOM) ----------
   function mountTopbar() {
-    const bar = document.querySelector(".sb-topbar");
-    if (!bar) return;
+    const root = rootPrefix();
     const slug = currentSlug();
-    const curCh = CHAPTERS.find(c => c.slug === slug);
-    const curTheme = document.documentElement.getAttribute("data-theme") || "light";
-    bar.innerHTML = `
-      <button class="sb-iconbtn" id="sb-drawer-btn" aria-label="Open Navigation">☰<span class="lbl">Sections</span></button>
-      <a class="sb-brand" href="${homeHref()}">
-        <span class="dot"></span>
-        <span>Samsung S.LSI · 200MP ISOCELL &amp; E2E AI Remosaic</span>
-      </a>
-      <span class="sb-ch-badge" id="sb-top-ch">${curCh ? ("Ch.0" + curCh.num + " · " + curCh.title.split("—")[0].trim()) : "Project Guidebook"}</span>
-      <div class="sb-spacer"></div>
-      <div class="book-search" id="book-search">
-        <span class="s-ico">🔎</span>
-        <input type="search" id="book-search-input" placeholder="Search sensors, E2E Gen 1–4, OEM models ( / )" autocomplete="off" />
-        <span class="s-kbd">/</span>
-        <div class="book-search-results" id="book-search-results" role="listbox"></div>
-      </div>
-      <a class="sb-iconbtn" href="https://yjqkrtk-ux.github.io" target="_blank" rel="noopener" title="Web Resume (CV)">📄<span class="lbl">Resume</span></a>
-      <button class="sb-iconbtn" id="sb-theme-btn" aria-label="Toggle Theme">${curTheme === "dark" ? "☀️" : "🌙"}<span class="lbl">${curTheme === "dark" ? "Light" : "Dark"}</span></button>
-    `;
-    document.getElementById("sb-theme-btn").addEventListener("click", toggleTheme);
-    document.getElementById("sb-drawer-btn").addEventListener("click", toggleDrawer);
-    initBookSearch();
-  }
+    const cur = SB.CHAPTERS.find(c => c.slug === slug);
 
-  function mountDrawer() {
-    const slug = currentSlug();
-    const back = document.createElement("div");
-    back.className = "sb-drawer-backdrop";
-    back.id = "sb-drawer-backdrop";
+    const bar = document.createElement("header");
+    bar.className = "sb-topbar";
+    bar.innerHTML = `
+      <button class="sb-iconbtn" id="sb-open-drawer" aria-label="Open Navigation">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M4 6h16M4 12h16M4 18h12"/></svg>
+        <span>${cur ? ("Ch." + cur.num) : "Chapters"}</span>
+      </button>
+      <a class="sb-brand" href="${root}index.html">
+        ${LOGO}
+        <span>ISOCELL 200MP &amp; E2E AI REMOSAIC <small>Samsung S.LSI Project Guidebook</small></span>
+      </a>
+      <div class="sp"></div>
+      <div class="book-search" id="book-search">
+        <input type="search" class="book-search-input" id="book-search-input" placeholder="Search sensors, E2E Gen 1–4, OEM models…" autocomplete="off" aria-label="Search guidebook">
+        <div class="book-search-results" id="book-search-results" hidden></div>
+      </div>
+      <a class="sb-iconbtn series-link" href="https://yjqkrtk-ux.github.io/" target="_blank" rel="noopener" title="Yongjoon Song — Executive Web Resume / CV">
+        <span>📄 Resume</span>
+      </a>
+      <a class="sb-iconbtn series-link" href="https://www.linkedin.com/in/yongjoon-song-52b03a208/" target="_blank" rel="noopener" title="LinkedIn Profile">
+        <span>💼 LinkedIn</span>
+      </a>
+      <button class="sb-iconbtn" id="sb-theme" aria-label="Toggle Theme" title="Switch Light / Dark Theme">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 3a9 9 0 1 0 9 9c0-.46-.04-.92-.1-1.36a5.389 5.389 0 0 1-4.4 2.26 5.403 5.403 0 0 1-3.14-9.8c-.44-.06-.9-.1-1.36-.1z"/></svg>
+      </button>
+      <div class="sb-progress" id="sb-progress"></div>
+    `;
+    document.body.prepend(bar);
+
+    const backdrop = document.createElement("div");
+    backdrop.className = "sb-drawer-backdrop";
     const drawer = document.createElement("aside");
     drawer.className = "sb-drawer";
-    drawer.id = "sb-drawer";
-
-    let html = `
-      <div class="d-head">
-        <span>SAMSUNG S.LSI PROJECT GUIDEBOOK</span>
-        <button class="sb-iconbtn" id="sb-drawer-close" aria-label="Close">✕</button>
+    drawer.innerHTML = `
+      <div class="sb-drawer-head">
+        <span>Samsung S.LSI Project Guidebook</span>
+        <button class="sb-iconbtn" id="sb-close-drawer">Close</button>
       </div>
-      <a class="d-home ${slug === "index" ? "is-active" : ""}" href="${homeHref()}">🏠 Overview &amp; Commercial Summary</a>
-    `;
-
-    CHAPTERS.forEach(c => {
-      const active = c.slug === slug ? "is-active" : "";
-      html += `
-        <div class="d-part">${c.part}</div>
-        <a class="d-ch ${active}" href="${chapterHref(c.slug)}">
-          <span class="c-num">0${c.num}</span>
-          <span class="c-title">${c.title}</span>
+      <nav class="sb-drawer-list">
+        <a href="${root}index.html" class="${slug === "index" ? "active" : ""}">
+          <span class="num">HOME</span>
+          <span>Overview &amp; Commercial Product Summary</span>
         </a>
-      `;
-    });
-
-    html += `
-      <div class="d-part">EXTERNAL LINKS &amp; AUTHOR</div>
-      <a class="d-ch" href="https://yjqkrtk-ux.github.io" target="_blank" rel="noopener">
-        <span class="c-num">CV</span>
-        <span class="c-title">Yongjoon Song — Web Resume ↗</span>
-      </a>
-      <a class="d-ch" href="https://www.linkedin.com/in/yongjoon-song-52b03a208/" target="_blank" rel="noopener">
-        <span class="c-num">IN</span>
-        <span class="c-title">LinkedIn Profile ↗</span>
-      </a>
-      <a class="d-ch" href="https://yjqkrtk-ux.github.io/gradworks/" target="_blank" rel="noopener">
-        <span class="c-num">PHD</span>
-        <span class="c-title">KAIST Ph.D. Research Guidebook ↗</span>
-      </a>
+        ${SB.CHAPTERS.map(c => `
+          <a href="${root}chapters/${c.slug}.html" class="${c.slug === slug ? "active" : ""}">
+            <span class="num">CH.${c.num}</span>
+            <span>${c.title}<div class="sub">${c.desc}</div></span>
+          </a>
+        `).join("")}
+        <div style="margin:14px 10px 6px;padding-top:12px;border-top:1px solid var(--border);font-family:var(--mono);font-size:11px;font-weight:700;color:var(--accent);letter-spacing:.04em;">AUTHOR PROFILES &amp; OTHER GUIDEBOOKS ↗</div>
+        <a href="https://yjqkrtk-ux.github.io/" target="_blank" rel="noopener">
+          <span class="num">CV</span>
+          <span>Executive Web Resume<div class="sub">yjqkrtk-ux.github.io · Print-ready CV</div></span>
+        </a>
+        <a href="https://www.linkedin.com/in/yongjoon-song-52b03a208/" target="_blank" rel="noopener">
+          <span class="num">IN</span>
+          <span>LinkedIn Profile<div class="sub">linkedin.com/in/yongjoon-song-52b03a208</div></span>
+        </a>
+        <a href="https://yjqkrtk-ux.github.io/aicamera/" target="_blank" rel="noopener">
+          <span class="num">LSP</span>
+          <span>AICAMERA (Edge LSP) Guidebook<div class="sub">Sony IMX500 + Hailo-8 Split Inference &amp; ISP</div></span>
+        </a>
+        <a href="https://yjqkrtk-ux.github.io/gradworks/" target="_blank" rel="noopener">
+          <span class="num">PHD</span>
+          <span>KAIST Ph.D. Research Guidebook<div class="sub">DQNAlign · 3D WPT · REminerII · Academic Archive</div></span>
+        </a>
+      </nav>
     `;
-
-    drawer.innerHTML = html;
-    document.body.appendChild(back);
+    document.body.appendChild(backdrop);
     document.body.appendChild(drawer);
-    back.addEventListener("click", closeDrawer);
-    drawer.querySelector("#sb-drawer-close").addEventListener("click", closeDrawer);
-  }
-  function toggleDrawer() {
-    const b = document.getElementById("sb-drawer-backdrop");
-    const d = document.getElementById("sb-drawer");
-    if (!b || !d) return;
-    const open = d.classList.toggle("is-open");
-    b.classList.toggle("is-open", open);
-  }
-  function closeDrawer() {
-    const b = document.getElementById("sb-drawer-backdrop");
-    const d = document.getElementById("sb-drawer");
-    if (b) b.classList.remove("is-open");
-    if (d) d.classList.remove("is-open");
-  }
 
-  function mountChapterShell() {
-    const main = document.querySelector("main.chapter");
-    if (!main) return;
-    const sections = Array.from(main.querySelectorAll(":scope > section[id]"));
-    if (!sections.length) return;
+    const close = () => document.body.classList.remove("drawer-open");
+    document.getElementById("sb-open-drawer").addEventListener("click", () => document.body.classList.add("drawer-open"));
+    document.getElementById("sb-close-drawer").addEventListener("click", close);
+    backdrop.addEventListener("click", close);
+    window.addEventListener("keydown", e => { if (e.key === "Escape") close(); });
 
-    sections.forEach((sec, idx) => {
-      const h2 = sec.querySelector(":scope > h2");
-      if (h2 && !h2.querySelector(".sec-num")) {
-        const numSpan = document.createElement("span");
-        numSpan.className = "sec-num";
-        numSpan.textContent = String(idx + 1).padStart(2, "0");
-        h2.insertBefore(numSpan, h2.firstChild);
-      }
+    document.getElementById("sb-theme").addEventListener("click", () => {
+      const next = SB.isDark() ? "light" : "dark";
+      try { localStorage.setItem(THEME_KEY, next); } catch {}
+      applyTheme(next);
     });
 
-    if (!main.parentElement.classList.contains("chapter-shell")) {
-      const shell = document.createElement("div");
-      shell.className = "chapter-shell";
-      main.parentElement.insertBefore(shell, main);
-      shell.appendChild(main);
-
-      const aside = document.createElement("aside");
-      aside.className = "toc-rail";
-      aside.setAttribute("aria-label", "On This Page");
-      let tocHtml = `<div class="toc-title">On This Page</div><ul>`;
-      sections.forEach((sec, idx) => {
-        const h2 = sec.querySelector(":scope > h2");
-        if (!h2) return;
-        const label = h2.textContent.replace(/^\s*\d+\s*/, "").trim();
-        tocHtml += `<li><a href="#${sec.id}" data-sec="${sec.id}">${String(idx + 1).padStart(2, "0")} · ${label}</a></li>`;
-      });
-      tocHtml += `</ul>`;
-      aside.innerHTML = tocHtml;
-      shell.appendChild(aside);
-
-      const links = Array.from(aside.querySelectorAll("a[data-sec]"));
-      const obs = new IntersectionObserver(entries => {
-        entries.forEach(en => {
-          if (en.isIntersecting) {
-            links.forEach(a => a.classList.toggle("is-active", a.getAttribute("data-sec") === en.target.id));
-          }
-        });
-      }, { rootMargin: "-15% 0px -72% 0px" });
-      sections.forEach(s => obs.observe(s));
-    }
+    const prog = document.getElementById("sb-progress");
+    const onScroll = () => {
+      const h = document.documentElement;
+      const max = Math.max(1, h.scrollHeight - h.clientHeight);
+      prog.style.width = Math.min(100, (h.scrollTop / max) * 100).toFixed(1) + "%";
+    };
+    window.addEventListener("scroll", onScroll, { passive: true });
+    onScroll();
   }
 
-  function mountPagerAndFooter() {
-    const main = document.querySelector("main.chapter");
-    const slug = currentSlug();
-    const idx = CHAPTERS.findIndex(c => c.slug === slug);
-    if (main && idx !== -1 && !main.querySelector(".ch-pager")) {
-      const prev = idx > 0 ? CHAPTERS[idx - 1] : null;
-      const next = idx < CHAPTERS.length - 1 ? CHAPTERS[idx + 1] : null;
+  // ---------- Mount Right-hand TOC + Section Numbering ----------
+  function mountToc() {
+    document.querySelectorAll("main.chapter").forEach(main => {
+      if (main.dataset.tocMounted) return;
+      main.dataset.tocMounted = "1";
+      let layout = main.closest(".sb-layout");
+      if (!layout) {
+        layout = document.createElement("div");
+        layout.className = "sb-layout";
+        main.parentNode.insertBefore(layout, main);
+        layout.appendChild(main);
+      }
+      const sections = Array.from(main.querySelectorAll(":scope > section"));
+      if (!sections.length) return;
+
+      const toc = document.createElement("aside");
+      toc.className = "sb-toc";
+      toc.innerHTML = `<h4>On this page</h4>`;
+      const links = [];
+
+      sections.forEach((sec, idx) => {
+        const h2 = sec.querySelector("h2");
+        if (!h2) return;
+        if (!sec.id) sec.id = "sec-" + (idx + 1);
+        const rawTitle = h2.textContent.replace(/^\s*\d+(\.\d+)?\s*/, "").trim();
+        if (!h2.querySelector(".h-num") && !sec.classList.contains("keypoints")) {
+          const num = String(idx + 1).padStart(2, "0");
+          h2.innerHTML = `<span class="h-num">${num}</span><span>${h2.innerHTML}</span>`;
+        }
+        const a = document.createElement("a");
+        a.href = "#" + sec.id;
+        a.textContent = rawTitle;
+        toc.appendChild(a);
+        links.push({ sec, a });
+      });
+      layout.appendChild(toc);
+
+      const spy = () => {
+        const y = window.scrollY + 110;
+        let active = links[0];
+        for (const item of links) {
+          if (item.sec.offsetTop <= y) active = item;
+        }
+        links.forEach(item => item.a.classList.toggle("on", item === active));
+      };
+      window.addEventListener("scroll", spy, { passive: true });
+      spy();
+    });
+  }
+
+  // ---------- Mount Prev / Next Pager ----------
+  function mountPager() {
+    document.querySelectorAll("main.chapter").forEach(main => {
+      if (main.dataset.pagerMounted) return;
+      main.dataset.pagerMounted = "1";
+      const slug = currentSlug();
+      const idx = SB.CHAPTERS.findIndex(c => c.slug === slug);
+      if (idx < 0) return;
+      const prev = SB.CHAPTERS[idx - 1];
+      const next = SB.CHAPTERS[idx + 1];
       const nav = document.createElement("nav");
-      nav.className = "ch-pager";
-      nav.setAttribute("aria-label", "Section Navigation");
+      nav.className = "sb-pager";
       nav.innerHTML = `
-        ${prev ? `<a class="prev" href="${chapterHref(prev.slug)}"><span class="p-lbl">← PREVIOUS SECTION · Ch.0${prev.num}</span><span class="p-title">${prev.title}</span></a>`
-                : `<a class="prev" href="${homeHref()}"><span class="p-lbl">← OVERVIEW</span><span class="p-title"> Samsung S.LSI Project Guidebook Home</span></a>`}
-        ${next ? `<a class="next" href="${chapterHref(next.slug)}"><span class="p-lbl">NEXT SECTION · Ch.0${next.num} →</span><span class="p-title">${next.title}</span></a>`
-                : `<a class="next" href="${homeHref()}"><span class="p-lbl">BACK TO OVERVIEW →</span><span class="p-title">Overview &amp; Commercial Product Summary</span></a>`}
+        ${prev ? `<a class="prev" href="${prev.slug}.html"><span class="dir">← PREVIOUS · CH.${prev.num}</span><span class="t">${prev.title}</span></a>` : `<a class="prev" href="../index.html"><span class="dir">← OVERVIEW</span><span class="t">Guidebook Home &amp; Commercial Summary</span></a>`}
+        ${next ? `<a class="next" href="${next.slug}.html"><span class="dir">NEXT · CH.${next.num} →</span><span class="t">${next.title}</span></a>` : `<a class="next" href="../index.html"><span class="dir">BACK TO HOME →</span><span class="t">Overview &amp; Commercial Product Summary</span></a>`}
       `;
       main.appendChild(nav);
-    }
+
+      const foot = document.createElement("footer");
+      foot.className = "sb-foot";
+      foot.innerHTML = `Samsung Electronics · S.LSI Sensor Business Team — 200MP ISOCELL &amp; E2E AI Remosaic Project Guidebook · Yongjoon Song, Ph.D. · Build 2026-11-01 (<code>8f33521</code>)`;
+      main.appendChild(foot);
+    });
   }
 
-  function initBookSearch() {
-    const wrap = document.getElementById("book-search");
+  // ---------- Collapsible Details ----------
+  function mountDetails() {
+    document.querySelectorAll(".detail").forEach(box => {
+      if (box.querySelector(".detail-toggle")) return;
+      const title = box.dataset.title || box.querySelector(".detail-title")?.textContent || "Show Details";
+      const tEl = box.querySelector(".detail-title");
+      if (tEl) tEl.remove();
+      const body = document.createElement("div");
+      body.className = "detail-body";
+      while (box.firstChild) body.appendChild(box.firstChild);
+      const btn = document.createElement("button");
+      btn.type = "button";
+      btn.className = "detail-toggle";
+      btn.textContent = title;
+      btn.addEventListener("click", () => box.classList.toggle("open"));
+      box.appendChild(btn);
+      box.appendChild(body);
+    });
+  }
+
+  // ---------- KaTeX Auto-render ----------
+  function mountKaTeX() {
+    const render = () => {
+      if (window.renderMathInElement) {
+        window.renderMathInElement(document.body, {
+          delimiters: [
+            { left: "$$", right: "$$", display: true },
+            { left: "\\[", right: "\\]", display: true },
+            { left: "\\(", right: "\\)", display: false },
+            { left: "$", right: "$", display: false },
+          ],
+          ignoredTags: ["script", "noscript", "style", "textarea", "pre", "code", "option", "svg", "text", "g"],
+          throwOnError: false,
+        });
+      }
+    };
+    if (window.renderMathInElement) render();
+    else window.addEventListener("load", render);
+  }
+
+  // ---------- Full-Book Instant Search ----------
+  function mountSearch() {
     const input = document.getElementById("book-search-input");
     const box = document.getElementById("book-search-results");
-    if (!wrap || !input || !box) return;
+    if (!input || !box) return;
+    const root = rootPrefix();
+
+    function itemHref(it) {
+      const base = root + "chapters/" + it.slug + ".html";
+      return it.hash ? base + "#" + it.hash : base;
+    }
+
+    let activeIdx = 0;
+    let currentHits = [];
 
     function render(q) {
-      const tokens = q.toLowerCase().trim().split(/\s+/).filter(Boolean);
-      if (!tokens.length) {
-        box.classList.remove("is-open");
-        box.innerHTML = "";
-        return;
-      }
+      const query = q.trim().toLowerCase();
+      if (!query) { box.hidden = true; box.innerHTML = ""; currentHits = []; return; }
+      const tokens = query.split(/\s+/).filter(Boolean);
       const scored = [];
-      SEARCH_INDEX.forEach(item => {
-        const hay = (item.title + " " + item.chTitle + " " + (item.keywords || "")).toLowerCase();
+      for (const it of PREBUILT_SEARCH) {
+        const titleL = (it.title || "").toLowerCase();
+        const kwL = (it.keywords || "").toLowerCase();
         let score = 0;
+        let ok = true;
         for (const tk of tokens) {
-          if (!hay.includes(tk)) return;
-          if (item.title.toLowerCase().includes(tk)) score += 3;
-          else score += 1;
+          if (titleL.includes(tk)) score += titleL.startsWith(tk) ? 12 : 7;
+          else if (kwL.includes(tk)) score += 3;
+          else { ok = false; break; }
         }
-        scored.push({ item, score });
-      });
+        if (ok && score > 0) scored.push({ it, score });
+      }
       scored.sort((a, b) => b.score - a.score);
-      const top = scored.slice(0, 10);
-      if (!top.length) {
-        box.innerHTML = `<div class="book-search-empty">No results for "${q}"</div>`;
-        box.classList.add("is-open");
+      currentHits = scored.slice(0, 10).map(s => s.it);
+      activeIdx = 0;
+
+      if (!currentHits.length) {
+        box.innerHTML = `<div class="sr-empty">No results for "${q}"</div>`;
+        box.hidden = false;
         return;
       }
-      box.innerHTML = top.map(({ item }) => {
-        const href = item.slug === "index"
-          ? (homeHref() + (item.hash ? "#" + item.hash : ""))
-          : (chapterHref(item.slug) + (item.hash ? "#" + item.hash : ""));
-        return `
-          <a class="book-search-item" href="${href}">
-            <div class="r-top">
-              <span class="r-badge">${item.type}</span>
-              <span class="r-ch">${item.num ? ("Ch.0" + item.num + " · ") : ""}${item.chTitle}</span>
-            </div>
-            <div class="r-title">${item.title}</div>
-          </a>
-        `;
+      box.innerHTML = currentHits.map((it, idx) => {
+        const tc = it.type === "Concept" ? "gl" : "";
+        return `<a href="${itemHref(it)}" class="${idx === 0 ? "on" : ""}" data-idx="${idx}">
+          <div class="sr-head"><span class="sr-type ${tc}">${it.type}</span><span>${it.title}</span></div>
+          <div class="sr-sub">CH.${it.num} ${it.chTitle}</div>
+        </a>`;
       }).join("");
-      box.classList.add("is-open");
+      box.hidden = false;
     }
 
     input.addEventListener("input", () => render(input.value));
     input.addEventListener("focus", () => { if (input.value.trim()) render(input.value); });
-    document.addEventListener("click", e => {
-      if (!wrap.contains(e.target)) box.classList.remove("is-open");
-    });
-    document.addEventListener("keydown", e => {
-      if (e.key === "/" && document.activeElement !== input && !/^(INPUT|TEXTAREA)$/.test((document.activeElement || {}).tagName || "")) {
+    input.addEventListener("keydown", e => {
+      if (box.hidden || !currentHits.length) return;
+      const links = box.querySelectorAll("a");
+      if (e.key === "ArrowDown") {
         e.preventDefault();
-        input.focus();
+        activeIdx = (activeIdx + 1) % currentHits.length;
+        links.forEach((a, i) => a.classList.toggle("on", i === activeIdx));
+      } else if (e.key === "ArrowUp") {
+        e.preventDefault();
+        activeIdx = (activeIdx - 1 + currentHits.length) % currentHits.length;
+        links.forEach((a, i) => a.classList.toggle("on", i === activeIdx));
+      } else if (e.key === "Enter") {
+        e.preventDefault();
+        if (links[activeIdx]) links[activeIdx].click();
       } else if (e.key === "Escape") {
-        box.classList.remove("is-open");
-        closeDrawer();
+        box.hidden = true;
       }
     });
+    document.addEventListener("click", e => {
+      if (!e.target.closest("#book-search")) box.hidden = true;
+    });
   }
 
-  function initProgressBar() {
-    const bar = document.querySelector(".sb-progress");
-    if (!bar) return;
-    function update() {
-      const h = document.documentElement.scrollHeight - window.innerHeight;
-      const p = h > 0 ? Math.min(100, Math.max(0, (window.scrollY / h) * 100)) : 0;
-      bar.style.width = p.toFixed(1) + "%";
-    }
-    window.addEventListener("scroll", update, { passive: true });
-    update();
-  }
-
-  document.addEventListener("DOMContentLoaded", () => {
+  function boot() {
     mountTopbar();
-    mountDrawer();
-    mountChapterShell();
-    mountPagerAndFooter();
-    initProgressBar();
-  });
+    mountSearch();
+    mountToc();
+    mountDetails();
+    mountPager();
+    mountKaTeX();
+  }
+  if (document.readyState === "loading") {
+    document.addEventListener("DOMContentLoaded", boot);
+  } else {
+    boot();
+  }
 })();

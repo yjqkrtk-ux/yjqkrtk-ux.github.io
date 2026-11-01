@@ -346,7 +346,7 @@
 
       const foot = document.createElement("footer");
       foot.className = "sb-foot";
-      foot.innerHTML = `GoogleDrive Master Workspace (Development · Documents · Photos) · 인터랙티브 아키텍처 가이드북 · Build 2026-11-01 (<code>dbcaf33</code>) · <code>docs/build_spec_portal.py</code> 자동 생성`;
+      foot.innerHTML = `GoogleDrive Master Workspace (Development · Documents · Photos) · 인터랙티브 아키텍처 가이드북 · Build 2026-11-01 (<code>8f33521</code>) · <code>docs/build_spec_portal.py</code> 자동 생성`;
       main.appendChild(foot);
     });
   }

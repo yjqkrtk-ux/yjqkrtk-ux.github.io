@@ -3,58 +3,69 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>Overview &amp; Commercial Summary — Samsung S.LSI 200MP ISOCELL &amp; E2E AI Remosaic Guidebook</title>
-<meta name="description" content="Overview &amp; Commercial Summary — Samsung S.LSI 200MP ISOCELL &amp; E2E AI Remosaic Guidebook">
+<title>Overview &amp; Commercial Summary · Samsung S.LSI 200MP ISOCELL &amp; E2E AI Remosaic Guidebook</title>
+<meta name="description" content="Overview &amp; Commercial Summary — Samsung S.LSI 200MP ISOCELL &amp; E2E AI Remosaic Project Guidebook">
 <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/katex@0.16.11/dist/katex.min.css">
 <script defer src="https://cdn.jsdelivr.net/npm/katex@0.16.11/dist/katex.min.js"></script>
 <script defer src="https://cdn.jsdelivr.net/npm/katex@0.16.11/dist/contrib/auto-render.min.js"></script>
-<link rel="stylesheet" href="css/style.css?v=dbcaf33">
-<link rel="stylesheet" href="css/glossary-tooltips.css?v=dbcaf33">
-<script src="js/glossary-data.js?v=dbcaf33"></script>
-<script src="js/common.js?v=dbcaf33"></script>
-<script defer src="js/glossary-tooltips.js?v=dbcaf33"></script>
+<link rel="stylesheet" href="css/style.css?v=8f33521">
+<link rel="stylesheet" href="css/glossary-tooltips.css?v=8f33521">
+<script src="js/glossary-data.js?v=8f33521"></script>
+<script src="js/common.js?v=8f33521"></script>
+<script defer src="js/glossary-tooltips.js?v=8f33521"></script>
 </head>
-<body data-chapter="index" data-root="">
-<div class="sb-progress"></div>
-<header class="sb-topbar"></header>
-<main>
+<body data-root="">
+
+<style>
+.numbers { display: grid; grid-template-columns: repeat(4, 1fr); gap: 12px; margin-top: 22px; }
+.numbers div { background: var(--bg-elev); border: 1px solid var(--border); border-radius: var(--radius-sm); padding: 14px 16px; box-shadow: var(--shadow); }
+.numbers b { font-family: var(--mono); font-size: 19px; color: var(--accent); display: block; white-space: nowrap; margin-bottom: 3px; }
+.numbers span { font-size: 13px; color: var(--text-dim); display: block; line-height: 1.45; }
+.home-hero .cta a { white-space: nowrap; padding: 10px 15px; font-size: 13.8px; }
+.ch-grid { grid-template-columns: repeat(2, 1fr); }
+@media (max-width: 900px) {
+  .numbers { grid-template-columns: repeat(2, 1fr); }
+  .ch-grid { grid-template-columns: 1fr; }
+}
+</style>
 
 <section class="home-hero">
   <div class="inner">
     <div>
-      <span class="eyebrow">SAMSUNG ELECTRONICS · S.LSI SENSOR BUSINESS TEAM (APR 2021 – PRESENT)</span>
-      <h1>200MP ISOCELL Sensors &amp;<br/>E2E AI Remosaic Guidebook</h1>
+      <div style="font-family:var(--mono);font-size:12.5px;color:var(--accent);font-weight:600;letter-spacing:.05em">SAMSUNG ELECTRONICS · S.LSI SENSOR BUSINESS TEAM (APR 2021 – PRESENT)</div>
+      <h1>200MP ISOCELL Sensors &amp;<br><span class="grad">E2E AI Remosaic Guidebook</span></h1>
       <p class="lead">
-        A concise engineering guidebook accompanying <a href="https://yjqkrtk-ux.github.io" target="_blank" rel="noopener"><strong>Yongjoon Song's Resume</strong></a>.
-        Organized around the two core workstreams at Samsung Electronics S.LSI:
+        An engineering project guidebook accompanying <a href="https://yjqkrtk-ux.github.io/" target="_blank" rel="noopener"><strong>Yongjoon Song's Resume</strong></a>.
+        Structured around the two core workstreams at Samsung Electronics S.LSI:
         <strong>(1) 200MP ISOCELL Sensor Remosaic Development (<code>HP2</code> · <code>HP3/HP9</code> · <code>HP5</code>)</strong> and
         <strong>(2) E2E AI Remosaic Turn-Key S/W ISP Platform (<code>Gen 1–4</code>)</strong> deployed across <strong>30+ global OEM smartphones</strong>.
       </p>
-      <div class="cta-row">
-        <a class="btn primary" href="chapters/isocell_sensors.html">Ch.01 · 200MP ISOCELL Sensor Development →</a>
-        <a class="btn" href="chapters/e2e_remosaic.html">Ch.02 · E2E AI Remosaic (Gen 1–4) →</a>
-        <a class="btn" href="https://yjqkrtk-ux.github.io" target="_blank" rel="noopener">📄 Web Resume (CV) ↗</a>
+      <div class="cta">
+        <a class="primary" href="chapters/isocell_sensors.html">Ch.01 · 200MP ISOCELL Sensors →</a>
+        <a class="ghost" href="chapters/e2e_remosaic.html">Ch.02 · E2E AI Remosaic (Gen 1–4) →</a>
+        <a class="ghost" href="https://yjqkrtk-ux.github.io/" target="_blank" rel="noopener">📄 Web Resume ↗</a>
+        <a class="ghost" href="#summary-table">Product Lineup Table</a>
       </div>
     </div>
-    <div class="hero-canvas-wrap" style="padding:18px 20px; display:flex; flex-direction:column; justify-content:center; gap:10px; height:auto; min-height:240px;">
-      <div style="font-family:var(--font-mono); font-size:0.74rem; font-weight:700; color:var(--accent); letter-spacing:0.06em; text-transform:uppercase;">
+    <div class="card" style="padding:20px 22px;display:flex;flex-direction:column;gap:12px;">
+      <div style="font-family:var(--mono);font-size:12px;font-weight:700;color:var(--accent);letter-spacing:.05em;text-transform:uppercase;">
         Career &amp; Role Progression at Samsung S.LSI
       </div>
-      <div style="border-left:3px solid var(--accent); padding-left:12px; margin:2px 0;">
-        <div style="font-weight:700; font-size:0.95rem; color:var(--text);">Staff Engineer / Technical Leader</div>
-        <div style="font-family:var(--font-mono); font-size:0.76rem; color:var(--text-dim);">Mar 2025 – Present · S.LSI Sensor Business Team</div>
-        <div style="font-size:0.84rem; color:var(--text-dim); margin-top:3px;">
-          Leading Neural ISP algorithm development for <strong>ISOCELL HP5 (0.5µm 200MP)</strong> &amp; architecting <strong>Gen 3 / Gen 4 E2E AI Remosaic</strong> (DL Multi-frame Remosaic on flagship AP NPU).
+      <div style="border-left:3px solid var(--accent);padding-left:13px;">
+        <div style="font-weight:700;font-size:15.5px;color:var(--text);">Staff Engineer / Technical Leader</div>
+        <div style="font-family:var(--mono);font-size:12px;color:var(--text-dim);">Mar 2025 – Present · S.LSI Sensor Business Team</div>
+        <div style="font-size:13.8px;color:var(--text-dim);margin-top:4px;line-height:1.5;">
+          Leading Neural ISP algorithm development for <strong>ISOCELL HP5 (0.5µm, 200MP)</strong> &amp; architecting <strong>Gen 3 / Gen 4 E2E AI Remosaic</strong> (DL Multi-frame Remosaic on flagship AP NPU).
         </div>
       </div>
-      <div style="border-left:3px solid var(--accent-2); padding-left:12px; margin:2px 0;">
-        <div style="font-weight:700; font-size:0.95rem; color:var(--text);">Staff Engineer</div>
-        <div style="font-family:var(--font-mono); font-size:0.76rem; color:var(--text-dim);">Apr 2021 – Feb 2025 · S.LSI Sensor Business Team</div>
-        <div style="font-size:0.84rem; color:var(--text-dim); margin-top:3px;">
+      <div style="border-left:3px solid var(--accent-2);padding-left:13px;">
+        <div style="font-weight:700;font-size:15.5px;color:var(--text);">Staff Engineer</div>
+        <div style="font-family:var(--mono);font-size:12px;color:var(--text-dim);">Apr 2021 – Feb 2025 · S.LSI Sensor Business Team</div>
+        <div style="font-size:13.8px;color:var(--text-dim);margin-top:4px;line-height:1.5;">
           Invented <strong>World's 1st DL Hexadeca (16-cell) Remosaic (HP3/HP9)</strong>, developed <strong>in-sensor QMSC (HP2)</strong>, and delivered <strong>Gen 1 &amp; Gen 2 E2E AI Remosaic</strong> across 30+ OEM models.
         </div>
       </div>
-      <div style="background:var(--bg-elev); border:1px solid var(--border); border-radius:6px; padding:8px 12px; font-size:0.82rem;">
+      <div class="callout tip" style="margin:2px 0 0;padding:10px 14px;font-size:13.5px;">
         🏆 <strong>SEC Annual Awards 2023 — Silver Award</strong> (Samsung Electronics, Dec 2023 · Related Project: <code>E2E AI RMSC</code>)
       </div>
     </div>
@@ -62,60 +73,102 @@
 </section>
 
 <section class="home-section">
-  <h2>Two Core Workstreams at Samsung Electronics S.LSI</h2>
-  <p class="sub">
-    From in-sensor H/W Remosaic IP and deep learning S/W Remosaic for 200MP sensors to heterogeneous SoC parallelization mounted on the mobile Camera ISP pipeline.
-  </p>
+  <h2>End-to-End Scope: 200MP ISOCELL Sensors &amp; Heterogeneous S/W ISP Pipeline</h2>
+  <p class="sub">From non-Bayer 4×4 Hexadeca / Q-cell CFA Remosaic (Chapter 01) to distributing Remosaic &amp; Camera ISP across CPU/GPU/NPU/ISP on the ISP pipeline (Chapter 02).</p>
 
   <div class="ch-pubs" role="region" aria-label="Official Samsung References & Author Profiles" style="margin-bottom:16px;">
-    <span class="ch-pubs-label">OFFICIAL SAMSUNG PRESS &amp; PROFILES</span>
-    <a class="pub-tag paper" href="https://semiconductor.samsung.com/news-events/news/samsung-electronics-introduces-isocell-zoom-anyplace-and-e2e-ai-remosaic-solutions-for-the-200-megapixel-image-sensor/" target="_blank" rel="noopener">📰 Samsung Newsroom: E2E AI Remosaic (Up to 3× Faster) ↗</a>
+    <span class="ch-pubs-label">OFFICIAL SAMSUNG PRESS &amp; PRODUCT PAGES</span>
+    <a class="pub-tag paper" href="https://semiconductor.samsung.com/news-events/news/samsung-electronics-introduces-isocell-zoom-anyplace-and-e2e-ai-remosaic-solutions-for-the-200-megapixel-image-sensor/" target="_blank" rel="noopener">📰 Samsung Newsroom: E2E AI Remosaic ↗</a>
     <a class="pub-tag paper" href="https://semiconductor.samsung.com/image-sensor/mobile-image-sensor/isocell-hp5/" target="_blank" rel="noopener">📷 ISOCELL HP5 (0.5µm) ↗</a>
     <a class="pub-tag paper" href="https://semiconductor.samsung.com/image-sensor/mobile-image-sensor/isocell-hp9/" target="_blank" rel="noopener">📷 ISOCELL HP9 (0.56µm Tele) ↗</a>
     <a class="pub-tag paper" href="https://semiconductor.samsung.com/image-sensor/mobile-image-sensor/isocell-hp3/" target="_blank" rel="noopener">📷 ISOCELL HP3 (0.56µm Main) ↗</a>
     <a class="pub-tag paper" href="https://semiconductor.samsung.com/image-sensor/mobile-image-sensor/isocell-hp2/" target="_blank" rel="noopener">📷 ISOCELL HP2 (0.6µm QMSC) ↗</a>
-    <a class="pub-tag code" href="https://www.linkedin.com/in/yongjoon-song-52b03a208/" target="_blank" rel="noopener">💼 LinkedIn ↗</a>
   </div>
 
-  <div class="pillar-grid">
+  <figure class="diagram chain">
+    <svg viewBox="0 0 980 210" role="img" aria-label="200MP ISOCELL Sensor Remosaic and E2E AI Remosaic ISP Pipeline">
+      <defs>
+        <marker id="arr" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="6" markerHeight="6" orient="auto-start-reverse">
+          <path d="M0 0L10 5L0 10z" fill="var(--accent)"/>
+        </marker>
+      </defs>
+      <g transform="translate(10,14)">
+        <rect x="0" y="16" width="295" height="148" rx="12" class="f-acc-soft"/>
+        <text x="147" y="42" text-anchor="middle" class="t-acc">① 200MP ISOCELL Sensors (Ch.01)</text>
+        <text x="147" y="64" text-anchor="middle" class="t-mono">Non-Bayer 4×4 CFA → Bayer Remosaic</text>
+        <text x="147" y="88" text-anchor="middle" class="t-dim">HP2 (0.6µm, 1/1.3"): In-Sensor AI QMSC</text>
+        <text x="147" y="108" text-anchor="middle" class="t-dim">HP3/HP9 (0.56µm): 1st DL 16-Cell Remosaic</text>
+        <text x="147" y="128" text-anchor="middle" class="t-dim">HP5 (0.5µm, 1/1.56"): Smallest 200MP</text>
+        <text x="147" y="148" text-anchor="middle" class="t-dim">200MP Full-Res &amp; 2×/4× In-Sensor Zoom</text>
+
+        <line x1="297" y1="90" x2="333" y2="90" class="s-acc" stroke-width="2" marker-end="url(#arr)"/>
+
+        <rect x="335" y="16" width="295" height="148" rx="12" class="f-elev"/>
+        <text x="482" y="42" text-anchor="middle" class="t" style="font-weight:700">② E2E AI Remosaic Platform (Ch.02)</text>
+        <text x="482" y="64" text-anchor="middle" class="t-mono">Mounted on Camera ISP Pipeline</text>
+        <text x="482" y="88" text-anchor="middle" class="t-dim">Distributes Remosaic &amp; ISP across</text>
+        <text x="482" y="108" text-anchor="middle" class="t-dim">CPU / GPU / NPU / ISP in parallel</text>
+        <text x="482" y="128" text-anchor="middle" class="t-dim">Up to 3× faster (3s → 1s @ SM8550)</text>
+        <text x="482" y="148" text-anchor="middle" class="t-dim">Gen 1 → Gen 4 (DL Multi-Frame on NPU)</text>
+
+        <line x1="632" y1="90" x2="668" y2="90" class="s-acc" stroke-width="2" marker-end="url(#arr)"/>
+
+        <rect x="670" y="16" width="290" height="148" rx="12" class="f-acc-soft"/>
+        <text x="815" y="42" text-anchor="middle" class="t-acc">③ 30+ Commercial OEM Products</text>
+        <text x="815" y="64" text-anchor="middle" class="t-mono">SEC Annual Award 2023 (Silver)</text>
+        <text x="815" y="88" text-anchor="middle" class="t-dim">Samsung Galaxy S23 Ultra (HP2 QMSC)</text>
+        <text x="815" y="108" text-anchor="middle" class="t-dim">HONOR Magic 9 &amp; 9 Pro Max (Gen 4 MF)</text>
+        <text x="815" y="128" text-anchor="middle" class="t-dim">vivo X200 Pro ZEISS 200MP · Magic7 Pro</text>
+        <text x="815" y="148" text-anchor="middle" class="t-dim">REDMI Note 15 Pro+ · Redmi Note 13 Pro+</text>
+      </g>
+    </svg>
+    <figcaption><b>Figure 0-1.</b> Two core pillars at Samsung Electronics S.LSI: <strong>200MP ISOCELL Sensor Remosaic Development (Chapter 01)</strong> and <strong>E2E AI Remosaic Heterogeneous ISP Pipeline Platform (Chapter 02)</strong>.</figcaption>
+  </figure>
+
+  <div class="numbers">
+    <div><b>200MP · 0.5µm</b><span><code>ISOCELL HP5</code> (World's Smallest), <code>HP3/HP9</code> (0.56µm), <code>HP2</code> (0.6µm)</span></div>
+    <div><b>1st DL 16-Cell</b><span>World's 1st DL Hexadeca Remosaic S/W (HP3/HP9) &amp; In-Sensor <code>QMSC</code> (HP2)</span></div>
+    <div><b>Up to 3× Faster</b><span><code>E2E AI Remosaic</code> parallelized across <code>CPU/GPU/NPU/ISP</code> on ISP pipeline</span></div>
+    <div><b>30+ OEM Models</b><span>Samsung · HONOR · vivo · Xiaomi + <strong>SEC Annual Award 2023 Silver</strong></span></div>
+  </div>
+</section>
+
+<section class="home-section" id="curriculum" style="padding-top:0">
+  <h2>Guidebook Sections (Chapters 01 &amp; 02)</h2>
+  <p class="sub">Click either section card below to view the architectural diagrams, chronological development history, and commercial product tables.</p>
+  <div class="ch-grid">
     <a class="ch-card" href="chapters/isocell_sensors.html">
       <span class="num">CHAPTER 01 · PILLAR 1 (APR 2021 – PRESENT)</span>
       <h3>200MP ISOCELL Sensor Development — HP2 (0.6µm) · HP3/HP9 (0.56µm) · HP5 (0.5µm)</h3>
       <p>
-        <strong>Core Principle:</strong> Converting non-Bayer multi-cell Color Filter Arrays (<code>4×4 Hexadeca</code> / <code>2×2 Q-cell</code>) into a standard Bayer pattern for full 200MP capture and 2×/4× In-Sensor Zoom.<br/>
-        <strong>Development History:</strong> Chronological track record from <strong>ISOCELL HP2</strong> (in-sensor AI 4×4 Q-cell Remosaic <code>QMSC</code> for Galaxy S23 Ultra 4× zoom) and <strong>ISOCELL HP3/HP9</strong> (world's 1st DL Hexadeca 16-cell Remosaic S/W for main &amp; telephoto cameras) to <strong>ISOCELL HP5</strong> (Technical Leader for the world's smallest 0.5µm 200MP sensor).
+        Core principle of converting non-Bayer multi-cell CFAs (<code>4×4 Hexadeca</code> / <code>2×2 Q-cell</code>) into standard Bayer for 200MP capture and 2×/4× In-Sensor Zoom, plus chronological development history across <strong>HP2</strong> (Galaxy S23 Ultra 4× zoom), <strong>HP3/HP9</strong> (World's 1st DL 16-cell Remosaic), and <strong>HP5</strong> (World's smallest 0.5µm 200MP sensor).
       </p>
       <div class="tags">
-        <span class="tag">Remosaic Principle</span>
-        <span class="tag">HP2 · QMSC (Apr 2021)</span>
-        <span class="tag">HP3/HP9 · 1st DL 16-Cell (Sep 2022)</span>
-        <span class="tag">HP5 · 0.5µm Tech Lead (Jan 2025)</span>
+        <span class="tag sim">Remosaic Principle</span>
+        <span class="tag">HP2 · QMSC</span>
+        <span class="tag">HP3/HP9 · 1st DL 16-Cell</span>
+        <span class="tag t3d">HP5 · 0.5µm Tech Lead</span>
       </div>
     </a>
-
     <a class="ch-card" href="chapters/e2e_remosaic.html">
       <span class="num">CHAPTER 02 · PILLAR 2 (SEP 2022 – PRESENT)</span>
-      <h3>E2E AI Remosaic (Gen 1–4) — Heterogeneous SoC Parallelization on the ISP Pipeline</h3>
+      <h3>E2E AI Remosaic (Gen 1–4) — Heterogeneous Parallelization on the ISP Pipeline</h3>
       <p>
-        <strong>Core Principle:</strong> Distributing heavy <strong>DL Remosaic</strong> and <strong>Camera ISP</strong> workloads across mobile <code>CPU / GPU / NPU / ISP</code> and mounting them directly onto the <strong>Camera ISP pipeline</strong> to execute in parallel—accelerating 200MP <code>cfa2yuv</code> capture latency up to <strong>3× faster (3s → 1s @ SM8550)</strong>.<br/>
-        <strong>Feature Evolution:</strong> Chronological progression from <strong>Gen 1</strong> (foundational turn-key ISP) and <strong>Gen 2</strong> (Heterogeneous SoC parallelization, <strong>SEC 2023 Silver Award</strong>) to <strong>Gen 3</strong> (In-Sensor Zoom &amp; Multi-frame) and <strong>Gen 4</strong> (DL Multi-frame Remosaic on flagship AP NPU).
+        How E2E AI Remosaic distributes <strong>DL Remosaic</strong> and <strong>Camera ISP</strong> workloads across <code>CPU / GPU / NPU / ISP</code> and mounts them onto the <strong>Camera ISP pipeline</strong> (~3× faster 200MP capture, <strong>SEC 2023 Silver Award</strong>), tracing <strong>Gen 1 → Gen 4 (DL Multi-Frame Remosaic on NPU)</strong> and the 30+ commercial OEM product lineup.
       </p>
       <div class="tags">
-        <span class="tag">ISP Pipeline Parallelization</span>
+        <span class="tag sim">ISP Pipeline Parallelization</span>
         <span class="tag">CPU / GPU / NPU / ISP</span>
-        <span class="tag">Gen 1 → Gen 4 History</span>
-        <span class="tag">30+ Commercial OEM Models</span>
+        <span class="tag t3d">Gen 1 → Gen 4 History</span>
+        <span class="tag">30+ Commercial Products</span>
       </div>
     </a>
   </div>
 </section>
 
-<section class="home-section" id="summary-table">
-  <h2>At-a-Glance: Project History &amp; Commercial Product Lineup</h2>
-  <p class="sub">
-    Summary of every Samsung Electronics project, generation milestone, and commercial smartphone documented in the Resume and LinkedIn profile.
-  </p>
-
+<section class="home-section" id="summary-table" style="padding-top:0">
+  <h2>Consolidated Project History &amp; Commercial Product Table</h2>
+  <p class="sub">Complete summary of Samsung Electronics projects, generation milestones, and commercial smartphones from the Resume and LinkedIn profile.</p>
   <div class="tbl-wrap">
     <table class="tbl">
       <thead>
@@ -130,49 +183,49 @@
       <tbody>
         <tr>
           <td><strong>200MP Sensor</strong></td>
-          <td><strong>ISOCELL HP5</strong><br/><code>0.5µm, 200MP, 1/1.56"</code></td>
+          <td><strong>ISOCELL HP5</strong><br><code>0.5µm, 200MP, 1/1.56"</code></td>
           <td>Jan 2025 – Present</td>
           <td><strong>Technical Leader</strong>: Deep learning-based S/W algorithm &amp; Neural ISP roadmap for the <strong>world's smallest 200MP sensor</strong>.</td>
           <td>Mass-market &amp; compact flagship 200MP cameras (<a href="https://semiconductor.samsung.com/image-sensor/mobile-image-sensor/isocell-hp5/" target="_blank" rel="noopener">Samsung HP5 Official ↗</a>)</td>
         </tr>
         <tr>
           <td><strong>200MP Sensor</strong></td>
-          <td><strong>ISOCELL HP3 / HP9</strong><br/><code>0.56µm, 200MP, 1/1.4"</code></td>
+          <td><strong>ISOCELL HP3 / HP9</strong><br><code>0.56µm, 200MP, 1/1.4"</code></td>
           <td>Sep 2022 – Present</td>
           <td>Invented the <strong>World's 1st Deep Learning-based Hexadeca (4×4 = 16-cell) Remosaic S/W algorithm</strong> for 200MP main (HP3) and telephoto (HP9) sensors.</td>
           <td><strong>vivo X200 Pro</strong> (200MP ZEISS Telephoto, HP9), <strong>HONOR Magic7 Pro</strong>, <strong>Redmi Note 13 Pro+ 5G</strong>, <strong>HONOR 80 Pro</strong> (160MP Main, HP3)</td>
         </tr>
         <tr>
           <td><strong>200MP Sensor</strong></td>
-          <td><strong>ISOCELL HP2</strong><br/><code>0.6µm, 200MP, 1/1.3"</code></td>
+          <td><strong>ISOCELL HP2</strong><br><code>0.6µm, 200MP, 1/1.3"</code></td>
           <td>Apr 2021 – Apr 2023</td>
           <td>Developed <strong>AI-based 4×4 Q-cell Remosaic (<code>QMSC</code>)</strong> algorithm deployed in-sensor for 200MP full-res and <strong>12MP 4× In-Sensor Zoom</strong> mode.</td>
           <td><strong>Samsung Galaxy S23 Ultra</strong> (Main camera · 200MP &amp; 12MP 4× In-Sensor Zoom)</td>
         </tr>
         <tr>
           <td><strong>E2E Platform</strong></td>
-          <td><strong>E2E AI Remosaic · Gen 4</strong><br/><code>DL Multi-Frame on NPU</code></td>
+          <td><strong>E2E AI Remosaic · Gen 4</strong><br><code>DL Multi-Frame on NPU</code></td>
           <td>Jan 2026 – Present</td>
           <td><strong>DL-based Multi-frame Remosaic</strong>: joint multi-frame reconstruction for detail recovery &amp; noise reduction, optimized for flagship AP NPU architectures.</td>
           <td><strong>HONOR Magic 9</strong> &amp; <strong>HONOR Magic 9 Pro Max</strong> (200MP Multi-Frame Capture)</td>
         </tr>
         <tr>
           <td><strong>E2E Platform</strong></td>
-          <td><strong>E2E AI Remosaic · Gen 3</strong><br/><code>In-Sensor Zoom &amp; MF</code></td>
+          <td><strong>E2E AI Remosaic · Gen 3</strong><br><code>In-Sensor Zoom &amp; MF</code></td>
           <td>Jan 2025 – Dec 2025</td>
           <td>Feature upgrade for <strong>In-Sensor Zoom</strong>: expanded Multi-frame &amp; Zoom processing capability into E2E AI Remosaic for broader OEM coverage.</td>
           <td><strong>Xiaomi REDMI Note 15 Pro+ 5G</strong> (Main camera mode with HPE sensor)</td>
         </tr>
         <tr>
           <td><strong>E2E Platform</strong></td>
-          <td><strong>E2E AI Remosaic · Gen 2</strong><br/><code>Heterogeneous SoC</code></td>
+          <td><strong>E2E AI Remosaic · Gen 2</strong><br><code>Heterogeneous SoC</code></td>
           <td>Jan 2023 – Dec 2024</td>
           <td>Accelerated 200MP <code>cfa2yuv</code> capture latency <strong>up to 3× faster (<code>3s → 1s @ SM8550</code>)</strong> via joint optimization &amp; parallelization of DL Remosaic &amp; SW ISP on Heterogeneous SoC (<code>CPU/GPU/NPU/ISP</code>).</td>
           <td>🏆 <strong>SEC Annual Awards 2023 (Silver Award)</strong> · <strong>HONOR Magic7 Pro</strong>, <strong>vivo X200 Pro ZEISS</strong>, <strong>Redmi Note 13 Pro+ 5G</strong>, <strong>30+ CN OEM products</strong></td>
         </tr>
         <tr>
           <td><strong>E2E Platform</strong></td>
-          <td><strong>E2E AI Remosaic · Gen 1</strong><br/><code>Turn-Key S/W ISP</code></td>
+          <td><strong>E2E AI Remosaic · Gen 1</strong><br><code>Turn-Key S/W ISP</code></td>
           <td>Sep 2022</td>
           <td>Foundational End-to-End Remosaic + S/W ISP turn-key architecture for 200MP ISOCELL sensors; established the commercial S/W ISP platform.</td>
           <td>Initial commercial 200MP turn-key S/W ISP rollout across China OEM flagships</td>
@@ -182,9 +235,8 @@
   </div>
 </section>
 
-</main>
-<footer class="sb-footer">
-  Samsung Electronics · S.LSI Sensor Business Team — 200MP ISOCELL &amp; E2E AI Remosaic Project Guidebook · Yongjoon Song, Ph.D. · Build 2026-11-01 (<code>dbcaf33</code>)
+<footer class="sb-foot">
+  Samsung Electronics · S.LSI Sensor Business Team — 200MP ISOCELL &amp; E2E AI Remosaic Project Guidebook · Yongjoon Song, Ph.D. · Build 2026-11-01 (<code>8f33521</code>)
 </footer>
 </body>
 </html>

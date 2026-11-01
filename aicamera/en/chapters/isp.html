@@ -1,0 +1,959 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Ch.03 Software ISP &amp; Halide/NPU Optimization · AICAMERA Guidebook</title>
+<meta name="description" content="10-stage C99 reference ISP (DPC·BLC·LSC·ANF·AWB·Demosaic·CCM·Gamma·CSC·EEH), 3A loop, Verified Lifting, 4-Tier Halide/GPU, and Dual-NPU edge AI.">
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/katex@0.16.11/dist/katex.min.css">
+<script defer src="https://cdn.jsdelivr.net/npm/katex@0.16.11/dist/katex.min.js"></script>
+<script defer src="https://cdn.jsdelivr.net/npm/katex@0.16.11/dist/contrib/auto-render.min.js"></script>
+<link rel="stylesheet" href="../css/style.css">
+<link rel="stylesheet" href="../css/glossary-tooltips.css">
+<script src="../js/glossary-data.js"></script>
+<script src="../js/common.js"></script>
+<script defer src="../js/glossary-tooltips.js"></script>
+</head>
+<body data-chapter="isp" data-root="../">
+
+<main class="chapter">
+    <header class="ch-header">
+      <div class="eyebrow">CHAPTER 03 · SOFTWARE ISP &amp; HALIDE/NPU OPTIMIZATION (hdrnet/)</div>
+      <h1>Software ISP — From C99 Reference to Fused Halide &amp; Edge AI</h1>
+      <p class="lead">
+        The raw <code>uint16</code> Bayer RGGB array emitted by a sensor is, by itself, merely a dark, green-tinted mosaic grid.
+        In this chapter, we ① dissect the exact mathematical specification of our 10-stage C99 reference OpenISP pipeline and 3A closed-loop controller, and
+        ② use interactive simulators to explore how a pipeline that originally consumed <strong>1,257.8 MB/frame</strong> of round-trip DRAM traffic is compressed down to
+        <strong>91.3 MB/frame (13.8× reduction)</strong> through <strong>Verified Lifting</strong>, <strong>Halide kernel fusion, and DMA-BUF Zero-Copy</strong>.
+      </p>
+      <div class="meta-bar">
+        <span>Pipeline <b>10-Stage C99 + 3A (AWB·CCM·AE)</b></span>
+        <span>12MP DRAM Saved <b>1257.8 MB → 91.3 MB (13.8×)</b></span>
+        <span>CPU Speedup <b>493.85 ms → 121.48 ms (4.07×)</b></span>
+        <span>Edge AI <b>IMX500 SSD + Hailo Grid/Seg + ZAP</b></span>
+      </div>
+    </header>
+
+    <section id="isp-pipe">
+      <h2>3.1 Why Linear Correction Comes First — 10-Stage Pipeline Domain Structure</h2>
+      <p>
+        The ordering of ISP stages is not arbitrary; it is strictly dictated by the <strong>physical linearity of photoelectric conversion</strong>.
+        Subtracting black level (BLC) and multiplying lens shading (LSC) and white balance (AWB) gains must happen in the linear Bayer RAW domain (Stages 1–5)—where sample values are directly proportional to photon counts—so radiometric ratios remain undistorted. Only after demosaicing (Stage 6) and the color correction matrix (Stage 7) complete in linear RGB are the nonlinear gamma curve (Stage 8), YUV color space conversion (Stage 9), and luma edge enhancement (Stage 10) applied.
+      </p>
+      <figure class="figure">
+        <svg class="diagram" id="isp-svg" viewBox="0 0 1300 236" role="img" aria-label="Software ISP 10-stage pipeline"><defs><marker id="arrow2" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M0,0 L10,5 L0,10 z" class="arrowhead"/></marker></defs><g class="lane lane-sensor"><rect x="6" y="34" width="616" height="124" rx="12"/><text class="lane-label" x="16" y="52">Bayer RAW Domain · float32 [0,1]</text></g><g class="lane lane-host"><rect x="636" y="34" width="372" height="124" rx="12"/><text class="lane-label" x="646" y="52">RGB Domain · float32</text></g><g class="lane lane-ws"><rect x="1022" y="34" width="250" height="124" rx="12"/><text class="lane-label" x="1032" y="52">YUV420 · uint8</text></g><g class="node n-isp n-off" data-stage="1" tabindex="0" role="button" aria-label="Stage 1 DPC"><rect x="14" y="70" width="112" height="66" rx="10" stroke-dasharray="5 4"/><text class="n-num" x="70.0" y="90">1</text><text class="n-title" x="70.0" y="110">DPC</text><text class="n-sub" x="70.0" y="126">4 B/px · off</text></g><path class="edge" d="M127,103.0 L134,103.0" marker-end="url(#arrow2)"/><g class="node n-isp" data-stage="2" tabindex="0" role="button" aria-label="Stage 2 BLC"><rect x="136" y="70" width="112" height="66" rx="10"/><text class="n-num" x="192.0" y="90">2</text><text class="n-title" x="192.0" y="110">BLC</text><text class="n-sub" x="192.0" y="126">6 B/px</text></g><path class="edge" d="M249,103.0 L256,103.0" marker-end="url(#arrow2)"/><g class="node n-isp n-off" data-stage="3" tabindex="0" role="button" aria-label="Stage 3 LSC"><rect x="258" y="70" width="112" height="66" rx="10" stroke-dasharray="5 4"/><text class="n-num" x="314.0" y="90">3</text><text class="n-title" x="314.0" y="110">LSC</text><text class="n-sub" x="314.0" y="126">8 B/px · off</text></g><path class="edge" d="M371,103.0 L378,103.0" marker-end="url(#arrow2)"/><g class="node n-isp n-off" data-stage="4" tabindex="0" role="button" aria-label="Stage 4 ANF"><rect x="380" y="70" width="112" height="66" rx="10" stroke-dasharray="5 4"/><text class="n-num" x="436.0" y="90">4</text><text class="n-title" x="436.0" y="110">ANF</text><text class="n-sub" x="436.0" y="126">8 B/px · off</text></g><path class="edge" d="M493,103.0 L500,103.0" marker-end="url(#arrow2)"/><g class="node n-isp" data-stage="5" tabindex="0" role="button" aria-label="Stage 5 AWB · Gain"><rect x="502" y="70" width="112" height="66" rx="10"/><text class="n-num" x="558.0" y="90">5</text><text class="n-title" x="558.0" y="110">AWB · Gain</text><text class="n-sub" x="558.0" y="126">8 B/px</text></g><path class="edge" d="M615,103.0 L642,103.0" marker-end="url(#arrow2)"/><g class="node n-isp" data-stage="6" tabindex="0" role="button" aria-label="Stage 6 Demosaic"><rect x="644" y="70" width="112" height="66" rx="10"/><text class="n-num" x="700.0" y="90">6</text><text class="n-title" x="700.0" y="110">Demosaic</text><text class="n-sub" x="700.0" y="126">16 B/px</text></g><path class="edge" d="M757,103.0 L764,103.0" marker-end="url(#arrow2)"/><g class="node n-isp" data-stage="7" tabindex="0" role="button" aria-label="Stage 7 CCM"><rect x="766" y="70" width="112" height="66" rx="10"/><text class="n-num" x="822.0" y="90">7</text><text class="n-title" x="822.0" y="110">CCM</text><text class="n-sub" x="822.0" y="126">24 B/px</text></g><path class="edge" d="M879,103.0 L886,103.0" marker-end="url(#arrow2)"/><g class="node n-isp" data-stage="8" tabindex="0" role="button" aria-label="Stage 8 Gamma"><rect x="888" y="70" width="112" height="66" rx="10"/><text class="n-num" x="944.0" y="90">8</text><text class="n-title" x="944.0" y="110">Gamma</text><text class="n-sub" x="944.0" y="126">24 B/px</text></g><path class="edge" d="M1001,103.0 L1028,103.0" marker-end="url(#arrow2)"/><g class="node n-isp" data-stage="9" tabindex="0" role="button" aria-label="Stage 9 CSC (YUV)"><rect x="1030" y="70" width="112" height="66" rx="10"/><text class="n-num" x="1086.0" y="90">9</text><text class="n-title" x="1086.0" y="110">CSC (YUV)</text><text class="n-sub" x="1086.0" y="126">13.5 B/px</text></g><path class="edge" d="M1143,103.0 L1150,103.0" marker-end="url(#arrow2)"/><g class="node n-isp n-off" data-stage="10" tabindex="0" role="button" aria-label="Stage 10 EEH (Y)"><rect x="1152" y="70" width="112" height="66" rx="10" stroke-dasharray="5 4"/><text class="n-num" x="1208.0" y="90">10</text><text class="n-title" x="1208.0" y="110">EEH (Y)</text><text class="n-sub" x="1208.0" y="126">2 B/px · off</text></g><text class="svg-foot" x="14" y="196">Input: uint16 Bayer RGGB (10-bit MSB-aligned in 16-bit) → Output: planar YUV420 uint8 · B/px = per-stage DRAM read+write bytes in code comments (102 B/px total)</text><text class="svg-foot" x="14" y="216">Dashed = disabled by default in openisp_default_params(). Live demo (sw_isp_demo.py) enables DPC·LSC·ANF·EEH; 3-way benchmark keeps them off.</text></svg>
+      </figure>
+      <p class="note">
+        Click any stage block in the diagram to scroll directly to its mathematical formula and C99 source card in Section 3.3 below.
+        Canonical C implementation: <a class="src" href="../../../hdrnet/c_src/openisp_procedural.c" title="hdrnet/c_src/openisp_procedural.c" target="_blank" rel="noopener">openisp_procedural.c</a> · Default parameter header: <a class="src" href="../../../hdrnet/c_src/openisp_params.h" title="hdrnet/c_src/openisp_params.h" target="_blank" rel="noopener">openisp_params.h</a>
+      </p>
+    </section>
+
+    <section id="isp-sim-sec">
+      <h2>3.2 Interactive 10-Stage OpenISP Pipeline Simulator</h2>
+      <div class="sim" id="sim-isp">
+        <div class="sim-head">
+          <div class="sim-title">SIMULATOR 01 · 10-Stage OpenISP Per-Stage Toggle · Parameter Tuning · Loupe &amp; Histogram</div>
+          <span class="badge b-isp">1:1 In-Browser C99 Equations</span>
+        </div>
+        <div class="sim-body">
+          <p style="margin-top:0;">
+            Click the chip buttons below to <strong>toggle each ISP stage on or off individually</strong>, or drag the sliders to tune key registers (DPC threshold, Black Level, LSC, AWB gains, Gamma, EEH sharpening).
+            Hover over the left canvas to update the <strong>pixel-grid magnifier loupe (7×7 neighborhood)</strong> and <strong>live RGB/Y histogram</strong> on the right.
+          </p>
+          <div class="isp-chips" id="isp-stage-chips"></div>
+          <div class="sim-controls" id="isp-sim-ctrl"></div>
+          <div class="sim-grid-2">
+            <div>
+              <canvas id="isp-main-cv" data-w="520" data-h="310" style="cursor:crosshair"></canvas>
+            </div>
+            <div>
+              <canvas id="isp-side-cv" data-w="400" data-h="310"></canvas>
+            </div>
+          </div>
+          <div class="sim-stats" id="isp-sim-stats"></div>
+        </div>
+      </div>
+    </section>
+
+    <section id="isp-stages">
+      <h2>3.3 Stage-by-Stage Mathematical Formulas &amp; C99 Implementation Details</h2>
+      <p>
+        The 10 cards below give the exact mathematical definitions and default register values corresponding 1:1 to the C functions implemented in <a class="src" href="../../../hdrnet/c_src/openisp_procedural.c" title="hdrnet/c_src/openisp_procedural.c" target="_blank" rel="noopener">openisp_procedural.c</a>.
+      </p>
+      <div class="stage-grid"><article class="card stage" id="stage-1"><div class="stage-head"><span class="stage-num">1</span><div><h3 id="isp-s1">Defective Pixel Correction (DPC)</h3><div class="stage-meta"><span class="badge b-off">Default off</span> · DRAM 4 B/px · <a class="src" href="../../../hdrnet/c_src/openisp_procedural.c" title="hdrnet/c_src/openisp_procedural.c (line 42)" target="_blank" rel="noopener">openisp_procedural.c:42</a></div></div></div><div class="eq">\[ \hat p=\begin{cases}\tfrac12\big(n_{(4)}+n_{(5)}\big) & p \gt n_{(8)}+T\ \ \lor\ \ p \lt n_{(1)}-T\\ p & \text{otherwise}\end{cases} \]</div><p>Sorts the 8 same-color neighbors (±2 px) into \(n_{(1)}\le\dots\le n_{(8)}\). If pixel \(p\) exceeds the neighbor range by more than \(T\)=<code>dpc_threshold</code>(30.0), it is replaced by the average of the two median neighbors. Because \(T\) is expressed in uint16 storage units (10-bit×64), it corresponds to ~0.47 DN in 10-bit units.</p></article><article class="card stage" id="stage-2"><div class="stage-head"><span class="stage-num">2</span><div><h3 id="isp-s2">Black Level Compensation (BLC)</h3><div class="stage-meta"><span class="badge b-on">Always On</span> · DRAM 6 B/px · <a class="src" href="../../../hdrnet/c_src/openisp_procedural.c" title="hdrnet/c_src/openisp_procedural.c (line 98)" target="_blank" rel="noopener">openisp_procedural.c:98</a></div></div></div><div class="eq">\[ x=\operatorname{clip}_{[0,1]}\!\left(\frac{I-64B}{64W-64B}\right) \]</div><p>\(B\)=<code>black_level</code>(64.0), \(W\)=<code>white_level</code>(1023.0). When <code>is_16bit_input</code> is set, 10-bit samples are treated as MSB-aligned in 16-bit (scaled by ×64) and normalized into linear [0,1] floating-point values.</p></article><article class="card stage" id="stage-3"><div class="stage-head"><span class="stage-num">3</span><div><h3 id="isp-s3">Lens Shading Correction (LSC)</h3><div class="stage-meta"><span class="badge b-off">Default off</span> · DRAM 8 B/px · <a class="src" href="../../../hdrnet/c_src/openisp_procedural.c" title="hdrnet/c_src/openisp_procedural.c (line 124)" target="_blank" rel="noopener">openisp_procedural.c:124</a></div></div></div><div class="eq">\[ x'=\operatorname{clip}_{[0,1]}\!\big(x\,(1+a_1 r^2+a_2 r^4)\big),\qquad r^2=(u-c_x)^2+(v-c_y)^2 \]</div><p>Squared radius in pixels \(r^2\) around the optical center \(c=((W-1)/2,(H-1)/2)\). \(a_1\)=1.5e-7, \(a_2\)=2.0e-14. Multiplies a radially symmetric gain equally across color channels.</p></article><article class="card stage" id="stage-4"><div class="stage-head"><span class="stage-num">4</span><div><h3 id="isp-s4">Anti-Noise Filter (Bayer Bilateral ANF)</h3><div class="stage-meta"><span class="badge b-off">Default off</span> · DRAM 8 B/px · <a class="src" href="../../../hdrnet/c_src/openisp_procedural.c" title="hdrnet/c_src/openisp_procedural.c (line 160)" target="_blank" rel="noopener">openisp_procedural.c:160</a></div></div></div><div class="eq">\[ x'(p)=\frac{\sum_{q} w_{pq}\,x(q)}{\sum_{q} w_{pq}},\qquad w_{pq}=\exp\!\Big(-\frac{\lVert d_{pq}\rVert^2}{2\sigma_s^2}-\frac{(x(q)-x(p))^2}{2\sigma_r^2}\Big) \]</div><p>Suppresses noise while preserving edges across a same-color 3×3 lattice (±2 px physical spacing). \(d\) is measured in lattice steps (−1, 0, 1). \(\sigma_s\)=1.0, \(\sigma_r\)=0.05.</p></article><article class="card stage" id="stage-5"><div class="stage-head"><span class="stage-num">5</span><div><h3 id="isp-s5">White Balance &amp; Digital Gain (AWB)</h3><div class="stage-meta"><span class="badge b-on">Always On</span> · DRAM 8 B/px · <a class="src" href="../../../hdrnet/c_src/openisp_procedural.c" title="hdrnet/c_src/openisp_procedural.c (line 214)" target="_blank" rel="noopener">openisp_procedural.c:214</a></div></div></div><div class="eq">\[ x'=x\cdot g_c\cdot g_d,\qquad g_c\in\{g_R,\ g_G,\ g_B\} \]</div><p>\(g_c\) is selected according to the RGGB 2×2 phase. Default \(g_R\)=2.20, \(g_G\)=1.00, \(g_B\)=1.80, \(g_d\)=1.00. No clipping is applied at this stage; when the 3A loop is active, gains are updated every frame from 3A outputs.</p></article><article class="card stage" id="stage-6"><div class="stage-head"><span class="stage-num">6</span><div><h3 id="isp-s6">Demosaic (Branchless Bilinear, Fixed RGGB)</h3><div class="stage-meta"><span class="badge b-on">Always On</span> · DRAM 16 B/px · <a class="src" href="../../../hdrnet/c_src/openisp_procedural.c" title="hdrnet/c_src/openisp_procedural.c (line 250)" target="_blank" rel="noopener">openisp_procedural.c:250</a></div></div></div><div class="eq">\[ \begin{aligned} G_{@R}&=\tfrac14\big(G_N+G_S+G_W+G_E\big)\\ B_{@R}&=\tfrac14\big(B_{NW}+B_{NE}+B_{SW}+B_{SE}\big)\\ R_{@G_r}&=\tfrac12\big(R_W+R_E\big) \end{aligned} \]</div><p>Branchless bilinear interpolation operating on 2×2 macropixels. Produces interleaved RGB float32 clipped to [0,1]. (Early design notes mentioning Malvar-He-Cutler differ from the actual C implementation.)</p></article><article class="card stage" id="stage-7"><div class="stage-head"><span class="stage-num">7</span><div><h3 id="isp-s7">Color Correction Matrix (CCM)</h3><div class="stage-meta"><span class="badge b-on">Always On</span> · DRAM 24 B/px · <a class="src" href="../../../hdrnet/c_src/openisp_procedural.c" title="hdrnet/c_src/openisp_procedural.c (line 343)" target="_blank" rel="noopener">openisp_procedural.c:343</a></div></div></div><div class="eq">\[ \begin{bmatrix}R'\\G'\\B'\end{bmatrix}=\operatorname{clip}_{[0,1]}\!\left(M\begin{bmatrix}R\\G\\B\end{bmatrix}\right) \]\[ M_{\mathrm{D65}}=\begin{bmatrix}1.6605 & -0.5876 & -0.0728\\-0.1245 & 1.3038 & -0.1793\\-0.0181 & -0.5055 & 1.5236\end{bmatrix} \]</div><p>Rotates and aligns sensor spectral sensitivities into the standard sRGB gamut. When 3A is active, \(M\) is linearly interpolated across 3000K–7500K presets based on estimated CCT. The <code>saturation</code> field is unused in the C path.</p></article><article class="card stage" id="stage-8"><div class="stage-head"><span class="stage-num">8</span><div><h3 id="isp-s8">Gamma Tone Mapping (Pure Power Law LUT)</h3><div class="stage-meta"><span class="badge b-on">Always On</span> · DRAM 24 B/px · <a class="src" href="../../../hdrnet/c_src/openisp_procedural.c" title="hdrnet/c_src/openisp_procedural.c (line 376)" target="_blank" rel="noopener">openisp_procedural.c:376</a></div></div></div><div class="eq">\[ \begin{aligned} y&=\mathrm{LUT}\big[\operatorname{round}(1023\,x)\big]\\ \mathrm{LUT}[i]&=\Big(\frac{i}{1023}\Big)^{1/\gamma} \end{aligned} \]</div><p>1024-entry lookup table with \(\gamma\)=<code>gamma</code>(2.2). Implements a pure power law rather than the piecewise sRGB OETF with a linear toe.</p></article><article class="card stage" id="stage-9"><div class="stage-head"><span class="stage-num">9</span><div><h3 id="isp-s9">Color Space Conversion (BT.601 Limited YUV420)</h3><div class="stage-meta"><span class="badge b-on">Always On</span> · DRAM 13.5 B/px · <a class="src" href="../../../hdrnet/c_src/openisp_procedural.c" title="hdrnet/c_src/openisp_procedural.c (line 409)" target="_blank" rel="noopener">openisp_procedural.c:409</a></div></div></div><div class="eq">\[ \begin{aligned} Y&=16+65.481\,R'+128.553\,G'+24.966\,B'\\ C_b&=128-37.797\,\bar R'-74.203\,\bar G'+112\,\bar B'\\ C_r&=128+112\,\bar R'-93.786\,\bar G'-18.214\,\bar B' \end{aligned} \]</div><p>\(\bar R',\bar G',\bar B'\) denote 2×2 block averages (4:2:0 chroma subsampling). Follows studio swing (Y 16–235), matching OpenCV <code>COLOR_YUV2BGR_I420</code> exactly. Output is planar YUV420 uint8.</p></article><article class="card stage" id="stage-10"><div class="stage-head"><span class="stage-num">10</span><div><h3 id="isp-s10">Edge Enhancement (EEH on Y Luma, Integer Fixed-Point)</h3><div class="stage-meta"><span class="badge b-off">Default off</span> · DRAM 2 B/px · <a class="src" href="../../../hdrnet/c_src/openisp_procedural.c" title="hdrnet/c_src/openisp_procedural.c (line 468)" target="_blank" rel="noopener">openisp_procedural.c:468</a></div></div></div><div class="eq">\[ \begin{aligned} h&=\operatorname{clip}_{[-c,\,c]}\!\Big(Y-\Big\lfloor\tfrac19\textstyle\sum_{3\times3}Y\Big\rfloor\Big)\\ Y'&=\operatorname{clip}_{[0,255]}\!\big(Y+((h\cdot g_{fp})\gg 8)\big) \end{aligned} \]</div><p>\(g_{fp}=\operatorname{round}(256k)\), \(c=\operatorname{round}(255\cdot\text{clip})\); default \(k\)=<code>eeh_gain</code>(0.8), clip=<code>eeh_clip</code>(0.15). Operates directly on the uint8 luma (Y) plane using fixed-point integer arithmetic.</p></article></div>
+
+      <h3 id="isp-params">Default ISP Parameter Registers — <code>OpenISPParams</code></h3>
+      <p>
+        Default configuration values parsed directly at build time from <code>openisp_default_params()</code> in <a class="src" href="../../../hdrnet/c_src/openisp_params.h" title="hdrnet/c_src/openisp_params.h" target="_blank" rel="noopener">openisp_params.h</a> (Python bindings: <a class="src" href="../../../hdrnet/c_backend.py" title="hdrnet/c_backend.py" target="_blank" rel="noopener">c_backend.py</a>).
+      </p>
+      <div class="tbl-wrap">
+        <table class="tbl">
+          <thead><tr><th>Field Name</th><th>C Default</th><th>Role &amp; Units</th></tr></thead>
+          <tbody><tr><td><code>dpc_enabled</code></td><td>false</td><td>Enable DPC</td></tr><tr><td><code>dpc_threshold</code></td><td>30.0</td><td>DPC threshold (in uint16 units)</td></tr><tr><td><code>black_level</code></td><td>64.0</td><td>10-bit black level</td></tr><tr><td><code>white_level</code></td><td>1023.0</td><td>10-bit white level</td></tr><tr><td><code>is_16bit_input</code></td><td>true</td><td>10-bit→16-bit MSB-aligned input</td></tr><tr><td><code>lsc_enabled</code></td><td>false</td><td>Enable LSC</td></tr><tr><td><code>lsc_a1</code></td><td>1.5e-7</td><td>r² coefficient</td></tr><tr><td><code>lsc_a2</code></td><td>2.0e-14</td><td>r⁴ coefficient</td></tr><tr><td><code>anf_enabled</code></td><td>false</td><td>Enable ANF</td></tr><tr><td><code>anf_sigma_spatial</code></td><td>1.0</td><td>σs</td></tr><tr><td><code>anf_sigma_range</code></td><td>0.05</td><td>σr</td></tr><tr><td><code>r_gain</code></td><td>2.20</td><td>R gain</td></tr><tr><td><code>g_gain</code></td><td>1.00</td><td>G gain</td></tr><tr><td><code>b_gain</code></td><td>1.80</td><td>B gain</td></tr><tr><td><code>digital_gain</code></td><td>1.00</td><td>Digital gain</td></tr><tr><td><code>cfa_pattern</code></td><td>0</td><td>CFA code (unused in C path — fixed RGGB)</td></tr><tr><td><code>saturation</code></td><td>1.0</td><td>Unused in C path</td></tr><tr><td><code>gamma</code></td><td>2.2</td><td>Gamma exponent</td></tr><tr><td><code>use_fast_lut</code></td><td>true</td><td>Use LUT</td></tr><tr><td><code>eeh_enabled</code></td><td>false</td><td>Enable EEH</td></tr><tr><td><code>eeh_gain</code></td><td>0.8</td><td>EEH gain k</td></tr><tr><td><code>eeh_clip</code></td><td>0.15</td><td>EEH clip (×255)</td></tr><tr><td><code>num_threads</code></td><td>0</td><td>OpenMP threads (0=auto)</td></tr></tbody>
+        </table>
+      </div>
+    </section>
+
+    <section id="isp-3a">
+      <h2>3.4 3A Closed-Loop Auto Control — AWB · CCT-Interpolated CCM · AE</h2>
+      <p>
+        When a camera encounters varying illuminants (incandescent 3000K to overcast 7500K) and brightness shifts, the feedback controller that stabilizes color and exposure is the <strong>3A loop</strong> (<a class="src" href="../../../hdrnet/c_src/openisp_3a.c" title="hdrnet/c_src/openisp_3a.c" target="_blank" rel="noopener">openisp_3a.c</a>).
+        Every frame, our implementation samples RGGB quads at <code>stats_stride</code> (8 px) intervals in the linear domain right after BLC to compute channel means \((\bar{R}, \bar{G}, \bar{B})\) and
+        Rec.709 luma \(L = 0.2126\bar{R} + 0.7152\bar{G} + 0.0722\bar{B}\) (<a class="src" href="../../../hdrnet/c_src/openisp_3a.c" title="hdrnet/c_src/openisp_3a.c (line 35)" target="_blank" rel="noopener">openisp_3a.c:35</a>).
+      </p>
+      <div class="grid-2">
+        <div class="card">
+          <h3 id="isp-3a-awb">1) Gray-World AWB &amp; Adaptive EMA</h3>
+          <div class="eq">
+            \[ \begin{aligned}
+              \hat g_R &= \operatorname{clip}_{[0.5,\,4]}\!\Big(\frac{\bar G}{\bar R}\Big),\qquad
+              \hat g_B = \operatorname{clip}_{[0.5,\,4]}\!\Big(\frac{\bar G}{\bar B}\Big)\\
+              g_t &= \alpha\,\hat g + (1-\alpha)\,g_{t-1}
+            \end{aligned} \]
+          </div>
+          <p>
+            Under large scene shifts (\(|\hat{g} - g_{t-1}| \gt 0.3\)), the filter converges rapidly with \(\alpha = 0.40\); during steady state, it tracks smoothly using <code>awb_speed</code> (0.15).
+            If mean luma \(L\) drops below <code>dark_luma_threshold</code> (0.02), AWB gains are frozen to prevent noise amplification.
+          </p>
+
+          <h3 id="isp-3a-ccm">2) Estimated CCT-Driven Linear CCM Interpolation</h3>
+          <div class="eq">
+            \[ T_{cc} = \operatorname{clip}_{[2400,\,8500]}\!\big(5500\cdot g_R / g_B\big) \]
+          </div>
+          <p>
+            Using the estimated correlated color temperature \(T_{cc}\), the controller piecewise-linearly interpolates across four standard CCM presets at 3000K, 4000K, 6500K (D65), and 7500K (<a class="src" href="../../../hdrnet/c_src/openisp_3a.c" title="hdrnet/c_src/openisp_3a.c (line 327)" target="_blank" rel="noopener">openisp_3a.c:327</a>).
+          </p>
+
+          <h3 id="isp-3a-ae">3) Digital-Gain AE &amp; Adaptive EMA</h3>
+          <div class="eq">
+            \[ \begin{aligned}
+              \hat d &= \operatorname{clip}_{[0.25,\,8]}\!\Big(\frac{0.18\cdot 2^{\mathrm{EV}}}{\max(10^{-3},\,L)}\Big)\\
+              d_t &= \beta\,\hat d + (1-\beta)\,d_{t-1}
+            \end{aligned} \]
+          </div>
+          <p>
+            Uses \(\beta = 0.45\) under large exposure errors (\(|\hat{d} - d_{t-1}| \gt 0.4\)) and <code>ae_speed</code> (0.20) otherwise.
+            (Note: the C 3A loop updates digital gain only and does not control sensor shutter integration time, analog gain, or autofocus.)
+          </p>
+        </div>
+        <div class="card">
+          <h3 id="isp-3a-params">3A Defaults — <code>OpenISP3AParams</code></h3>
+          <div class="tbl-wrap">
+            <table class="tbl">
+              <thead><tr><th>Field</th><th>Default</th><th>Description</th></tr></thead>
+              <tbody><tr><td><code>awb_speed</code></td><td>0.15</td><td>AWB EMA factor (fixed to 0.40 when |Δ|&gt;0.3)</td></tr><tr><td><code>min_rg</code></td><td>0.5</td><td>R gain lower bound</td></tr><tr><td><code>max_rg</code></td><td>4.0</td><td>R gain upper bound</td></tr><tr><td><code>min_bg</code></td><td>0.5</td><td>B gain lower bound</td></tr><tr><td><code>max_bg</code></td><td>4.0</td><td>B gain upper bound</td></tr><tr><td><code>dark_luma_threshold</code></td><td>0.015</td><td>Freeze AWB when mean luma falls below this</td></tr><tr><td><code>ae_speed</code></td><td>0.20</td><td>AE EMA factor (fixed to 0.45 when |Δ|&gt;0.4)</td></tr><tr><td><code>target_luma</code></td><td>0.18</td><td>Target mean luma</td></tr><tr><td><code>ev_comp</code></td><td>0.0</td><td>Exposure compensation (EV)</td></tr><tr><td><code>min_digital_gain</code></td><td>0.25</td><td>Digital gain lower bound</td></tr><tr><td><code>max_digital_gain</code></td><td>8.0</td><td>Digital gain upper bound</td></tr><tr><td><code>stats_stride</code></td><td>8</td><td>Statistics sampling stride (px)</td></tr></tbody>
+            </table>
+          </div>
+          <p class="note">Automatically extracted at build time from <code>openisp_3a_default_params()</code> in <a class="src" href="../../../hdrnet/c_src/openisp_3a.c" title="hdrnet/c_src/openisp_3a.c" target="_blank" rel="noopener">openisp_3a.c</a></p>
+        </div>
+      </div>
+
+      <div class="sim" id="sim-3a">
+        <div class="sim-head">
+          <div class="sim-title">SIMULATOR 02 · 3A Closed-Loop Convergence Simulator (Illuminant CCT · Luma Step Change &amp; Adaptive EMA)</div>
+          <span class="badge b-isp">openisp_3a.c Equations Live</span>
+        </div>
+        <div class="sim-body">
+          <p style="margin-top:0;">
+            Simulate a sudden lighting step change at frame \(t=10\) (e.g., daylight 6500K → tungsten 2800K, or entering a dark room), and
+            observe how many frames AWB gains \((g_R, g_B)\) and AE digital gain \(d_t\) take to settle via <strong>adaptive EMA (fast mode \(\alpha=0.40, \beta=0.45\) on large deltas)</strong>.
+          </p>
+          <div class="sim-controls" id="a3-ctrl"></div>
+          <canvas id="a3-cv" data-w="920" data-h="250"></canvas>
+          <div class="sim-stats" id="a3-stats"></div>
+        </div>
+      </div>
+    </section>
+
+    <section id="isp-tiers">
+      <h2>3.5 4-Tier Execution Engines, Halide Kernel Fusion &amp; DMA-BUF Zero-Copy</h2>
+      <p>
+        When processing a 12.33 MP (<code>4056×3040</code>) high-resolution frame by writing and reading full-frame buffers to and from DRAM at every stage like the C99 reference (Tier 1),
+        each frame incurs roughly <strong>102 B/px (1,257.8 MB)</strong> of DRAM traffic, thrashing the CPU cache at every stage boundary.
+        To overcome this, we progressively optimized the exact same mathematical pipeline across four execution tiers (Tiers 1–4):
+      </p>
+      <div class="tier-grid" style="margin:14px 0;">
+        <div class="tier"><b>Tier 1 · C99 Baseline</b><span>Single-threaded · Full-frame DRAM round-trip per stage (1,257.8 MB)</span><a class="src" href="../../../hdrnet/c_src/openisp_procedural.c" title="hdrnet/c_src/openisp_procedural.c (line 522)" target="_blank" rel="noopener">openisp_procedural.c:522</a></div>
+        <div class="tier"><b>Tier 2 · Halide Block-wise</b><span>Per-stage individual Halide functions · ARM NEON SIMD vectorization</span><a class="src" href="../../../hdrnet/c_src/openisp_halide_wrapper.c" title="hdrnet/c_src/openisp_halide_wrapper.c" target="_blank" rel="noopener">openisp_halide_wrapper.c</a></div>
+        <div class="tier"><b>Tier 3 · Halide Fused CPU</b><span>Fuses all stages into a single tiled loop · L2 cache resident (91.3 MB)</span><a class="src" href="../../../hdrnet/c_src/build_openisp_halide.py" title="hdrnet/c_src/build_openisp_halide.py" target="_blank" rel="noopener">build_openisp_halide.py</a></div>
+        <div class="tier"><b>Tier 4 · Halide GPU (V3D)</b><span>VideoCore VII Vulkan Compute · Staged / DMA-BUF / FP16</span><a class="src" href="../../../hdrnet/c_src/openisp_halide_gpu_wrapper.c" title="hdrnet/c_src/openisp_halide_gpu_wrapper.c" target="_blank" rel="noopener">openisp_halide_gpu_wrapper.c</a></div>
+      </div>
+
+      <figure class="figure figure-chart">
+        <svg class="chart" viewBox="0 0 860 282" role="img" aria-label="12MP ISP latency by engine"><line class="grid" x1="215.0" y1="14" x2="215.0" y2="254"/><text class="tick" x="215.0" y="270">0</text><line class="grid" x1="315.0" y1="14" x2="315.0" y2="254"/><text class="tick" x="315.0" y="270">100</text><line class="grid" x1="415.0" y1="14" x2="415.0" y2="254"/><text class="tick" x="415.0" y="270">200</text><line class="grid" x1="515.0" y1="14" x2="515.0" y2="254"/><text class="tick" x="515.0" y="270">300</text><line class="grid" x1="615.0" y1="14" x2="615.0" y2="254"/><text class="tick" x="615.0" y="270">400</text><line class="grid" x1="715.0" y1="14" x2="715.0" y2="254"/><text class="tick" x="715.0" y="270">500</text><text class="tick" x="755" y="270">ms</text><text class="bar-label" x="203" y="37.0">Tier 1 · C (1 thread)</text><rect class="seg-cpu" x="215" y="20" width="474.0" height="24" rx="3"><title>Tier 1 · C (1 thread): compute 474.04 ms</title></rect><text class="bar-total" x="697.0" y="37.0">474.04 ms · ×1.00</text><text class="bar-label" x="203" y="75.0">Tier 2 · Halide block-wise</text><rect class="seg-cpu" x="215" y="58" width="298.3" height="24" rx="3"><title>Tier 2 · Halide block-wise: compute 298.28 ms</title></rect><text class="bar-total" x="521.3" y="75.0">298.28 ms · ×1.59</text><text class="bar-label" x="203" y="113.0">Tier 3 · Halide fused CPU</text><rect class="seg-cpu" x="215" y="96" width="128.8" height="24" rx="3"><title>Tier 3 · Halide fused CPU: compute 128.78 ms</title></rect><text class="bar-total" x="351.8" y="113.0">128.78 ms · ×3.68</text><text class="bar-label" x="203" y="151.0">Tier 4 · GPU staged</text><rect class="seg-gpu" x="215" y="134" width="229.4" height="24" rx="3"><title>Tier 4 · GPU staged: compute 229.40 ms</title></rect><rect class="seg-stage" x="444.4" y="134" width="60.2" height="24" rx="3"><title>staging copy 60.16 ms</title></rect><text class="bar-total" x="512.6" y="151.0">289.56 ms · ×1.64</text><text class="bar-label" x="203" y="189.0">Tier 4 · GPU DMA-BUF</text><rect class="seg-gpu" x="215" y="172" width="229.4" height="24" rx="3"><title>Tier 4 · GPU DMA-BUF: compute 229.40 ms</title></rect><text class="bar-total" x="452.4" y="189.0">229.40 ms · ×2.07</text><text class="bar-label" x="203" y="227.0">Tier 4 · GPU FP16</text><rect class="seg-gpu" x="215" y="210" width="268.2" height="24" rx="3"><title>Tier 4 · GPU FP16: compute 268.18 ms</title></rect><rect class="seg-stage" x="483.2" y="210" width="59.6" height="24" rx="3"><title>staging copy 59.63 ms</title></rect><text class="bar-total" x="550.8" y="227.0">327.81 ms · ×1.45</text></svg>
+        <figcaption>Mean latency at 12.33 MP (4056×3040) over 5 iterations. Gray bars indicate GPU staging buffer copy overhead. Source: <a class="src" href="../../../hdrnet/benchmarks/3way_isp_results.json" title="hdrnet/benchmarks/3way_isp_results.json" target="_blank" rel="noopener">3way_isp_results.json</a></figcaption>
+      </figure>
+
+      <div class="tbl-wrap">
+        <table class="tbl tbl-num">
+          <thead>
+            <tr><th>Engine (Tier)</th><th>Mean ms</th><th>FPS</th><th>Speedup (vs C)</th><th>DRAM Traffic (MB)</th><th>PSNR vs ref (dB)</th><th>MAE vs ref</th></tr>
+          </thead>
+          <tbody><tr><td><b>Baseline: Pure Raw C (Single-Thread)</b></td><td>474.04</td><td>2.11</td><td>×1.00</td><td>811.4</td><td>43.09</td><td>1.16</td></tr><tr><td><b>Tier 2: Block-Wise Vectorized Halide</b></td><td>298.28</td><td>3.35</td><td>×1.59</td><td>811.4</td><td>43.53</td><td>1.29</td></tr><tr><td><b>Tier 3: Monolithic Fused Halide (CPU NEON)</b></td><td>128.78</td><td>7.77</td><td>×3.68</td><td>58.8</td><td>43.53</td><td>1.29</td></tr><tr><td><b>Tier 4: GPU Pattern-Aware (FP32 Staged)</b></td><td>289.56</td><td>3.45</td><td>×1.64</td><td>58.8</td><td>43.53</td><td>1.29</td></tr><tr><td><b>Tier 4: GPU + DMA-BUF Zero-Copy (Direct Compute)</b></td><td>229.40</td><td>4.36</td><td>×2.07</td><td>58.8</td><td>43.53</td><td>1.29</td></tr><tr><td><b>Tier 4: GPU FP16 Precision Scaling</b></td><td>327.81</td><td>3.05</td><td>×1.45</td><td>58.8</td><td>43.53</td><td>1.29</td></tr></tbody>
+        </table>
+      </div>
+
+      <div class="callout warn">
+        <div class="callout-title">Important Notes When Interpreting the 12MP Benchmark</div>
+        <ul>
+          <li><strong>Active Stage Condition</strong>: For a fair core-pipeline comparison, <a class="src" href="../../../hdrnet/scripts/bench_3way_isp.py" title="hdrnet/scripts/bench_3way_isp.py (line 77)" target="_blank" rel="noopener">bench_3way_isp.py:77</a> was measured with <code>DPC · LSC · ANF · EEH</code> disabled (running the <strong>6 core stages: BLC · AWB · Demosaic · CCM · Gamma · CSC</strong>).</li>
+          <li><strong>Numerical Parity</strong>: Due to floating-point associativity and fast approximations, Halide Tiers 2–4 achieve <strong>43.53 dB PSNR / 1.29 MAE</strong> against the C reference (numerical parity rather than bit-exactness).</li>
+          <li><strong>DMA-BUF Zero-Copy Impact</strong>: Eliminating the host↔GPU staging memory copy (60.16 ms) from Tier 4 GPU Staged (289.56 ms) via <code>DMA-BUF</code> buffer sharing cuts latency to <strong>229.40 ms (2.15×)</strong>.</li>
+        </ul>
+      </div>
+
+      <div class="sim" id="sim-halide">
+        <div class="sim-head">
+          <div class="sim-title">SIMULATOR 03 · Halide Tiled Kernel Fusion (Loop Fusion) &amp; DRAM Traffic Simulator</div>
+          <span class="badge b-ok">102 B/px → 7.4 B/px</span>
+        </div>
+        <div class="sim-body">
+          <p style="margin-top:0;">
+            Select an execution Tier and tile size (\(T_x \times T_y\)).
+            In <strong>Unfused</strong> mode, every stage flushes the full 12MP frame to DRAM; in <strong>Single-Kernel Fused</strong> mode, each tile flows through all 6 stages inside the L2 cache (up to 2 MB),
+            shrinking external DRAM access to just <strong>initial RAW read (2 B/px) + final YUV/RGB write (5.4 B/px) = 7.4 B/px</strong>.
+          </p>
+          <div class="sim-controls" id="hal-ctrl"></div>
+          <canvas id="hal-cv" data-w="920" data-h="230"></canvas>
+          <div class="sim-stats" id="hal-stats"></div>
+        </div>
+      </div>
+
+      <details class="details">
+        <summary>Earlier Measurement Campaign — 12MP C Pipeline 5-Stage Breakdown (Historical Reference)</summary>
+        <div class="tbl-wrap">
+          <table class="tbl tbl-num"><thead><tr><th>Stage</th><th>Latency (ms)</th></tr></thead><tbody><tr><td>blc</td><td>63.12</td></tr><tr><td>awb</td><td>72.15</td></tr><tr><td>demosaic</td><td>540.83</td></tr><tr><td>ccm</td><td>253.86</td></tr><tr><td>gamma_procedural</td><td>898.52</td></tr><tr><td>gamma_lut</td><td>348.17</td></tr></tbody></table>
+        </div>
+        <p class="note">Procedural total 1828.48 ms, LUT total 1278.13 ms. Source: <a class="src" href="../../../hdrnet/benchmarks/rpi_12mp_bench_results.json" title="hdrnet/benchmarks/rpi_12mp_bench_results.json" target="_blank" rel="noopener">rpi_12mp_bench_results.json</a> (20260919_222021) — recorded prior to the current 4-Tier unification.</p>
+      </details>
+    </section>
+
+    <section id="isp-vl">
+      <h2>3.6 Verified Lifting — Automated C99-to-Halide Translation &amp; Numerical Verification</h2>
+      <p>
+        Manually rewriting C loops into the Halide DSL is prone to index offset and boundary condition bugs.
+        The <code>hdrnet/verified_lifting/</code> module parses the C99 reference source, classifies operator patterns, automatically emits Halide code and schedules, and verifies numerical equivalence:
+      </p>
+      <div class="grid-2">
+        <div class="card">
+          <h3>4-Stage Automated Lifting Pipeline</h3>
+          <ol class="steps">
+            <li><strong>C AST Parsing</strong>: Regex and syntax analyzers extract C stage function signatures and nested loop bounds (<a class="src" href="../../../hdrnet/verified_lifting/src/ast_parser.py" title="hdrnet/verified_lifting/src/ast_parser.py" target="_blank" rel="noopener">ast_parser.py</a>).</li>
+            <li><strong>Operator Pattern Classification</strong>: Normalizes loop bodies into <code>Pointwise</code>, <code>Stencil</code> (neighbor access), <code>Reduction</code>, and <code>LUT</code> intermediate representations (IR) (<a class="src" href="../../../hdrnet/verified_lifting/src/patterns.py" title="hdrnet/verified_lifting/src/patterns.py" target="_blank" rel="noopener">patterns.py</a>).</li>
+            <li><strong>Halide Code &amp; Schedule Generation</strong>: Emits <code>Halide::Func</code>/<code>Var</code> C++ code (<a class="src" href="../../../hdrnet/verified_lifting/src/halide_emitter.py" title="hdrnet/verified_lifting/src/halide_emitter.py" target="_blank" rel="noopener">halide_emitter.py</a>) and binds target hardware schedules (CPU NEON / GPU Vulkan) (<a class="src" href="../../../hdrnet/verified_lifting/src/schedule_library.py" title="hdrnet/verified_lifting/src/schedule_library.py" target="_blank" rel="noopener">schedule_library.py</a>).</li>
+            <li><strong>Numerical Parity Verifier</strong>: Measures the error between C reference outputs and Halide outputs across random and test-pattern inputs, enforcing <strong>PSNR ≥ 40.0 dB and MAE ≤ 10⁻³</strong> (<a class="src" href="../../../hdrnet/verified_lifting/src/verifier.py" title="hdrnet/verified_lifting/src/verifier.py (line 42)" target="_blank" rel="noopener">verifier.py:42</a>).</li>
+          </ol>
+        </div>
+        <div class="callout warn">
+          <div class="callout-title">Verification Scope Clarification (Numerical Parity vs Formal Proof)</div>
+          <p>
+            In the current repository, <code>verifier.py</code> (<a class="src" href="../../../hdrnet/verified_lifting/src/verifier.py" title="hdrnet/verified_lifting/src/verifier.py (line 42)" target="_blank" rel="noopener">verifier.py:42</a>) performs <strong>automated numerical parity verification over test input tensors</strong>.
+            No Z3 SMT solver or SyGuS symbolic formal proof engine is included in the codebase; therefore, "Verified Lifting" in project documents denotes our <strong>pattern-based automated transpilation + numerical regression verification pipeline</strong>.
+          </p>
+        </div>
+      </div>
+    </section>
+
+    <section id="isp-ai">
+      <h2>3.7 Dual-NPU Edge AI Layer (Detection · Segmentation · ZAP Auto-Framing)</h2>
+      <p>
+        Alongside live ISP video processing, the real-time SW ISP web demo (<a class="src" href="../../../hdrnet/scripts/sw_isp_demo.py" title="hdrnet/scripts/sw_isp_demo.py" target="_blank" rel="noopener">sw_isp_demo.py</a>, port 5001) asynchronously drives the <strong>IMX500 sensor NPU</strong> and <strong>Hailo-8 host NPU</strong>
+        to perform face detection, bilateral grid tone mapping, person segmentation, and smooth <strong>ZAP (Zoom &amp; Auto-Pan) tracking</strong>.
+      </p>
+      <div class="tbl-wrap">
+        <table class="tbl">
+          <thead><tr><th>Edge AI Capability</th><th>Execution Node</th><th>Model / Implementation Details</th><th>Source &amp; Notes</th></tr></thead>
+          <tbody>
+            <tr>
+              <td><strong>In-Sensor Object/Face Detection</strong></td>
+              <td>IMX500 NPU</td>
+              <td><code>.rpk</code> search order: system SSD MobileNetV2-FPNLite 320×320 → <a class="src" href="../../../lsp/aicamera-models/imx500_face_ssd_320x320.rpk" title="lsp/aicamera-models/imx500_face_ssd_320x320.rpk" target="_blank" rel="noopener">imx500_face_ssd_320x320.rpk</a></td>
+              <td>Selects system default model first if installed (<a class="src" href="../../../hdrnet/scripts/sw_isp_demo.py" title="hdrnet/scripts/sw_isp_demo.py (line 929)" target="_blank" rel="noopener">sw_isp_demo.py:929</a>)</td>
+            </tr>
+            <tr>
+              <td><strong>Fallback Face Detection</strong></td>
+              <td>Host CPU</td>
+              <td>OpenCV Haar Cascade (<code>frontal_alt2</code> → <code>default</code> → <code>profile</code>)</td>
+              <td>Automatic fallback when sensor metadata is unavailable (<a class="src" href="../../../hdrnet/scripts/sw_isp_demo.py" title="hdrnet/scripts/sw_isp_demo.py (line 1012)" target="_blank" rel="noopener">sw_isp_demo.py:1012</a>)</td>
+            </tr>
+            <tr>
+              <td><strong>HDRNet Bilateral Grid</strong></td>
+              <td>Hailo-8 NPU</td>
+              <td>Infers 3D affine bilateral grid coefficients from low-res input → <a class="src" href="../../../lsp/hailo-models/hdrnet_bilateral_grid_h8.hef" title="lsp/hailo-models/hdrnet_bilateral_grid_h8.hef" target="_blank" rel="noopener">hdrnet_bilateral_grid_h8.hef</a></td>
+              <td>Asynchronous inference worker (<a class="src" href="../../../hdrnet/src/hailo_ai_engine.py" title="hdrnet/src/hailo_ai_engine.py" target="_blank" rel="noopener">hailo_ai_engine.py</a>)</td>
+            </tr>
+            <tr>
+              <td><strong>Person Semantic Segmentation</strong></td>
+              <td>Hailo-8 / CPU</td>
+              <td>YOLOv5n-seg (<code>.hef</code>, Hailo-8) or MediaPipe Selfie Segmentation (ONNX, CPU)</td>
+              <td>Supports background bokeh synthesis (<a class="src" href="../../../hdrnet/src/semantic_processor.py" title="hdrnet/src/semantic_processor.py" target="_blank" rel="noopener">semantic_processor.py</a>)</td>
+            </tr>
+            <tr>
+              <td><strong>ZAP Tracking &amp; Auto-Framing</strong></td>
+              <td>Host CPU</td>
+              <td>IoU matching + exponential moving average viewport smoothing (<code>smoothing=0.08</code>, <code>margin=1.8</code>, fixed 4:3)</td>
+              <td><a class="src" href="../../../hdrnet/src/zap_tracker.py" title="hdrnet/src/zap_tracker.py" target="_blank" rel="noopener">zap_tracker.py</a> · <a class="src" href="../../../hdrnet/scripts/sw_isp_demo.py" title="hdrnet/scripts/sw_isp_demo.py (line 975)" target="_blank" rel="noopener">sw_isp_demo.py:975</a></td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+      <p class="note">
+        Note: Certain badge strings displayed in the demo web UI header (e.g., <code>grid 1.29 ms</code>, <code>Face SSD 4.7 ms</code>) are static template labels rather than live per-frame timers (<a class="src" href="../../../hdrnet/scripts/sw_isp_demo.py" title="hdrnet/scripts/sw_isp_demo.py" target="_blank" rel="noopener">sw_isp_demo.py</a>).
+      </p>
+
+      <div class="sim" id="sim-zap">
+        <div class="sim-head">
+          <div class="sim-title">SIMULATOR 04 · ZAP (Zoom &amp; Auto-Pan) Viewport EMA Tracking Simulator</div>
+          <span class="badge b-ok">zap_tracker.py Logic Live</span>
+        </div>
+        <div class="sim-body">
+          <p style="margin-top:0;">
+            Move your mouse inside the canvas to move the subject (yellow face target).
+            Even though the raw detection box (dashed red) suffers from sensor jitter noise, watch in real time how the <strong>ZAP tracker's EMA filter (\(v_t = \alpha \hat{v}_t + (1-\alpha) v_{t-1}\), default \(\alpha = 0.08\))</strong> and
+            framing margin (<code>margin=1.8</code>) stabilize the camera pan/zoom viewport (cyan 4:3 frame).
+          </p>
+          <div class="sim-controls" id="zap-ctrl"></div>
+          <canvas id="zap-cv" data-w="920" data-h="240" style="cursor:pointer"></canvas>
+          <div class="sim-stats" id="zap-stats"></div>
+        </div>
+      </div>
+    </section>
+
+    <section class="keypoints" id="summary">
+      <h3>Key Takeaways · Chapter 03</h3>
+      <ul>
+        <li><strong>Linear-Domain-First Principle</strong>: BLC, LSC, ANF, and AWB (Stages 2–5) along with Demosaic and CCM (Stages 6–7) must operate in the photon-linear domain to prevent distortion of color ratios and radial shading correction, placing nonlinear Gamma (Stage 8) and YUV conversion (Stage 9) at the end.</li>
+        <li><strong>Adaptive 3A Feedback Loop</strong>: Gray-World AWB and digital-gain AE suppress flicker during steady state using low EMA factors (\(\alpha=0.15, \beta=0.20\)), and immediately switch to fast factors (\(0.40 / 0.45\)) upon detecting large illumination steps (\(|\Delta| \gt 0.3 / 0.4\)).</li>
+        <li><strong>Halide Kernel Fusion &amp; DMA-BUF</strong>: Fusing the 12MP pipeline—which previously consumed <strong>1,257.8 MB</strong> of stage-by-stage DRAM round-trips—into a single tiled loop (Tier 3) slashes DRAM traffic to <strong>91.3 MB (13.8× reduction)</strong> and accelerates CPU execution from <strong>493.85 ms → 121.48 ms (4.07× speedup)</strong>.</li>
+        <li><strong>Dual-NPU Async Edge AI</strong>: Running IMX500 (in-sensor detection) and Hailo-8 (Bilateral Grid / segmentation) on asynchronous threads decoupled from the ISP loop, combined with ZAP EMA viewport tracking, delivers drop-free intelligent camera UX.</li>
+      </ul>
+    </section>
+</main>
+<script>
+(function(){
+  // 0. Clickable SVG pipeline nodes -> scroll to stage card
+  document.querySelectorAll('#isp-svg .node[data-stage]').forEach(g => {
+    const go = () => {
+      const c = document.getElementById('stage-' + g.dataset.stage);
+      if(!c) return;
+      c.scrollIntoView({ behavior: 'smooth', block: 'start' });
+      c.classList.add('flash');
+      setTimeout(() => c.classList.remove('flash'), 1400);
+    };
+    g.addEventListener('click', go);
+    g.addEventListener('keydown', e => {
+      if(e.key === 'Enter' || e.key === ' '){ e.preventDefault(); go(); }
+    });
+  });
+
+  // 1. Simulator 01: 10-Stage OpenISP Interactive Canvas
+  const stageList = [
+    { id: 'dpc', label: '1 DPC', on: true },
+    { id: 'blc', label: '2 BLC', on: true },
+    { id: 'lsc', label: '3 LSC', on: true },
+    { id: 'anf', label: '4 ANF', on: true },
+    { id: 'awb', label: '5 AWB', on: true },
+    { id: 'dem', label: '6 Demosaic', on: true },
+    { id: 'ccm', label: '7 CCM', on: true },
+    { id: 'gam', label: '8 Gamma', on: true },
+    { id: 'csc', label: '9 CSC(YUV)', on: true },
+    { id: 'eeh', label: '10 EEH', on: true }
+  ];
+  const chipBox = document.getElementById('isp-stage-chips');
+  if(chipBox){
+    stageList.forEach(st => {
+      const btn = document.createElement('button');
+      btn.type = 'button';
+      btn.className = 'isp-chip' + (st.on ? ' on' : '');
+      btn.textContent = st.label;
+      btn.addEventListener('click', () => {
+        st.on = !st.on;
+        btn.classList.toggle('on', st.on);
+        drawIspSim();
+      });
+      chipBox.appendChild(btn);
+    });
+  }
+
+  let pBlack = 64, pLsc = 0.35, pRgain = 1.65, pBgain = 1.45, pGamma = 2.2, pEeh = 0.8;
+  let probeX = 0.45, probeY = 0.48;
+  const ispCtrl = document.getElementById('isp-sim-ctrl');
+  const ispStats = document.getElementById('isp-sim-stats');
+  if(ispCtrl){
+    ispCtrl.appendChild(SB.range({ label: 'Black Level (10b)', min: 0, max: 128, step: 4, value: pBlack, onInput: v => { pBlack = v; drawIspSim(); } }));
+    ispCtrl.appendChild(SB.range({ label: 'LSC Radial Gain Strength', min: 0, max: 0.8, step: 0.05, value: pLsc, fmt: v => v.toFixed(2), onInput: v => { pLsc = v; drawIspSim(); } }));
+    ispCtrl.appendChild(SB.range({ label: 'AWB R Gain', min: 0.8, max: 2.5, step: 0.05, value: pRgain, fmt: v => v.toFixed(2), onInput: v => { pRgain = v; drawIspSim(); } }));
+    ispCtrl.appendChild(SB.range({ label: 'AWB B Gain', min: 0.8, max: 2.5, step: 0.05, value: pBgain, fmt: v => v.toFixed(2), onInput: v => { pBgain = v; drawIspSim(); } }));
+    ispCtrl.appendChild(SB.range({ label: 'Gamma γ', min: 1.0, max: 2.8, step: 0.1, value: pGamma, fmt: v => v.toFixed(1), onInput: v => { pGamma = v; drawIspSim(); } }));
+    ispCtrl.appendChild(SB.range({ label: 'EEH Gain k', min: 0.0, max: 2.0, step: 0.1, value: pEeh, fmt: v => v.toFixed(1), onInput: v => { pEeh = v; drawIspSim(); } }));
+  }
+
+  const mainCvEl = document.getElementById('isp-main-cv');
+  if(mainCvEl){
+    mainCvEl.addEventListener('mousemove', e => {
+      const r = mainCvEl.getBoundingClientRect();
+      probeX = Math.max(0.08, Math.min(0.92, (e.clientX - r.left) / r.width));
+      probeY = Math.max(0.08, Math.min(0.92, (e.clientY - r.top) / r.height));
+      drawIspSim();
+    });
+  }
+
+  // Synthesize low-res ground truth scene (80x50) for fast real-time per-pixel ISP simulation
+  const SW = 88, SH = 56;
+  const gtScene = new Float32Array(SW * SH * 3);
+  (function initScene(){
+    const patches = [
+      [0.75, 0.22, 0.18], [0.18, 0.65, 0.25], [0.15, 0.35, 0.82],
+      [0.85, 0.78, 0.15], [0.72, 0.25, 0.75], [0.15, 0.75, 0.78],
+      [0.92, 0.92, 0.92], [0.45, 0.45, 0.45], [0.12, 0.12, 0.12]
+    ];
+    for(let y = 0; y < SH; y++){
+      for(let x = 0; x < SW; x++){
+        const u = x / SW, v = y / SH;
+        let r = 0.22 + 0.35 * (1 - v), g = 0.35 + 0.35 * (1 - v), b = 0.55 + 0.38 * (1 - v);
+        // Color checker grid on bottom-left
+        if(u > 0.08 && u < 0.52 && v > 0.42 && v < 0.88){
+          const cx = Math.min(2, Math.floor(((u - 0.08) / 0.44) * 3));
+          const cy = Math.min(2, Math.floor(((v - 0.42) / 0.46) * 3));
+          const p = patches[cy * 3 + cx];
+          r = p[0]; g = p[1]; b = p[2];
+        }
+        // Bright sun/sphere on right
+        const dx = u - 0.74, dy = (v - 0.48) * (SH / SW);
+        const dist = Math.sqrt(dx * dx + dy * dy);
+        if(dist < 0.14){
+          const sh = Math.cos((dist / 0.14) * 1.3);
+          r = 0.95 * sh; g = 0.62 * sh; b = 0.20 * sh;
+        }
+        const idx = (y * SW + x) * 3;
+        gtScene[idx] = r; gtScene[idx + 1] = g; gtScene[idx + 2] = b;
+      }
+    }
+  })();
+
+  function isOn(id){
+    const f = stageList.find(s => s.id === id);
+    return f ? f.on : false;
+  }
+
+  function drawIspSim(){
+    const { ctx, w, h } = SB.canvas('#isp-main-cv');
+    const side = SB.canvas('#isp-side-cv');
+    const sctx = side.ctx, sw = side.w, sh = side.h;
+    ctx.clearRect(0, 0, w, h);
+    sctx.clearRect(0, 0, sw, sh);
+    const dk = SB.isDark();
+    const tx = dk ? '#e6edf6' : '#12161f';
+    const tx3 = dk ? '#6e7e97' : '#7b8494';
+
+    const outRGB = new Float32Array(SW * SH * 3);
+    const histR = new Int32Array(32), histG = new Int32Array(32), histB = new Int32Array(32);
+    let mseSum = 0, hotPixelsLeft = 0;
+
+    for(let y = 0; y < SH; y++){
+      for(let x = 0; x < SW; x++){
+        const idx = (y * SW + x) * 3;
+        let r = gtScene[idx], g = gtScene[idx + 1], b = gtScene[idx + 2];
+
+        // Simulate sensor optical falloff (vignetting) + illuminant tint (green-heavy RAW) + black level pedestal
+        const ux = (x / SW) - 0.5, uy = (y / SH) - 0.5;
+        const r2 = (ux * ux + uy * uy) * 2.2;
+        const vig = 1.0 / (1.0 + 0.42 * r2);
+        r = (r * vig) / 1.65 + (64 / 1023);
+        g = (g * vig) * 1.00 + (64 / 1023);
+        b = (b * vig) / 1.45 + (64 / 1023);
+
+        // Deterministic defective hot/cold pixels + read noise
+        const hash = ((x * 73856093) ^ (y * 19349663)) & 1023;
+        if(hash < 12){
+          if(!isOn('dpc')){
+            r = 1.0; g = 1.0; b = 1.0;
+            hotPixelsLeft++;
+          }
+        }
+        if(!isOn('anf')){
+          const n = (((hash & 31) - 15) / 15.0) * 0.035;
+          r += n; g += n; b += n;
+        }
+
+        // Stage 2: BLC
+        if(isOn('blc')){
+          const ped = pBlack / 1023.0;
+          const span = Math.max(0.1, (1023 - pBlack) / 1023.0);
+          r = Math.max(0, Math.min(1, (r - ped) / span));
+          g = Math.max(0, Math.min(1, (g - ped) / span));
+          b = Math.max(0, Math.min(1, (b - ped) / span));
+        }
+
+        // Stage 3: LSC
+        if(isOn('lsc')){
+          const gainLsc = 1.0 + pLsc * r2 + 0.15 * pLsc * r2 * r2;
+          r = Math.min(1, r * gainLsc);
+          g = Math.min(1, g * gainLsc);
+          b = Math.min(1, b * gainLsc);
+        }
+
+        // Stage 5: AWB
+        if(isOn('awb')){
+          r *= pRgain;
+          b *= pBgain;
+        }
+
+        // Stage 6: Demosaic (if off, show Bayer RGGB mosaic pattern!)
+        if(!isOn('dem')){
+          const isEvenY = (y & 1) === 0, isEvenX = (x & 1) === 0;
+          if(isEvenY && isEvenX){ g = 0; b = 0; }
+          else if(!isEvenY && !isEvenX){ r = 0; g = 0; }
+          else { r = 0; b = 0; }
+        } else {
+          // Stage 7: CCM
+          if(isOn('ccm')){
+            const nr = 1.65 * r - 0.50 * g - 0.15 * b;
+            const ng = -0.22 * r + 1.40 * g - 0.18 * b;
+            const nb = -0.06 * r - 0.44 * g + 1.50 * b;
+            r = nr; g = ng; b = nb;
+          }
+          // Stage 8: Gamma
+          if(isOn('gam')){
+            const invG = 1.0 / Math.max(0.5, pGamma);
+            r = Math.pow(Math.max(0, Math.min(1, r)), invG);
+            g = Math.pow(Math.max(0, Math.min(1, g)), invG);
+            b = Math.pow(Math.max(0, Math.min(1, b)), invG);
+          }
+          // Stage 9: CSC BT.601 studio range effect
+          if(isOn('csc')){
+            r = (16 / 255) + r * (219 / 255);
+            g = (16 / 255) + g * (219 / 255);
+            b = (16 / 255) + b * (219 / 255);
+          }
+        }
+
+        r = Math.max(0, Math.min(1, r));
+        g = Math.max(0, Math.min(1, g));
+        b = Math.max(0, Math.min(1, b));
+        outRGB[idx] = r; outRGB[idx + 1] = g; outRGB[idx + 2] = b;
+      }
+    }
+
+    // Stage 10: EEH (3x3 unsharp on luma) + stats
+    const cellW = w / SW, cellH = h / SH;
+    for(let y = 0; y < SH; y++){
+      for(let x = 0; x < SW; x++){
+        const idx = (y * SW + x) * 3;
+        let r = outRGB[idx], g = outRGB[idx + 1], b = outRGB[idx + 2];
+        if(isOn('eeh') && isOn('dem') && x > 0 && x < SW - 1 && y > 0 && y < SH - 1){
+          const cY = 0.299 * r + 0.587 * g + 0.114 * b;
+          const nIdx = ((y - 1) * SW + x) * 3, sIdx = ((y + 1) * SW + x) * 3;
+          const wIdx = (y * SW + (x - 1)) * 3, eIdx = (y * SW + (x + 1)) * 3;
+          const avgY = (
+            (0.299 * outRGB[nIdx] + 0.587 * outRGB[nIdx + 1] + 0.114 * outRGB[nIdx + 2]) +
+            (0.299 * outRGB[sIdx] + 0.587 * outRGB[sIdx + 1] + 0.114 * outRGB[sIdx + 2]) +
+            (0.299 * outRGB[wIdx] + 0.587 * outRGB[wIdx + 1] + 0.114 * outRGB[wIdx + 2]) +
+            (0.299 * outRGB[eIdx] + 0.587 * outRGB[eIdx + 1] + 0.114 * outRGB[eIdx + 2])
+          ) * 0.25;
+          const hp = Math.max(-0.15, Math.min(0.15, cY - avgY)) * pEeh;
+          r = Math.max(0, Math.min(1, r + hp));
+          g = Math.max(0, Math.min(1, g + hp));
+          b = Math.max(0, Math.min(1, b + hp));
+        }
+        histR[Math.min(31, Math.floor(r * 31))]++;
+        histG[Math.min(31, Math.floor(g * 31))]++;
+        histB[Math.min(31, Math.floor(b * 31))]++;
+
+        // Compare against ideal gamma-mapped GT
+        const gr = Math.pow(gtScene[idx], 1 / 2.2);
+        const gg = Math.pow(gtScene[idx + 1], 1 / 2.2);
+        const gb = Math.pow(gtScene[idx + 2], 1 / 2.2);
+        mseSum += ((r - gr) * (r - gr) + (g - gg) * (g - gg) + (b - gb) * (b - gb)) / 3;
+
+        ctx.fillStyle = 'rgb(' + Math.round(r * 255) + ',' + Math.round(g * 255) + ',' + Math.round(b * 255) + ')';
+        ctx.fillRect(x * cellW, y * cellH, Math.ceil(cellW), Math.ceil(cellH));
+      }
+    }
+
+    // Draw probe reticle on main canvas
+    const px = probeX * w, py = probeY * h;
+    ctx.strokeStyle = '#ffffff';
+    ctx.lineWidth = 1.8;
+    ctx.strokeRect(px - 18, py - 18, 36, 36);
+
+    // Side panel top: 7x7 Magnifier Loupe
+    sctx.fillStyle = tx;
+    sctx.font = '700 12px "Pretendard", sans-serif';
+    sctx.fillText('Magnifier Loupe View (7×7 Pixel Grid)', 14, 20);
+    const gxCenter = Math.floor(probeX * SW), gyCenter = Math.floor(probeY * SH);
+    const loupeSize = 118, lx0 = 14, ly0 = 30, lCell = loupeSize / 7;
+    for(let dy = -3; dy <= 3; dy++){
+      for(let dx = -3; dx <= 3; dx++){
+        const sx = Math.max(0, Math.min(SW - 1, gxCenter + dx));
+        const sy = Math.max(0, Math.min(SH - 1, gyCenter + dy));
+        const id = (sy * SW + sx) * 3;
+        sctx.fillStyle = 'rgb(' + Math.round(outRGB[id] * 255) + ',' + Math.round(outRGB[id + 1] * 255) + ',' + Math.round(outRGB[id + 2] * 255) + ')';
+        sctx.fillRect(lx0 + (dx + 3) * lCell, ly0 + (dy + 3) * lCell, lCell - 1, lCell - 1);
+      }
+    }
+    const cId = (gyCenter * SW + gxCenter) * 3;
+    const cR = Math.round(outRGB[cId] * 255), cG = Math.round(outRGB[cId + 1] * 255), cB = Math.round(outRGB[cId + 2] * 255);
+    sctx.fillStyle = tx;
+    sctx.font = '600 11.5px "JetBrains Mono", monospace';
+    sctx.fillText('Coord: (' + gxCenter + ', ' + gyCenter + ')', 148, 54);
+    sctx.fillText('RGB  : (' + cR + ', ' + cG + ', ' + cB + ')', 148, 76);
+    const cY = Math.round(16 + 0.257 * cR + 0.504 * cG + 0.098 * cB);
+    sctx.fillText('Y(601): ' + cY + ' DN', 148, 98);
+    sctx.fillStyle = tx3;
+    sctx.font = '11px "Pretendard", sans-serif';
+    sctx.fillText(isOn('dem') ? 'Interleaved RGB Reconstructed' : 'Raw Bayer RGGB Mosaic Exposed', 148, 122);
+
+    // Side panel bottom: RGB Histogram
+    sctx.fillStyle = tx;
+    sctx.font = '700 12px "Pretendard", sans-serif';
+    sctx.fillText('Live RGB Channel Histogram', 14, 174);
+    const hx0 = 14, hy0 = 184, hgw = sw - 28, hgh = sh - hy0 - 16;
+    sctx.strokeStyle = dk ? 'rgba(255,255,255,0.1)' : 'rgba(15,23,42,0.1)';
+    sctx.strokeRect(hx0, hy0, hgw, hgh);
+
+    const maxBin = Math.max(1, ...histR, ...histG, ...histB);
+    [
+      { arr: histR, col: 'rgba(239,68,68,0.75)' },
+      { arr: histG, col: 'rgba(16,185,129,0.75)' },
+      { arr: histB, col: 'rgba(59,130,246,0.75)' }
+    ].forEach(ch => {
+      sctx.strokeStyle = ch.col;
+      sctx.lineWidth = 1.8;
+      sctx.beginPath();
+      for(let b = 0; b < 32; b++){
+        const bx = hx0 + (b / 31) * hgw;
+        const by = hy0 + hgh - (ch.arr[b] / maxBin) * (hgh - 8);
+        if(b === 0) sctx.moveTo(bx, by); else sctx.lineTo(bx, by);
+      }
+      sctx.stroke();
+    });
+
+    const mse = mseSum / (SW * SH);
+    const psnr = 10 * Math.log10(1.0 / Math.max(1e-6, mse));
+    const activeCount = stageList.filter(s => s.on).length;
+    const bppMap = { dpc: 4, blc: 6, lsc: 8, anf: 8, awb: 8, dem: 16, ccm: 24, gam: 24, csc: 13.5, eeh: 2 };
+    const activeBpp = stageList.reduce((acc, s) => acc + (s.on ? bppMap[s.id] : 0), 0);
+
+    if(ispStats){
+      ispStats.innerHTML = [
+        SB.stat({ label: 'Active Stages', value: activeCount + ' / 10 stages' }),
+        SB.stat({ label: 'Unfused DRAM Traffic', value: activeBpp.toFixed(1) + ' B/px' }),
+        SB.stat({ label: 'PSNR vs Ideal Reference', value: psnr.toFixed(1) + ' dB' }),
+        SB.stat({ label: 'Uncorrected Hot Pixels', value: hotPixelsLeft + ' px' })
+      ].join('');
+    }
+  }
+  drawIspSim();
+
+  // 2. Simulator 02: 3A Closed-Loop Convergence Simulator
+  const a3Ctrl = document.getElementById('a3-ctrl');
+  const a3Stats = document.getElementById('a3-stats');
+  let targetCct = 3200;
+  let sceneLuma = 0.06;
+  let evComp = 0.0;
+
+  if(a3Ctrl){
+    a3Ctrl.appendChild(SB.range({
+      label: 'Illuminant CCT Step (K)', min: 2500, max: 8000, step: 100, value: targetCct,
+      fmt: v => v + ' K',
+      onInput: v => { targetCct = v; draw3aSim(); }
+    }));
+    a3Ctrl.appendChild(SB.range({
+      label: 'Incident Scene Luma L', min: 0.01, max: 0.45, step: 0.01, value: sceneLuma,
+      fmt: v => v.toFixed(2),
+      onInput: v => { sceneLuma = v; draw3aSim(); }
+    }));
+    a3Ctrl.appendChild(SB.range({
+      label: 'Exposure Comp (EV)', min: -1.5, max: 1.5, step: 0.25, value: evComp,
+      fmt: v => (v >= 0 ? '+' : '') + v.toFixed(2) + ' EV',
+      onInput: v => { evComp = v; draw3aSim(); }
+    }));
+  }
+
+  function draw3aSim(){
+    const { ctx, w, h } = SB.canvas('#a3-cv');
+    ctx.clearRect(0, 0, w, h);
+    const dk = SB.isDark();
+    const tx = dk ? '#e6edf6' : '#12161f';
+    const tx3 = dk ? '#6e7e97' : '#7b8494';
+    const gridCol = dk ? 'rgba(255,255,255,0.07)' : 'rgba(15,23,42,0.07)';
+
+    // Target gains derived from CCT (T_cc = 5500 * gR / gB)
+    const ratio = targetCct / 5500.0;
+    const tgtGr = Math.max(0.5, Math.min(4.0, 1.45 * Math.sqrt(ratio)));
+    const tgtGb = Math.max(0.5, Math.min(4.0, 1.45 / Math.sqrt(ratio)));
+    const tgtAe = Math.max(0.25, Math.min(8.0, (0.18 * Math.pow(2, evComp)) / Math.max(1e-3, sceneLuma)));
+    const frozenAwb = sceneLuma < 0.02;
+
+    const T_FRAMES = 40;
+    const grHist = [], gbHist = [], aeHist = [];
+    let curGr = 1.65, curGb = 1.45, curAe = 1.25;
+    let settleFrame = 10;
+
+    for(let f = 0; f <= T_FRAMES; f++){
+      if(f >= 10){
+        if(!frozenAwb){
+          const aR = Math.abs(tgtGr - curGr) > 0.3 ? 0.40 : 0.15;
+          const aB = Math.abs(tgtGb - curGb) > 0.3 ? 0.40 : 0.15;
+          curGr = aR * tgtGr + (1 - aR) * curGr;
+          curGb = aB * tgtGb + (1 - aB) * curGb;
+        }
+        const bAe = Math.abs(tgtAe - curAe) > 0.4 ? 0.45 : 0.20;
+        curAe = bAe * tgtAe + (1 - bAe) * curAe;
+        if(Math.abs(curAe - tgtAe) > 0.05 || (!frozenAwb && Math.abs(curGr - tgtGr) > 0.04)){
+          settleFrame = f;
+        }
+      }
+      grHist.push(curGr);
+      gbHist.push(curGb);
+      aeHist.push(curAe);
+    }
+
+    const x0 = 56, y0 = 28, gw = w - x0 - 24, gh = h - y0 - 38;
+    ctx.strokeStyle = gridCol;
+    ctx.strokeRect(x0, y0, gw, gh);
+
+    const maxY = Math.max(4.2, tgtAe * 1.15);
+    const mapX = f => x0 + (f / T_FRAMES) * gw;
+    const mapY = v => y0 + gh - (v / maxY) * gh;
+
+    // Step event line at Frame 10
+    const sx = mapX(10);
+    ctx.strokeStyle = 'rgba(245,158,11,0.5)';
+    ctx.setLineDash([4, 4]);
+    ctx.beginPath(); ctx.moveTo(sx, y0); ctx.lineTo(sx, y0 + gh); ctx.stroke();
+    ctx.setLineDash([]);
+    ctx.fillStyle = '#f59e0b';
+    ctx.font = '600 10.5px "JetBrains Mono", monospace';
+    ctx.fillText('Frame 10: Lighting Step', sx + 6, y0 + 14);
+
+    // Plot curves
+    [
+      { arr: grHist, col: '#ef4444', name: 'AWB g_R' },
+      { arr: gbHist, col: '#3b82f6', name: 'AWB g_B' },
+      { arr: aeHist, col: '#10b981', name: 'AE digital_gain' }
+    ].forEach((s, idx) => {
+      ctx.strokeStyle = s.col;
+      ctx.lineWidth = 2.2;
+      ctx.beginPath();
+      s.arr.forEach((v, f) => {
+        const cx = mapX(f), cy = mapY(v);
+        if(f === 0) ctx.moveTo(cx, cy); else ctx.lineTo(cx, cy);
+      });
+      ctx.stroke();
+
+      ctx.fillStyle = s.col;
+      ctx.font = '600 11.5px "Pretendard", sans-serif';
+      ctx.fillText('● ' + s.name + ' (' + s.arr[T_FRAMES].toFixed(2) + '×)', x0 + 14 + idx * 185, y0 + gh + 24);
+    });
+
+    const estCct = Math.round(Math.max(2400, Math.min(8500, 5500 * (curGr / curGb))));
+    if(a3Stats){
+      a3Stats.innerHTML = [
+        SB.stat({ label: 'Converged AWB Gains (g_R / g_B)', value: frozenAwb ? 'Frozen (Dark Luma < 0.02)' : curGr.toFixed(2) + ' / ' + curGb.toFixed(2) }),
+        SB.stat({ label: 'Est. CCT T_cc (CCM Interp)', value: estCct + ' K' }),
+        SB.stat({ label: 'Converged AE Digital Gain', value: curAe.toFixed(2) + ' ×' }),
+        SB.stat({ label: '95% Settling Time', value: Math.max(1, settleFrame - 10) + ' frames' })
+      ].join('');
+    }
+  }
+  draw3aSim();
+
+  // 3. Simulator 03: Halide Loop Fusion & DRAM Traffic
+  const halCtrl = document.getElementById('hal-ctrl');
+  const halStats = document.getElementById('hal-stats');
+  let halTier = 't3';
+  let tileSize = 128;
+
+  const TIER_SIM = {
+    t1: { name: 'Tier 1 · C99 Unfused', ms: 493.85, dram: 1257.8, bpp: 102.0, fused: false, gpu: false },
+    t2: { name: 'Tier 2 · Halide Block-wise', ms: 162.88, dram: 1257.8, bpp: 102.0, fused: false, gpu: false },
+    t3: { name: 'Tier 3 · Halide Fused CPU', ms: 121.48, dram: 91.3, bpp: 7.4, fused: true, gpu: false },
+    t4s: { name: 'Tier 4 · GPU Staged', ms: 289.56, dram: 165.0, bpp: 13.4, fused: true, gpu: true },
+    t4z: { name: 'Tier 4 · GPU DMA-BUF Zero-Copy', ms: 229.40, dram: 91.3, bpp: 7.4, fused: true, gpu: true }
+  };
+
+  if(halCtrl){
+    halCtrl.appendChild(SB.seg({
+      label: 'Execution Engine Tier',
+      options: [
+        ['t1', 'Tier 1 (C99)'],
+        ['t2', 'Tier 2 (SIMD)'],
+        ['t3', 'Tier 3 (Fused CPU)'],
+        ['t4s', 'Tier 4 (GPU Staged)'],
+        ['t4z', 'Tier 4 (GPU DMA-BUF)']
+      ],
+      value: 't3',
+      onChange: v => { halTier = v; drawHalSim(); }
+    }));
+    halCtrl.appendChild(SB.seg({
+      label: 'Tile Size (Fused)',
+      options: [['64', '64×64'], ['128', '128×128 (Canonical)'], ['256', '256×256'], ['512', '512×512']],
+      value: '128',
+      onChange: v => { tileSize = parseInt(v, 10); drawHalSim(); }
+    }));
+  }
+
+  function drawHalSim(){
+    const t = TIER_SIM[halTier];
+    const { ctx, w, h } = SB.canvas('#hal-cv');
+    ctx.clearRect(0, 0, w, h);
+    const dk = SB.isDark();
+    const tx = dk ? '#e6edf6' : '#12161f';
+    const tx3 = dk ? '#6e7e97' : '#7b8494';
+
+    // Working set in L2 cache for a tile across 6 float32 intermediate stages (4 bytes * 3 channels = 12 B/px)
+    const tileKb = t.fused ? Math.round((tileSize * tileSize * 12 * 2) / 1024) : 12330 * 4;
+    const fitsL2 = tileKb <= 2048;
+
+    ctx.fillStyle = tx;
+    ctx.textAlign = 'left';
+    ctx.font = '700 12.5px "Pretendard", sans-serif';
+    ctx.fillText(t.name + ' — Memory Hierarchy Data Movement Path (per 12.33 MP Frame)', 16, 24);
+
+    // Draw DRAM vs L2 Cache / Register pipeline diagram
+    const stNames = ['BLC', 'AWB', 'Demosaic', 'CCM', 'Gamma', 'CSC'];
+    const xStart = 34, yBox = 62, bw = 112, bh = 54, gap = 28;
+
+    stNames.forEach((sn, idx) => {
+      const bx = xStart + idx * (bw + gap);
+      ctx.fillStyle = t.fused ? 'rgba(16,185,129,0.12)' : 'rgba(239,68,68,0.10)';
+      ctx.strokeStyle = t.fused ? '#10b981' : '#ef4444';
+      ctx.lineWidth = 1.6;
+      ctx.beginPath(); ctx.roundRect(bx, yBox, bw, bh, 8); ctx.fill(); ctx.stroke();
+
+      ctx.fillStyle = tx;
+      ctx.textAlign = 'center';
+      ctx.font = '700 12px "Pretendard", sans-serif';
+      ctx.fillText(sn, bx + bw / 2, yBox + 24);
+      ctx.fillStyle = tx3;
+      ctx.font = '10.5px "JetBrains Mono", monospace';
+      ctx.fillText(t.fused ? 'In-L2 Tile Pass' : 'DRAM Round-Trip', bx + bw / 2, yBox + 42);
+
+      if(idx < stNames.length - 1){
+        ctx.strokeStyle = t.fused ? '#10b981' : '#ef4444';
+        ctx.beginPath();
+        ctx.moveTo(bx + bw + 2, yBox + bh / 2);
+        ctx.lineTo(bx + bw + gap - 2, yBox + bh / 2);
+        ctx.stroke();
+      }
+    });
+
+    // Bottom DRAM bar
+    const dy = 148;
+    ctx.fillStyle = dk ? 'rgba(255,255,255,0.06)' : 'rgba(15,23,42,0.06)';
+    ctx.beginPath(); ctx.roundRect(34, dy, w - 68, 52, 8); ctx.fill();
+    const barW = (t.dram / 1257.8) * (w - 88);
+    ctx.fillStyle = t.fused ? '#10b981' : '#ef4444';
+    ctx.beginPath(); ctx.roundRect(44, dy + 12, Math.max(18, barW), 28, 6); ctx.fill();
+    ctx.fillStyle = tx;
+    ctx.textAlign = 'left';
+    ctx.font = '700 12px "JetBrains Mono", monospace';
+    ctx.fillText('External DRAM Traffic: ' + t.dram.toFixed(1) + ' MB / frame (' + t.bpp.toFixed(1) + ' B/px)', 54, dy + 30);
+
+    if(halStats){
+      halStats.innerHTML = [
+        SB.stat({ label: '12MP Mean Frame Latency', value: t.ms.toFixed(2) + ' ms (' + (493.85 / t.ms).toFixed(2) + '× speedup)' }),
+        SB.stat({ label: 'Per-Frame DRAM Traffic', value: t.dram.toFixed(1) + ' MB (' + t.bpp.toFixed(1) + ' B/px)' }),
+        SB.stat({ label: 'Tile Working-Set Size', value: t.fused ? tileKb + ' KB (' + (fitsL2 ? 'Fits RPi5 2MB L2' : 'L2 Spill') + ')' : '49,320 KB (Exceeds L2)' }),
+        SB.stat({ label: 'Numerical Parity (vs C99)', value: halTier === 't1' ? 'Ref (Baseline)' : '43.53 dB / MAE 1.29' })
+      ].join('');
+    }
+  }
+  drawHalSim();
+
+  // 4. Simulator 04: ZAP (Zoom & Auto-Pan) Viewport EMA Tracker
+  const zapCtrl = document.getElementById('zap-ctrl');
+  const zapStats = document.getElementById('zap-stats');
+  let zapAlpha = 0.08;
+  let zapMargin = 1.8;
+  let tgtX = 0.62, tgtY = 0.46;
+  let vpX = 0.50, vpY = 0.50;
+
+  if(zapCtrl){
+    zapCtrl.appendChild(SB.range({
+      label: 'viewport_smoothing (EMA α)', min: 0.02, max: 0.40, step: 0.02, value: zapAlpha,
+      fmt: v => v.toFixed(2),
+      onInput: v => { zapAlpha = v; }
+    }));
+    zapCtrl.appendChild(SB.range({
+      label: 'Framing Margin Multiplier (margin)', min: 1.2, max: 2.6, step: 0.1, value: zapMargin,
+      fmt: v => v.toFixed(1) + '×',
+      onInput: v => { zapMargin = v; }
+    }));
+  }
+
+  const zapCvEl = document.getElementById('zap-cv');
+  if(zapCvEl){
+    zapCvEl.addEventListener('mousemove', e => {
+      const r = zapCvEl.getBoundingClientRect();
+      tgtX = Math.max(0.15, Math.min(0.85, (e.clientX - r.left) / r.width));
+      tgtY = Math.max(0.20, Math.min(0.80, (e.clientY - r.top) / r.height));
+    });
+  }
+
+  function stepZap(){
+    vpX = zapAlpha * tgtX + (1 - zapAlpha) * vpX;
+    vpY = zapAlpha * tgtY + (1 - zapAlpha) * vpY;
+    const { ctx, w, h } = SB.canvas('#zap-cv');
+    ctx.clearRect(0, 0, w, h);
+    const dk = SB.isDark();
+    const tx = dk ? '#e6edf6' : '#12161f';
+
+    // Sensor full frame background
+    ctx.fillStyle = dk ? '#0d1322' : '#eef2f9';
+    ctx.fillRect(0, 0, w, h);
+
+    // Jittery raw detector box around target
+    const jx = (Math.sin(performance.now() * 0.025) * 6);
+    const jy = (Math.cos(performance.now() * 0.031) * 5);
+    const faceR = 26;
+    const fx = tgtX * w + jx, fy = tgtY * h + jy;
+
+    // Target subject
+    ctx.fillStyle = '#f59e0b';
+    ctx.beginPath(); ctx.arc(tgtX * w, tgtY * h, faceR, 0, Math.PI * 2); ctx.fill();
+
+    // Raw SSD detector bbox (dashed red)
+    ctx.strokeStyle = '#ef4444';
+    ctx.setLineDash([4, 4]);
+    ctx.lineWidth = 1.5;
+    ctx.strokeRect(fx - faceR, fy - faceR, faceR * 2, faceR * 2);
+    ctx.setLineDash([]);
+
+    // Smoothed 4:3 ZAP viewport (cyan)
+    const vpH = Math.min(h - 20, faceR * 2 * zapMargin * 1.4);
+    const vpW = vpH * (4 / 3);
+    const vx = Math.max(8, Math.min(w - vpW - 8, vpX * w - vpW / 2));
+    const vy = Math.max(8, Math.min(h - vpH - 8, vpY * h - vpH / 2));
+
+    ctx.strokeStyle = '#0ea5e9';
+    ctx.lineWidth = 2.6;
+    ctx.strokeRect(vx, vy, vpW, vpH);
+    ctx.fillStyle = 'rgba(14,165,233,0.08)';
+    ctx.fillRect(vx, vy, vpW, vpH);
+
+    ctx.fillStyle = tx;
+    ctx.font = '700 11.5px "JetBrains Mono", monospace';
+    ctx.fillText('ZAP 4:3 Viewport (EMA α=' + zapAlpha.toFixed(2) + ', margin=' + zapMargin.toFixed(1) + ')', vx + 8, vy + 18);
+
+    if(zapStats){
+      const lagPx = Math.hypot((tgtX - vpX) * w, (tgtY - vpY) * h);
+      zapStats.innerHTML = [
+        SB.stat({ label: 'Viewport Center (Normalized)', value: '(' + vpX.toFixed(2) + ', ' + vpY.toFixed(2) + ')' }),
+        SB.stat({ label: 'Jitter Attenuation', value: Math.round((1 - zapAlpha) * 100) + ' % suppressed' }),
+        SB.stat({ label: 'Instantaneous Tracking Lag', value: lagPx.toFixed(1) + ' px' }),
+        SB.stat({ label: 'Output Aspect Ratio', value: 'Fixed 4:3 Crop' })
+      ].join('');
+    }
+    requestAnimationFrame(stepZap);
+  }
+  requestAnimationFrame(stepZap);
+
+  window.addEventListener('sb:theme', () => { drawIspSim(); draw3aSim(); drawHalSim(); });
+})();
+</script>
+</body>
+</html>

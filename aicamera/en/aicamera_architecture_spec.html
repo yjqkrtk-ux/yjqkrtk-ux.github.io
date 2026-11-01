@@ -1,0 +1,329 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>AICAMERA · Heterogeneous Edge Camera Interactive Guidebook</title>
+<meta name="description" content="From photons to latent tensors and real-time ISP — An interactive architecture guidebook for heterogeneous edge cameras spanning Sony IMX500 in-sensor NPU, Hailo-8 host NPU, and Raspberry Pi 5.">
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/katex@0.16.11/dist/katex.min.css">
+<script defer src="https://cdn.jsdelivr.net/npm/katex@0.16.11/dist/katex.min.js"></script>
+<script defer src="https://cdn.jsdelivr.net/npm/katex@0.16.11/dist/contrib/auto-render.min.js"></script>
+<link rel="stylesheet" href="css/style.css">
+<link rel="stylesheet" href="css/glossary-tooltips.css">
+<script src="js/glossary-data.js"></script>
+<script src="js/common.js"></script>
+<script defer src="js/glossary-tooltips.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/three@0.147.0/build/three.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/three@0.147.0/examples/js/controls/OrbitControls.js"></script>
+<style>
+  .chain { overflow-x: auto; }
+  .chain svg { min-width: 820px; }
+</style>
+<script>
+  // Legacy portal hash redirect (#lsp, #isp/isp-3a, #ucfa, #notes, #overview)
+  (function () {
+    var h = location.hash.slice(1);
+    if (!h) return;
+    var parts = h.split("/");
+    var valid = { overview: 1, lsp: 1, isp: 1, ucfa: 1, notes: 1 };
+    if (valid[parts[0]]) {
+      location.replace("chapters/" + parts[0] + ".html" + (parts[1] ? "#" + parts[1] : ""));
+    }
+  })();
+</script>
+</head>
+<body data-root="">
+
+<section class="home-hero">
+  <div class="inner">
+    <div>
+      <div class="eyebrow">Interactive Edge Camera Architecture Guidebook</div>
+      <h1>From Sensor Pixels to<br><span class="grad">Latent Space &amp; Real-Time ISP</span></h1>
+      <p>Across an in-sensor NPU (Sony IMX500), a host NPU (Hailo-8), and a multi-core CPU/GPU (Raspberry Pi 5), <strong>where and in what representation should visual signal processing be partitioned?</strong> Explore hardware-measured benchmarks and C99, PyTorch, and Halide source code hands-on through interactive sliders and 3D structures.</p>
+      <div class="cta">
+        <a class="primary" href="chapters/overview.html">Start at Chapter 1 →</a>
+        <a class="ghost" href="chapters/overview.html#s-sw-stack">IMX500 · Hailo-8 Compile Stack</a>
+        <a class="ghost" href="chapters/lsp.html">Explore LSP Split Encoder</a>
+        <a class="ghost" href="chapters/isp.html#isp-sim-sec">10-Stage ISP Simulator</a>
+      </div>
+      <div class="hero-badges">
+        <span>5 Deep-Dive Chapters</span><span>13 Simulators</span><span>Dual-NPU Compile · Agent Flow</span><span>Auto-Verified JSON · C99</span>
+      </div>
+    </div>
+    <div class="hero-3d" id="hero3d"><span class="hint">Drag to rotate · Incident Photons → IMX500 On-Chip Compression → MIPI 64 KB → Hailo-8 Latent Decoding</span></div>
+  </div>
+</section>
+
+<section class="home-section">
+  <h2>What a Heterogeneous Edge Camera Partitions — and How</h2>
+  <p class="sub">In one sentence: <b>Compress bandwidth inside the sensor with the lightest operators, and perform high-dimensional reconstruction and generation on the host via NPUs and fused kernels.</b></p>
+  <figure class="diagram chain">
+    <svg viewBox="0 0 1150 270" role="img" aria-label="AICAMERA end-to-end signal chain">
+      <defs>
+        <marker id="arr" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto"><path d="M0,0 L10,5 L0,10 z" fill="var(--accent)"/></marker>
+        <marker id="arr2" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto"><path d="M0,0 L10,5 L0,10 z" fill="var(--accent-2)"/></marker>
+      </defs>
+      <!-- 1. Sensor Optics & CFA -->
+      <g transform="translate(18,32)">
+        <rect width="150" height="145" rx="12" class="f-surface"/>
+        <rect x="22" y="22" width="24" height="24" rx="3" fill="#e0443e"/><rect x="48" y="22" width="24" height="24" rx="3" fill="#2da44e"/>
+        <rect x="22" y="48" width="24" height="24" rx="3" fill="#2da44e"/><rect x="48" y="48" width="24" height="24" rx="3" fill="#2f6fe0"/>
+        <rect x="80" y="22" width="46" height="50" rx="6" class="f-acc2-soft"/>
+        <text x="103" y="45" text-anchor="middle" class="t-mono">4×4</text>
+        <text x="103" y="61" text-anchor="middle" class="t-mono">8×8</text>
+        <text x="75" y="102" text-anchor="middle" class="t" style="font-size:11.5px;font-weight:700">Sony IMX500 Pixels</text>
+        <text x="75" y="122" text-anchor="middle" class="t-dim">Bayer · Quad · Hexa</text>
+        <text x="75" y="170" text-anchor="middle" class="t" style="font-size:11.5px">Sensor Photodiode · CFA</text>
+        <text x="75" y="188" text-anchor="middle" class="t-mono">Ch.01 · Ch.04</text>
+      </g>
+      <path d="M174 104 H210" class="s-acc" marker-end="url(#arr)"/>
+      <!-- 2. In-Sensor NPU -->
+      <g transform="translate(216,32)">
+        <rect width="182" height="145" rx="12" class="f-acc-soft"/>
+        <rect x="14" y="20" width="154" height="46" rx="8" class="f-elev"/>
+        <text x="91" y="41" text-anchor="middle" class="t" style="font-weight:700">Stage A (.rpk)</text>
+        <text x="91" y="57" text-anchor="middle" class="t-mono">5.9K params · 2.59 ms</text>
+        <rect x="14" y="78" width="154" height="46" rx="8" class="f-elev"/>
+        <text x="91" y="99" text-anchor="middle" class="t" style="font-size:11px;font-weight:600">PixelUnshuffle Compress</text>
+        <text x="91" y="115" text-anchor="middle" class="t-mono">SRAM &lt; 2 MB</text>
+        <text x="91" y="170" text-anchor="middle" class="t" style="font-size:11.5px">In-Sensor NPU Compress</text>
+        <text x="91" y="188" text-anchor="middle" class="t-mono">Ch.02 · Ch.04</text>
+      </g>
+      <path d="M404 104 H455" class="s-acc" marker-end="url(#arr)"/>
+      <text x="429" y="92" text-anchor="middle" class="t-mono">64 KB</text>
+      <text x="429" y="124" text-anchor="middle" class="t-mono">(48×↓)</text>
+      <!-- 3. MIPI CSI-2 Bus -->
+      <g transform="translate(462,32)">
+        <rect width="144" height="145" rx="12" class="f-surface"/>
+        <text x="72" y="44" text-anchor="middle" class="t" style="font-weight:700">MIPI CSI-2</text>
+        <text x="72" y="68" text-anchor="middle" class="t-acc">r: 2.90 ms</text>
+        <text x="72" y="92" text-anchor="middle" class="t-dim" style="font-size:10.5px">vs Raw 3072 KB</text>
+        <text x="72" y="112" text-anchor="middle" class="t-mono" style="font-size:10px">(52.91 ms stall)</text>
+        <text x="72" y="170" text-anchor="middle" class="t" style="font-size:11.5px">Bus Bottleneck Broken</text>
+        <text x="72" y="188" text-anchor="middle" class="t-mono">Ch.01 · Ch.02</text>
+      </g>
+      <path d="M612 76 H658" class="s-acc" marker-end="url(#arr)"/>
+      <path d="M612 132 H658" class="s-line" marker-end="url(#arr2)" stroke-dasharray="5 3"/>
+      <!-- 4A. Hailo-8 Latent Path -->
+      <g transform="translate(664,18)">
+        <rect width="210" height="78" rx="10" class="f-acc2-soft"/>
+        <text x="105" y="28" text-anchor="middle" class="t" style="font-weight:700">Hailo-8 Stage B + TAESD</text>
+        <text x="105" y="48" text-anchor="middle" class="t-mono">0.97 ms + 16.44 ms → ẑ</text>
+        <text x="105" y="66" text-anchor="middle" class="t-mono">Ch.02 Latent Hub</text>
+      </g>
+      <!-- 4B. Software ISP Path -->
+      <g transform="translate(664,112)">
+        <rect width="210" height="78" rx="10" class="f-elev"/>
+        <text x="105" y="28" text-anchor="middle" class="t" style="font-weight:700">10-Stage OpenISP · Halide</text>
+        <text x="105" y="48" text-anchor="middle" class="t-mono">12MP 128.78 ms (×3.68)</text>
+        <text x="105" y="66" text-anchor="middle" class="t-mono">Ch.03 Fused CPU / Vulkan</text>
+      </g>
+      <path d="M880 57 H922" class="s-acc" marker-end="url(#arr)"/>
+      <path d="M880 151 H922" class="s-acc" marker-end="url(#arr)"/>
+      <!-- 5. Outputs -->
+      <g transform="translate(928,24)">
+        <rect width="204" height="160" rx="12" class="f-acc-soft"/>
+        <text x="102" y="36" text-anchor="middle" class="t-acc" style="font-size:11.5px">30.0 FPS Live Viewfinder</text>
+        <text x="102" y="58" text-anchor="middle" class="t-mono">Camera Ceiling Reached</text>
+        <line x1="20" y1="74" x2="184" y2="74" class="s-axis"/>
+        <text x="102" y="98" text-anchor="middle" class="t" style="font-size:11.5px;font-weight:700">ZSL Generative Capture &amp; 3A</text>
+        <text x="102" y="118" text-anchor="middle" class="t-dim">ControlNet · Bilateral Grid</text>
+        <text x="102" y="140" text-anchor="middle" class="t-mono">Ch.02 · Ch.03 · Ch.05</text>
+      </g>
+      <text x="575" y="252" text-anchor="middle" class="t-dim">Unified research platform spanning classical pixel pipelines (Ch.03 Software ISP) and split latent inference (Ch.02 LSP · Ch.04 Universal CFA)</text>
+    </svg>
+    <figcaption><b>Figure 0-1.</b> Two pillars of AICAMERA: (Top) Latent Signal Processing (LSP/UCFA), splitting the encoder across in-sensor and host NPUs to break the MIPI bus bottleneck; and (Bottom) Software ISP, accelerating the 10-stage C99 reference pipeline via Halide kernel fusion and DMA-BUF zero-copy.</figcaption>
+  </figure>
+</section>
+
+<section class="home-section" style="padding-top:0">
+  <h2>Key Figures Verified by Hardware Measurements &amp; Source Code</h2>
+  <p class="sub">Every number in this guidebook is extracted directly from repository benchmark JSONs and C99 headers at build time.</p>
+  <div class="numbers">
+    <div><b>64 KB (48×↓)</b><span>SA8 MIPI bus payload — cuts extraction latency from 52.91 ms to 2.90 ms vs. uncompressed 3072 KB</span></div>
+    <div><b>30.0 FPS</b><span>Camera-synchronized live preview — reaches the 30 FPS sensor ceiling with 22.90 ms serial latency (43.7 FPS pipelined)</span></div>
+    <div><b>5,924 params</b><span>In-sensor Stage A (SA8) parameter count on IMX500 — satisfies the &lt;2 MB SRAM budget at 0.122 GMACs</span></div>
+    <div><b>128.78 ms (×3.68)</b><span>12.3MP 10-stage ISP Halide fused CPU latency — 3.68× speedup over sequential C99 (474.04 ms)</span></div>
+    <div><b>13.8× Saved</b><span>Per-frame 12MP DRAM traffic reduction via kernel fusion — shrunk from 811 MB to 59 MB</span></div>
+    <div><b>2×2 · 4×4 · 8×8</b><span>Unifies Bayer, Tetracell, and Hexadecacell clustered CFAs into a single frozen host translator (Stage B)</span></div>
+  </div>
+</section>
+
+<section class="home-section" style="padding-top:0">
+  <h2>All Chapters</h2>
+  <p class="sub">Each chapter progresses in depth from <b>Concept → Intuitive Diagram (SVG) → Mathematical Formulation (KaTeX) → Interactive Simulator → Hardware Measurements &amp; Source Links → Key Takeaways</b>.</p>
+  <div class="ch-grid" id="chgrid"></div>
+</section>
+
+<section class="home-section" style="padding-top:0">
+  <h2>Recommended Learning Paths</h2>
+  <p class="sub">Follow the sequence below based on your area of interest or engineering role, and experiment with each simulator hands-on.</p>
+  <div class="paths">
+    <div class="path">
+      <h3>System Architect · SW Stack &amp; Agents</h3>
+      <p>Master the MIPI bus bottleneck, IMX500 (.rpk) &amp; Hailo-8 (.hef) cross-compilation, MCP server, and closed-loop agent workflows.</p>
+      <div class="steps">
+        <a href="chapters/overview.html#s-paradigm">01 Bus Bottleneck</a>
+        <a href="chapters/overview.html#s-sw-stack">01 .rpk/.hef Compile</a>
+        <a href="chapters/overview.html#s-agent-flow">01 Agents &amp; MCP</a>
+        <a href="chapters/overview.html#sim-devops">01 Compile Simulator</a>
+        <a href="chapters/notes.html#notes-audit">05 Consistency Audit</a>
+      </div>
+    </div>
+    <div class="path">
+      <h3>Split Inference · Generative AI (LSP)</h3>
+      <p>Explore sensor-host split autoencoder design, Power-of-2 QAT, real-time TAESD decoding, and ZSL diffusion capture.</p>
+      <div class="steps">
+        <a href="chapters/lsp.html#lsp-arch">02 Split Architecture</a>
+        <a href="chapters/lsp.html#lsp-model">02 Stage A/B Math</a>
+        <a href="chapters/lsp.html#lsp-bench">02 HW Benchmarks</a>
+        <a href="chapters/lsp.html#lsp-capture">02 ZSL Capture</a>
+        <a href="chapters/ucfa.html#ucfa-diffusion">04 One-Pass Diffusion</a>
+      </div>
+    </div>
+    <div class="path">
+      <h3>Image Processing · Compiler Optimization (ISP)</h3>
+      <p>Follow the 10-stage C99 ISP math, 3A feedback loop, Verified Lifting, Halide tile fusion, and Vulkan DMA-BUF zero-copy.</p>
+      <div class="steps">
+        <a href="chapters/isp.html#isp-sim-sec">03 10-Stage Simulator</a>
+        <a href="chapters/isp.html#isp-raw">03 RAW/RGB Math</a>
+        <a href="chapters/isp.html#isp-3a">03 3A Control</a>
+        <a href="chapters/isp.html#isp-tiers">03 Halide Fusion</a>
+        <a href="chapters/isp.html#isp-vl">03 Verified Lifting</a>
+      </div>
+    </div>
+    <div class="path">
+      <h3>Sensor CFA · Edge Vision AI</h3>
+      <p>Examine phase-decomposed compression for clustered CFAs (Tetracell/Hexadecacell) and IMX500+Hailo-8 dual-NPU tracking &amp; segmentation.</p>
+      <div class="steps">
+        <a href="chapters/ucfa.html#ucfa-intro">04 Clustered CFA</a>
+        <a href="chapters/ucfa.html#ucfa-sim-cfa">04 PixelUnshuffle</a>
+        <a href="chapters/ucfa.html#ucfa-arch">04 Phase Compressor</a>
+        <a href="chapters/isp.html#isp-ai">03 Dual-NPU AI</a>
+        <a href="chapters/notes.html#glossary-sec">05 Glossary</a>
+      </div>
+    </div>
+  </div>
+</section>
+
+<section class="home-section" style="padding-top:0">
+  <h2>How to Use This Guidebook</h2>
+  <div class="flow">
+    <div><b>Read · Tooltips</b>Hover over any dotted-underlined technical term in the prose to view its definition immediately.</div>
+    <div><b>Click Diagrams</b>Click any node in the architecture SVGs to inspect hardware constraints and source code locations.</div>
+    <div><b>Manipulate Simulators</b>Push sliders and stage toggles to their limits to observe regime shifts and image quality trade-offs live.</div>
+    <div><b>Trace Source Code</b>Blue <code>file:line</code> chips are build-verified links pointing directly to canonical repository files.</div>
+    <div><b>Verify Consistency</b>Chapter 5 transparently documents 23 audit items comparing prose claims against actual C/PyTorch code and JSONs.</div>
+  </div>
+</section>
+
+<script>
+(function () {
+  const grid = document.getElementById("chgrid");
+  const tagName = { sim: "Simulator", "3d": "3D", "HW-Measured": "HW Measured" };
+  grid.innerHTML = SB.CHAPTERS.map((c) => `
+    <a class="ch-card" href="chapters/${c.slug}.html">
+      <span class="num">CHAPTER ${c.num}</span>
+      <h3>${c.title}</h3>
+      <p>${c.desc}</p>
+      <span class="tags">${c.tags.map((t) => `<span class="${t === "sim" ? "tag-sim" : t === "3d" ? "d3" : ""}">${tagName[t] || t}</span>`).join("")}</span>
+    </a>`).join("");
+
+  // Hero 3D: Sony IMX500 Stacked Sensor + MIPI CSI-2 Packet Stream + RPi 5 & Hailo-8 NPU
+  const el = document.getElementById("hero3d");
+  const T = SB.three(el, { camera: [0, 6.2, 13.5], target: [0, -0.2, 0], fov: 36, autoRotate: true, autoRotateSpeed: 0.45, pan: false, minDistance: 8, maxDistance: 22 });
+  if (!T) return;
+  const { THREE, scene } = T;
+
+  // Left: IMX500 Stacked Sensor (-4.2, y, 0)
+  const sx = -4.2;
+  const N = 4, P = 0.72, off = -((N - 1) * P) / 2;
+  const colors = { R: 0xe0443e, G: 0x2da44e, B: 0x2f6fe0 };
+  const cfaAt = (i, j) => (i % 2 === 0 ? (j % 2 === 0 ? "R" : "G") : j % 2 === 0 ? "G" : "B");
+  const lensGeo = new THREE.SphereGeometry(0.34, 20, 10, 0, Math.PI * 2, 0, Math.PI / 2);
+
+  for (let i = 0; i < N; i++) for (let j = 0; j < N; j++) {
+    const x = sx + off + j * P, z = off + i * P, c = cfaAt(i, j);
+    const cf = new THREE.Mesh(new THREE.BoxGeometry(P * 0.94, 0.22, P * 0.94), new THREE.MeshStandardMaterial({ color: colors[c], transparent: true, opacity: 0.85, roughness: 0.3 }));
+    cf.position.set(x, 1.15, z); scene.add(cf);
+    const ml = new THREE.Mesh(lensGeo, new THREE.MeshPhysicalMaterial({ color: 0xdfefff, transparent: true, opacity: 0.55, roughness: 0.08, clearcoat: 1 }));
+    ml.scale.set(0.95, 0.65, 0.95); ml.position.set(x, 1.26, z); scene.add(ml);
+  }
+  // Silicon Photodiode Die
+  const siDie = new THREE.Mesh(new THREE.BoxGeometry(3.2, 0.75, 3.2), T.material(0x3b485e, { roughness: 0.4, metalness: 0.3 }));
+  siDie.position.set(sx, 0.6, 0); scene.add(siDie);
+  // Cu-Cu Hybrid Bonding Layer
+  const bond = new THREE.Mesh(new THREE.BoxGeometry(3.2, 0.14, 3.2), T.material(0xd98a00, { roughness: 0.25, metalness: 0.8 }));
+  bond.position.set(sx, 0.14, 0); scene.add(bond);
+  // Logic + In-Sensor NPU Die (.rpk)
+  const npuDie = new THREE.Mesh(new THREE.BoxGeometry(3.2, 0.7, 3.2), new THREE.MeshStandardMaterial({ color: 0x123524, emissive: 0x1f9d55, emissiveIntensity: 0.25, roughness: 0.35, metalness: 0.4 }));
+  npuDie.position.set(sx, -0.32, 0); scene.add(npuDie);
+
+  // Center: MIPI CSI-2 Bus Bridge
+  const busBridge = new THREE.Mesh(new THREE.BoxGeometry(4.6, 0.12, 0.9), T.material(0x28354a, { roughness: 0.5, metalness: 0.4 }));
+  busBridge.position.set(-0.1, -0.32, 0); scene.add(busBridge);
+
+  // Right: Raspberry Pi 5 Board + Hailo-8 NPU + Latent Cube (3.8, y, 0)
+  const hx = 3.8;
+  const rpiPcb = new THREE.Mesh(new THREE.BoxGeometry(3.8, 0.24, 3.4), T.material(0x1b5e3a, { roughness: 0.5, metalness: 0.2 }));
+  rpiPcb.position.set(hx, -0.65, 0); scene.add(rpiPcb);
+  const hailoChip = new THREE.Mesh(new THREE.BoxGeometry(2.4, 0.45, 2.4), new THREE.MeshStandardMaterial({ color: 0x2c1b47, emissive: 0x7a4ce0, emissiveIntensity: 0.32, roughness: 0.3, metalness: 0.5 }));
+  hailoChip.position.set(hx, -0.22, 0); scene.add(hailoChip);
+
+  // Floating 4-channel Latent Tensor ẑ above Hailo-8
+  const latGroup = new THREE.Group();
+  latGroup.position.set(hx, 1.15, 0);
+  const latColors = [0x38b6f5, 0xa585ff, 0x3fcf7f, 0xf5b93a];
+  for (let c = 0; c < 4; c++) {
+    const slice = new THREE.Mesh(new THREE.BoxGeometry(1.5, 0.14, 1.5), new THREE.MeshStandardMaterial({ color: latColors[c], transparent: true, opacity: 0.82, roughness: 0.2 }));
+    slice.position.y = (c - 1.5) * 0.26;
+    latGroup.add(slice);
+  }
+  scene.add(latGroup);
+
+  // Animated Photons (falling into IMX500) & Compressed Latent Packets (traveling along MIPI bus)
+  const photons = [], packets = [];
+  const pGeo = new THREE.SphereGeometry(0.08, 10, 8);
+  const pktGeo = new THREE.BoxGeometry(0.28, 0.22, 0.45);
+  const pktMat = new THREE.MeshStandardMaterial({ color: 0x38b6f5, emissive: 0x38b6f5, emissiveIntensity: 0.6 });
+
+  let pAcc = 0, kAcc = 0;
+  T.onFrame((dt, t) => {
+    latGroup.rotation.y = t * 0.8;
+    pAcc += dt; kAcc += dt;
+    if (pAcc > 0.08 && photons.length < 28) {
+      pAcc = 0;
+      const pick = [0xe0443e, 0x2da44e, 0x2f6fe0][Math.floor(Math.random() * 3)];
+      const m = new THREE.Mesh(pGeo, new THREE.MeshBasicMaterial({ color: pick }));
+      m.position.set(sx + (Math.random() - 0.5) * 2.4, 3.2, (Math.random() - 0.5) * 2.4);
+      scene.add(m); photons.push(m);
+    }
+    if (kAcc > 0.28 && packets.length < 10) {
+      kAcc = 0;
+      const pk = new THREE.Mesh(pktGeo, pktMat);
+      pk.position.set(sx + 1.6, -0.18, 0);
+      scene.add(pk); packets.push(pk);
+    }
+    for (let i = photons.length - 1; i >= 0; i--) {
+      photons[i].position.y -= dt * 3.0;
+      if (photons[i].position.y < 0.7) {
+        scene.remove(photons[i]); photons.splice(i, 1);
+      }
+    }
+    for (let i = packets.length - 1; i >= 0; i--) {
+      packets[i].position.x += dt * 3.8;
+      if (packets[i].position.x > hx - 1.1) {
+        scene.remove(packets[i]); packets.splice(i, 1);
+      }
+    }
+  });
+
+  T.label("IMX500 Pixel Die (CFA + PD)", [sx, 1.85, 0]);
+  T.label("On-Chip NPU (.rpk · Stage A)", [sx, -1.05, 1.4]);
+  T.label("MIPI CSI-2 (r: 64 KB · 2.90 ms)", [-0.1, 0.35, 0]);
+  T.label("Latent ẑ (64×64×4)", [hx, 2.05, 0]);
+  T.label("RPi 5 + Hailo-8 (.hef)", [hx, -1.1, 1.4]);
+})();
+</script>
+</body>
+</html>

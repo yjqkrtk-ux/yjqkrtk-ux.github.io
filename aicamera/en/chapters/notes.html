@@ -1,0 +1,147 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Ch.05 Glossary &amp; Code-to-Docs Audit Notes · AICAMERA Guidebook</title>
+<meta name="description" content="23 code-to-documentation consistency audit notes cross-checked against C/Python sources and benchmark JSONs, Single-Source-of-Truth build policy, and 43-term interactive glossary.">
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/katex@0.16.11/dist/katex.min.css">
+<script defer src="https://cdn.jsdelivr.net/npm/katex@0.16.11/dist/katex.min.js"></script>
+<script defer src="https://cdn.jsdelivr.net/npm/katex@0.16.11/dist/contrib/auto-render.min.js"></script>
+<link rel="stylesheet" href="../css/style.css">
+<link rel="stylesheet" href="../css/glossary-tooltips.css">
+<script src="../js/glossary-data.js"></script>
+<script src="../js/common.js"></script>
+<script defer src="../js/glossary-tooltips.js"></script>
+</head>
+<body data-chapter="notes" data-root="../">
+
+<main class="chapter">
+    <header class="ch-header">
+      <div class="eyebrow">CHAPTER 05 · AUDIT NOTES &amp; INTERACTIVE GLOSSARY</div>
+      <h1>Code-to-Docs Consistency Audit Notes &amp; Core Glossary</h1>
+      <p class="lead">
+        When a research repository evolves rapidly, subtle discrepancies can emerge between early manuscript drafts or slide decks and the actual C/Python implementations and hardware benchmark JSONs.
+        This chapter transparently publishes all <strong>23 code-and-data vs. documentation audit items</strong> across the repository, followed by an interactive searchable directory of the <strong>core technical glossary</strong> used for inline tooltips throughout the guidebook.
+      </p>
+      <div class="meta-bar">
+        <span>Consistency Audit <b>23 Items (14 Resolved · 9 Notes/Checks)</b></span>
+        <span>Build Gate <b>Auto JSON/C Extraction · Broken Link &amp; Math Blocker</b></span>
+        <span>Interactive Dictionary <b>43 Domain Terms</b></span>
+      </div>
+    </header>
+
+    <section id="notes-audit">
+      <h2>5.1 Code ↔ Documentation Consistency Audit Log (23 Items)</h2>
+      <p>
+        Every chapter in this guidebook (Ch.01 – Ch.04) treats the <strong>“Actual Code &amp; Canonical Data”</strong> column below as the Single Source of Truth.
+        Click the area filter chips below to filter audit entries by sub-project.
+      </p>
+      <div class="card">
+        <div class="filter-row" role="group" aria-label="Area filter">
+          <button class="chip active" data-filter="all">All (23)</button>
+          <button class="chip" data-filter="LSP">LSP (8)</button>
+          <button class="chip" data-filter="ISP">ISP (13)</button>
+          <button class="chip" data-filter="UCFA">UCFA (1)</button>
+          <button class="chip" data-filter="Docs">Docs (1)</button>
+        </div>
+        <div class="tbl-wrap">
+          <table class="tbl" id="notes-tbl">
+            <thead>
+              <tr><th>Area</th><th>Earlier Draft / Presentation Claim</th><th>Actual Code &amp; Canonical Data (Ground Truth)</th><th>Evidence Files</th><th>Status</th></tr>
+            </thead>
+            <tbody><tr data-area='LSP' data-status='doc'><td><span class='badge b-area'>LSP</span></td><td>Stage A 9.59K / 9.1K / 2.4K params (ONNX export graph)</td><td>PyTorch Conv2d: 5,924 / 1,812 / 196 (SA8/4/2)</td><td class='mono'>encoder.py · configs · stageA_*.npz</td><td><span class='badge b-warn'>Doc Note</span></td></tr><tr data-area='LSP' data-status='resolved'><td><span class='badge b-area'>LSP</span></td><td>Stage B 0.97 ms [1.29 ms VGA] · TAESD 16.44 ms [18.28 ms VGA]</td><td>Both canonical 512×512 and 640×480 VGA measurements documented side-by-side</td><td class='mono'>rpi_table1_bench_results.json</td><td><span class='badge b-on'>Resolved</span></td></tr><tr data-area='LSP' data-status='resolved'><td><span class='badge b-area'>LSP</span></td><td>IDENTITY 18.9 FPS compute / 14.9 FPS sync · SA2 20.0 FPS / 15.2 FPS</td><td>Synchronized documentation tables with canonical JSON measurements</td><td class='mono'>rpi_table1_bench_results.json</td><td><span class='badge b-on'>Resolved</span></td></tr><tr data-area='LSP' data-status='resolved'><td><span class='badge b-area'>LSP</span></td><td>Stage B executed on Hailo-8 across all modes</td><td>Updated benchmark script to prioritize .hef execution for SA2/SA4/SA8</td><td class='mono'>run_hardware_benchmark.py</td><td><span class='badge b-on'>Resolved</span></td></tr><tr data-area='LSP' data-status='doc'><td><span class='badge b-area'>LSP</span></td><td>SD 2.1 U-Net consumes latent tensor directly</td><td>SD 1.5 + ControlNet img2img pipeline decodes via VAE then re-encodes on workstation</td><td class='mono'>generative_capture_service.py</td><td><span class='badge b-warn'>Doc Note</span></td></tr><tr data-area='LSP' data-status='doc'><td><span class='badge b-area'>LSP</span></td><td>LPIPS contributes to training gradient</td><td>Computed inside z.detach() + torch.no_grad() → zero gradient (monitoring only)</td><td class='mono'>train_asym_ae.py</td><td><span class='badge b-warn'>Doc Note</span></td></tr><tr data-area='LSP' data-status='doc'><td><span class='badge b-area'>LSP</span></td><td>Stage A compresses raw Bayer mosaic</td><td>Input is 512×512×3 RGB from IMX500 on-chip ISP</td><td class='mono'>enc_sa8_c4_div2k.yaml</td><td><span class='badge b-warn'>Doc Note</span></td></tr><tr data-area='LSP' data-status='resolved'><td><span class='badge b-area'>LSP</span></td><td>Benchmark script JSON output handling</td><td>Added Path import and separated LSP_DIR canonical output from .mock.json</td><td class='mono'>run_hardware_benchmark.py · v2_demo.py</td><td><span class='badge b-on'>Resolved</span></td></tr><tr data-area='ISP' data-status='resolved'><td><span class='badge b-area'>ISP</span></td><td>Demosaic = Malvar-He-Cutler</td><td>Corrected documentation to branchless 2×2 bilinear interpolation</td><td class='mono'>openisp_procedural.c · hdrnet/README.md</td><td><span class='badge b-on'>Resolved</span></td></tr><tr data-area='ISP' data-status='resolved'><td><span class='badge b-area'>ISP</span></td><td>LSC includes a3·r⁶ term</td><td>Corrected documentation to 1 + a1·r² + a2·r⁴ polynomial</td><td class='mono'>openisp_procedural.c · hdrnet/README.md</td><td><span class='badge b-on'>Resolved</span></td></tr><tr data-area='ISP' data-status='resolved'><td><span class='badge b-area'>ISP</span></td><td>EEH κ=1.4</td><td>Corrected documentation to gain 0.8, clip 0.15</td><td class='mono'>openisp_params.h · hdrnet/README.md</td><td><span class='badge b-on'>Resolved</span></td></tr><tr data-area='ISP' data-status='resolved'><td><span class='badge b-area'>ISP</span></td><td>Gamma = sRGB OETF (code comment)</td><td>Unified code and documentation as pure power-law LUT x^(1/γ)</td><td class='mono'>openisp_params.h · procedural.c · README.md</td><td><span class='badge b-on'>Resolved</span></td></tr><tr data-area='ISP' data-status='code'><td><span class='badge b-area'>ISP</span></td><td>cfa_pattern default 0=BGGR (IMX500)</td><td>Sensor RAW is SRGGB10; C pipeline hardcodes RGGB and leaves field unused</td><td class='mono'>openisp_params.h · sw_isp_demo.py</td><td><span class='badge b-off'>Code Note</span></td></tr><tr data-area='ISP' data-status='resolved'><td><span class='badge b-area'>ISP</span></td><td>3A: PID AE · sensor exposure/AGC · AF · AWB α=0.08</td><td>Corrected docs: digital gain EMA only, AWB α=0.15/0.40, no AF</td><td class='mono'>openisp_3a.c · hdrnet/README.md</td><td><span class='badge b-on'>Resolved</span></td></tr><tr data-area='ISP' data-status='doc'><td><span class='badge b-area'>ISP</span></td><td>Macbeth chart calibration · 5-head neural tuner</td><td>No corresponding implementation in repository (planned future work)</td><td class='mono'>—</td><td><span class='badge b-warn'>Doc Note</span></td></tr><tr data-area='ISP' data-status='resolved'><td><span class='badge b-area'>ISP</span></td><td>Z3 / SyGuS formal proof, 0 LSB</td><td>Corrected docs to numerical parity verification (PSNR ≥ 40 dB, MAE ≤ 1e-3; 43.53 dB across tiers)</td><td class='mono'>verifier.py · 3way JSON · README.md</td><td><span class='badge b-on'>Resolved</span></td></tr><tr data-area='ISP' data-status='resolved'><td><span class='badge b-area'>ISP</span></td><td>Tier 4 327.65 ms</td><td>Synchronized docs with JSON: staged 289.56 ms, DMA-BUF 229.40 ms, FP16 327.81 ms</td><td class='mono'>3way_isp_results.json · README.md</td><td><span class='badge b-on'>Resolved</span></td></tr><tr data-area='ISP' data-status='check'><td><span class='badge b-area'>ISP</span></td><td>3 MP Tier 3 32.76 ms / 30.5 FPS</td><td>Recorded in hdrnet/README.md from RPi 5 measurement (no separate JSON file)</td><td class='mono'>hdrnet/README.md</td><td><span class='badge b-sim'>Needs Check</span></td></tr><tr data-area='ISP' data-status='resolved'><td><span class='badge b-area'>ISP</span></td><td>Selfie segmentation on Hailo-8 5.2 ms</td><td>Corrected docs: MediaPipe ONNX CPU (~3.4 ms) / YOLOv5n-seg Hailo-8 (~28.5 ms)</td><td class='mono'>semantic_processor.py · README.md</td><td><span class='badge b-on'>Resolved</span></td></tr><tr data-area='ISP' data-status='doc'><td><span class='badge b-area'>ISP</span></td><td>Face SSD 4.7 ms · grid 1.29 ms</td><td>Hardcoded UI badge strings in demo template</td><td class='mono'>sw_isp_demo.py</td><td><span class='badge b-warn'>Doc Note</span></td></tr><tr data-area='ISP' data-status='check'><td><span class='badge b-area'>ISP</span></td><td>DPC threshold 30</td><td>Stored in uint16 units (≈0.47 DN in 10-bit scale) — aggressive correction threshold</td><td class='mono'>openisp_procedural.c</td><td><span class='badge b-sim'>Needs Check</span></td></tr><tr data-area='UCFA' data-status='resolved'><td><span class='badge b-area'>UCFA</span></td><td>Enhanced compressor 9,524 params / 0.115 G</td><td>Corrected code and docs to 10,052 params / 0.164 G</td><td class='mono'>in_sensor_models.py · README.md</td><td><span class='badge b-on'>Resolved</span></td></tr><tr data-area='Docs' data-status='resolved'><td><span class='badge b-area'>Docs</span></td><td>Broken links (missing lsp/ prefix, export_calibration.py, etc.)</td><td>All relative paths repaired and verified at build time</td><td class='mono'>lsp/README.md · hailo-models/README.md</td><td><span class='badge b-on'>Resolved</span></td></tr></tbody>
+          </table>
+        </div>
+      </div>
+    </section>
+
+    <section id="notes-policy">
+      <h2>5.2 Single-Source-of-Truth Build Policy &amp; Automated Verification</h2>
+      <p>
+        The entire guidebook (<code>docs/index.html</code>, <code>docs/aicamera_architecture_spec.html</code>, <code>docs/chapters/*.html</code>, <code>docs/en/**</code>, <code>docs/css/*</code>, <code>docs/js/*</code>) is deterministically generated by <a class="src" href="../../../docs/build_spec_portal.py" title="docs/build_spec_portal.py" target="_blank" rel="noopener">build_spec_portal.py</a> rather than hand-edited HTML.
+      </p>
+      <div class="grid-3">
+        <div class="card">
+          <h3>1. Metrics Loaded Directly from JSON</h3>
+          <p>
+            LSP hardware latencies, DIV2K fidelity metrics, 12MP 4-Tier ISP latencies, and Universal CFA simulation results are parsed directly from canonical JSON files at build time and injected into tables and charts.
+          </p>
+        </div>
+        <div class="card">
+          <h3>2. Register Defaults Parsed from C</h3>
+          <p>
+            The <code>OpenISPParams</code> and <code>OpenISP3AParams</code> default tables in Ch.03 are generated by regex-parsing the struct initialization assignments in <code>openisp_params.h</code> and <code>openisp_3a.c</code>.
+          </p>
+        </div>
+        <div class="card">
+          <h3>3. Build-Time Integrity Gate</h3>
+          <p>
+            The build fails immediately if any referenced source path is missing, any function/line anchor cannot be resolved, any HTML tag is unclosed, any TeX math expression has unbalanced braces, or any SVG text overflows its container.
+          </p>
+        </div>
+      </div>
+    </section>
+
+    <section id="glossary-sec">
+      <h2>5.3 AICAMERA Core Technical Glossary (Interactive Dictionary)</h2>
+      <p>
+        Below are the definitions, abbreviations, and related chapter links for all core terms highlighted with dotted underlines throughout the guidebook.
+        Type any keyword or abbreviation into the search box to filter in real time.
+      </p>
+      <input type="search" class="gl-search" id="gl-search-input" placeholder="Search terms (e.g., IMX500, QAT, Halide, Tetracell, ZSL, 3A...)" aria-label="Search glossary terms">
+      <div class="gl-list" id="gl-list-box"></div>
+    </section>
+
+    <section class="keypoints" id="summary">
+      <h3>Key Takeaways · Chapter 05</h3>
+      <ul>
+        <li><strong>Code &amp; Data First Principle</strong>: Whenever manuscript drafts or slide decks diverge from implementation details, executable code (<code>.py</code>, <code>.c</code>, <code>.yaml</code>) and measured JSONs always serve as the canonical source of truth.</li>
+        <li><strong>Automated Consistency Guarantee</strong>: Running <code>~/py311_train/bin/python docs/build_spec_portal.py</code> regenerates both the Korean master and 1:1 English guidebook while automatically verifying hundreds of source links and SVG bounds.</li>
+      </ul>
+    </section>
+</main>
+<script>
+(function(){
+  // 1. Audit notes area filter
+  document.querySelectorAll('.chip[data-filter]').forEach(c => {
+    c.addEventListener('click', () => {
+      document.querySelectorAll('.chip[data-filter]').forEach(x => x.classList.toggle('active', x === c));
+      const f = c.dataset.filter;
+      document.querySelectorAll('#notes-tbl tbody tr').forEach(tr => {
+        tr.style.display = (f === 'all' || tr.dataset.area === f) ? '' : 'none';
+      });
+    });
+  });
+
+  // 2. Interactive Glossary rendering & search
+  const listBox = document.getElementById('gl-list-box');
+  const searchInput = document.getElementById('gl-search-input');
+  const terms = ((window.BOOK_GLOSSARY && window.BOOK_GLOSSARY.terms) || []).slice().sort((a, b) => (a.ko || '').localeCompare(b.ko || '', 'en'));
+
+  function renderGlossary(q){
+    if(!listBox) return;
+    const query = (q || '').trim().toLowerCase();
+    const html = [];
+    terms.forEach(item => {
+      const hay = ((item.ko || '') + ' ' + (item.en || '') + ' ' + (item.abbr || '') + ' ' + (item.def || '')).toLowerCase();
+      if(query && !hay.includes(query)) return;
+      const chBadges = (item.chapters || []).map(ch => `<a class="src" href="${ch}.html">Ch.${ch.toUpperCase()}</a>`).join(' ');
+      const abbrSpan = item.abbr ? `<span class="badge b-area">${item.abbr}</span>` : '';
+      html.push(
+        `<div class="gl-item">` +
+          `<div class="gl-head"><span class="gl-name">${item.ko || ''}</span>${abbrSpan}<span class="gl-en">${item.en || ''}</span>${chBadges}</div>` +
+          `<div class="gl-desc">${item.def || ''}</div>` +
+        `</div>`
+      );
+    });
+    listBox.innerHTML = html.length ? html.join('') : '<div class="card"><p>No matching glossary terms found.</p></div>';
+  }
+  renderGlossary('');
+  if(searchInput){
+    searchInput.addEventListener('input', e => renderGlossary(e.target.value));
+  }
+})();
+</script>
+</body>
+</html>

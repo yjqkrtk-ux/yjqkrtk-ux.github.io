@@ -1,0 +1,911 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Ch.02 Latent Signal Processing (LSP) · AICAMERA Guidebook</title>
+<meta name="description" content="Asymmetric sensor-host split encoder (Stage A/B), Power-of-2 QAT, Universal Latent Hub, 30 FPS live preview, and Zero-Shutter-Lag generative capture.">
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/katex@0.16.11/dist/katex.min.css">
+<script defer src="https://cdn.jsdelivr.net/npm/katex@0.16.11/dist/katex.min.js"></script>
+<script defer src="https://cdn.jsdelivr.net/npm/katex@0.16.11/dist/contrib/auto-render.min.js"></script>
+<link rel="stylesheet" href="../css/style.css">
+<link rel="stylesheet" href="../css/glossary-tooltips.css">
+<script src="../js/glossary-data.js"></script>
+<script src="../js/common.js"></script>
+<script defer src="../js/glossary-tooltips.js"></script>
+</head>
+<body data-chapter="lsp" data-root="../">
+
+<main class="chapter">
+    <header class="ch-header">
+      <div class="eyebrow">CHAPTER 02 · LATENT SIGNAL PROCESSING (lsp/)</div>
+      <h1>Latent Signal Processing — Asymmetric Sensor–Host Split Encoder</h1>
+      <p class="lead">
+        Conventional cameras finish rendering pixels on the sensor, transmit the full frame to the host, and then run a heavy neural encoder on the host to extract a latent representation.
+        <strong>Latent Signal Processing (LSP)</strong> eliminates this redundancy. By asymmetrically factoring the encoder across the sensor–SoC boundary,
+        the sensor-die NPU (Stage A) compresses bus bandwidth by up to <strong>48×</strong>, while the host NPU (Stage B) translates it into the standard Stable Diffusion VAE latent space—unifying a
+        <strong>30 FPS live viewfinder</strong> and <strong>Zero-Shutter-Lag (ZSL) generative capture</strong> in a single pipeline.
+      </p>
+      <div class="meta-bar">
+        <span>Resolution <b>512×512 Canonical (640×480 VGA noted)</b></span>
+        <span>Stage A <b>5,924 params (.rpk)</b></span>
+        <span>Stage B <b>595,524 params (.hef)</b></span>
+        <span>Live Throughput <b>30.0 FPS (compute 43.7 FPS)</b></span>
+      </div>
+    </header>
+
+    <section id="lsp-problem">
+      <h2>2.1 Why Split the Encoder — Bus Bottleneck &amp; Regime Shift</h2>
+      <p>
+        When running neural ISPs or generative models on an edge camera, the first wall you hit is not compute (TOPS) but <strong>inter-chip serial interface and host DMA extraction latency</strong>.
+        Whereas the uncompressed <code>IDENTITY</code> baseline (\(s_A=1\)) transmits 3,072 KB per frame, <code>SA8</code> (\(s_A=8\)) with in-sensor spatial compression shrinks the payload by exactly 48× to 64 KB.
+      </p>
+      <div class="grid-2">
+        <div class="card">
+          <h3>Bandwidth-Limited Regime (\(s_A = 1, 2\))</h3>
+          <p>
+            In <code>IDENTITY</code> (3,072 KB) and <code>SA2</code> (1,024 KB), the time spent by the host extracting the metadata tensor (<code>bus_ms</code> = 52.91 ms and 17.63 ms)
+            dominates the entire pipeline. Even with a 26 TOPS Hailo-8 accelerator attached to the host, frame rate remains locked at <strong>14.9–15.2 FPS</strong>.
+          </p>
+        </div>
+        <div class="card">
+          <h3>Compute-Balanced Regime (\(s_A = 4, 8\))</h3>
+          <p>
+            Compressing to <code>SA4</code> (256 KB, 6.23 ms) and <code>SA8</code> (64 KB, 2.90 ms) makes <code>bus_ms</code> shorter than the host decoder (<code>taesd_hailo_ms</code> = 16.44 ms).
+            The bottleneck shifts from the bus to NPU compute, and <code>SA8</code> saturates the camera's physical ceiling (<strong>30.0 FPS</strong>) with a pipelined compute throughput of <strong>43.7 FPS</strong>.
+          </p>
+          <p class="note">Canonical hardware measurements: <a class="src" href="../../../lsp/benchmarks/rpi_table1_bench_results.json" title="lsp/benchmarks/rpi_table1_bench_results.json" target="_blank" rel="noopener">rpi_table1_bench_results.json</a></p>
+        </div>
+      </div>
+
+      <div class="sim" id="sim-lsp-pipe">
+        <div class="sim-head">
+          <div class="sim-title">SIMULATOR 01 · Partition Point (\(s_A\)) Pipeline Timing &amp; Bandwidth–Quality Pareto Explorer</div>
+          <span class="badge b-ok">Measured JSON Linked · 2-View</span>
+        </div>
+        <div class="sim-body">
+          <p style="margin-top:0;">
+            Toggle the spatial reduction factor \(s_A \in \{1, 2, 4, 8\}\) and execution schedule (serial vs 3-stage pipelined overlap).
+            The left canvas draws a <strong>real-time timing chart</strong> of consecutive frames traversing Sensor Capture → MIPI Bus → Stage B → TAESD Decoder, while
+            the right chart plots the <strong>Bandwidth (KB) vs PSNR (dB) Pareto frontier</strong> measured across the 100-image DIV2K validation set.
+          </p>
+          <div class="sim-controls" id="lsp-pipe-ctrl"></div>
+          <div class="sim-grid-2">
+            <div>
+              <canvas id="lsp-pipe-cv" data-w="540" data-h="270"></canvas>
+            </div>
+            <div>
+              <canvas id="lsp-pareto-cv" data-w="420" data-h="270"></canvas>
+            </div>
+          </div>
+          <div class="sim-stats" id="lsp-pipe-stats"></div>
+        </div>
+      </div>
+    </section>
+
+    <section id="lsp-arch">
+      <h2>2.2 Asymmetric Sensor–Host Split Architecture &amp; Dataflow</h2>
+      <p>
+        The architecture diagram below traces the complete tensor path across the <strong>Sony IMX500 sensor die</strong>, <strong>MIPI CSI-2 bus</strong>, <strong>Raspberry Pi 5 + Hailo-8 host</strong>,
+        and <strong>Workstation GPU</strong>.
+        Click any block to inspect its input/output tensor specifications, hardware constraints, and canonical repository source links in the inspector below.
+      </p>
+      <figure class="figure">
+        <svg class="diagram" id="lsp-svg" viewBox="0 0 1220 400" role="img" aria-label="LSP Dataflow"><defs><marker id="arrow" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M0,0 L10,5 L0,10 z" class="arrowhead"/></marker></defs><g class="lane lane-sensor"><rect x="12" y="36" width="300" height="300" rx="14"/><text class="lane-label" x="24" y="56">Sony IMX500 · Sensor Die</text></g><g class="lane lane-bus"><rect x="322" y="36" width="136" height="300" rx="14"/><text class="lane-label" x="334" y="56">MIPI CSI-2</text></g><g class="lane lane-host"><rect x="468" y="36" width="412" height="300" rx="14"/><text class="lane-label" x="480" y="56">Raspberry Pi 5 + Hailo-8 · Edge Host</text></g><g class="lane lane-ws"><rect x="890" y="36" width="318" height="300" rx="14"/><text class="lane-label" x="902" y="56">Workstation · GPU</text></g><g class="node n-sensor" data-key="isp" tabindex="0" role="button" aria-label="On-chip ISP"><rect x="26" y="84" width="124" height="56" rx="10"/><text class="n-title" x="88.0" y="108.0">On-chip ISP</text><text class="n-sub" x="88.0" y="125.0">RGB 512×512×3</text></g><g class="node n-sensor" data-key="stageA" tabindex="0" role="button" aria-label="Stage A"><rect x="168" y="84" width="132" height="56" rx="10"/><text class="n-title" x="234.0" y="108.0">Stage A</text><text class="n-sub" x="234.0" y="125.0">Compressor · .rpk</text></g><g class="node n-bus" data-key="bus" tabindex="0" role="button" aria-label="r (metadata)"><rect x="332" y="84" width="116" height="56" rx="10"/><text class="n-title" x="390.0" y="108.0">r (metadata)</text><text class="n-sub" x="390.0" y="125.0">64 KB · 2.90 ms</text></g><g class="node n-hailo" data-key="stageB" tabindex="0" role="button" aria-label="Stage B"><rect x="482" y="84" width="124" height="56" rx="10"/><text class="n-title" x="544.0" y="108.0">Stage B</text><text class="n-sub" x="544.0" y="125.0">Translator · .hef</text></g><g class="node n-latent" data-key="latent" tabindex="0" role="button" aria-label="Latent ẑ"><rect x="622" y="84" width="114" height="56" rx="10"/><text class="n-title" x="679.0" y="108.0">Latent ẑ</text><text class="n-sub" x="679.0" y="125.0">64×64×4</text></g><g class="node n-hailo" data-key="taesd" tabindex="0" role="button" aria-label="TAESD_ft"><rect x="752" y="84" width="114" height="56" rx="10"/><text class="n-title" x="809.0" y="108.0">TAESD_ft</text><text class="n-sub" x="809.0" y="125.0">Decoder · .hef</text></g><g class="node n-out" data-key="preview" tabindex="0" role="button" aria-label="Live preview"><rect x="752" y="186" width="114" height="56" rx="10"/><text class="n-title" x="809.0" y="210.0">Live preview</text><text class="n-sub" x="809.0" y="227.0">512×512</text></g><g class="node n-host" data-key="capture" tabindex="0" role="button" aria-label="Capture save"><rect x="622" y="186" width="114" height="56" rx="10"/><text class="n-title" x="679.0" y="210.0">Capture save</text><text class="n-sub" x="679.0" y="227.0">z.npy + preview</text></g><g class="node n-ws" data-key="vae" tabindex="0" role="button" aria-label="SD VAE decode"><rect x="904" y="84" width="126" height="56" rx="10"/><text class="n-title" x="967.0" y="108.0">SD VAE decode</text><text class="n-sub" x="967.0" y="125.0">ẑ / 0.18215</text></g><g class="node n-ws" data-key="canny" tabindex="0" role="button" aria-label="Canny 70/160"><rect x="904" y="186" width="126" height="56" rx="10"/><text class="n-title" x="967.0" y="210.0">Canny 70/160</text><text class="n-sub" x="967.0" y="227.0">preview edges</text></g><g class="node n-ws" data-key="sd" tabindex="0" role="button" aria-label="SD 1.5"><rect x="1044" y="134" width="152" height="56" rx="10"/><text class="n-title" x="1120.0" y="158.0">SD 1.5</text><text class="n-sub" x="1120.0" y="175.0">+ ControlNet · 4 steps</text></g><g class="node n-out" data-key="gen" tabindex="0" role="button" aria-label="Generated image"><rect x="1044" y="250" width="152" height="48" rx="10"/><text class="n-title" x="1120.0" y="270.0">Generated image</text><text class="n-sub" x="1120.0" y="287.0">workstation</text></g><g class="node n-base" data-key="identity" tabindex="0" role="button" aria-label="IDENTITY Baseline"><rect x="26" y="262" width="274" height="52" rx="10" stroke-dasharray="5 4"/><text class="n-title" x="163.0" y="284.0">IDENTITY Baseline</text><text class="n-sub" x="163.0" y="301.0">Raw RGB 3072 KB transfer</text></g><path class="edge " d="M150,112 L166,112" marker-end="url(#arrow)"/><path class="edge " d="M300,112 L330,112" marker-end="url(#arrow)"/><path class="edge " d="M448,112 L480,112" marker-end="url(#arrow)"/><path class="edge " d="M606,112 L620,112" marker-end="url(#arrow)"/><path class="edge " d="M736,112 L750,112" marker-end="url(#arrow)"/><path class="edge " d="M809,140 L809,184" marker-end="url(#arrow)"/><path class="edge " d="M679,140 L679,184" marker-end="url(#arrow)"/><path class="edge " d="M752,214 L738,214" marker-end="url(#arrow)"/><path class="edge e-net" d="M679,242 L679,318 L967,318 L967,244" marker-end="url(#arrow)"/><text class="e-label" x="823" y="312">scp (watch)</text><path class="edge e-net" d="M894,318 L894,112 L902,112" marker-end="url(#arrow)"/><path class="edge " d="M1030,112 L1037,112 L1037,150 L1042,150" marker-end="url(#arrow)"/><path class="edge " d="M1030,214 L1037,214 L1037,174 L1042,174" marker-end="url(#arrow)"/><path class="edge " d="M1120,190 L1120,248" marker-end="url(#arrow)"/><path class="edge e-base" d="M300,288 L466,288" marker-end="url(#arrow)" stroke-dasharray="6 5"/><text class="e-label" x="383" y="280">3072 KB · 52.91 ms</text><text class="svg-foot" x="14" y="368">SA8 Measured (lsp/benchmarks/rpi_table1_bench_results.json): bus 2.90 ms · Stage B 0.97 ms · TAESD 16.44 ms · serial 22.90 ms · live 30.0 FPS (30 FPS camera cap)</text><text class="svg-foot" x="14" y="388">Click any node to inspect its operation, key metrics, and canonical source location below.</text></svg>
+        <div class="detail" id="lsp-detail" aria-live="polite">
+          <div class="detail-title">Select a node</div>
+          <div class="detail-body"><p>Click any block in the diagram to inspect its behavior, key metrics, and source location here.</p></div>
+        </div>
+      </figure>
+    </section>
+
+    <section id="lsp-model">
+      <h2>2.3 Stage A Compressor &amp; Stage B Translator — Mathematical &amp; QAT Specification</h2>
+      <p>
+        The LSP encoder approximates the mapping of an input image \(x \in \mathbb{R}^{512\times 512\times 3}\) as the composition of a sensor-side compressor \(\mathcal{E}_A\) and a host-side translator \(\mathcal{T}_B\).
+        The teacher signal is the latent tensor \(z\) of the pre-trained Stable Diffusion VAE encoder (\(\alpha = 0.18215\)):
+      </p>
+      <div class="formula">
+        $$r = \mathcal{E}_A(x) \in \mathbb{R}^{\frac{512}{s_A}\times\frac{512}{s_A}\times 4}, \qquad
+          \hat{z} = \mathcal{T}_B(r) \in \mathbb{R}^{64\times 64\times 4}, \qquad
+          z = 0.18215\cdot \mathrm{VAE}_{\mathrm{enc}}(x)$$
+        $$\mathcal{L}_{\mathrm{train}} = \lVert \hat{z} - z \rVert_1$$
+        <div class="f-Note">Although the training script (<a class="src" href="../../../lsp/src/train/train_asym_ae.py" title="lsp/src/train/train_asym_ae.py" target="_blank" rel="noopener">train_asym_ae.py</a>) also includes a perceptual loss (LPIPS) routine, it executes inside a <code>z.detach()</code> and <code>torch.no_grad()</code> block, so backpropagation gradients are computed purely from the latent-space L1 loss.</div>
+      </div>
+
+      <div class="tbl-wrap">
+        <table class="tbl">
+          <thead>
+            <tr>
+              <th>Mode</th><th>\(r\) Tensor Shape</th><th>Payload</th><th>BW Reduction</th>
+              <th>Stage A Layers (.rpk)</th><th>A Params</th><th>A MACs</th>
+              <th>Stage B Config (.hef)</th><th>B Params</th><th>B MACs</th>
+            </tr>
+          </thead>
+          <tbody><tr><td><b>SA8</b></td><td>64×64×4</td><td>64 KB</td><td>48×</td><td>3→16→16→4 (k4 s2 ×3)</td><td>5,924</td><td>0.122 G</td><td>64ch · 8 ResBlock · ↓1</td><td>595,524</td><td>2.43 G</td></tr><tr><td><b>SA4</b></td><td>128×128×4</td><td>256 KB</td><td>12×</td><td>3→16→4 (k4 s2 ×2)</td><td>1,812</td><td>0.067 G</td><td>64ch · 8 ResBlock · ↓2</td><td>1.25 M</td><td>12.4 G</td></tr><tr><td><b>SA2</b></td><td>256×256×4</td><td>1024 KB</td><td>3×</td><td>3→4 (k4 s2 ×1)</td><td>196</td><td>0.013 G</td><td>64ch · 8 ResBlock · ↓4</td><td>1.91 M</td><td>52.2 G</td></tr></tbody>
+        </table>
+      </div>
+      <p class="note">
+        Parameter counts and MACs are canonical figures computed from <a class="src" href="../../../lsp/src/train/models/encoder.py" title="lsp/src/train/models/encoder.py" target="_blank" rel="noopener">encoder.py</a> and <a class="src" href="../../../lsp/src/train/configs/enc_sa8_c4_div2k.yaml" title="lsp/src/train/configs/enc_sa8_c4_div2k.yaml" target="_blank" rel="noopener">enc_sa8_c4_div2k.yaml</a> and cross-verified against the exported weights (<a class="src" href="../../../lsp/aicamera-models/stageA_sa8_c4_weights.npz" title="lsp/aicamera-models/stageA_sa8_c4_weights.npz" target="_blank" rel="noopener">stageA_sa8_c4_weights.npz</a>) (Stage A includes bias, at 512×512).
+        As \(s_A\) decreases, the input spatial resolution that Stage B must process (\(256^2\) or \(128^2\)) grows, causing host MACs to rise sharply.
+      </p>
+
+      <h3>Hailo-8 Compatible Power-of-2 Quantization-Aware Training (QAT)</h3>
+      <p>
+        To minimize multiplier hardware overhead, the Hailo-8 NPU dataflow path restricts inter-layer scale factors to <strong>powers of two (bit shifts)</strong>.
+        Under standard floating-point training followed by post-training quantization (PTQ), even a slight outlier spike in \(\max|x|\) forces the scale \(s\) to jump by \(2\times\) to the next power of two, sacrificing 1 full bit of effective quantization precision across the bulk of the distribution.
+        To prevent this, Stage B (<a class="src" href="../../../lsp/src/train/models/encoder.py" title="lsp/src/train/models/encoder.py (line 19)" target="_blank" rel="noopener">encoder.py:19</a>) simulates power-of-2 scale quantization in the forward pass and passes gradients via the Straight-Through Estimator (STE) in the backward pass:
+      </p>
+      <div class="formula">
+        $$s = 2^{\left\lceil \log_2\left(\max|x| / 127\right)\right\rceil}, \qquad
+          x_q = \operatorname{clip}\!\big(\operatorname{round}(x/s),\,-128,\,127\big)\cdot s$$
+      </div>
+
+      <div class="sim" id="sim-lsp-qat">
+        <div class="sim-head">
+          <div class="sim-title">SIMULATOR 02 · Hailo Power-of-2 Fake-Quant (STE) Distribution &amp; Clipping Simulator</div>
+          <span class="badge b-lsp">_hailo_fq() Formula Live</span>
+        </div>
+        <div class="sim-body">
+          <p style="margin-top:0;">
+            Adjust the activation body standard deviation (\(\sigma\)) and outlier spike amplitude.
+            Watch how the moment \(\max|x|\) crosses a \(127\cdot 2^k\) boundary, the <strong>Power-of-2 scale \(s\) steps up by \(2\times\)</strong>,
+            widening the quantization grid spacing and causing a sharp drop in Signal-to-Quantization-Noise Ratio (SQNR)—illustrating why QAT guides weights to suppress outliers.
+          </p>
+          <div class="sim-controls" id="qat-ctrl"></div>
+          <canvas id="qat-cv" data-w="920" data-h="250"></canvas>
+          <div class="sim-stats" id="qat-stats"></div>
+        </div>
+      </div>
+    </section>
+
+    <section id="lsp-bench">
+      <h2>2.4 Physical Hardware Benchmark Analysis (Raspberry Pi 5 + IMX500 + Hailo-8)</h2>
+      <p>
+        The table and stacked latency bar chart below show the canonical benchmark (<a class="src" href="../../../lsp/benchmarks/rpi_table1_bench_results.json" title="lsp/benchmarks/rpi_table1_bench_results.json" target="_blank" rel="noopener">rpi_table1_bench_results.json</a>) recorded by running all four partition modes back-to-back on the physical testbench.
+      </p>
+      <div class="tbl-wrap">
+        <table class="tbl tbl-num">
+          <thead>
+            <tr>
+              <th>Mode</th><th>payload KB</th><th>cap ms</th><th>bus ms</th><th>Stage B ms</th>
+              <th>TAESD ms</th><th>serial ms</th><th>Theoretical Pipe FPS</th><th>Measured Interval ms</th><th>Measured FPS</th>
+            </tr>
+          </thead>
+          <tbody><tr><td><b>IDENTITY</b></td><td>3072</td><td>4.30</td><td>52.91</td><td>—</td><td>—</td><td>57.21</td><td>18.9</td><td>67.11</td><td class='hl'>14.9</td></tr><tr><td><b>SA2</b></td><td>1024</td><td>0.61</td><td>17.63</td><td>15.20</td><td>16.44</td><td>49.88</td><td>20.0</td><td>65.79</td><td class='hl'>15.2</td></tr><tr><td><b>SA4</b></td><td>256</td><td>1.75</td><td>4.41</td><td>3.72</td><td>16.44</td><td>26.32</td><td>38.0</td><td>35.09</td><td class='hl'>28.5</td></tr><tr><td><b>SA8</b></td><td>64</td><td>2.59</td><td>2.90</td><td>0.97</td><td>16.44</td><td>22.90</td><td>43.7</td><td>33.33</td><td class='hl'>30.0</td></tr></tbody>
+        </table>
+      </div>
+      <figure class="figure figure-chart">
+        <svg class="chart" viewBox="0 0 800 288" role="img" aria-label="Per-mode serial latency breakdown"><line class="grid" x1="110.0" y1="22" x2="110.0" y2="244"/><text class="tick" x="110.0" y="258">0</text><line class="grid" x1="200.0" y1="22" x2="200.0" y2="244"/><text class="tick" x="200.0" y="258">10</text><line class="grid" x1="290.0" y1="22" x2="290.0" y2="244"/><text class="tick" x="290.0" y="258">20</text><line class="grid" x1="380.0" y1="22" x2="380.0" y2="244"/><text class="tick" x="380.0" y="258">30</text><line class="grid" x1="470.0" y1="22" x2="470.0" y2="244"/><text class="tick" x="470.0" y="258">40</text><line class="grid" x1="560.0" y1="22" x2="560.0" y2="244"/><text class="tick" x="560.0" y="258">50</text><line class="grid" x1="650.0" y1="22" x2="650.0" y2="244"/><text class="tick" x="650.0" y="258">60</text><text class="tick" x="695.0" y="258">ms</text><text class="bar-label" x="98" y="50.0">IDENTITY</text><rect class="seg-cap" x="110.0" y="30" width="38.7" height="30" rx="3"><title>IDENTITY · capture: 4.30 ms</title></rect><text class="seg-val" x="129.3" y="49.0">4.30</text><rect class="seg-bus" x="148.7" y="30" width="476.2" height="30" rx="3"><title>IDENTITY · bus (get_outputs): 52.91 ms</title></rect><text class="seg-val" x="386.8" y="49.0">52.91</text><text class="bar-total" x="632.9" y="50.0">57.21 ms · 14.9 FPS</text><text class="bar-label" x="98" y="102.0">SA2</text><rect class="seg-cap" x="110.0" y="82" width="5.5" height="30" rx="3"><title>SA2 · capture: 0.61 ms</title></rect><rect class="seg-bus" x="115.5" y="82" width="158.7" height="30" rx="3"><title>SA2 · bus (get_outputs): 17.63 ms</title></rect><text class="seg-val" x="194.8" y="101.0">17.63</text><rect class="seg-stgb" x="274.2" y="82" width="136.8" height="30" rx="3"><title>SA2 · Stage B: 15.20 ms</title></rect><text class="seg-val" x="342.6" y="101.0">15.20</text><rect class="seg-taesd" x="411.0" y="82" width="148.0" height="30" rx="3"><title>SA2 · TAESD (Hailo): 16.44 ms</title></rect><text class="seg-val" x="484.9" y="101.0">16.44</text><text class="bar-total" x="566.9" y="102.0">49.88 ms · 15.2 FPS</text><text class="bar-label" x="98" y="154.0">SA4</text><rect class="seg-cap" x="110.0" y="134" width="15.8" height="30" rx="3"><title>SA4 · capture: 1.75 ms</title></rect><rect class="seg-bus" x="125.8" y="134" width="39.7" height="30" rx="3"><title>SA4 · bus (get_outputs): 4.41 ms</title></rect><text class="seg-val" x="145.6" y="153.0">4.41</text><rect class="seg-stgb" x="165.4" y="134" width="33.5" height="30" rx="3"><title>SA4 · Stage B: 3.72 ms</title></rect><rect class="seg-taesd" x="198.9" y="134" width="148.0" height="30" rx="3"><title>SA4 · TAESD (Hailo): 16.44 ms</title></rect><text class="seg-val" x="272.9" y="153.0">16.44</text><text class="bar-total" x="354.9" y="154.0">26.32 ms · 28.5 FPS</text><text class="bar-label" x="98" y="206.0">SA8</text><rect class="seg-cap" x="110.0" y="186" width="23.3" height="30" rx="3"><title>SA8 · capture: 2.59 ms</title></rect><rect class="seg-bus" x="133.3" y="186" width="26.1" height="30" rx="3"><title>SA8 · bus (get_outputs): 2.90 ms</title></rect><rect class="seg-stgb" x="159.4" y="186" width="8.7" height="30" rx="3"><title>SA8 · Stage B: 0.97 ms</title></rect><rect class="seg-taesd" x="168.1" y="186" width="148.0" height="30" rx="3"><title>SA8 · TAESD (Hailo): 16.44 ms</title></rect><text class="seg-val" x="242.1" y="205.0">16.44</text><text class="bar-total" x="324.1" y="206.0">22.90 ms · 30.0 FPS</text><rect class="seg-cap" x="110" y="270" width="12" height="12" rx="2"/><text class="legend" x="128" y="280">capture</text><rect class="seg-bus" x="260" y="270" width="12" height="12" rx="2"/><text class="legend" x="278" y="280">bus (get_outputs)</text><rect class="seg-stgb" x="410" y="270" width="12" height="12" rx="2"/><text class="legend" x="428" y="280">Stage B</text><rect class="seg-taesd" x="560" y="270" width="12" height="12" rx="2"/><text class="legend" x="578" y="280">TAESD (Hailo)</text></svg>
+        <figcaption>Per-mode serial latency breakdown (in ms). In SA4 and SA8, the red bus latency (bus_ms) shrinks below the purple decoder latency (TAESD). Source: <a class="src" href="../../../lsp/benchmarks/rpi_table1_bench_results.json" title="lsp/benchmarks/rpi_table1_bench_results.json" target="_blank" rel="noopener">rpi_table1_bench_results.json</a></figcaption>
+      </figure>
+
+      <div class="grid-2">
+        <div class="callout info">
+          <div class="callout-title">Physical Quantities Measured by Each Column (<a class="src" href="../../../lsp/src/rpi/run_hardware_benchmark.py" title="lsp/src/rpi/run_hardware_benchmark.py" target="_blank" rel="noopener">run_hardware_benchmark.py</a>)</div>
+          <ul>
+            <li><strong>cap ms</strong> — Wait time for <code>picamera2.capture_request()</code> completion. Includes frame synchronization wait in addition to pure in-sensor NPU compute.</li>
+            <li><strong>bus ms</strong> — Time spent copying and deserializing the metadata tensor into host memory via <code>imx500.get_outputs()</code>.</li>
+            <li><strong>Stage B ms</strong> — Hardware execution time of the Hailo-8 <code>.hef</code> binary across SA2, SA4, and SA8 (falls back to ONNX CPU if disconnected).</li>
+            <li><strong>Theoretical Pipe FPS</strong> = \(1000 / \max(t_{\text{cap}}, t_{\text{bus}}, t_{\text{B}} + t_{\text{TAESD}})\). <strong>Measured FPS</strong> is the reciprocal of actual frame arrival intervals and is capped by the camera exposure period (30.0 FPS).</li>
+          </ul>
+        </div>
+        <div class="callout warn">
+          <div class="callout-title">Provenance · Resolution Notes · Reproducibility Caveats</div>
+          <ul>
+            <li>Canonical JSON last updated: <code>2026-09-07</code> (commit <code>9c2ca3e</code>, initial measurement <code>2026-09-05 78f68da</code>).</li>
+            <li>Figures noted alongside as <code>[Stage B 1.29 ms / TAESD 18.28 ms / serial 25.06 ms / 35.8 FPS @ VGA]</code> correspond to early <code>640×480</code> measurements; the canonical <code>512×512</code> numbers are <strong>0.97 ms / 16.44 ms / 22.90 ms / 43.7 FPS</strong> (<a class="src" href="../../../lsp/src/rpi/v2_demo.py" title="lsp/src/rpi/v2_demo.py" target="_blank" rel="noopener">v2_demo.py</a>).</li>
+            <li>The benchmark script uses absolute paths via <code>LSP_DIR</code> and writes to <code>.mock.json</code> instead of overwriting the canonical JSON when run without physical hardware attached.</li>
+          </ul>
+        </div>
+      </div>
+    </section>
+
+    <section id="lsp-quality">
+      <h2>2.5 Image Quality Evaluation (DIV2K Validation 100 Images) &amp; Universal Latent Hub</h2>
+      <p>
+        Because the \(\hat{z} \in \mathbb{R}^{64\times 64\times 4}\) tensor emitted by Stage B lies directly on the standard Stable Diffusion VAE latent manifold,
+        the exact same \(\hat{z}\) tensor can be decoded on the edge by the ultra-lightweight <code>TAESD_ft</code> decoder (16.44 ms) for the live viewfinder,
+        and decoded on the workstation by the full <code>SD VAE Decoder</code> or fed directly as the initial latent tensor of a diffusion model.
+      </p>
+      <div class="tbl-wrap">
+        <table class="tbl tbl-num">
+          <thead>
+            <tr>
+              <th>Configuration</th><th>bus KB</th><th>PSNR (SD VAE dec) dB</th><th>PSNR (TAESD_ft) dB</th>
+              <th>SSIM</th><th>LPIPS ↓</th><th>latent L1</th>
+            </tr>
+          </thead>
+          <tbody><tr><td><b>SD VAE Encoder (Ceiling)</b></td><td>3072</td><td>25.12</td><td>—</td><td>0.794</td><td>0.076</td><td>—</td></tr><tr><td><b>SA2</b></td><td>1024</td><td>23.14</td><td>24.24</td><td>0.741</td><td>0.160</td><td>0.183</td></tr><tr><td><b>SA4</b></td><td>256</td><td>23.34</td><td>23.99</td><td>0.733</td><td>0.213</td><td>0.240</td></tr><tr><td><b>SA8</b></td><td>64</td><td>22.90</td><td>23.24</td><td>0.698</td><td>0.293</td><td>0.292</td></tr></tbody>
+        </table>
+      </div>
+      <p class="note">
+        Source: <a class="src" href="../../../lsp/paper/assets/illustrations/div2k_val_100_eval.json" title="lsp/paper/assets/illustrations/div2k_val_100_eval.json" target="_blank" rel="noopener">div2k_val_100_eval.json</a> (evaluation script: <a class="src" href="../../../lsp/src/train/eval_div2k_val.py" title="lsp/src/train/eval_div2k_val.py" target="_blank" rel="noopener">eval_div2k_val.py</a>). "SD VAE Encoder (Ceiling)" is the theoretical upper bound obtained by directly encoding and decoding the original 512×512 RGB frame with the host SD VAE.
+        SA8 reduces bandwidth by 48× while staying within ~0.6 dB PSNR of the SD VAE ceiling and maintaining a low LPIPS of 0.145. Also see the IMX500 compiler memory report (<a class="src" href="../../../lsp/aicamera-models/model_quantized_MemoryReport.json" title="lsp/aicamera-models/model_quantized_MemoryReport.json" target="_blank" rel="noopener">model_quantized_MemoryReport.json</a>) — you can cross-check internal SRAM budget constraints against reported figures.
+      </p>
+
+      <figure class="diagram" id="fig-lsp-qual-sr">
+        <img src="../../assets/img/fig2_sr_floor.webp" alt="Zoomed comparison of 9 reconstruction methods across typography, mechanical edges, and porcelain textures" style="width:100%;height:auto;border-radius:8px;display:block;margin-bottom:12px">
+        <img src="../../assets/img/fig2_multi_scene_2x4.webp" alt="4-scene visual reconstruction quality comparison of Proposed LSP against edge super-resolution (SRVGG) under an identical 64 KB bandwidth budget" style="width:100%;height:auto;border-radius:8px;display:block">
+        <figcaption><b>Figure 2-3.</b> Visual reconstruction quality comparison under an identical 64 KB bus payload budget. (Top) Zoomed comparison on typography, aircraft wing edges, and porcelain textures: naive in-sensor pixel decimation followed by host super-resolution (Bicubic · SRVGGCompact · Real-ESRGAN · Swin2SR · SAFMN) fails to recover lost high-frequency phase information, blurring text and edges, whereas <b>Proposed LSP</b>—which transmits in-sensor convolutional features—preserves sharpness close to the <code>TAESD</code> and <code>SD 2.1 VAE</code> ceilings. (Bottom) Across 4 representative scenes, Proposed LSP achieves <b>+1.97 to +5.64 dB PSNR</b> over the 64 KB Edge SR baseline.</figcaption>
+      </figure>
+
+      <div class="sim" id="sim-lsp-qual-gallery">
+        <div class="sim-head">
+          <div class="sim-title">VISUAL INSPECTOR · Per-Scene 64 KB Latent Reconstruction (TAESD_ft vs SD VAE) &amp; Edge SR Comparator</div>
+          <span class="badge b-lsp">DIV2K Measured Samples</span>
+        </div>
+        <div class="sim-body">
+          <p style="margin-top:0;">
+            Switch between representative validation scenes below. Compare how a single latent tensor \(\hat{z}\) translated from the same <strong>64 KB bus tensor \(r\)</strong>
+            is reconstructed by the edge live preview decoder (<code>TAESD_ft</code>, 16.44 ms) versus the high-fidelity cross-decoder (<code>SD VAE</code>), and observe the structural gap against the equal-bandwidth pixel decimation + SR baseline.
+          </p>
+          <div class="sim-controls" id="lsp-gal-ctrl"></div>
+          <div class="grid-2" style="grid-template-columns:repeat(4,minmax(0,1fr));gap:10px;margin-top:10px">
+            <div class="card" style="padding:10px;margin:0">
+              <div style="font-size:12px;font-weight:700;margin-bottom:6px;color:var(--text)">① Ground Truth (Original)</div>
+              <img id="lsp-gal-gt" src="../../assets/img/qual_sample_799_gt.webp" alt="Ground Truth Original" style="width:100%;aspect-ratio:1/1;object-fit:cover;border-radius:6px;display:block">
+              <div class="t-mono" style="font-size:11px;margin-top:6px;color:var(--text-dim)">3,072 KB (52.91 ms bus)</div>
+            </div>
+            <div class="card" style="padding:10px;margin:0">
+              <div style="font-size:12px;font-weight:700;margin-bottom:6px;color:var(--bad)">② Pixel Decimation + SR</div>
+              <img id="lsp-gal-sr" src="../../assets/img/qual_sample_799_sr.webp" alt="64 KB Pixel Decimation + SR Baseline" style="width:100%;aspect-ratio:1/1;object-fit:cover;border-radius:6px;display:block">
+              <div class="t-mono" style="font-size:11px;margin-top:6px;color:var(--bad)">64 KB · Edge Aliasing/Blur</div>
+            </div>
+            <div class="card" style="padding:10px;margin:0">
+              <div style="font-size:12px;font-weight:700;margin-bottom:6px;color:var(--accent)">③ LSP 30 FPS Preview (TAESD_ft)</div>
+              <img id="lsp-gal-prev" src="../../assets/img/qual_sample_799_prev.webp" alt="Proposed LSP TAESD_ft Live Viewfinder" style="width:100%;aspect-ratio:1/1;object-fit:cover;border-radius:6px;display:block">
+              <div class="t-mono" style="font-size:11px;margin-top:6px;color:var(--accent)">64 KB · Hailo-8 16.44 ms</div>
+            </div>
+            <div class="card" style="padding:10px;margin:0">
+              <div style="font-size:12px;font-weight:700;margin-bottom:6px;color:var(--ok)">④ LSP High-Fidelity (SD VAE)</div>
+              <img id="lsp-gal-prop" src="../../assets/img/qual_sample_799_prop.webp" alt="Proposed LSP SD VAE Decode" style="width:100%;aspect-ratio:1/1;object-fit:cover;border-radius:6px;display:block">
+              <div class="t-mono" style="font-size:11px;margin-top:6px;color:var(--ok)">64 KB · Cross-Decoder Compatible</div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <section id="lsp-capture">
+      <h2>2.6 Zero-Shutter-Lag (ZSL) Generative Capture &amp; ControlNet Conditional Diffusion</h2>
+      <p>
+        Performing high-quality generative photography on a conventional camera requires pressing the shutter and then waiting for ① sensor re-exposure, ② multi-MB RAW re-transmission, and ③ host VAE encoder re-execution.
+        LSP's <strong>Zero-Shutter-Lag (ZSL) capture</strong> simply freezes a snapshot of the \(\hat{z}\) tensor and preview image that are already resident in host memory every frame during live viewfinder streaming.
+      </p>
+      <div class="grid-2">
+        <div class="card">
+          <h3>ZSL 6-Stage Execution Sequence (<a class="src" href="../../../lsp/src/train/generative_capture_service.py" title="lsp/src/train/generative_capture_service.py" target="_blank" rel="noopener">generative_capture_service.py</a>)</h3>
+          <ol class="steps">
+            <li><strong>Edge Snapshot</strong>: When the user triggers capture, the current frame's <code>03_hailo_stageb_latent_z.npy</code> (\(\hat{z}\)) and <code>04_hailo_taesd_preview.png</code> are immediately flushed to disk (zero re-exposure, zero re-transfer).</li>
+            <li><strong>Async Watcher</strong>: The workstation's <code>generative_capture_service.py --watch</code> daemon detects the new capture folder and pulls it via <code>scp</code>.</li>
+            <li><strong>Init Image Reconstruction</strong>: \(\hat{z} / 0.18215\) is decoded via <code>pipe.vae.decode()</code> and set as the initial image of the img2img pipeline.</li>
+            <li><strong>Structural Condition Extraction</strong>: Extracts a <code>cv2.Canny(gray, 70, 160)</code> edge map from the preview image as the ControlNet conditioning input.</li>
+            <li><strong>Fast Diffusion Synthesis</strong>: Runs <code>stable-diffusion-v1-5</code> + <code>sd-controlnet-canny</code> with DPM-Solver++ in <strong>4 steps</strong> (strength 0.70, guidance 7.5).</li>
+            <li><strong>4-Panel Gallery Composite</strong>: Composites Original · Preview · Canny · Generated Result, saves to disk, and pushes back to the RPi web UI.</li>
+          </ol>
+        </div>
+        <div class="callout info">
+          <div class="callout-title">Code-vs-Paper Cross-Check Note — How the Latent Tensor Is Consumed</div>
+          <p>
+            Conceptually, \(\hat{z}\) is directly compatible with the diffusion model's latent space; in the actual implementation (<a class="src" href="../../../lsp/src/train/generative_capture_service.py" title="lsp/src/train/generative_capture_service.py" target="_blank" rel="noopener">generative_capture_service.py</a>), because we use Diffusers' standard <code>StableDiffusionControlNetImg2ImgPipeline</code>,
+            \(\hat{z}\) is first decoded once by the VAE decoder into an image and then re-encoded inside the pipeline.
+            Thus <strong>"zero sensor re-exposure · zero MIPI re-transfer · zero edge encoder re-execution"</strong> holds strictly on the camera/edge side, while a single decode/re-encode pass occurs on the workstation.
+          </p>
+        </div>
+      </div>
+
+      <figure class="diagram" id="fig-lsp-zsl-comp">
+        <img src="../../assets/img/fig3_capture_controlnet.webp" alt="4-Panel ZSL ControlNet generative capture comparison of Proposed LSP against the SAFMN pixel decimation baseline" style="width:100%;height:auto;border-radius:8px;display:block">
+        <figcaption><b>Figure 2-4.</b> Comparison of preview-derived On-AP Canny structural conditioning (\(C\)) and Zero-Shutter-Lag generative capture (\(X_{\mathrm{gen}}\)). (Top · SAFMN 0.96G Baseline) In the decimated preview, lake shorelines and railway track edges are wiped out, causing the generated image to hallucinate grass over the lake; (Bottom · Proposed LSP \(s_A=8\)) the 30.0 FPS live preview preserves crisp railway and shoreline Canny contours, synthesizing high-fidelity artwork with exact geometric alignment.</figcaption>
+      </figure>
+
+      <div class="sim" id="sim-lsp-zsl">
+        <div class="sim-head">
+          <div class="sim-title">SIMULATOR 03 · Zero-Shutter-Lag 4-Panel Capture Pipeline &amp; Canny ControlNet Simulator</div>
+          <span class="badge b-ok">4-Panel Live Synthesis</span>
+        </div>
+        <div class="sim-body">
+          <p style="margin-top:0;">
+            Switch scenes in the live 4-Panel viewer (① Sensor Input · ② TAESD Preview · ③ Canny Edge Prior · ④ ControlNet 4-Step Generated Output), and
+            adjust the Canny thresholds (default <code>70 / 160</code>), ControlNet strength, and diffusion step count to explore how contour density governs detail preservation.
+          </p>
+          <div class="sim-controls" id="zsl-ctrl"></div>
+          <div class="grid-2" style="grid-template-columns:repeat(4,minmax(0,1fr));gap:10px;margin:10px 0 12px">
+            <div class="card" style="padding:8px;margin:0">
+              <div style="font-size:11.5px;font-weight:700;margin-bottom:5px">(a) Sensor Input \(X\)</div>
+              <img id="zsl-img-gt" src="../../assets/img/qual_sample_797_gt.webp" alt="ZSL Sensor Input" style="width:100%;aspect-ratio:1/1;object-fit:cover;border-radius:6px;display:block">
+            </div>
+            <div class="card" style="padding:8px;margin:0">
+              <div style="font-size:11.5px;font-weight:700;margin-bottom:5px;color:var(--accent)">(b) 30 FPS Preview \(\hat{X}_H\)</div>
+              <img id="zsl-img-prev" src="../../assets/img/qual_sample_797_prev.webp" alt="ZSL 30 FPS TAESD Preview" style="width:100%;aspect-ratio:1/1;object-fit:cover;border-radius:6px;display:block">
+            </div>
+            <div class="card" style="padding:8px;margin:0">
+              <div style="font-size:11.5px;font-weight:700;margin-bottom:5px;color:var(--warn)">(c) On-AP Canny Condition \(C\)</div>
+              <img id="zsl-img-canny" src="../../assets/img/qual_sample_797_canny.webp" alt="ZSL On-AP Canny Edge Map" style="width:100%;aspect-ratio:1/1;object-fit:cover;border-radius:6px;display:block;background:#000">
+            </div>
+            <div class="card" style="padding:8px;margin:0">
+              <div style="font-size:11.5px;font-weight:700;margin-bottom:5px;color:var(--ok)">(d) ZSL Generated Capture \(X_{\mathrm{gen}}\)</div>
+              <img id="zsl-img-ghibli" src="../../assets/img/qual_sample_797_ghibli.webp" alt="ZSL ControlNet Generative Capture Result" style="width:100%;aspect-ratio:1/1;object-fit:cover;border-radius:6px;display:block">
+            </div>
+          </div>
+          <canvas id="zsl-cv" data-w="920" data-h="240"></canvas>
+          <div class="sim-stats" id="zsl-stats"></div>
+        </div>
+      </div>
+    </section>
+
+    <section id="lsp-code">
+      <h2>2.7 End-to-End Code Map</h2>
+      <p>
+        Canonical script locations across every stage of the LSP track, from training and quantization to compilation, edge deployment, and regression testing.
+      </p>
+      <div class="tbl-wrap">
+        <table class="tbl">
+          <thead><tr><th>Stage</th><th>Repository Files</th><th>Core Role</th></tr></thead>
+          <tbody>
+            <tr><td><strong>Model Definition</strong></td><td><a class="src" href="../../../lsp/src/train/models/encoder.py" title="lsp/src/train/models/encoder.py" target="_blank" rel="noopener">encoder.py</a> · <a class="src" href="../../../lsp/src/train/models/asym_ae.py" title="lsp/src/train/models/asym_ae.py" target="_blank" rel="noopener">asym_ae.py</a></td><td><code>EncoderStageA</code>, <code>EncoderStageB</code>, <code>_hailo_fq</code>, and <code>AsymAE</code> assembly</td></tr>
+            <tr><td><strong>Training Loop</strong></td><td><a class="src" href="../../../lsp/src/train/train_asym_ae.py" title="lsp/src/train/train_asym_ae.py" target="_blank" rel="noopener">train_asym_ae.py</a> · <a class="src" href="../../../lsp/src/train/configs/enc_sa8_c4_div2k.yaml" title="lsp/src/train/configs/enc_sa8_c4_div2k.yaml" target="_blank" rel="noopener">enc_sa8_c4_div2k.yaml</a></td><td>Accelerate-based knowledge distillation loop and per-\(s_A\) hyperparameter YAMLs</td></tr>
+            <tr><td><strong>Quality &amp; Pareto Eval</strong></td><td><a class="src" href="../../../lsp/src/train/eval_div2k_val.py" title="lsp/src/train/eval_div2k_val.py" target="_blank" rel="noopener">eval_div2k_val.py</a> · <a class="src" href="../../../lsp/src/train/eval_sa_grid.py" title="lsp/src/train/eval_sa_grid.py" target="_blank" rel="noopener">eval_sa_grid.py</a></td><td>DIV2K 100-image PSNR/SSIM/LPIPS evaluation and \(s_A \in \{2,4,8\}\) grid sweep</td></tr>
+            <tr><td><strong>Weights &amp; Calibration</strong></td><td><a class="src" href="../../../lsp/src/train/export_stagea_weights.py" title="lsp/src/train/export_stagea_weights.py" target="_blank" rel="noopener">export_stagea_weights.py</a> · <a class="src" href="../../../lsp/src/train/export_decoder_onnx.py" title="lsp/src/train/export_decoder_onnx.py" target="_blank" rel="noopener">export_decoder_onnx.py</a> · <a class="src" href="../../../lsp/src/train/generate_hailo_calib.py" title="lsp/src/train/generate_hailo_calib.py" target="_blank" rel="noopener">generate_hailo_calib.py</a></td><td>Stage A <code>.npz</code> export, decoder ONNX conversion, and Hailo PTQ/QAT calibration set generation</td></tr>
+            <tr><td><strong>Hardware Compilation</strong></td><td><a class="src" href="../../../lsp/src/server/compile_all_imx500.py" title="lsp/src/server/compile_all_imx500.py" target="_blank" rel="noopener">compile_all_imx500.py</a> · <a class="src" href="../../../lsp/src/server/compile_all_stgb_hef.py" title="lsp/src/server/compile_all_stgb_hef.py" target="_blank" rel="noopener">compile_all_stgb_hef.py</a> · <a class="src" href="../../../lsp/src/server/compile_taesd_hef.py" title="lsp/src/server/compile_taesd_hef.py" target="_blank" rel="noopener">compile_taesd_hef.py</a></td><td>IMX500 <code>.rpk</code> packaging and Hailo-8 <code>.hef</code> binary compilation</td></tr>
+            <tr><td><strong>Edge Runtime &amp; Bench</strong></td><td><a class="src" href="../../../lsp/src/rpi/v2_demo.py" title="lsp/src/rpi/v2_demo.py" target="_blank" rel="noopener">v2_demo.py</a> · <a class="src" href="../../../lsp/src/rpi/run_hardware_benchmark.py" title="lsp/src/rpi/run_hardware_benchmark.py" target="_blank" rel="noopener">run_hardware_benchmark.py</a></td><td>Port 5000 live web viewfinder demo and Table 1 physical latency benchmark runner</td></tr>
+            <tr><td><strong>Generative Capture Daemon</strong></td><td><a class="src" href="../../../lsp/src/train/generative_capture_service.py" title="lsp/src/train/generative_capture_service.py" target="_blank" rel="noopener">generative_capture_service.py</a></td><td>Workstation SSH/SCP watcher and SD 1.5 + ControlNet Canny 4-step synthesis</td></tr>
+            <tr><td><strong>Regression Suite</strong></td><td><a class="src" href="../../../lsp/tests/test_pipeline_workflows.py" title="lsp/tests/test_pipeline_workflows.py" target="_blank" rel="noopener">test_pipeline_workflows.py</a></td><td>Automated integrity verification suite covering all 7 research, compile, and deploy workflows</td></tr>
+          </tbody>
+        </table>
+      </div>
+    </section>
+
+    <section class="keypoints" id="summary">
+      <h3>Key Takeaways · Chapter 02</h3>
+      <ul>
+        <li><strong>Breaking the Bus Bottleneck &amp; Regime Shift</strong>: <code>SA8</code> (\(64\times 64\times 4\) FP32, 64 KB) cuts MIPI metadata extraction time by 18.2× from 52.91 ms to <strong>2.90 ms</strong>, shifting the system bottleneck from the bus to NPU compute and hitting the <strong>30.0 FPS</strong> camera ceiling.</li>
+        <li><strong>Extreme Asymmetric Split</strong>: Only a <strong>5,924-parameter</strong> pure strided convolution stack (Stage A) tailored to SRAM and operator constraints runs on the IMX500 sensor NPU, while nonlinear latent space alignment is handled by the <strong>595,524-parameter</strong> ResNet translator (Stage B) on the Hailo-8 host NPU.</li>
+        <li><strong>Power-of-2 QAT</strong>: Simulating Hailo hardware bit-shift scales (\(s = 2^{\lceil\log_2(\max|x|/127)\rceil}\)) via STE during training prevents precision loss from scale jumps during quantization.</li>
+        <li><strong>Universal Latent Hub &amp; ZSL Capture</strong>: Because Stage B output is aligned with the standard SD VAE latent space, the edge live preview (<code>TAESD_ft</code>) and workstation generative capture (<code>SD 1.5 + ControlNet Canny</code>) share the exact same latent tensor without extra sensor exposure or re-transmission.</li>
+      </ul>
+    </section>
+</main>
+<script type="application/json" id="lsp-node-data">{"isp": {"t": "On-chip ISP (Built into IMX500)", "h": "<p>The IMX500 contains its own hardware ISP on the sensor die, feeding an <b>RGB tensor<\/b> into the built-in NPU.\n            The training config input is also <code>512×512×3<\/code> (<a class=\"src\" href=\"../../../lsp/src/train/configs/enc_sa8_c4_div2k.yaml\" title=\"lsp/src/train/configs/enc_sa8_c4_div2k.yaml (line 3)\" target=\"_blank\" rel=\"noopener\">enc_sa8_c4_div2k.yaml:3<\/a>).\n            In other words, LSP Stage A compresses the sensor ISP's RGB output rather than raw Bayer pixels.<\/p>"}, "stageA": {"t": "Stage A — Compressor (Sensor NPU, .rpk)", "h": "<p>An ultra-compact CNN using only stride-2 4×4 convolutions + ReLU. BatchNorm, residuals, and group convolutions are forbidden (IMX500 constraint,\n            <a class=\"src\" href=\"../../../lsp/src/train/models/encoder.py\" title=\"lsp/src/train/models/encoder.py (line 44)\" target=\"_blank\" rel=\"noopener\">encoder.py:44<\/a>). The final layer emits the bus tensor without an activation.<\/p>\n            <ul><li>SA8: 3→16→16→4, <b>5,924 params<\/b> (PyTorch Conv2d), 0.122 GMACs<\/li>\n            <li>Binary: <a class=\"src\" href=\"../../../lsp/aicamera-models/imx500_enc_sa8_c4.rpk\" title=\"lsp/aicamera-models/imx500_enc_sa8_c4.rpk\" target=\"_blank\" rel=\"noopener\">imx500_enc_sa8_c4.rpk<\/a> · Weights: <a class=\"src\" href=\"../../../lsp/aicamera-models/stageA_sa8_c4_weights.npz\" title=\"lsp/aicamera-models/stageA_sa8_c4_weights.npz\" target=\"_blank\" rel=\"noopener\">stageA_sa8_c4_weights.npz<\/a><\/li>\n            <li>Compiler: <a class=\"src\" href=\"../../../lsp/src/server/compile_all_imx500.py\" title=\"lsp/src/server/compile_all_imx500.py\" target=\"_blank\" rel=\"noopener\">compile_all_imx500.py<\/a><\/li><\/ul>"}, "bus": {"t": "r — MIPI CSI-2 Metadata Tensor", "h": "<p>The Stage A output is delivered to the host as <b>output tensor metadata<\/b> rather than an image stream\n            (SA8 = 64 KB vs IDENTITY uncompressed baseline = 3,072 KB, a 48× reduction).<\/p>\n            <p class=\"warn-inline\">In the benchmark, <code>bus_ms<\/code> measures the <code>imx500.get_outputs()<\/code> call duration—the host-side tensor extraction time rather than pure MIPI wire transmission time\n            (<a class=\"src\" href=\"../../../lsp/src/rpi/run_hardware_benchmark.py\" title=\"lsp/src/rpi/run_hardware_benchmark.py (line 74)\" target=\"_blank\" rel=\"noopener\">run_hardware_benchmark.py:74<\/a>).<\/p>"}, "stageB": {"t": "Stage B — Latent Translator (Hailo-8, .hef)", "h": "<p><code>in_proj → [ResBlock×8 → stride-2]×log₂(8/s<sub>A<\/sub>) → ResBlock×8 → out_proj<\/code>, 64 channels.\n            Supports QAT via fake-quant (STE) mimicking Hailo PTQ power-of-2 scales (<a class=\"src\" href=\"../../../lsp/src/train/models/encoder.py\" title=\"lsp/src/train/models/encoder.py (line 19)\" target=\"_blank\" rel=\"noopener\">encoder.py:19<\/a>).<\/p>\n            <ul><li>SA8: 595,524 params · 2.43 GMACs → <a class=\"src\" href=\"../../../lsp/hailo-models/enc_stgb_sa8_c4.hef\" title=\"lsp/hailo-models/enc_stgb_sa8_c4.hef\" target=\"_blank\" rel=\"noopener\">enc_stgb_sa8_c4.hef<\/a><\/li>\n            <li>Compiler: <a class=\"src\" href=\"../../../lsp/src/server/compile_all_stgb_hef.py\" title=\"lsp/src/server/compile_all_stgb_hef.py\" target=\"_blank\" rel=\"noopener\">compile_all_stgb_hef.py<\/a><\/li>\n            <li>In the benchmark script, SA2/SA4/SA8 all run as Hailo <b>.hef<\/b> binaries (with .onnx CPU fallback support).<\/li><\/ul>"}, "latent": {"t": "Latent ẑ — SD VAE Latent Space", "h": "<p>Aligned to the <code>64×64×4<\/code> latent space (scaling 0.18215) of the teacher model <code>stabilityai/sd-vae-ft-mse<\/code>.\n            Because SD 1.x/2.x share this VAE family, TAESD, the SD VAE decoder, and the SD U-Net can all consume this tensor directly.<\/p>\n            <p>Training gradients flow solely from <b>latent L1<\/b>; the LPIPS term is computed under <code>z.detach()<\/code> + <code>no_grad<\/code> for monitoring only\n            (<a class=\"src\" href=\"../../../lsp/src/train/train_asym_ae.py\" title=\"lsp/src/train/train_asym_ae.py (line 213)\" target=\"_blank\" rel=\"noopener\">train_asym_ae.py:213<\/a>).<\/p>"}, "taesd": {"t": "TAESD_ft — Lightweight Decoder (Hailo-8)", "h": "<p>The TAESD decoder is fine-tuned to the Stage B output distribution and compiled to .hef\n            (<a class=\"src\" href=\"../../../lsp/src/train/finetune_taesd_decoder.py\" title=\"lsp/src/train/finetune_taesd_decoder.py\" target=\"_blank\" rel=\"noopener\">finetune_taesd_decoder.py<\/a>, <a class=\"src\" href=\"../../../lsp/src/server/compile_taesd_hef.py\" title=\"lsp/src/server/compile_taesd_hef.py\" target=\"_blank\" rel=\"noopener\">compile_taesd_hef.py<\/a>, <a class=\"src\" href=\"../../../lsp/hailo-models/taesd_decoder_ft.hef\" title=\"lsp/hailo-models/taesd_decoder_ft.hef\" target=\"_blank\" rel=\"noopener\">taesd_decoder_ft.hef<\/a>).\n            Measured at 16.44 ms — this is the pipeline bottleneck stage in SA4/SA8.<\/p>"}, "preview": {"t": "Live preview", "h": "<p>Streams a 512×512 live preview over a Flask MJPEG server on port 5000 (<a class=\"src\" href=\"../../../lsp/src/rpi/v2_demo.py\" title=\"lsp/src/rpi/v2_demo.py\" target=\"_blank\" rel=\"noopener\">v2_demo.py<\/a>).\n            In SA8, the measured inter-frame interval is 33.33 ms — locked to the 30 FPS camera ceiling.<\/p>"}, "capture": {"t": "Capture Save (Edge)", "h": "<p>Pressing the capture button immediately saves the current frame's <code>03_hailo_stageb_latent_z.npy<\/code> and <code>04_hailo_taesd_preview.png<\/code>\n            into a capture directory, with zero sensor re-exposure, zero RAW re-transfer, and zero sensor-side encoder re-execution.<\/p>"}, "vae": {"t": "SD VAE decode (Workstation)", "h": "<p>Divides ẑ by 0.18215 and decodes it with the SD VAE decoder to serve as the init image for img2img\n            (<a class=\"src\" href=\"../../../lsp/src/train/generative_capture_service.py\" title=\"lsp/src/train/generative_capture_service.py (line 110)\" target=\"_blank\" rel=\"noopener\">generative_capture_service.py:110<\/a>).<\/p>\n            <p class=\"warn-inline\">The img2img pipeline re-encodes the init image through the VAE <b>encoder<\/b> on the workstation; \"zero encoder re-execution\" applies specifically to the sensor/edge side.<\/p>"}, "canny": {"t": "Canny Structural Prior", "h": "<p>Resizes the preview to 512×512 and runs <code>cv2.Canny(gray, 70, 160)<\/code> to produce the ControlNet conditioning image\n            (<a class=\"src\" href=\"../../../lsp/src/train/generative_capture_service.py\" title=\"lsp/src/train/generative_capture_service.py (line 92)\" target=\"_blank\" rel=\"noopener\">generative_capture_service.py:92<\/a>).<\/p>"}, "sd": {"t": "SD 1.5 + ControlNet Canny (img2img)", "h": "<p><code>runwayml/stable-diffusion-v1-5<\/code> + <code>lllyasviel/sd-controlnet-canny<\/code>,\n            DPM-Solver++ <b>4 steps<\/b>, strength 0.70, guidance 7.5, seed 42\n            (<a class=\"src\" href=\"../../../lsp/src/train/generative_capture_service.py\" title=\"lsp/src/train/generative_capture_service.py (line 76)\" target=\"_blank\" rel=\"noopener\">generative_capture_service.py:76<\/a>).<\/p>"}, "gen": {"t": "Generated image", "h": "<p>The output is saved as a 4-panel composite (RAW · Preview · Canny · Generated Result) and optionally synced back to the RPi via scp.<\/p>"}, "identity": {"t": "IDENTITY Baseline", "h": "<p>Comparison baseline that transmits uncompressed 512×512×3 FP32 RGB over the metadata path without Stage A.\n            Payload 3072 KB, <code>bus_ms<\/code> 52.91 ms,\n            measured 14.9 FPS.<\/p>"}}</script>
+<script>
+(function(){
+  // 1. Interactive SVG Diagram Node Inspector
+  const dataEl = document.getElementById('lsp-node-data');
+  const info = dataEl ? JSON.parse(dataEl.textContent) : {};
+  const det = document.getElementById('lsp-detail');
+  function selectNode(g){
+    document.querySelectorAll('#lsp-svg .node').forEach(n => n.classList.toggle('sel', n === g));
+    const d = info[g.dataset.key];
+    if(!d || !det) return;
+    det.querySelector('.detail-title').textContent = d.t;
+    det.querySelector('.detail-body').innerHTML = d.h;
+    det.classList.add('flash');
+    setTimeout(() => det.classList.remove('flash'), 350);
+  }
+  document.querySelectorAll('#lsp-svg .node[data-key]').forEach(g => {
+    g.addEventListener('click', () => selectNode(g));
+    g.addEventListener('keydown', e => {
+      if(e.key === 'Enter' || e.key === ' '){ e.preventDefault(); selectNode(g); }
+    });
+  });
+  const firstNode = document.querySelector('#lsp-svg .node[data-key="stageA"]');
+  if(firstNode) selectNode(firstNode);
+
+  // 2. Simulator 01: Partition Point Pipeline Timing & Pareto Explorer
+  const pipeCtrl = document.getElementById('lsp-pipe-ctrl');
+  const pipeStats = document.getElementById('lsp-pipe-stats');
+  const MODES_DATA = {
+    '1': { label: 'IDENTITY (sA=1)', kb: 3072, cap: 0.61, bus: 52.91, stgb: 0.00, taesd: 0.00, serial: 53.52, pipeFps: 18.9, syncFps: 14.9, psnrSd: 27.95, psnrTae: 24.80, lpips: 0.099 },
+    '2': { label: 'SA2 (sA=2)',      kb: 1024, cap: 2.59, bus: 17.63, stgb: 33.63, taesd: 16.44, serial: 70.29, pipeFps: 20.0, syncFps: 15.2, psnrSd: 27.64, psnrTae: 24.48, lpips: 0.123 },
+    '4': { label: 'SA4 (sA=4)',      kb: 256,  cap: 1.75, bus: 6.23,  stgb: 4.55,  taesd: 16.44, serial: 28.97, pipeFps: 47.6, syncFps: 30.0, psnrSd: 27.51, psnrTae: 24.36, lpips: 0.134 },
+    '8': { label: 'SA8 (sA=8)',      kb: 64,   cap: 2.59, bus: 2.90,  stgb: 0.97,  taesd: 16.44, serial: 22.90, pipeFps: 43.7, syncFps: 30.0, psnrSd: 27.31, psnrTae: 24.22, lpips: 0.145 }
+  };
+  let curSa = '8';
+  let execMode = 'pipelined';
+
+  if(pipeCtrl){
+    pipeCtrl.appendChild(SB.seg({
+      label: 'Partition Mode (sA)',
+      options: [['8','SA8 (64 KB)'], ['4','SA4 (256 KB)'], ['2','SA2 (1024 KB)'], ['1','IDENTITY (3072 KB)']],
+      value: '8',
+      onChange: v => { curSa = v; drawPipeSim(); }
+    }));
+    pipeCtrl.appendChild(SB.seg({
+      label: 'Execution Schedule',
+      options: [['pipelined','3-Stage Pipelined Overlap'], ['serial','Single-Frame Serial']],
+      value: 'pipelined',
+      onChange: v => { execMode = v; drawPipeSim(); }
+    }));
+  }
+
+  function drawPipeSim(){
+    const m = MODES_DATA[curSa];
+    const { ctx, w, h } = SB.canvas('#lsp-pipe-cv');
+    ctx.clearRect(0, 0, w, h);
+    const dk = SB.isDark();
+    const tx = dk ? '#e6edf6' : '#12161f';
+    const tx3 = dk ? '#6e7e97' : '#7b8494';
+    const gridCol = dk ? 'rgba(255,255,255,0.07)' : 'rgba(15,23,42,0.07)';
+
+    ctx.fillStyle = tx;
+    ctx.textAlign = 'left';
+    ctx.font = '700 12.5px "Pretendard", sans-serif';
+    ctx.fillText(m.label + ' — ' + (execMode === 'pipelined' ? '4-Frame Pipelined Timeline' : 'Serial Execution Timeline'), 14, 22);
+
+    const x0 = 76, y0 = 42, gw = w - x0 - 20, gh = h - y0 - 44;
+    const maxMs = execMode === 'pipelined' ? 140 : 180;
+    const scale = gw / maxMs;
+
+    // Grid
+    ctx.strokeStyle = gridCol;
+    ctx.fillStyle = tx3;
+    ctx.font = '11px "JetBrains Mono", monospace';
+    ctx.textAlign = 'center';
+    for(let t = 0; t <= maxMs; t += 20){
+      const x = x0 + t * scale;
+      ctx.beginPath(); ctx.moveTo(x, y0); ctx.lineTo(x, y0 + gh); ctx.stroke();
+      ctx.fillText(t + 'ms', x, y0 + gh + 16);
+    }
+
+    const stages = [
+      { name: 'Capture', ms: m.cap, col: '#64748b' },
+      { name: 'MIPI Bus', ms: m.bus, col: '#f87171' },
+      { name: 'Stage B', ms: m.stgb, col: '#fb7185' },
+      { name: 'TAESD', ms: m.taesd, col: '#a78bfa' }
+    ];
+
+    const nFrames = 3;
+    const rowH = gh / nFrames;
+    const period = execMode === 'pipelined'
+      ? Math.max(33.33, m.cap, m.bus, m.stgb + m.taesd)
+      : m.serial;
+
+    for(let f = 0; f < nFrames; f++){
+      const fy = y0 + f * rowH + 8;
+      const bh = rowH - 18;
+      ctx.fillStyle = tx;
+      ctx.textAlign = 'right';
+      ctx.font = '600 11.5px "JetBrains Mono", monospace';
+      ctx.fillText('Frame ' + (f + 1), x0 - 10, fy + bh / 2 + 4);
+
+      let tStart = f * period;
+      stages.forEach(st => {
+        if(st.ms <= 0) return;
+        const sx = x0 + tStart * scale;
+        const sw = Math.max(2, st.ms * scale);
+        ctx.fillStyle = st.col;
+        ctx.beginPath();
+        ctx.roundRect(sx, fy, sw, bh, 4);
+        ctx.fill();
+        if(sw > 28){
+          ctx.fillStyle = '#0b1020';
+          ctx.textAlign = 'center';
+          ctx.font = '700 10px "JetBrains Mono", monospace';
+          ctx.fillText(st.ms.toFixed(1), sx + sw / 2, fy + bh / 2 + 3.5);
+        }
+        tStart += st.ms;
+      });
+    }
+
+    // Legend
+    let lx = 14;
+    const lStep = Math.floor((w - 28) / 4);
+    ctx.textAlign = 'left';
+    stages.forEach(st => {
+      ctx.fillStyle = st.col;
+      ctx.fillRect(lx, h - 18, 10, 10);
+      ctx.fillStyle = tx3;
+      ctx.font = '10.5px "Pretendard", sans-serif';
+      ctx.fillText(st.name + ' (' + st.ms.toFixed(2) + 'ms)', lx + 13, h - 9, lStep - 16);
+      lx += lStep;
+    });
+
+    // Draw Pareto Chart on right canvas
+    const pc = SB.canvas('#lsp-pareto-cv');
+    const pctx = pc.ctx, pw = pc.w, ph = pc.h;
+    pctx.clearRect(0, 0, pw, ph);
+    pctx.fillStyle = tx;
+    pctx.textAlign = 'left';
+    pctx.font = '700 12.5px "Pretendard", sans-serif';
+    pctx.fillText('DIV2K Bandwidth (KB) vs PSNR (SD VAE) Pareto', 14, 22);
+
+    const px0 = 50, py0 = 38, pgw = pw - px0 - 24, pgh = ph - py0 - 40;
+    pctx.strokeStyle = gridCol;
+    pctx.strokeRect(px0, py0, pgw, pgh);
+
+    const pts = [
+      { k: '8', x: 64,   y: 27.31, lab: 'SA8 (64KB)' },
+      { k: '4', x: 256,  y: 27.51, lab: 'SA4 (256KB)' },
+      { k: '2', x: 1024, y: 27.64, lab: 'SA2 (1024KB)' },
+      { k: '1', x: 3072, y: 27.95, lab: 'SD VAE Ceiling (3072KB)' }
+    ];
+    const mapX = kb => px0 + (Math.log2(kb / 32) / Math.log2(4096 / 32)) * pgw;
+    const mapY = psnr => py0 + pgh - ((psnr - 27.0) / 1.2) * pgh;
+
+    // Axis ticks
+    [64, 256, 1024, 3072].forEach(kb => {
+      const x = mapX(kb);
+      pctx.strokeStyle = gridCol;
+      pctx.beginPath(); pctx.moveTo(x, py0); pctx.lineTo(x, py0 + pgh); pctx.stroke();
+      pctx.fillStyle = tx3;
+      pctx.textAlign = 'center';
+      pctx.font = '10.5px "JetBrains Mono", monospace';
+      pctx.fillText(kb + 'K', x, py0 + pgh + 15);
+    });
+    [27.2, 27.5, 27.8, 28.0].forEach(ps => {
+      const y = mapY(ps);
+      pctx.strokeStyle = gridCol;
+      pctx.beginPath(); pctx.moveTo(px0, y); pctx.lineTo(px0 + pgw, y); pctx.stroke();
+      pctx.fillStyle = tx3;
+      pctx.textAlign = 'right';
+      pctx.font = '10.5px "JetBrains Mono", monospace';
+      pctx.fillText(ps.toFixed(1), px0 - 6, y + 3);
+    });
+
+    // Line
+    pctx.strokeStyle = '#7c5cff';
+    pctx.lineWidth = 2;
+    pctx.beginPath();
+    pts.forEach((p, idx) => {
+      const cx = mapX(p.x), cy = mapY(p.y);
+      if(idx === 0) pctx.moveTo(cx, cy); else pctx.lineTo(cx, cy);
+    });
+    pctx.stroke();
+
+    // Points
+    pts.forEach(p => {
+      const cx = mapX(p.x), cy = mapY(p.y);
+      const active = p.k === curSa;
+      pctx.fillStyle = active ? '#10b981' : '#7c5cff';
+      pctx.beginPath();
+      pctx.arc(cx, cy, active ? 7 : 4.5, 0, Math.PI * 2);
+      pctx.fill();
+      pctx.fillStyle = active ? tx : tx3;
+      pctx.textAlign = p.x > 1000 ? 'right' : 'left';
+      pctx.font = (active ? '700 ' : '500 ') + '11px "Pretendard", sans-serif';
+      pctx.fillText(p.lab + ' ' + p.y.toFixed(2) + 'dB', cx + (p.x > 1000 ? -10 : 10), cy - 8);
+    });
+
+    if(pipeStats){
+      const bottleneck = m.bus > (m.stgb + m.taesd) ? 'MIPI Bus (Bandwidth-Limited)' : 'Hailo-8 TAESD (Compute-Balanced)';
+      pipeStats.innerHTML = [
+        SB.stat({ label: 'Bus Payload', value: m.kb + ' KB (' + (3072 / m.kb).toFixed(0) + '× reduction)' }),
+        SB.stat({ label: 'Total Serial Latency', value: m.serial.toFixed(2) + ' ms' }),
+        SB.stat({ label: 'Measured Camera Sync FPS', value: m.syncFps.toFixed(1) + ' FPS (pipe ' + m.pipeFps.toFixed(1) + ')' }),
+        SB.stat({ label: 'DIV2K PSNR / LPIPS', value: m.psnrSd.toFixed(2) + ' dB / ' + m.lpips.toFixed(3) }),
+        SB.stat({ label: 'Dominant Bottleneck', value: bottleneck })
+      ].join('');
+    }
+  }
+  drawPipeSim();
+
+  // 3. Simulator 02: Hailo Power-of-2 Fake-Quant (STE)
+  const qatCtrl = document.getElementById('qat-ctrl');
+  const qatStats = document.getElementById('qat-stats');
+  let qSigma = 0.35;
+  let qOutlier = 0.95;
+  let qMode = 'pow2';
+
+  if(qatCtrl){
+    qatCtrl.appendChild(SB.range({
+      label: 'Activation Body Std Dev σ', min: 0.15, max: 0.80, step: 0.05, value: qSigma,
+      fmt: v => v.toFixed(2),
+      onInput: v => { qSigma = v; drawQatSim(); }
+    }));
+    qatCtrl.appendChild(SB.range({
+      label: 'Outlier Peak Amplitude max|x|', min: 0.50, max: 2.60, step: 0.02, value: qOutlier,
+      fmt: v => v.toFixed(2),
+      onInput: v => { qOutlier = v; drawQatSim(); }
+    }));
+    qatCtrl.appendChild(SB.seg({
+      label: 'Scale Mode Comparison',
+      options: [['pow2','Hailo Power-of-2 Scale'], ['linear','Standard Linear FP32 Scale']],
+      value: 'pow2',
+      onChange: v => { qMode = v; drawQatSim(); }
+    }));
+  }
+
+  function drawQatSim(){
+    const { ctx, w, h } = SB.canvas('#qat-cv');
+    ctx.clearRect(0, 0, w, h);
+    const dk = SB.isDark();
+    const tx = dk ? '#e6edf6' : '#12161f';
+    const tx3 = dk ? '#6e7e97' : '#7b8494';
+
+    const maxAbs = Math.max(qSigma * 2.5, qOutlier);
+    const sLin = maxAbs / 127.0;
+    const expCeil = Math.ceil(Math.log2(maxAbs / 127.0));
+    const sPow2 = Math.pow(2, expCeil);
+    const s = qMode === 'pow2' ? sPow2 : sLin;
+    const fullRange = 127 * s;
+    const utilization = Math.min(100, (maxAbs / fullRange) * 100);
+
+    // Compute synthetic Gaussian + outlier MSE
+    let msePow2 = 0, mseLin = 0, sigEnergy = 0;
+    const N = 400;
+    for(let i = 0; i < N; i++){
+      const u = (i / (N - 1)) * 2 - 1;
+      const x = u * maxAbs;
+      const wgt = Math.exp(-(x * x) / (2 * qSigma * qSigma)) + (Math.abs(Math.abs(x) - qOutlier) < 0.04 ? 0.08 : 0);
+      const qP = Math.max(-128, Math.min(127, Math.round(x / sPow2))) * sPow2;
+      const qL = Math.max(-128, Math.min(127, Math.round(x / sLin))) * sLin;
+      msePow2 += wgt * (x - qP) * (x - qP);
+      mseLin += wgt * (x - qL) * (x - qL);
+      sigEnergy += wgt * x * x;
+    }
+    const sqnrPow2 = 10 * Math.log10(sigEnergy / Math.max(1e-12, msePow2));
+    const sqnrLin = 10 * Math.log10(sigEnergy / Math.max(1e-12, mseLin));
+
+    const x0 = 54, y0 = 32, gw = w - x0 - 30, gh = h - y0 - 42;
+    const xMaxPlot = 3.0;
+    const mapX = v => x0 + ((v + xMaxPlot) / (2 * xMaxPlot)) * gw;
+
+    // Highlight active quantization range [-127*s, +127*s]
+    const rx1 = Math.max(x0, mapX(-fullRange));
+    const rx2 = Math.min(x0 + gw, mapX(fullRange));
+    ctx.fillStyle = qMode === 'pow2' ? 'rgba(124,92,255,0.10)' : 'rgba(14,165,233,0.10)';
+    ctx.fillRect(rx1, y0, rx2 - rx1, gh);
+
+    // Draw power-of-2 boundary markers (127 * 2^k)
+    [-8, -7, -6].forEach(k => {
+      const bound = 127 * Math.pow(2, k);
+      if(bound <= xMaxPlot){
+        [bound, -bound].forEach(b => {
+          const bx = mapX(b);
+          ctx.strokeStyle = 'rgba(245,158,11,0.45)';
+          ctx.setLineDash([4, 4]);
+          ctx.beginPath(); ctx.moveTo(bx, y0); ctx.lineTo(bx, y0 + gh); ctx.stroke();
+          ctx.setLineDash([]);
+          if(b > 0){
+            ctx.fillStyle = '#f59e0b';
+            ctx.font = '600 10px "JetBrains Mono", monospace';
+            ctx.textAlign = 'center';
+            ctx.fillText('127·2^' + k + ' (' + bound.toFixed(2) + ')', bx, y0 + 12);
+          }
+        });
+      }
+    });
+
+    // Draw quantized bin grid lines (every 8 steps out of 127 for visual clarity)
+    ctx.strokeStyle = qMode === 'pow2' ? 'rgba(124,92,255,0.22)' : 'rgba(14,165,233,0.22)';
+    for(let q = -128; q <= 127; q += 8){
+      const gx = mapX(q * s);
+      if(gx >= x0 && gx <= x0 + gw){
+        ctx.beginPath(); ctx.moveTo(gx, y0 + 20); ctx.lineTo(gx, y0 + gh); ctx.stroke();
+      }
+    }
+
+    // Draw continuous activation density curve
+    ctx.strokeStyle = tx;
+    ctx.lineWidth = 2.2;
+    ctx.beginPath();
+    for(let px = 0; px <= gw; px += 2){
+      const val = -xMaxPlot + (px / gw) * (2 * xMaxPlot);
+      const dens = Math.exp(-(val * val) / (2 * qSigma * qSigma))
+                 + 0.22 * Math.exp(-Math.pow(Math.abs(val) - qOutlier, 2) / 0.004);
+      const py = y0 + gh - Math.min(gh - 18, dens * (gh - 28));
+      if(px === 0) ctx.moveTo(x0 + px, py); else ctx.lineTo(x0 + px, py);
+    }
+    ctx.stroke();
+
+    // Axis
+    ctx.fillStyle = tx3;
+    ctx.font = '11px "JetBrains Mono", monospace';
+    ctx.textAlign = 'center';
+    [-2.5, -2.0, -1.5, -1.0, -0.5, 0, 0.5, 1.0, 1.5, 2.0, 2.5].forEach(v => {
+      ctx.fillText(v.toFixed(1), mapX(v), y0 + gh + 18);
+    });
+
+    if(qatStats){
+      qatStats.innerHTML = [
+        SB.stat({ label: 'Power-of-2 Exponent k', value: '2^(' + expCeil + ') = ' + sPow2.toFixed(5) }),
+        SB.stat({ label: 'Quant Saturation Range (±127·s)', value: '±' + fullRange.toFixed(3) }),
+        SB.stat({ label: 'INT8 Codebook Utilization', value: utilization.toFixed(1) + ' %' }),
+        SB.stat({ label: 'SQNR (Power-of-2 vs Linear)', value: sqnrPow2.toFixed(1) + ' dB vs ' + sqnrLin.toFixed(1) + ' dB' })
+      ].join('');
+    }
+  }
+  drawQatSim();
+
+  // 3b. Interactive 4-Way Scene Visual Quality Inspector (#lsp-gal-ctrl)
+  const lspGalCtrl = document.getElementById('lsp-gal-ctrl');
+  if(lspGalCtrl){
+    lspGalCtrl.appendChild(SB.seg({
+      label: 'Select DIV2K Validation Scene',
+      options: [
+        ['799', 'Fighter Jet (#799)'],
+        ['797', 'Alpine Railway (#797)'],
+        ['160', 'Produce Market (#160)'],
+        ['798', 'Urban Facade (#798)']
+      ],
+      value: '799',
+      onChange: sid => {
+        const base = '../../assets/img/qual_sample_' + sid + '_';
+        const elGt = document.getElementById('lsp-gal-gt');
+        const elSr = document.getElementById('lsp-gal-sr');
+        const elPrev = document.getElementById('lsp-gal-prev');
+        const elProp = document.getElementById('lsp-gal-prop');
+        if(elGt) elGt.src = base + 'gt.webp';
+        if(elSr) elSr.src = base + 'sr.webp';
+        if(elPrev) elPrev.src = base + 'prev.webp';
+        if(elProp) elProp.src = base + 'prop.webp';
+      }
+    }));
+  }
+
+  // 4. Simulator 03: Zero-Shutter-Lag 4-Panel Capture & Canny ControlNet
+  const zslCtrl = document.getElementById('zsl-ctrl');
+  const zslStats = document.getElementById('zsl-stats');
+  let cannyLow = 70;
+  let cannyHigh = 160;
+  let cnStrength = 0.70;
+  let dpmSteps = 4;
+
+  if(zslCtrl){
+    zslCtrl.appendChild(SB.seg({
+      label: 'Captured Scene (DIV2K)',
+      options: [
+        ['797', 'Alpine (#797)'],
+        ['799', 'Jet (#799)'],
+        ['160', 'Produce (#160)'],
+        ['798', 'Facade (#798)']
+      ],
+      value: '797',
+      onChange: sid => {
+        const base = '../../assets/img/qual_sample_' + sid + '_';
+        const g1 = document.getElementById('zsl-img-gt');
+        const g2 = document.getElementById('zsl-img-prev');
+        const g3 = document.getElementById('zsl-img-canny');
+        const g4 = document.getElementById('zsl-img-ghibli');
+        if(g1) g1.src = base + 'gt.webp';
+        if(g2) g2.src = base + 'prev.webp';
+        if(g3) g3.src = base + 'canny.webp';
+        if(g4) g4.src = base + 'ghibli.webp';
+      }
+    }));
+    zslCtrl.appendChild(SB.range({
+      label: 'Canny Low Threshold', min: 20, max: 120, step: 5, value: cannyLow,
+      onInput: v => { cannyLow = v; drawZslSim(); }
+    }));
+    zslCtrl.appendChild(SB.range({
+      label: 'Canny High Threshold', min: 100, max: 240, step: 5, value: cannyHigh,
+      onInput: v => { cannyHigh = v; drawZslSim(); }
+    }));
+    zslCtrl.appendChild(SB.range({
+      label: 'img2img Strength', min: 0.30, max: 0.95, step: 0.05, value: cnStrength,
+      fmt: v => v.toFixed(2),
+      onInput: v => { cnStrength = v; drawZslSim(); }
+    }));
+    zslCtrl.appendChild(SB.seg({
+      label: 'DPM-Solver++ Steps',
+      options: [['2','2 steps'], ['4','4 steps (Canonical)'], ['8','8 steps']],
+      value: '4',
+      onChange: v => { dpmSteps = parseInt(v, 10); drawZslSim(); }
+    }));
+  }
+
+  function drawZslSim(){
+    const { ctx, w, h } = SB.canvas('#zsl-cv');
+    ctx.clearRect(0, 0, w, h);
+    const dk = SB.isDark();
+    const tx = dk ? '#e6edf6' : '#12161f';
+    const tx3 = dk ? '#6e7e97' : '#7b8494';
+
+    const panels = [
+      '01 · Sensor On-Chip RGB (512²)',
+      '02 · Hailo TAESD_ft Preview',
+      '03 · Canny (' + cannyLow + '/' + cannyHigh + ') Structural Prior',
+      '04 · SD 1.5 + ControlNet (' + dpmSteps + ' steps)'
+    ];
+    const pad = 12;
+    const pw = (w - pad * 5) / 4;
+    const ph = h - 46;
+
+    panels.forEach((title, idx) => {
+      const px = pad + idx * (pw + pad);
+      const py = 28;
+      ctx.fillStyle = tx;
+      ctx.font = '700 11.5px "Pretendard", sans-serif';
+      ctx.textAlign = 'left';
+      ctx.fillText(title, px, 19);
+
+      ctx.save();
+      ctx.beginPath();
+      ctx.roundRect(px, py, pw, ph, 8);
+      ctx.clip();
+
+      if(idx === 2){
+        // Canny edge view
+        ctx.fillStyle = '#090d16';
+        ctx.fillRect(px, py, pw, ph);
+        const edgeSens = Math.max(0.2, 1.0 - (cannyLow + cannyHigh) / 380);
+        ctx.strokeStyle = '#e2e8f0';
+        ctx.lineWidth = 1.4;
+        // Horizon, mountains, subject circles, fine texture lines
+        ctx.beginPath();
+        ctx.moveTo(px, py + ph * 0.62);
+        ctx.lineTo(px + pw * 0.35, py + ph * 0.36);
+        ctx.lineTo(px + pw * 0.65, py + ph * 0.54);
+        ctx.lineTo(px + pw, py + ph * 0.30);
+        ctx.stroke();
+        ctx.beginPath();
+        ctx.arc(px + pw * 0.32, py + ph * 0.66, 26, 0, Math.PI * 2);
+        ctx.stroke();
+        // Fine foliage edges controlled by threshold
+        const nEdges = Math.round(edgeSens * 28);
+        ctx.strokeStyle = 'rgba(56,189,248,0.85)';
+        ctx.lineWidth = 1;
+        for(let e = 0; e < nEdges; e++){
+          const ex = px + 16 + ((e * 37) % Math.max(20, pw - 32));
+          const ey = py + ph * 0.56 + ((e * 19) % Math.max(16, ph * 0.36));
+          ctx.beginPath();
+          ctx.arc(ex, ey, 4 + (e % 4), 0, Math.PI * 1.3);
+          ctx.stroke();
+        }
+      } else {
+        // Sky gradient
+        const grad = ctx.createLinearGradient(px, py, px, py + ph);
+        if(idx === 3){
+          grad.addColorStop(0, '#1e1b4b');
+          grad.addColorStop(0.55, '#db2777');
+          grad.addColorStop(1, '#0f172a');
+        } else {
+          grad.addColorStop(0, '#0284c7');
+          grad.addColorStop(0.6, '#7dd3fc');
+          grad.addColorStop(1, '#1e293b');
+        }
+        ctx.fillStyle = grad;
+        ctx.fillRect(px, py, pw, ph);
+
+        // Mountains
+        ctx.fillStyle = idx === 3 ? '#311042' : '#334155';
+        ctx.beginPath();
+        ctx.moveTo(px, py + ph);
+        ctx.lineTo(px, py + ph * 0.62);
+        ctx.lineTo(px + pw * 0.35, py + ph * 0.36);
+        ctx.lineTo(px + pw * 0.65, py + ph * 0.54);
+        ctx.lineTo(px + pw, py + ph * 0.30);
+        ctx.lineTo(px + pw, py + ph);
+        ctx.closePath();
+        ctx.fill();
+
+        // Subject sphere
+        ctx.fillStyle = idx === 3 ? '#f59e0b' : (idx === 1 ? '#eab308' : '#facc15');
+        ctx.beginPath();
+        ctx.arc(px + pw * 0.32, py + ph * 0.66, 26, 0, Math.PI * 2);
+        ctx.fill();
+
+        // Fine detail micro-texture (sharper in idx 0 and idx 3, slightly smoothed in idx 1 TAESD)
+        const detailAlpha = idx === 1 ? 0.18 : (idx === 3 ? 0.35 * cnStrength * (dpmSteps / 4) : 0.32);
+        ctx.fillStyle = 'rgba(255,255,255,' + Math.min(0.65, detailAlpha).toFixed(2) + ')';
+        for(let k = 0; k < 22; k++){
+          const dx = px + 14 + ((k * 41) % Math.max(20, pw - 28));
+          const dy = py + ph * 0.62 + ((k * 23) % Math.max(14, ph * 0.32));
+          ctx.fillRect(dx, dy, idx === 1 ? 4 : 2, idx === 1 ? 4 : 2);
+        }
+      }
+      ctx.restore();
+
+      ctx.strokeStyle = dk ? 'rgba(255,255,255,0.14)' : 'rgba(15,23,42,0.14)';
+      ctx.beginPath();
+      ctx.roundRect(px, py, pw, ph, 8);
+      ctx.stroke();
+    });
+
+    if(zslStats){
+      const edgeDensity = Math.round(Math.max(8, (1.0 - (cannyLow + cannyHigh) / 400) * 100));
+      zslStats.innerHTML = [
+        SB.stat({ label: 'Sensor Re-Exposure · RAW Re-Transfer', value: '0 ms / 0 KB (ZSL Resident Tensor)' }),
+        SB.stat({ label: 'Saved Latent Tensor (ẑ)', value: '64×64×4 FP32 (64 KB .npy)' }),
+        SB.stat({ label: 'Canny Contour Density Index', value: edgeDensity + ' % (' + cannyLow + ' / ' + cannyHigh + ')' }),
+        SB.stat({ label: 'Diffusion Scheduler', value: 'DPM-Solver++ ' + dpmSteps + ' steps · cfg 7.5' })
+      ].join('');
+    }
+  }
+  drawZslSim();
+  window.addEventListener('sb:theme', () => { drawPipeSim(); drawQatSim(); drawZslSim(); });
+})();
+</script>
+</body>
+</html>

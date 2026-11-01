@@ -1,0 +1,754 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Ch.04 Universal CFA — Phase-Aware In-Sensor Compression · AICAMERA Guidebook</title>
+<meta name="description" content="Stacked CMOS sensor cross-section, Bayer (1×1), Tetracell (2×2), and Hexadecacell (4×4) clustered color filters, PixelUnshuffle phase decomposition, and frozen host translator.">
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/katex@0.16.11/dist/katex.min.css">
+<script defer src="https://cdn.jsdelivr.net/npm/katex@0.16.11/dist/katex.min.js"></script>
+<script defer src="https://cdn.jsdelivr.net/npm/katex@0.16.11/dist/contrib/auto-render.min.js"></script>
+<link rel="stylesheet" href="../css/style.css">
+<link rel="stylesheet" href="../css/glossary-tooltips.css">
+<script src="../js/glossary-data.js"></script>
+<script src="../js/common.js"></script>
+<script defer src="../js/glossary-tooltips.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/three@0.147.0/build/three.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/three@0.147.0/examples/js/controls/OrbitControls.js"></script>
+</head>
+<body data-chapter="ucfa" data-root="../">
+
+<main class="chapter">
+    <header class="ch-header">
+      <div class="eyebrow">CHAPTER 04 · UNIVERSAL CFA (universal_cfa/ · SIMULATION TRACK)</div>
+      <h1>Universal CFA — Phase-Aware In-Sensor Compression &amp; Frozen Host Translator</h1>
+      <p class="lead">
+        To overcome the photon-collection limits of sub-micron pixels, modern 50MP–200MP mobile image sensors replace the classic \(2\times 2\) Bayer pattern with
+        <strong>Tetracell (\(4\times 4\) period)</strong> and <strong>Hexadecacell (\(8\times 8\) period)</strong> Color Filter Arrays (CFAs) that group identical color filters into \(2\times 2\) or \(4\times 4\) clusters.
+        The <strong>Universal CFA (`SE-Universal-CFA`)</strong> research track bypasses costly remosaicing and full RAW transmission: a sensor-specific
+        <strong>phase-aware SE-ResNet compressor (\(\mathcal{E}_A^{\mathrm{CFA}}\))</strong> maps the 1-channel CFA mosaic directly into a single 16-channel bus tensor \(r \in \mathbb{R}^{16\times 64\times 64}\) (`64 KB` INT8)
+        shared across a <strong>sensor-invariant unified host translator (\(\mathcal{T}_B: 16\to 16\))</strong> and <strong>16-channel `FLUX.1` / `TAEF1` decoder (\(\mathcal{D}_{\mathrm{rec}}\))</strong>.
+      </p>
+      <div class="meta-bar">
+        <span>Supported CFAs <b>Bayer (2×2) · Tetracell (4×4) · Hexadecacell (8×8)</b></span>
+        <span>Sensor Stack <b>3D Stacked BSI CMOS + In-Sensor NPU</b></span>
+        <span>Core Operator <b>PixelUnshuffle(r) + SE-ResBlock</b></span>
+        <span>Host Pipeline <b>Unified Single-Stream 16-Ch FLUX.1 / TAEF1</b></span>
+      </div>
+    </header>
+
+    <section id="ucfa-intro">
+      <h2>4.1 Stacked Sensor Architecture &amp; Clustered CFAs (Bayer · Tetracell · Hexadecacell)</h2>
+      <p>
+        When pixel pitch shrinks to \(0.56\ \mu\text{m}\text{–}0.7\ \mu\text{m}\), the number of photons captured by each individual photodiode drops sharply, causing shot noise to explode in low light.
+        To address this, modern high-megapixel sensors place <strong>identical-color filters</strong> over adjacent \(2\times 2\) pixels (Tetracell / Quad-Bayer, total period \(4\times 4\)) or \(4\times 4\) pixels (Hexadecacell / 16-Cell, total period \(8\times 8\)),
+        and stack a logic and in-sensor NPU die directly beneath the pixel die via Cu-Cu hybrid bonding (<a class="src" href="../../../universal_cfa/src/cfa_physics.py" title="universal_cfa/src/cfa_physics.py" target="_blank" rel="noopener">cfa_physics.py</a>).
+      </p>
+
+      <figure class="diagram" id="fig-ucfa-sensor-stack"><svg viewBox="0 0 1080 355" role="img" aria-label="Stacked CMOS image sensor cross-section and Bayer, Tetracell, Hexadecacell CFA comparison"><defs><marker id="ua1" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="6" markerHeight="6" orient="auto"><path d="M0,0 L10,5 L0,10 z" fill="var(--accent)"/></marker></defs><rect x="14" y="14" width="468" height="326" rx="14" class="f-surface"/><text x="248" y="36" text-anchor="middle" class="t-acc">A. Stacked BSI CMOS Image Sensor Physical Cross-Section</text><text x="86" y="58" class="t-mono" style="fill:#e0443e">hν (R 650nm) ↓</text><text x="208" y="58" class="t-mono" style="fill:#2da44e">hν (G 530nm) ↓</text><text x="330" y="58" class="t-mono" style="fill:#2f6fe0">hν (B 460nm) ↓</text><path d="M36,86 Q60,62 84,86 Q108,62 132,86 Q156,62 180,86 Q204,62 228,86 Q252,62 276,86 Q300,62 324,86 Q348,62 372,86 Q396,62 420,86 Z" fill="rgba(56,182,245,0.28)" stroke="var(--accent)" stroke-width="1.6"/><text x="428" y="82" class="t-mono">① OCL</text><g transform="translate(36,90)"><rect x="0" y="0" width="94" height="26" rx="2" fill="#e0443e"/><line x1="47" y1="0" x2="47" y2="26" stroke="rgba(255,255,255,0.35)" stroke-width="1"/><rect x="96" y="0" width="94" height="26" rx="2" fill="#2da44e"/><line x1="143" y1="0" x2="143" y2="26" stroke="rgba(255,255,255,0.35)" stroke-width="1"/><rect x="192" y="0" width="94" height="26" rx="2" fill="#1f883d"/><line x1="239" y1="0" x2="239" y2="26" stroke="rgba(255,255,255,0.35)" stroke-width="1"/><rect x="288" y="0" width="94" height="26" rx="2" fill="#2f6fe0"/><line x1="335" y1="0" x2="335" y2="26" stroke="rgba(255,255,255,0.35)" stroke-width="1"/><text x="47" y="17" text-anchor="middle" fill="#fff" style="font-size:10px;font-weight:700">R Cluster</text><text x="143" y="17" text-anchor="middle" fill="#fff" style="font-size:10px;font-weight:700">Gr Cluster</text><text x="239" y="17" text-anchor="middle" fill="#fff" style="font-size:10px;font-weight:700">Gb Cluster</text><text x="335" y="17" text-anchor="middle" fill="#fff" style="font-size:10px;font-weight:700">B Cluster</text></g><text x="428" y="107" class="t-mono">② CFA</text><rect x="36" y="120" width="382" height="58" rx="4" fill="#334155" stroke="var(--border)"/><line x1="84" y1="120" x2="84" y2="178" stroke="#94a3b8" stroke-width="1.5" stroke-dasharray="3 2"/><line x1="131" y1="120" x2="131" y2="178" stroke="#facc15" stroke-width="2.2"/><line x1="179" y1="120" x2="179" y2="178" stroke="#94a3b8" stroke-width="1.5" stroke-dasharray="3 2"/><line x1="227" y1="120" x2="227" y2="178" stroke="#facc15" stroke-width="2.2"/><line x1="275" y1="120" x2="275" y2="178" stroke="#94a3b8" stroke-width="1.5" stroke-dasharray="3 2"/><line x1="323" y1="120" x2="323" y2="178" stroke="#facc15" stroke-width="2.2"/><line x1="370" y1="120" x2="370" y2="178" stroke="#94a3b8" stroke-width="1.5" stroke-dasharray="3 2"/><text x="227" y="145" text-anchor="middle" fill="#f8fafc" style="font-size:11px;font-weight:700">③ BSI Silicon Photodiodes (0.56–0.70 µm Pitch) + DTI</text><text x="227" y="165" text-anchor="middle" fill="#cbd5e1" style="font-size:10px">Low-light: Same-color PD binning · Daylight: Full-res readout</text><text x="424" y="152" class="t-mono" style="font-size:10px">③ PD/DTI</text><rect x="36" y="184" width="382" height="22" rx="3" fill="rgba(217,138,0,0.25)" stroke="var(--warn)"/><text x="227" y="199" text-anchor="middle" class="t-mono" style="font-size:10px">④ Cu-Cu Hybrid Bonding (High-Density Interconnect + ADC)</text><rect x="36" y="212" width="382" height="112" rx="8" class="f-acc-soft"/><text x="227" y="234" text-anchor="middle" class="t-acc">⑤ Stacked In-Sensor NPU Logic Die (SRAM &lt; 2 MB)</text><rect x="50" y="244" width="168" height="66" rx="6" class="f-elev"/><text x="134" y="265" text-anchor="middle" class="t" style="font-weight:700">PixelUnshuffle(r)</text><text x="134" y="283" text-anchor="middle" class="t-mono" style="font-size:10px">1×H×W → r²×(H/r)×(W/r)</text><text x="134" y="300" text-anchor="middle" class="t-dim" style="font-size:10.5px">Lossless Phase Planes</text><path d="M220 277 H242" class="s-acc" marker-end="url(#ua1)"/><rect x="246" y="244" width="158" height="66" rx="6" class="f-elev"/><text x="325" y="265" text-anchor="middle" class="t" style="font-weight:700;font-size:11.5px">Compressor E_A^CFA</text><text x="325" y="283" text-anchor="middle" class="t-mono">r ∈ R^(16×64×64)</text><text x="325" y="300" text-anchor="middle" class="t-acc" style="font-size:10.5px">MIPI 64 KB INT8 Bus</text><rect x="494" y="14" width="572" height="326" rx="14" class="f-surface"/><text x="780" y="34" text-anchor="middle" class="t-acc">B. Top-Down 8×8 CFA Lattice &amp; Fundamental Period (r×r) Comparison</text><g><text x="586.0" y="56" text-anchor="middle" class="t" style="font-size:12px;font-weight:700">① Bayer (1×1)</text><text x="586.0" y="72" text-anchor="middle" class="t-mono" style="font-size:10px">p=2 · 1×1 Single</text><rect x="518" y="80" width="15.5" height="15.5" rx="2.5" fill="#e0443e"/><text x="525.8" y="91.2" text-anchor="middle" fill="#fff" style="font-size:7.5px;font-weight:700;font-family:var(--mono)">R</text><rect x="535" y="80" width="15.5" height="15.5" rx="2.5" fill="#2da44e"/><text x="542.8" y="91.2" text-anchor="middle" fill="#fff" style="font-size:7.5px;font-weight:700;font-family:var(--mono)">Gr</text><rect x="552" y="80" width="15.5" height="15.5" rx="2.5" fill="#e0443e"/><text x="559.8" y="91.2" text-anchor="middle" fill="#fff" style="font-size:7.5px;font-weight:700;font-family:var(--mono)">R</text><rect x="569" y="80" width="15.5" height="15.5" rx="2.5" fill="#2da44e"/><text x="576.8" y="91.2" text-anchor="middle" fill="#fff" style="font-size:7.5px;font-weight:700;font-family:var(--mono)">Gr</text><rect x="586" y="80" width="15.5" height="15.5" rx="2.5" fill="#e0443e"/><text x="593.8" y="91.2" text-anchor="middle" fill="#fff" style="font-size:7.5px;font-weight:700;font-family:var(--mono)">R</text><rect x="603" y="80" width="15.5" height="15.5" rx="2.5" fill="#2da44e"/><text x="610.8" y="91.2" text-anchor="middle" fill="#fff" style="font-size:7.5px;font-weight:700;font-family:var(--mono)">Gr</text><rect x="620" y="80" width="15.5" height="15.5" rx="2.5" fill="#e0443e"/><text x="627.8" y="91.2" text-anchor="middle" fill="#fff" style="font-size:7.5px;font-weight:700;font-family:var(--mono)">R</text><rect x="637" y="80" width="15.5" height="15.5" rx="2.5" fill="#2da44e"/><text x="644.8" y="91.2" text-anchor="middle" fill="#fff" style="font-size:7.5px;font-weight:700;font-family:var(--mono)">Gr</text><rect x="518" y="97" width="15.5" height="15.5" rx="2.5" fill="#1f883d"/><text x="525.8" y="108.2" text-anchor="middle" fill="#fff" style="font-size:7.5px;font-weight:700;font-family:var(--mono)">Gb</text><rect x="535" y="97" width="15.5" height="15.5" rx="2.5" fill="#2f6fe0"/><text x="542.8" y="108.2" text-anchor="middle" fill="#fff" style="font-size:7.5px;font-weight:700;font-family:var(--mono)">B</text><rect x="552" y="97" width="15.5" height="15.5" rx="2.5" fill="#1f883d"/><text x="559.8" y="108.2" text-anchor="middle" fill="#fff" style="font-size:7.5px;font-weight:700;font-family:var(--mono)">Gb</text><rect x="569" y="97" width="15.5" height="15.5" rx="2.5" fill="#2f6fe0"/><text x="576.8" y="108.2" text-anchor="middle" fill="#fff" style="font-size:7.5px;font-weight:700;font-family:var(--mono)">B</text><rect x="586" y="97" width="15.5" height="15.5" rx="2.5" fill="#1f883d"/><text x="593.8" y="108.2" text-anchor="middle" fill="#fff" style="font-size:7.5px;font-weight:700;font-family:var(--mono)">Gb</text><rect x="603" y="97" width="15.5" height="15.5" rx="2.5" fill="#2f6fe0"/><text x="610.8" y="108.2" text-anchor="middle" fill="#fff" style="font-size:7.5px;font-weight:700;font-family:var(--mono)">B</text><rect x="620" y="97" width="15.5" height="15.5" rx="2.5" fill="#1f883d"/><text x="627.8" y="108.2" text-anchor="middle" fill="#fff" style="font-size:7.5px;font-weight:700;font-family:var(--mono)">Gb</text><rect x="637" y="97" width="15.5" height="15.5" rx="2.5" fill="#2f6fe0"/><text x="644.8" y="108.2" text-anchor="middle" fill="#fff" style="font-size:7.5px;font-weight:700;font-family:var(--mono)">B</text><rect x="518" y="114" width="15.5" height="15.5" rx="2.5" fill="#e0443e"/><text x="525.8" y="125.2" text-anchor="middle" fill="#fff" style="font-size:7.5px;font-weight:700;font-family:var(--mono)">R</text><rect x="535" y="114" width="15.5" height="15.5" rx="2.5" fill="#2da44e"/><text x="542.8" y="125.2" text-anchor="middle" fill="#fff" style="font-size:7.5px;font-weight:700;font-family:var(--mono)">Gr</text><rect x="552" y="114" width="15.5" height="15.5" rx="2.5" fill="#e0443e"/><text x="559.8" y="125.2" text-anchor="middle" fill="#fff" style="font-size:7.5px;font-weight:700;font-family:var(--mono)">R</text><rect x="569" y="114" width="15.5" height="15.5" rx="2.5" fill="#2da44e"/><text x="576.8" y="125.2" text-anchor="middle" fill="#fff" style="font-size:7.5px;font-weight:700;font-family:var(--mono)">Gr</text><rect x="586" y="114" width="15.5" height="15.5" rx="2.5" fill="#e0443e"/><text x="593.8" y="125.2" text-anchor="middle" fill="#fff" style="font-size:7.5px;font-weight:700;font-family:var(--mono)">R</text><rect x="603" y="114" width="15.5" height="15.5" rx="2.5" fill="#2da44e"/><text x="610.8" y="125.2" text-anchor="middle" fill="#fff" style="font-size:7.5px;font-weight:700;font-family:var(--mono)">Gr</text><rect x="620" y="114" width="15.5" height="15.5" rx="2.5" fill="#e0443e"/><text x="627.8" y="125.2" text-anchor="middle" fill="#fff" style="font-size:7.5px;font-weight:700;font-family:var(--mono)">R</text><rect x="637" y="114" width="15.5" height="15.5" rx="2.5" fill="#2da44e"/><text x="644.8" y="125.2" text-anchor="middle" fill="#fff" style="font-size:7.5px;font-weight:700;font-family:var(--mono)">Gr</text><rect x="518" y="131" width="15.5" height="15.5" rx="2.5" fill="#1f883d"/><text x="525.8" y="142.2" text-anchor="middle" fill="#fff" style="font-size:7.5px;font-weight:700;font-family:var(--mono)">Gb</text><rect x="535" y="131" width="15.5" height="15.5" rx="2.5" fill="#2f6fe0"/><text x="542.8" y="142.2" text-anchor="middle" fill="#fff" style="font-size:7.5px;font-weight:700;font-family:var(--mono)">B</text><rect x="552" y="131" width="15.5" height="15.5" rx="2.5" fill="#1f883d"/><text x="559.8" y="142.2" text-anchor="middle" fill="#fff" style="font-size:7.5px;font-weight:700;font-family:var(--mono)">Gb</text><rect x="569" y="131" width="15.5" height="15.5" rx="2.5" fill="#2f6fe0"/><text x="576.8" y="142.2" text-anchor="middle" fill="#fff" style="font-size:7.5px;font-weight:700;font-family:var(--mono)">B</text><rect x="586" y="131" width="15.5" height="15.5" rx="2.5" fill="#1f883d"/><text x="593.8" y="142.2" text-anchor="middle" fill="#fff" style="font-size:7.5px;font-weight:700;font-family:var(--mono)">Gb</text><rect x="603" y="131" width="15.5" height="15.5" rx="2.5" fill="#2f6fe0"/><text x="610.8" y="142.2" text-anchor="middle" fill="#fff" style="font-size:7.5px;font-weight:700;font-family:var(--mono)">B</text><rect x="620" y="131" width="15.5" height="15.5" rx="2.5" fill="#1f883d"/><text x="627.8" y="142.2" text-anchor="middle" fill="#fff" style="font-size:7.5px;font-weight:700;font-family:var(--mono)">Gb</text><rect x="637" y="131" width="15.5" height="15.5" rx="2.5" fill="#2f6fe0"/><text x="644.8" y="142.2" text-anchor="middle" fill="#fff" style="font-size:7.5px;font-weight:700;font-family:var(--mono)">B</text><rect x="518" y="148" width="15.5" height="15.5" rx="2.5" fill="#e0443e"/><text x="525.8" y="159.2" text-anchor="middle" fill="#fff" style="font-size:7.5px;font-weight:700;font-family:var(--mono)">R</text><rect x="535" y="148" width="15.5" height="15.5" rx="2.5" fill="#2da44e"/><text x="542.8" y="159.2" text-anchor="middle" fill="#fff" style="font-size:7.5px;font-weight:700;font-family:var(--mono)">Gr</text><rect x="552" y="148" width="15.5" height="15.5" rx="2.5" fill="#e0443e"/><text x="559.8" y="159.2" text-anchor="middle" fill="#fff" style="font-size:7.5px;font-weight:700;font-family:var(--mono)">R</text><rect x="569" y="148" width="15.5" height="15.5" rx="2.5" fill="#2da44e"/><text x="576.8" y="159.2" text-anchor="middle" fill="#fff" style="font-size:7.5px;font-weight:700;font-family:var(--mono)">Gr</text><rect x="586" y="148" width="15.5" height="15.5" rx="2.5" fill="#e0443e"/><text x="593.8" y="159.2" text-anchor="middle" fill="#fff" style="font-size:7.5px;font-weight:700;font-family:var(--mono)">R</text><rect x="603" y="148" width="15.5" height="15.5" rx="2.5" fill="#2da44e"/><text x="610.8" y="159.2" text-anchor="middle" fill="#fff" style="font-size:7.5px;font-weight:700;font-family:var(--mono)">Gr</text><rect x="620" y="148" width="15.5" height="15.5" rx="2.5" fill="#e0443e"/><text x="627.8" y="159.2" text-anchor="middle" fill="#fff" style="font-size:7.5px;font-weight:700;font-family:var(--mono)">R</text><rect x="637" y="148" width="15.5" height="15.5" rx="2.5" fill="#2da44e"/><text x="644.8" y="159.2" text-anchor="middle" fill="#fff" style="font-size:7.5px;font-weight:700;font-family:var(--mono)">Gr</text><rect x="518" y="165" width="15.5" height="15.5" rx="2.5" fill="#1f883d"/><text x="525.8" y="176.2" text-anchor="middle" fill="#fff" style="font-size:7.5px;font-weight:700;font-family:var(--mono)">Gb</text><rect x="535" y="165" width="15.5" height="15.5" rx="2.5" fill="#2f6fe0"/><text x="542.8" y="176.2" text-anchor="middle" fill="#fff" style="font-size:7.5px;font-weight:700;font-family:var(--mono)">B</text><rect x="552" y="165" width="15.5" height="15.5" rx="2.5" fill="#1f883d"/><text x="559.8" y="176.2" text-anchor="middle" fill="#fff" style="font-size:7.5px;font-weight:700;font-family:var(--mono)">Gb</text><rect x="569" y="165" width="15.5" height="15.5" rx="2.5" fill="#2f6fe0"/><text x="576.8" y="176.2" text-anchor="middle" fill="#fff" style="font-size:7.5px;font-weight:700;font-family:var(--mono)">B</text><rect x="586" y="165" width="15.5" height="15.5" rx="2.5" fill="#1f883d"/><text x="593.8" y="176.2" text-anchor="middle" fill="#fff" style="font-size:7.5px;font-weight:700;font-family:var(--mono)">Gb</text><rect x="603" y="165" width="15.5" height="15.5" rx="2.5" fill="#2f6fe0"/><text x="610.8" y="176.2" text-anchor="middle" fill="#fff" style="font-size:7.5px;font-weight:700;font-family:var(--mono)">B</text><rect x="620" y="165" width="15.5" height="15.5" rx="2.5" fill="#1f883d"/><text x="627.8" y="176.2" text-anchor="middle" fill="#fff" style="font-size:7.5px;font-weight:700;font-family:var(--mono)">Gb</text><rect x="637" y="165" width="15.5" height="15.5" rx="2.5" fill="#2f6fe0"/><text x="644.8" y="176.2" text-anchor="middle" fill="#fff" style="font-size:7.5px;font-weight:700;font-family:var(--mono)">B</text><rect x="518" y="182" width="15.5" height="15.5" rx="2.5" fill="#e0443e"/><text x="525.8" y="193.2" text-anchor="middle" fill="#fff" style="font-size:7.5px;font-weight:700;font-family:var(--mono)">R</text><rect x="535" y="182" width="15.5" height="15.5" rx="2.5" fill="#2da44e"/><text x="542.8" y="193.2" text-anchor="middle" fill="#fff" style="font-size:7.5px;font-weight:700;font-family:var(--mono)">Gr</text><rect x="552" y="182" width="15.5" height="15.5" rx="2.5" fill="#e0443e"/><text x="559.8" y="193.2" text-anchor="middle" fill="#fff" style="font-size:7.5px;font-weight:700;font-family:var(--mono)">R</text><rect x="569" y="182" width="15.5" height="15.5" rx="2.5" fill="#2da44e"/><text x="576.8" y="193.2" text-anchor="middle" fill="#fff" style="font-size:7.5px;font-weight:700;font-family:var(--mono)">Gr</text><rect x="586" y="182" width="15.5" height="15.5" rx="2.5" fill="#e0443e"/><text x="593.8" y="193.2" text-anchor="middle" fill="#fff" style="font-size:7.5px;font-weight:700;font-family:var(--mono)">R</text><rect x="603" y="182" width="15.5" height="15.5" rx="2.5" fill="#2da44e"/><text x="610.8" y="193.2" text-anchor="middle" fill="#fff" style="font-size:7.5px;font-weight:700;font-family:var(--mono)">Gr</text><rect x="620" y="182" width="15.5" height="15.5" rx="2.5" fill="#e0443e"/><text x="627.8" y="193.2" text-anchor="middle" fill="#fff" style="font-size:7.5px;font-weight:700;font-family:var(--mono)">R</text><rect x="637" y="182" width="15.5" height="15.5" rx="2.5" fill="#2da44e"/><text x="644.8" y="193.2" text-anchor="middle" fill="#fff" style="font-size:7.5px;font-weight:700;font-family:var(--mono)">Gr</text><rect x="518" y="199" width="15.5" height="15.5" rx="2.5" fill="#1f883d"/><text x="525.8" y="210.2" text-anchor="middle" fill="#fff" style="font-size:7.5px;font-weight:700;font-family:var(--mono)">Gb</text><rect x="535" y="199" width="15.5" height="15.5" rx="2.5" fill="#2f6fe0"/><text x="542.8" y="210.2" text-anchor="middle" fill="#fff" style="font-size:7.5px;font-weight:700;font-family:var(--mono)">B</text><rect x="552" y="199" width="15.5" height="15.5" rx="2.5" fill="#1f883d"/><text x="559.8" y="210.2" text-anchor="middle" fill="#fff" style="font-size:7.5px;font-weight:700;font-family:var(--mono)">Gb</text><rect x="569" y="199" width="15.5" height="15.5" rx="2.5" fill="#2f6fe0"/><text x="576.8" y="210.2" text-anchor="middle" fill="#fff" style="font-size:7.5px;font-weight:700;font-family:var(--mono)">B</text><rect x="586" y="199" width="15.5" height="15.5" rx="2.5" fill="#1f883d"/><text x="593.8" y="210.2" text-anchor="middle" fill="#fff" style="font-size:7.5px;font-weight:700;font-family:var(--mono)">Gb</text><rect x="603" y="199" width="15.5" height="15.5" rx="2.5" fill="#2f6fe0"/><text x="610.8" y="210.2" text-anchor="middle" fill="#fff" style="font-size:7.5px;font-weight:700;font-family:var(--mono)">B</text><rect x="620" y="199" width="15.5" height="15.5" rx="2.5" fill="#1f883d"/><text x="627.8" y="210.2" text-anchor="middle" fill="#fff" style="font-size:7.5px;font-weight:700;font-family:var(--mono)">Gb</text><rect x="637" y="199" width="15.5" height="15.5" rx="2.5" fill="#2f6fe0"/><text x="644.8" y="210.2" text-anchor="middle" fill="#fff" style="font-size:7.5px;font-weight:700;font-family:var(--mono)">B</text><rect x="517" y="79" width="34.5" height="34.5" rx="3" fill="none" stroke="#facc15" stroke-width="2.2" stroke-dasharray="4 2"/><text x="586.0" y="232" text-anchor="middle" class="t-dim" style="font-size:9.5px">Dashed: 2×2 RGGB (4 phases)</text></g><g><text x="780.0" y="56" text-anchor="middle" class="t" style="font-size:12px;font-weight:700">② Tetracell (2×2)</text><text x="780.0" y="72" text-anchor="middle" class="t-mono" style="font-size:10px">p=4 · 2×2 Cluster</text><rect x="712" y="80" width="15.5" height="15.5" rx="2.5" fill="#e0443e"/><text x="719.8" y="91.2" text-anchor="middle" fill="#fff" style="font-size:7.5px;font-weight:700;font-family:var(--mono)">R</text><rect x="729" y="80" width="15.5" height="15.5" rx="2.5" fill="#e0443e"/><text x="736.8" y="91.2" text-anchor="middle" fill="#fff" style="font-size:7.5px;font-weight:700;font-family:var(--mono)">R</text><rect x="746" y="80" width="15.5" height="15.5" rx="2.5" fill="#2da44e"/><text x="753.8" y="91.2" text-anchor="middle" fill="#fff" style="font-size:7.5px;font-weight:700;font-family:var(--mono)">Gr</text><rect x="763" y="80" width="15.5" height="15.5" rx="2.5" fill="#2da44e"/><text x="770.8" y="91.2" text-anchor="middle" fill="#fff" style="font-size:7.5px;font-weight:700;font-family:var(--mono)">Gr</text><rect x="780" y="80" width="15.5" height="15.5" rx="2.5" fill="#e0443e"/><text x="787.8" y="91.2" text-anchor="middle" fill="#fff" style="font-size:7.5px;font-weight:700;font-family:var(--mono)">R</text><rect x="797" y="80" width="15.5" height="15.5" rx="2.5" fill="#e0443e"/><text x="804.8" y="91.2" text-anchor="middle" fill="#fff" style="font-size:7.5px;font-weight:700;font-family:var(--mono)">R</text><rect x="814" y="80" width="15.5" height="15.5" rx="2.5" fill="#2da44e"/><text x="821.8" y="91.2" text-anchor="middle" fill="#fff" style="font-size:7.5px;font-weight:700;font-family:var(--mono)">Gr</text><rect x="831" y="80" width="15.5" height="15.5" rx="2.5" fill="#2da44e"/><text x="838.8" y="91.2" text-anchor="middle" fill="#fff" style="font-size:7.5px;font-weight:700;font-family:var(--mono)">Gr</text><rect x="712" y="97" width="15.5" height="15.5" rx="2.5" fill="#e0443e"/><text x="719.8" y="108.2" text-anchor="middle" fill="#fff" style="font-size:7.5px;font-weight:700;font-family:var(--mono)">R</text><rect x="729" y="97" width="15.5" height="15.5" rx="2.5" fill="#e0443e"/><text x="736.8" y="108.2" text-anchor="middle" fill="#fff" style="font-size:7.5px;font-weight:700;font-family:var(--mono)">R</text><rect x="746" y="97" width="15.5" height="15.5" rx="2.5" fill="#2da44e"/><text x="753.8" y="108.2" text-anchor="middle" fill="#fff" style="font-size:7.5px;font-weight:700;font-family:var(--mono)">Gr</text><rect x="763" y="97" width="15.5" height="15.5" rx="2.5" fill="#2da44e"/><text x="770.8" y="108.2" text-anchor="middle" fill="#fff" style="font-size:7.5px;font-weight:700;font-family:var(--mono)">Gr</text><rect x="780" y="97" width="15.5" height="15.5" rx="2.5" fill="#e0443e"/><text x="787.8" y="108.2" text-anchor="middle" fill="#fff" style="font-size:7.5px;font-weight:700;font-family:var(--mono)">R</text><rect x="797" y="97" width="15.5" height="15.5" rx="2.5" fill="#e0443e"/><text x="804.8" y="108.2" text-anchor="middle" fill="#fff" style="font-size:7.5px;font-weight:700;font-family:var(--mono)">R</text><rect x="814" y="97" width="15.5" height="15.5" rx="2.5" fill="#2da44e"/><text x="821.8" y="108.2" text-anchor="middle" fill="#fff" style="font-size:7.5px;font-weight:700;font-family:var(--mono)">Gr</text><rect x="831" y="97" width="15.5" height="15.5" rx="2.5" fill="#2da44e"/><text x="838.8" y="108.2" text-anchor="middle" fill="#fff" style="font-size:7.5px;font-weight:700;font-family:var(--mono)">Gr</text><rect x="712" y="114" width="15.5" height="15.5" rx="2.5" fill="#1f883d"/><text x="719.8" y="125.2" text-anchor="middle" fill="#fff" style="font-size:7.5px;font-weight:700;font-family:var(--mono)">Gb</text><rect x="729" y="114" width="15.5" height="15.5" rx="2.5" fill="#1f883d"/><text x="736.8" y="125.2" text-anchor="middle" fill="#fff" style="font-size:7.5px;font-weight:700;font-family:var(--mono)">Gb</text><rect x="746" y="114" width="15.5" height="15.5" rx="2.5" fill="#2f6fe0"/><text x="753.8" y="125.2" text-anchor="middle" fill="#fff" style="font-size:7.5px;font-weight:700;font-family:var(--mono)">B</text><rect x="763" y="114" width="15.5" height="15.5" rx="2.5" fill="#2f6fe0"/><text x="770.8" y="125.2" text-anchor="middle" fill="#fff" style="font-size:7.5px;font-weight:700;font-family:var(--mono)">B</text><rect x="780" y="114" width="15.5" height="15.5" rx="2.5" fill="#1f883d"/><text x="787.8" y="125.2" text-anchor="middle" fill="#fff" style="font-size:7.5px;font-weight:700;font-family:var(--mono)">Gb</text><rect x="797" y="114" width="15.5" height="15.5" rx="2.5" fill="#1f883d"/><text x="804.8" y="125.2" text-anchor="middle" fill="#fff" style="font-size:7.5px;font-weight:700;font-family:var(--mono)">Gb</text><rect x="814" y="114" width="15.5" height="15.5" rx="2.5" fill="#2f6fe0"/><text x="821.8" y="125.2" text-anchor="middle" fill="#fff" style="font-size:7.5px;font-weight:700;font-family:var(--mono)">B</text><rect x="831" y="114" width="15.5" height="15.5" rx="2.5" fill="#2f6fe0"/><text x="838.8" y="125.2" text-anchor="middle" fill="#fff" style="font-size:7.5px;font-weight:700;font-family:var(--mono)">B</text><rect x="712" y="131" width="15.5" height="15.5" rx="2.5" fill="#1f883d"/><text x="719.8" y="142.2" text-anchor="middle" fill="#fff" style="font-size:7.5px;font-weight:700;font-family:var(--mono)">Gb</text><rect x="729" y="131" width="15.5" height="15.5" rx="2.5" fill="#1f883d"/><text x="736.8" y="142.2" text-anchor="middle" fill="#fff" style="font-size:7.5px;font-weight:700;font-family:var(--mono)">Gb</text><rect x="746" y="131" width="15.5" height="15.5" rx="2.5" fill="#2f6fe0"/><text x="753.8" y="142.2" text-anchor="middle" fill="#fff" style="font-size:7.5px;font-weight:700;font-family:var(--mono)">B</text><rect x="763" y="131" width="15.5" height="15.5" rx="2.5" fill="#2f6fe0"/><text x="770.8" y="142.2" text-anchor="middle" fill="#fff" style="font-size:7.5px;font-weight:700;font-family:var(--mono)">B</text><rect x="780" y="131" width="15.5" height="15.5" rx="2.5" fill="#1f883d"/><text x="787.8" y="142.2" text-anchor="middle" fill="#fff" style="font-size:7.5px;font-weight:700;font-family:var(--mono)">Gb</text><rect x="797" y="131" width="15.5" height="15.5" rx="2.5" fill="#1f883d"/><text x="804.8" y="142.2" text-anchor="middle" fill="#fff" style="font-size:7.5px;font-weight:700;font-family:var(--mono)">Gb</text><rect x="814" y="131" width="15.5" height="15.5" rx="2.5" fill="#2f6fe0"/><text x="821.8" y="142.2" text-anchor="middle" fill="#fff" style="font-size:7.5px;font-weight:700;font-family:var(--mono)">B</text><rect x="831" y="131" width="15.5" height="15.5" rx="2.5" fill="#2f6fe0"/><text x="838.8" y="142.2" text-anchor="middle" fill="#fff" style="font-size:7.5px;font-weight:700;font-family:var(--mono)">B</text><rect x="712" y="148" width="15.5" height="15.5" rx="2.5" fill="#e0443e"/><text x="719.8" y="159.2" text-anchor="middle" fill="#fff" style="font-size:7.5px;font-weight:700;font-family:var(--mono)">R</text><rect x="729" y="148" width="15.5" height="15.5" rx="2.5" fill="#e0443e"/><text x="736.8" y="159.2" text-anchor="middle" fill="#fff" style="font-size:7.5px;font-weight:700;font-family:var(--mono)">R</text><rect x="746" y="148" width="15.5" height="15.5" rx="2.5" fill="#2da44e"/><text x="753.8" y="159.2" text-anchor="middle" fill="#fff" style="font-size:7.5px;font-weight:700;font-family:var(--mono)">Gr</text><rect x="763" y="148" width="15.5" height="15.5" rx="2.5" fill="#2da44e"/><text x="770.8" y="159.2" text-anchor="middle" fill="#fff" style="font-size:7.5px;font-weight:700;font-family:var(--mono)">Gr</text><rect x="780" y="148" width="15.5" height="15.5" rx="2.5" fill="#e0443e"/><text x="787.8" y="159.2" text-anchor="middle" fill="#fff" style="font-size:7.5px;font-weight:700;font-family:var(--mono)">R</text><rect x="797" y="148" width="15.5" height="15.5" rx="2.5" fill="#e0443e"/><text x="804.8" y="159.2" text-anchor="middle" fill="#fff" style="font-size:7.5px;font-weight:700;font-family:var(--mono)">R</text><rect x="814" y="148" width="15.5" height="15.5" rx="2.5" fill="#2da44e"/><text x="821.8" y="159.2" text-anchor="middle" fill="#fff" style="font-size:7.5px;font-weight:700;font-family:var(--mono)">Gr</text><rect x="831" y="148" width="15.5" height="15.5" rx="2.5" fill="#2da44e"/><text x="838.8" y="159.2" text-anchor="middle" fill="#fff" style="font-size:7.5px;font-weight:700;font-family:var(--mono)">Gr</text><rect x="712" y="165" width="15.5" height="15.5" rx="2.5" fill="#e0443e"/><text x="719.8" y="176.2" text-anchor="middle" fill="#fff" style="font-size:7.5px;font-weight:700;font-family:var(--mono)">R</text><rect x="729" y="165" width="15.5" height="15.5" rx="2.5" fill="#e0443e"/><text x="736.8" y="176.2" text-anchor="middle" fill="#fff" style="font-size:7.5px;font-weight:700;font-family:var(--mono)">R</text><rect x="746" y="165" width="15.5" height="15.5" rx="2.5" fill="#2da44e"/><text x="753.8" y="176.2" text-anchor="middle" fill="#fff" style="font-size:7.5px;font-weight:700;font-family:var(--mono)">Gr</text><rect x="763" y="165" width="15.5" height="15.5" rx="2.5" fill="#2da44e"/><text x="770.8" y="176.2" text-anchor="middle" fill="#fff" style="font-size:7.5px;font-weight:700;font-family:var(--mono)">Gr</text><rect x="780" y="165" width="15.5" height="15.5" rx="2.5" fill="#e0443e"/><text x="787.8" y="176.2" text-anchor="middle" fill="#fff" style="font-size:7.5px;font-weight:700;font-family:var(--mono)">R</text><rect x="797" y="165" width="15.5" height="15.5" rx="2.5" fill="#e0443e"/><text x="804.8" y="176.2" text-anchor="middle" fill="#fff" style="font-size:7.5px;font-weight:700;font-family:var(--mono)">R</text><rect x="814" y="165" width="15.5" height="15.5" rx="2.5" fill="#2da44e"/><text x="821.8" y="176.2" text-anchor="middle" fill="#fff" style="font-size:7.5px;font-weight:700;font-family:var(--mono)">Gr</text><rect x="831" y="165" width="15.5" height="15.5" rx="2.5" fill="#2da44e"/><text x="838.8" y="176.2" text-anchor="middle" fill="#fff" style="font-size:7.5px;font-weight:700;font-family:var(--mono)">Gr</text><rect x="712" y="182" width="15.5" height="15.5" rx="2.5" fill="#1f883d"/><text x="719.8" y="193.2" text-anchor="middle" fill="#fff" style="font-size:7.5px;font-weight:700;font-family:var(--mono)">Gb</text><rect x="729" y="182" width="15.5" height="15.5" rx="2.5" fill="#1f883d"/><text x="736.8" y="193.2" text-anchor="middle" fill="#fff" style="font-size:7.5px;font-weight:700;font-family:var(--mono)">Gb</text><rect x="746" y="182" width="15.5" height="15.5" rx="2.5" fill="#2f6fe0"/><text x="753.8" y="193.2" text-anchor="middle" fill="#fff" style="font-size:7.5px;font-weight:700;font-family:var(--mono)">B</text><rect x="763" y="182" width="15.5" height="15.5" rx="2.5" fill="#2f6fe0"/><text x="770.8" y="193.2" text-anchor="middle" fill="#fff" style="font-size:7.5px;font-weight:700;font-family:var(--mono)">B</text><rect x="780" y="182" width="15.5" height="15.5" rx="2.5" fill="#1f883d"/><text x="787.8" y="193.2" text-anchor="middle" fill="#fff" style="font-size:7.5px;font-weight:700;font-family:var(--mono)">Gb</text><rect x="797" y="182" width="15.5" height="15.5" rx="2.5" fill="#1f883d"/><text x="804.8" y="193.2" text-anchor="middle" fill="#fff" style="font-size:7.5px;font-weight:700;font-family:var(--mono)">Gb</text><rect x="814" y="182" width="15.5" height="15.5" rx="2.5" fill="#2f6fe0"/><text x="821.8" y="193.2" text-anchor="middle" fill="#fff" style="font-size:7.5px;font-weight:700;font-family:var(--mono)">B</text><rect x="831" y="182" width="15.5" height="15.5" rx="2.5" fill="#2f6fe0"/><text x="838.8" y="193.2" text-anchor="middle" fill="#fff" style="font-size:7.5px;font-weight:700;font-family:var(--mono)">B</text><rect x="712" y="199" width="15.5" height="15.5" rx="2.5" fill="#1f883d"/><text x="719.8" y="210.2" text-anchor="middle" fill="#fff" style="font-size:7.5px;font-weight:700;font-family:var(--mono)">Gb</text><rect x="729" y="199" width="15.5" height="15.5" rx="2.5" fill="#1f883d"/><text x="736.8" y="210.2" text-anchor="middle" fill="#fff" style="font-size:7.5px;font-weight:700;font-family:var(--mono)">Gb</text><rect x="746" y="199" width="15.5" height="15.5" rx="2.5" fill="#2f6fe0"/><text x="753.8" y="210.2" text-anchor="middle" fill="#fff" style="font-size:7.5px;font-weight:700;font-family:var(--mono)">B</text><rect x="763" y="199" width="15.5" height="15.5" rx="2.5" fill="#2f6fe0"/><text x="770.8" y="210.2" text-anchor="middle" fill="#fff" style="font-size:7.5px;font-weight:700;font-family:var(--mono)">B</text><rect x="780" y="199" width="15.5" height="15.5" rx="2.5" fill="#1f883d"/><text x="787.8" y="210.2" text-anchor="middle" fill="#fff" style="font-size:7.5px;font-weight:700;font-family:var(--mono)">Gb</text><rect x="797" y="199" width="15.5" height="15.5" rx="2.5" fill="#1f883d"/><text x="804.8" y="210.2" text-anchor="middle" fill="#fff" style="font-size:7.5px;font-weight:700;font-family:var(--mono)">Gb</text><rect x="814" y="199" width="15.5" height="15.5" rx="2.5" fill="#2f6fe0"/><text x="821.8" y="210.2" text-anchor="middle" fill="#fff" style="font-size:7.5px;font-weight:700;font-family:var(--mono)">B</text><rect x="831" y="199" width="15.5" height="15.5" rx="2.5" fill="#2f6fe0"/><text x="838.8" y="210.2" text-anchor="middle" fill="#fff" style="font-size:7.5px;font-weight:700;font-family:var(--mono)">B</text><rect x="711" y="79" width="68.5" height="68.5" rx="3" fill="none" stroke="#facc15" stroke-width="2.2" stroke-dasharray="4 2"/><text x="780.0" y="232" text-anchor="middle" class="t-dim" style="font-size:9.5px">Dashed: 4×4 RGGB (16 phases)</text></g><g><text x="974.0" y="56" text-anchor="middle" class="t" style="font-size:12px;font-weight:700">③ Hexadecacell (4×4)</text><text x="974.0" y="72" text-anchor="middle" class="t-mono" style="font-size:10px">p=8 · 4×4 Cluster</text><rect x="906" y="80" width="15.5" height="15.5" rx="2.5" fill="#e0443e"/><text x="913.8" y="91.2" text-anchor="middle" fill="#fff" style="font-size:7.5px;font-weight:700;font-family:var(--mono)">R</text><rect x="923" y="80" width="15.5" height="15.5" rx="2.5" fill="#e0443e"/><text x="930.8" y="91.2" text-anchor="middle" fill="#fff" style="font-size:7.5px;font-weight:700;font-family:var(--mono)">R</text><rect x="940" y="80" width="15.5" height="15.5" rx="2.5" fill="#e0443e"/><text x="947.8" y="91.2" text-anchor="middle" fill="#fff" style="font-size:7.5px;font-weight:700;font-family:var(--mono)">R</text><rect x="957" y="80" width="15.5" height="15.5" rx="2.5" fill="#e0443e"/><text x="964.8" y="91.2" text-anchor="middle" fill="#fff" style="font-size:7.5px;font-weight:700;font-family:var(--mono)">R</text><rect x="974" y="80" width="15.5" height="15.5" rx="2.5" fill="#2da44e"/><text x="981.8" y="91.2" text-anchor="middle" fill="#fff" style="font-size:7.5px;font-weight:700;font-family:var(--mono)">Gr</text><rect x="991" y="80" width="15.5" height="15.5" rx="2.5" fill="#2da44e"/><text x="998.8" y="91.2" text-anchor="middle" fill="#fff" style="font-size:7.5px;font-weight:700;font-family:var(--mono)">Gr</text><rect x="1008" y="80" width="15.5" height="15.5" rx="2.5" fill="#2da44e"/><text x="1015.8" y="91.2" text-anchor="middle" fill="#fff" style="font-size:7.5px;font-weight:700;font-family:var(--mono)">Gr</text><rect x="1025" y="80" width="15.5" height="15.5" rx="2.5" fill="#2da44e"/><text x="1032.8" y="91.2" text-anchor="middle" fill="#fff" style="font-size:7.5px;font-weight:700;font-family:var(--mono)">Gr</text><rect x="906" y="97" width="15.5" height="15.5" rx="2.5" fill="#e0443e"/><text x="913.8" y="108.2" text-anchor="middle" fill="#fff" style="font-size:7.5px;font-weight:700;font-family:var(--mono)">R</text><rect x="923" y="97" width="15.5" height="15.5" rx="2.5" fill="#e0443e"/><text x="930.8" y="108.2" text-anchor="middle" fill="#fff" style="font-size:7.5px;font-weight:700;font-family:var(--mono)">R</text><rect x="940" y="97" width="15.5" height="15.5" rx="2.5" fill="#e0443e"/><text x="947.8" y="108.2" text-anchor="middle" fill="#fff" style="font-size:7.5px;font-weight:700;font-family:var(--mono)">R</text><rect x="957" y="97" width="15.5" height="15.5" rx="2.5" fill="#e0443e"/><text x="964.8" y="108.2" text-anchor="middle" fill="#fff" style="font-size:7.5px;font-weight:700;font-family:var(--mono)">R</text><rect x="974" y="97" width="15.5" height="15.5" rx="2.5" fill="#2da44e"/><text x="981.8" y="108.2" text-anchor="middle" fill="#fff" style="font-size:7.5px;font-weight:700;font-family:var(--mono)">Gr</text><rect x="991" y="97" width="15.5" height="15.5" rx="2.5" fill="#2da44e"/><text x="998.8" y="108.2" text-anchor="middle" fill="#fff" style="font-size:7.5px;font-weight:700;font-family:var(--mono)">Gr</text><rect x="1008" y="97" width="15.5" height="15.5" rx="2.5" fill="#2da44e"/><text x="1015.8" y="108.2" text-anchor="middle" fill="#fff" style="font-size:7.5px;font-weight:700;font-family:var(--mono)">Gr</text><rect x="1025" y="97" width="15.5" height="15.5" rx="2.5" fill="#2da44e"/><text x="1032.8" y="108.2" text-anchor="middle" fill="#fff" style="font-size:7.5px;font-weight:700;font-family:var(--mono)">Gr</text><rect x="906" y="114" width="15.5" height="15.5" rx="2.5" fill="#e0443e"/><text x="913.8" y="125.2" text-anchor="middle" fill="#fff" style="font-size:7.5px;font-weight:700;font-family:var(--mono)">R</text><rect x="923" y="114" width="15.5" height="15.5" rx="2.5" fill="#e0443e"/><text x="930.8" y="125.2" text-anchor="middle" fill="#fff" style="font-size:7.5px;font-weight:700;font-family:var(--mono)">R</text><rect x="940" y="114" width="15.5" height="15.5" rx="2.5" fill="#e0443e"/><text x="947.8" y="125.2" text-anchor="middle" fill="#fff" style="font-size:7.5px;font-weight:700;font-family:var(--mono)">R</text><rect x="957" y="114" width="15.5" height="15.5" rx="2.5" fill="#e0443e"/><text x="964.8" y="125.2" text-anchor="middle" fill="#fff" style="font-size:7.5px;font-weight:700;font-family:var(--mono)">R</text><rect x="974" y="114" width="15.5" height="15.5" rx="2.5" fill="#2da44e"/><text x="981.8" y="125.2" text-anchor="middle" fill="#fff" style="font-size:7.5px;font-weight:700;font-family:var(--mono)">Gr</text><rect x="991" y="114" width="15.5" height="15.5" rx="2.5" fill="#2da44e"/><text x="998.8" y="125.2" text-anchor="middle" fill="#fff" style="font-size:7.5px;font-weight:700;font-family:var(--mono)">Gr</text><rect x="1008" y="114" width="15.5" height="15.5" rx="2.5" fill="#2da44e"/><text x="1015.8" y="125.2" text-anchor="middle" fill="#fff" style="font-size:7.5px;font-weight:700;font-family:var(--mono)">Gr</text><rect x="1025" y="114" width="15.5" height="15.5" rx="2.5" fill="#2da44e"/><text x="1032.8" y="125.2" text-anchor="middle" fill="#fff" style="font-size:7.5px;font-weight:700;font-family:var(--mono)">Gr</text><rect x="906" y="131" width="15.5" height="15.5" rx="2.5" fill="#e0443e"/><text x="913.8" y="142.2" text-anchor="middle" fill="#fff" style="font-size:7.5px;font-weight:700;font-family:var(--mono)">R</text><rect x="923" y="131" width="15.5" height="15.5" rx="2.5" fill="#e0443e"/><text x="930.8" y="142.2" text-anchor="middle" fill="#fff" style="font-size:7.5px;font-weight:700;font-family:var(--mono)">R</text><rect x="940" y="131" width="15.5" height="15.5" rx="2.5" fill="#e0443e"/><text x="947.8" y="142.2" text-anchor="middle" fill="#fff" style="font-size:7.5px;font-weight:700;font-family:var(--mono)">R</text><rect x="957" y="131" width="15.5" height="15.5" rx="2.5" fill="#e0443e"/><text x="964.8" y="142.2" text-anchor="middle" fill="#fff" style="font-size:7.5px;font-weight:700;font-family:var(--mono)">R</text><rect x="974" y="131" width="15.5" height="15.5" rx="2.5" fill="#2da44e"/><text x="981.8" y="142.2" text-anchor="middle" fill="#fff" style="font-size:7.5px;font-weight:700;font-family:var(--mono)">Gr</text><rect x="991" y="131" width="15.5" height="15.5" rx="2.5" fill="#2da44e"/><text x="998.8" y="142.2" text-anchor="middle" fill="#fff" style="font-size:7.5px;font-weight:700;font-family:var(--mono)">Gr</text><rect x="1008" y="131" width="15.5" height="15.5" rx="2.5" fill="#2da44e"/><text x="1015.8" y="142.2" text-anchor="middle" fill="#fff" style="font-size:7.5px;font-weight:700;font-family:var(--mono)">Gr</text><rect x="1025" y="131" width="15.5" height="15.5" rx="2.5" fill="#2da44e"/><text x="1032.8" y="142.2" text-anchor="middle" fill="#fff" style="font-size:7.5px;font-weight:700;font-family:var(--mono)">Gr</text><rect x="906" y="148" width="15.5" height="15.5" rx="2.5" fill="#1f883d"/><text x="913.8" y="159.2" text-anchor="middle" fill="#fff" style="font-size:7.5px;font-weight:700;font-family:var(--mono)">Gb</text><rect x="923" y="148" width="15.5" height="15.5" rx="2.5" fill="#1f883d"/><text x="930.8" y="159.2" text-anchor="middle" fill="#fff" style="font-size:7.5px;font-weight:700;font-family:var(--mono)">Gb</text><rect x="940" y="148" width="15.5" height="15.5" rx="2.5" fill="#1f883d"/><text x="947.8" y="159.2" text-anchor="middle" fill="#fff" style="font-size:7.5px;font-weight:700;font-family:var(--mono)">Gb</text><rect x="957" y="148" width="15.5" height="15.5" rx="2.5" fill="#1f883d"/><text x="964.8" y="159.2" text-anchor="middle" fill="#fff" style="font-size:7.5px;font-weight:700;font-family:var(--mono)">Gb</text><rect x="974" y="148" width="15.5" height="15.5" rx="2.5" fill="#2f6fe0"/><text x="981.8" y="159.2" text-anchor="middle" fill="#fff" style="font-size:7.5px;font-weight:700;font-family:var(--mono)">B</text><rect x="991" y="148" width="15.5" height="15.5" rx="2.5" fill="#2f6fe0"/><text x="998.8" y="159.2" text-anchor="middle" fill="#fff" style="font-size:7.5px;font-weight:700;font-family:var(--mono)">B</text><rect x="1008" y="148" width="15.5" height="15.5" rx="2.5" fill="#2f6fe0"/><text x="1015.8" y="159.2" text-anchor="middle" fill="#fff" style="font-size:7.5px;font-weight:700;font-family:var(--mono)">B</text><rect x="1025" y="148" width="15.5" height="15.5" rx="2.5" fill="#2f6fe0"/><text x="1032.8" y="159.2" text-anchor="middle" fill="#fff" style="font-size:7.5px;font-weight:700;font-family:var(--mono)">B</text><rect x="906" y="165" width="15.5" height="15.5" rx="2.5" fill="#1f883d"/><text x="913.8" y="176.2" text-anchor="middle" fill="#fff" style="font-size:7.5px;font-weight:700;font-family:var(--mono)">Gb</text><rect x="923" y="165" width="15.5" height="15.5" rx="2.5" fill="#1f883d"/><text x="930.8" y="176.2" text-anchor="middle" fill="#fff" style="font-size:7.5px;font-weight:700;font-family:var(--mono)">Gb</text><rect x="940" y="165" width="15.5" height="15.5" rx="2.5" fill="#1f883d"/><text x="947.8" y="176.2" text-anchor="middle" fill="#fff" style="font-size:7.5px;font-weight:700;font-family:var(--mono)">Gb</text><rect x="957" y="165" width="15.5" height="15.5" rx="2.5" fill="#1f883d"/><text x="964.8" y="176.2" text-anchor="middle" fill="#fff" style="font-size:7.5px;font-weight:700;font-family:var(--mono)">Gb</text><rect x="974" y="165" width="15.5" height="15.5" rx="2.5" fill="#2f6fe0"/><text x="981.8" y="176.2" text-anchor="middle" fill="#fff" style="font-size:7.5px;font-weight:700;font-family:var(--mono)">B</text><rect x="991" y="165" width="15.5" height="15.5" rx="2.5" fill="#2f6fe0"/><text x="998.8" y="176.2" text-anchor="middle" fill="#fff" style="font-size:7.5px;font-weight:700;font-family:var(--mono)">B</text><rect x="1008" y="165" width="15.5" height="15.5" rx="2.5" fill="#2f6fe0"/><text x="1015.8" y="176.2" text-anchor="middle" fill="#fff" style="font-size:7.5px;font-weight:700;font-family:var(--mono)">B</text><rect x="1025" y="165" width="15.5" height="15.5" rx="2.5" fill="#2f6fe0"/><text x="1032.8" y="176.2" text-anchor="middle" fill="#fff" style="font-size:7.5px;font-weight:700;font-family:var(--mono)">B</text><rect x="906" y="182" width="15.5" height="15.5" rx="2.5" fill="#1f883d"/><text x="913.8" y="193.2" text-anchor="middle" fill="#fff" style="font-size:7.5px;font-weight:700;font-family:var(--mono)">Gb</text><rect x="923" y="182" width="15.5" height="15.5" rx="2.5" fill="#1f883d"/><text x="930.8" y="193.2" text-anchor="middle" fill="#fff" style="font-size:7.5px;font-weight:700;font-family:var(--mono)">Gb</text><rect x="940" y="182" width="15.5" height="15.5" rx="2.5" fill="#1f883d"/><text x="947.8" y="193.2" text-anchor="middle" fill="#fff" style="font-size:7.5px;font-weight:700;font-family:var(--mono)">Gb</text><rect x="957" y="182" width="15.5" height="15.5" rx="2.5" fill="#1f883d"/><text x="964.8" y="193.2" text-anchor="middle" fill="#fff" style="font-size:7.5px;font-weight:700;font-family:var(--mono)">Gb</text><rect x="974" y="182" width="15.5" height="15.5" rx="2.5" fill="#2f6fe0"/><text x="981.8" y="193.2" text-anchor="middle" fill="#fff" style="font-size:7.5px;font-weight:700;font-family:var(--mono)">B</text><rect x="991" y="182" width="15.5" height="15.5" rx="2.5" fill="#2f6fe0"/><text x="998.8" y="193.2" text-anchor="middle" fill="#fff" style="font-size:7.5px;font-weight:700;font-family:var(--mono)">B</text><rect x="1008" y="182" width="15.5" height="15.5" rx="2.5" fill="#2f6fe0"/><text x="1015.8" y="193.2" text-anchor="middle" fill="#fff" style="font-size:7.5px;font-weight:700;font-family:var(--mono)">B</text><rect x="1025" y="182" width="15.5" height="15.5" rx="2.5" fill="#2f6fe0"/><text x="1032.8" y="193.2" text-anchor="middle" fill="#fff" style="font-size:7.5px;font-weight:700;font-family:var(--mono)">B</text><rect x="906" y="199" width="15.5" height="15.5" rx="2.5" fill="#1f883d"/><text x="913.8" y="210.2" text-anchor="middle" fill="#fff" style="font-size:7.5px;font-weight:700;font-family:var(--mono)">Gb</text><rect x="923" y="199" width="15.5" height="15.5" rx="2.5" fill="#1f883d"/><text x="930.8" y="210.2" text-anchor="middle" fill="#fff" style="font-size:7.5px;font-weight:700;font-family:var(--mono)">Gb</text><rect x="940" y="199" width="15.5" height="15.5" rx="2.5" fill="#1f883d"/><text x="947.8" y="210.2" text-anchor="middle" fill="#fff" style="font-size:7.5px;font-weight:700;font-family:var(--mono)">Gb</text><rect x="957" y="199" width="15.5" height="15.5" rx="2.5" fill="#1f883d"/><text x="964.8" y="210.2" text-anchor="middle" fill="#fff" style="font-size:7.5px;font-weight:700;font-family:var(--mono)">Gb</text><rect x="974" y="199" width="15.5" height="15.5" rx="2.5" fill="#2f6fe0"/><text x="981.8" y="210.2" text-anchor="middle" fill="#fff" style="font-size:7.5px;font-weight:700;font-family:var(--mono)">B</text><rect x="991" y="199" width="15.5" height="15.5" rx="2.5" fill="#2f6fe0"/><text x="998.8" y="210.2" text-anchor="middle" fill="#fff" style="font-size:7.5px;font-weight:700;font-family:var(--mono)">B</text><rect x="1008" y="199" width="15.5" height="15.5" rx="2.5" fill="#2f6fe0"/><text x="1015.8" y="210.2" text-anchor="middle" fill="#fff" style="font-size:7.5px;font-weight:700;font-family:var(--mono)">B</text><rect x="1025" y="199" width="15.5" height="15.5" rx="2.5" fill="#2f6fe0"/><text x="1032.8" y="210.2" text-anchor="middle" fill="#fff" style="font-size:7.5px;font-weight:700;font-family:var(--mono)">B</text><rect x="905" y="79" width="136.5" height="136.5" rx="3" fill="none" stroke="#facc15" stroke-width="2.2" stroke-dasharray="4 2"/><text x="974.0" y="232" text-anchor="middle" class="t-dim" style="font-size:9.5px">Dashed: 8×8 RGGB (64 phases)</text></g><rect x="510" y="246" width="540" height="80" rx="8" class="f-elev"/><text x="780" y="268" text-anchor="middle" class="t" style="font-size:11.5px;font-weight:700">Why use PixelUnshuffle(r) instead of remosaicing on clustered CFAs (r=4, 8)?</text><text x="780" y="290" text-anchor="middle" class="t-dim" style="font-size:10px">• Standard Stride-2 conv flips R/G/B ratios across shifts, breaking equivariance</text><text x="780" y="310" text-anchor="middle" class="t-acc" style="font-size:10px">• PixelUnshuffle(r) isolates each phase into its own channel (100% single-phase)</text></svg><figcaption><b>Figure 4-1.</b> (Left) Vertical cross-section of a stacked BSI CMOS image sensor (Microlens → Color Filter → DTI Photodiode → Cu-Cu Bonding → In-Sensor NPU Die) and (Right) top-down 8×8 mosaic comparison of Bayer (2×2), Tetracell (4×4), and Hexadecacell (8×8) color filter arrays.</figcaption></figure>
+
+      <div class="sim" id="sim-ucfa-3d">
+        <div class="sim-head">
+          <div class="sim-title">3D EXPLORER · Stacked CMOS Sensor Pixel Stack &amp; Bayer · Tetracell · Hexadecacell Exploded View</div>
+          <span class="badge b-ucfa">3D Interactive</span>
+        </div>
+        <div class="sim-body">
+          <p style="margin-top:0;">
+            Drag with your mouse to rotate the 3D sensor stack. Switching the <b>CFA Pattern</b> reconfigures the \(8\times 8\) color filter array into \(1\times 1\) (Bayer), \(2\times 2\) (Tetracell), or \(4\times 4\) (Hexadecacell) same-color clusters, while
+            raising the <b>Exploded Layer Separation</b> slider spreads apart the 5 vertical tiers: <strong>① Microlens → ② Color Filter (CFA) → ③ DTI Silicon Photodiodes → ④ Cu-Cu Hybrid Bonding → ⑤ In-Sensor NPU Die</strong>.
+          </p>
+          <div class="sim-controls" id="ucfa-3d-ctrl"></div>
+          <div class="sim-view three" id="ucfa-3d-view" style="height:360px;border-radius:10px;border:1px solid var(--border);position:relative;overflow:hidden"></div>
+          <div class="sim-stats" id="ucfa-3d-stats"></div>
+        </div>
+      </div>
+
+      <div class="grid-2">
+        <div class="card">
+          <h3>The Double Burden of Conventional Pipelines: Remosaic + Demosaic</h3>
+          <p>
+            In low light, adjacent same-color pixels are summed (binned) to behave like a standard Bayer sensor; in daylight, however, unlocking full spatial resolution requires
+            <strong>remosaicing</strong>—rearranging the clustered mosaic back into a standard \(2\times 2\) Bayer grid—followed immediately by
+            <strong>demosaicing</strong> into 3-channel RGB.
+            In Hexadecacell sensors, where same-color clusters span 4 pixels across, high-frequency edges suffer from severe false color and zippering artifacts.
+          </p>
+        </div>
+        <div class="card">
+          <h3>Phase Scrambling under Standard Stride-2 Convolutions</h3>
+          <p>
+            What happens if we apply a standard <code>stride=2, kernel=4×4</code> convolution directly to a 1-channel CFA RAW image?
+            In Bayer (\(2\times 2\) period), every 2-pixel shift of the kernel sees the exact same <code>[R, Gr; Gb, B]</code> phase arrangement.
+            In Tetracell (\(4\times 4\)) or Hexadecacell (\(8\times 8\)), however, a stride-2 shift causes the kernel to scan <strong>completely different color combinations at different spatial positions</strong>,
+            destroying the translation equivariance of a single convolutional filter.
+          </p>
+        </div>
+      </div>
+    </section>
+
+    <section id="ucfa-sim-cfa">
+      <h2>4.2 Interactive CFA Lattice &amp; PixelUnshuffle Phase Decomposition Simulator</h2>
+      <p>
+        The operator that fundamentally eliminates phase shift is <strong><code>PixelUnshuffle(r)</code> (Space-to-Depth)</strong> (<a class="src" href="../../../universal_cfa/src/phase_aware_compressor.py" title="universal_cfa/src/phase_aware_compressor.py" target="_blank" rel="noopener">phase_aware_compressor.py</a>).
+        By decomposing the input tensor \(y_{\mathrm{CFA}} \in \mathbb{R}^{1\times H\times W}\) into \(r^2\) sub-phase planes matched to the CFA's fundamental period \(r \in \{2, 4, 8\}\),
+        every resulting channel contains samples of only a single color and a single spatial phase, guaranteeing exact spatial alignment:
+      </p>
+      <div class="formula">
+        $$\operatorname{PixelUnshuffle}_r : \mathbb{R}^{1\times H\times W} \;\longrightarrow\; \mathbb{R}^{r^2 \times \frac{H}{r} \times \frac{W}{r}}, \qquad r \in \{2\ (\text{Bayer}),\; 4\ (\text{Tetracell}),\; 8\ (\text{Hexadecacell})\}$$
+      </div>
+
+      <div class="sim" id="sim-ucfa-phase">
+        <div class="sim-head">
+          <div class="sim-title">SIMULATOR 01 · Bayer (2×2) · Tetracell (4×4) · Hexadecacell (8×8) Lattice &amp; PixelUnshuffle Phase Decomposer</div>
+          <span class="badge b-ucfa">Phase Alignment Visualizer</span>
+        </div>
+        <div class="sim-body">
+          <p style="margin-top:0;">
+            Switch the CFA pattern and kernel scan offset below.
+            The left side shows which color phases a <code>stride=2</code> kernel sees on the physical \(8\times 8\) photodiode lattice, while
+            the right side displays the \(r^2\) homogeneous phase channels produced after applying <code>PixelUnshuffle(r)</code>.
+          </p>
+          <div class="sim-controls" id="ucfa-phase-ctrl"></div>
+          <canvas id="ucfa-phase-cv" data-w="920" data-h="260"></canvas>
+          <div class="sim-stats" id="ucfa-phase-stats"></div>
+        </div>
+      </div>
+    </section>
+
+    <section id="ucfa-arch">
+      <h2>4.3 Unified 16-Channel Host Translator (\(\mathcal{T}_B: 16\to 16\)) &amp; Sensor-Specific Phase Compressors (\(\mathcal{E}_A^{\mathrm{CFA}}\))</h2>
+      <p>
+        Retraining and recompiling a large host-SoC translator (\(\mathcal{T}_B\)) and downstream decoders/diffusion models every time a smartphone or edge product line swaps camera sensor modules (Bayer, Tetracell, Hexadecacell) incurs prohibitive engineering cost.
+        `SE-Universal-CFA` keeps the <strong>host's 16-channel translator (\(\mathcal{T}_B: 16\to 16\)) and decoder (\(\mathcal{D}_{\mathrm{rec}}\)) 100% sensor-invariant (shared)</strong>,
+        adapting only the lightweight in-sensor phase-aware compressor \(\mathcal{E}_A^{\mathrm{CFA}}\) to the sensor's period \(r\):
+      </p>
+      <div class="formula">
+        $$r = \mathcal{E}_A^{\mathrm{CFA}}\!\big(y_{\mathrm{CFA}}\big) \in \mathbb{R}^{16\times 64\times 64}, \qquad
+          \hat{z} = r + \mathcal{T}_B(r) \in \mathbb{R}^{16\times 64\times 64}$$
+        <div class="f-Note">Whereas LSP Stage A in Chapter 02 takes 3-channel RGB (\(512\times 512\times 3\)) from the on-chip ISP, Universal CFA's \(\mathcal{E}_A^{\mathrm{CFA}}\) ingests the <strong>1-channel CFA mosaic (\(512\times 512\times 1\))</strong> prior to any on-chip demosaicing or remosaicing, projecting directly into the same <strong>16-channel `FLUX.1` / `TAEF1` latent space</strong> used across `HDRNet` and `Comp-LSP`.</div>
+      </div>
+
+      <figure class="figure" id="fig-ucfa-arch">
+        <svg id="ucfa-arch-svg" class="diagram" viewBox="0 0 1160 390" role="img" aria-label="Universal In-Sensor LSP code-grounded architecture diagram">
+          <defs>
+            <marker id="uc-arr" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="6.5" markerHeight="6.5" orient="auto">
+              <path d="M0,0 L10,5 L0,10 z" fill="var(--accent)"/>
+            </marker>
+            <marker id="uc-arr2" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="6.5" markerHeight="6.5" orient="auto">
+              <path d="M0,0 L10,5 L0,10 z" fill="var(--accent-2)"/>
+            </marker>
+            <marker id="uc-arr-ok" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="6.5" markerHeight="6.5" orient="auto">
+              <path d="M0,0 L10,5 L0,10 z" fill="var(--ok)"/>
+            </marker>
+          </defs>
+
+          <!-- 1. Left Container: Sony IMX500 In-Sensor NPU -->
+          <rect x="14" y="14" width="380" height="362" rx="14" class="f-acc-soft" stroke-dasharray="5 3"/>
+          <text x="204" y="36" text-anchor="middle" class="t-acc" style="font-size:11.5px">Sony IMX500 Sensor NPU (&lt; 2 MB SRAM) · 16-Ch Single Stream</text>
+
+          <!-- Node: Bayer Phase Compressor -->
+          <g class="node" data-key="bayer" tabindex="0" role="button" transform="translate(28,50)">
+            <rect width="352" height="94" rx="10" class="f-elev"/>
+            <!-- Mini 1x1 icon -->
+            <rect x="14" y="18" width="14" height="14" fill="#e0443e"/><rect x="29" y="18" width="14" height="14" fill="#2da44e"/>
+            <rect x="14" y="33" width="14" height="14" fill="#1f883d"/><rect x="29" y="33" width="14" height="14" fill="#2f6fe0"/>
+            <text x="28" y="64" text-anchor="middle" class="t-mono" style="font-size:9px">Bayer 1×1</text>
+            <text x="204" y="26" text-anchor="middle" class="t" style="font-weight:700;font-size:11.5px">BayerPhaseCompressor (E_A^Bayer)</text>
+            <text x="204" y="46" text-anchor="middle" class="t-mono" style="font-size:10px">PixelUnshuffle(2) + SE-Res → 16×64²</text>
+            <text x="204" y="66" text-anchor="middle" class="t-dim" style="font-size:10.5px">17.1K (ch16) / 582.5K (ch64, 569 KB INT8)</text>
+            <text x="204" y="83" text-anchor="middle" class="t-acc" style="font-size:11px">🔥 Sensor-Specific Lightweight (.rpk)</text>
+          </g>
+
+          <!-- Node: Tetracell Phase Compressor -->
+          <g class="node" data-key="tetra" tabindex="0" role="button" transform="translate(28,156)">
+            <rect width="352" height="94" rx="10" class="f-elev"/>
+            <!-- Mini 2x2 icon -->
+            <rect x="14" y="18" width="14" height="14" fill="#e0443e"/><rect x="29" y="18" width="14" height="14" fill="#2da44e"/>
+            <rect x="14" y="33" width="14" height="14" fill="#1f883d"/><rect x="29" y="33" width="14" height="14" fill="#2f6fe0"/>
+            <line x1="21" y1="18" x2="21" y2="47" stroke="#fff" stroke-width="0.8"/><line x1="36" y1="18" x2="36" y2="47" stroke="#fff" stroke-width="0.8"/>
+            <line x1="14" y1="25" x2="43" y2="25" stroke="#fff" stroke-width="0.8"/><line x1="14" y1="40" x2="43" y2="40" stroke="#fff" stroke-width="0.8"/>
+            <text x="28" y="64" text-anchor="middle" class="t-mono" style="font-size:9px">Tetra 2×2</text>
+            <text x="204" y="26" text-anchor="middle" class="t" style="font-weight:700;font-size:11.5px">TetracellPhaseCompressor (E_A^Tetra)</text>
+            <text x="204" y="46" text-anchor="middle" class="t-mono" style="font-size:10px">PixelUnshuffle(4) + SE-Res → 16×64²</text>
+            <text x="204" y="66" text-anchor="middle" class="t-dim" style="font-size:10.5px">16.5K (ch16) / 572.1K (ch64, 559 KB INT8)</text>
+            <text x="204" y="83" text-anchor="middle" class="t-acc" style="font-size:11px">🔥 Implicit Remosaicing Built-In</text>
+          </g>
+
+          <!-- Node: Hexadecacell Phase Compressor -->
+          <g class="node" data-key="hexa" tabindex="0" role="button" transform="translate(28,262)">
+            <rect width="352" height="98" rx="10" class="f-elev"/>
+            <!-- Mini 4x4 icon -->
+            <rect x="14" y="18" width="14" height="14" fill="#e0443e"/><rect x="29" y="18" width="14" height="14" fill="#2da44e"/>
+            <rect x="14" y="33" width="14" height="14" fill="#1f883d"/><rect x="29" y="33" width="14" height="14" fill="#2f6fe0"/>
+            <text x="28" y="64" text-anchor="middle" class="t-mono" style="font-size:9px">Hexa 4×4</text>
+            <text x="204" y="26" text-anchor="middle" class="t" style="font-weight:700;font-size:11.5px">HexadecaPhaseCompressor (E_A^Hexa)</text>
+            <text x="204" y="46" text-anchor="middle" class="t-mono" style="font-size:10px">PixelUnshuffle(8) + 80ch SE → 16×64²</text>
+            <text x="204" y="66" text-anchor="middle" class="t-dim" style="font-size:10.5px">16.3K (ch16) / 413.7K (ch64, 404 KB INT8)</text>
+            <text x="204" y="84" text-anchor="middle" class="t-acc" style="font-size:11px">🔥 Direct 64×64 Jump (Lowest MACs)</text>
+          </g>
+
+          <!-- Arrows to MIPI Bus -->
+          <path d="M380 97 C402 97, 402 195, 420 195" class="s-acc" fill="none" marker-end="url(#uc-arr)"/>
+          <path d="M380 203 H420" class="s-acc" fill="none" marker-end="url(#uc-arr)"/>
+          <path d="M380 311 C402 311, 402 211, 420 211" class="s-acc" fill="none" marker-end="url(#uc-arr)"/>
+
+          <!-- 2. Middle-Left: MIPI CSI-2 Bus (No-Raw-Retention) -->
+          <g class="node" data-key="bus" tabindex="0" role="button" transform="translate(424,118)">
+            <rect width="164" height="170" rx="12" class="f-surface"/>
+            <text x="82" y="26" text-anchor="middle" class="t-acc">MIPI CSI-2 Bus</text>
+            <text x="82" y="48" text-anchor="middle" class="t" style="font-weight:700">Unified Bus Tensor r</text>
+            <text x="82" y="68" text-anchor="middle" class="t-mono" style="font-size:10.5px">16 × 64 × 64 (64 KB INT8)</text>
+            <line x1="16" y1="82" x2="148" y2="82" class="s-axis"/>
+            <text x="82" y="102" text-anchor="middle" class="t-ok">48.0× BW Reduction</text>
+            <text x="82" y="120" text-anchor="middle" class="t-mono">30.0 FPS Real-Time</text>
+            <text x="82" y="142" text-anchor="middle" class="t-dim">No-Raw-Retention</text>
+            <text x="82" y="158" text-anchor="middle" class="t-dim" style="font-size:10px">(RAW Discarded In-Sensor)</text>
+          </g>
+
+          <path d="M588 203 H616" class="s-acc" marker-end="url(#uc-arr)"/>
+
+          <!-- 3. Middle-Right & Right: Host RPi 5 + Hailo-8 & Dual-Path Decoding -->
+          <rect x="620" y="14" width="526" height="362" rx="14" class="f-acc2-soft" stroke-dasharray="5 3"/>
+          <text x="883" y="36" text-anchor="middle" class="t" style="font-weight:700;fill:var(--accent-2)">Raspberry Pi 5 + Hailo-8 (26 TOPS) &amp; 16-Ch FLUX.1 / TAEF1 Hub</text>
+
+          <!-- Node: Shared Stage B Translator -->
+          <g class="node" data-key="tb" tabindex="0" role="button" transform="translate(636,126)">
+            <rect width="204" height="154" rx="10" class="f-elev"/>
+            <text x="102" y="24" text-anchor="middle" class="t" style="font-weight:700;fill:var(--accent-2)">❄️ 100% Shared Translator</text>
+            <text x="102" y="44" text-anchor="middle" class="t" style="font-weight:700">Unified Translator (T_B)</text>
+            <text x="102" y="64" text-anchor="middle" class="t-mono">16 → 16 Residual ResNet</text>
+            <text x="102" y="84" text-anchor="middle" class="t-dim" style="font-size:10.5px">1.52M params · 8× ResBlock(96ch)</text>
+            <text x="102" y="104" text-anchor="middle" class="t-acc">Shared Across All CFAs</text>
+            <line x1="16" y1="116" x2="188" y2="116" class="s-axis"/>
+            <text x="102" y="136" text-anchor="middle" class="t-mono">Output ẑ ∈ R^(16×64×64)</text>
+          </g>
+
+          <!-- Branch arrows from T_B -->
+          <path d="M738 126 V98 H876" class="s-line" stroke="var(--accent-2)" stroke-width="1.8" stroke-dasharray="4 3" fill="none" marker-end="url(#uc-arr2)"/>
+          <path d="M840 175 H876" class="s-acc" marker-end="url(#uc-arr)"/>
+          <path d="M840 238 C858 238, 858 305, 876 305" class="s-line" stroke="var(--ok)" stroke-width="2" fill="none" marker-end="url(#uc-arr-ok)"/>
+
+          <!-- Node: Top — Offline Teacher Supervision -->
+          <g class="node" data-key="teacher" tabindex="0" role="button" transform="translate(880,48)">
+            <rect width="250" height="82" rx="10" class="f-surface"/>
+            <text x="125" y="22" text-anchor="middle" class="t" style="font-weight:700;font-size:11.5px">❄️ [Offline Train] 16-Ch FLUX.1 Teacher</text>
+            <text x="125" y="42" text-anchor="middle" class="t-mono">z_teacher = E_FLUX(X) ∈ R^(16×64²)</text>
+            <text x="125" y="60" text-anchor="middle" class="t-dim">L_distill = ||ẑ − z_teacher||_1 + (1−cos)</text>
+            <text x="125" y="75" text-anchor="middle" class="t-mono">Cosine 0.921–0.973 Alignment</text>
+          </g>
+
+          <!-- Node: Middle — DemosaicPixelShuffleDecoder (Preview) -->
+          <g class="node" data-key="dec" tabindex="0" role="button" transform="translate(880,144)">
+            <rect width="250" height="96" rx="10" class="f-elev"/>
+            <text x="125" y="24" text-anchor="middle" class="t" style="font-weight:700">① 16-Ch Unified Decoder (D_rec)</text>
+            <text x="125" y="44" text-anchor="middle" class="t-mono">TAEF1 Trunk + Guided 16-Ch Pyramid</text>
+            <text x="125" y="62" text-anchor="middle" class="t-dim">2.51M params · 100% CFA-Agnostic</text>
+            <text x="125" y="82" text-anchor="middle" class="t-acc">35.91 / 34.56 / 30.27 dB (X̂_rec)</text>
+          </g>
+
+          <!-- Arrow from Preview to Canny / ZSL -->
+          <path d="M1005 240 V258" class="s-line" stroke="var(--ok)" stroke-width="1.8" marker-end="url(#uc-arr-ok)"/>
+          <text x="1062" y="253" text-anchor="middle" class="t-mono" style="font-size:10px">Canny Edge C</text>
+
+          <!-- Node: Bottom — One-Pass ZSL Latent Diffusion -->
+          <g class="node" data-key="zsl" tabindex="0" role="button" transform="translate(880,262)">
+            <rect width="250" height="98" rx="10" class="f-elev"/>
+            <text x="125" y="24" text-anchor="middle" class="t-ok">② One-Pass ZSL 16-Ch Diffusion</text>
+            <text x="125" y="44" text-anchor="middle" class="t-mono">FLUX.1 DiT / ControlNet</text>
+            <text x="125" y="64" text-anchor="middle" class="t-dim">Resident Latent ẑ + Preview Canny C</text>
+            <text x="125" y="84" text-anchor="middle" class="t-mono">0 Re-Exposure · 0 RAW Re-Send (X_gen)</text>
+          </g>
+        </svg>
+        <div class="detail" id="ucfa-detail" aria-live="polite">
+          <div class="detail-title">Click any architecture node</div>
+          <div class="detail-body"><p>Click any module in the diagram to inspect its I/O tensor specs, parameter/MAC counts, and canonical source code links here.</p></div>
+        </div>
+        <figcaption><b>Figure 4-2.</b> Interactive architecture diagram of Universal In-Sensor LSP grounded in repository code (<a class="src" href="../../../universal_cfa/docs/generate_architecture_diagram.py" title="universal_cfa/docs/generate_architecture_diagram.py" target="_blank" rel="noopener">generate_architecture_diagram.py</a>). Click any block to view its detailed specification and implementation.</figcaption>
+      </figure>
+
+      <div class="tbl-wrap">
+        <table class="tbl">
+          <thead><tr><th>Model Class</th><th>Internal Architecture (16-Ch Single Stream)</th><th>Parameters (`ch16` / `ch64`)</th><th>INT8 SRAM (IMX500 Verified)</th></tr></thead>
+          <tbody>
+            <tr><td><code>BayerPhaseCompressor</code></td><td><code>PixelUnshuffle(2)</code> (4ch @ 256²) + SE-ResBlocks → <code>16×64²</code></td><td>17,128 (ch16) / 582,480 (ch64)</td><td>16.7&nbsp;KB / 568.8&nbsp;KB</td></tr>
+            <tr><td><code>TetracellPhaseCompressor</code></td><td><code>PixelUnshuffle(4)</code> (16ch @ 128²) + SE-ResBlocks → <code>16×64²</code></td><td>16,536 (ch16) / 572,144 (ch64)</td><td>16.1&nbsp;KB / 558.7&nbsp;KB</td></tr>
+            <tr><td><code>HexadecaPhaseCompressor</code></td><td><code>PixelUnshuffle(8)</code> (64ch @ 64²) + 80ch SE-ResBlocks → <code>16×64²</code></td><td>16,340 (ch16) / 413,680 (ch64)</td><td>16.0&nbsp;KB / 404.0&nbsp;KB</td></tr>
+            <tr><td><code>UnifiedLatentTranslator</code></td><td><code>16 → 96 → 16</code> 8× Residual ConvNet ($z = r + \mathcal{T}_B(r)$)</td><td>1,524,208 (1.52M)</td><td>Host NPU (100% Shared)</td></tr>
+            <tr><td><code>DemosaicPixelShuffleDecoder</code></td><td>16-Ch <code>TAEF1</code> Trunk + 3× <code>SE-PixelShuffle</code> Residual Pyramid</td><td>2,512,995 (2.51M)</td><td>Host NPU (100% CFA-Agnostic)</td></tr>
+          </tbody>
+        </table>
+      </div>
+      <p class="note">
+        Canonical sources: <a class="src" href="../../../universal_cfa/src/in_sensor_models.py" title="universal_cfa/src/in_sensor_models.py" target="_blank" rel="noopener">in_sensor_models.py</a> · <a class="src" href="../../../universal_cfa/src/phase_aware_compressor.py" title="universal_cfa/src/phase_aware_compressor.py" target="_blank" rel="noopener">phase_aware_compressor.py</a> · <a class="src" href="../../../universal_cfa/src/high_fidelity_decoder.py" title="universal_cfa/src/high_fidelity_decoder.py" target="_blank" rel="noopener">high_fidelity_decoder.py</a>.
+        Notably, because <code>HexadecaPhaseCompressor</code> immediately drops spatial resolution to \(64\times 64\) at the very first step via <code>PixelUnshuffle(8)</code>,
+        it achieves the lowest total MACs (0.08 G) across all three CFA variants.
+      </p>
+    </section>
+
+    <section id="ucfa-diffusion">
+      <h2>4.4 The No-Raw-Retention Constraint &amp; One-Pass Latent Reconstruction</h2>
+      <p>
+        Many academic diffusion-based inverse-problem solvers (such as DPS and DDRM) reference the observation operator \(A\) (CFA mask) and raw measurement \(y_{\mathrm{CFA}}\)
+        at every denoising step \(t = T, \dots, 1\) to compute a data-consistency gradient \(\nabla_{x_t}\lVert y_{\mathrm{CFA}} - A\hat{x}_0(x_t)\rVert_2^2\).
+      </p>
+      <div class="callout info">
+        <div class="callout-title">Why Does the LSP Bus Exclude Iterative RAW Guidance?</div>
+        <p>
+          The foundational premise of our system is <strong>No-Raw-Retention: never transmitting the raw mosaic \(y_{\mathrm{CFA}}\) to the host at all, sending only the 64 KB tensor \(r\)</strong>.
+          Because the host never possesses \(y_{\mathrm{CFA}}\) at reconstruction time, it conditions solely on \(\hat{z} = \mathcal{T}_B(r)\) to synthesize the final RGB image via a
+          <strong>single-pass (One-Pass) latent decoder</strong> (<a class="src" href="../../../universal_cfa/src/high_fidelity_decoder.py" title="universal_cfa/src/high_fidelity_decoder.py" target="_blank" rel="noopener">high_fidelity_decoder.py</a>) or latent-conditioned diffusion backbone.
+        </p>
+      </div>
+    </section>
+
+    <section id="ucfa-results">
+      <h2>4.5 Simulation Benchmark Results &amp; Visual Reconstruction Comparison</h2>
+      <p>
+        The table below compares reconstruction fidelity and latent space alignment (Cosine Similarity) on synthetic Bayer, Tetracell, and Hexadecacell inputs derived from DIV2K validation images between
+        ① full-frame host-side algorithmic/lightweight neural remosaicing baselines (3,072 KB) and
+        ② our in-sensor LSP compressor path (64 KB) (<a class="src" href="../../../universal_cfa/experiments/results/benchmark_summary.json" title="universal_cfa/experiments/results/benchmark_summary.json" target="_blank" rel="noopener">benchmark_summary.json</a>).
+      </p>
+      <div class="tbl-wrap">
+        <table class="tbl tbl-num">
+          <thead>
+            <tr><th>Experimental Configuration</th><th>Bus Payload (KB)</th><th>PSNR (dB)</th><th>SSIM</th><th>LPIPS ↓</th><th>Latent Cosine ↑</th></tr>
+          </thead>
+          <tbody><tr><td><b>RGB Ceiling (16-Ch FLUX.1 VAE, 3072 KB)</b></td><td>3072</td><td>33.81</td><td>0.985</td><td>0.041</td><td>1.000</td></tr><tr><td><b>SE-Universal-CFA · Bayer (1×1)</b></td><td>64</td><td>35.91</td><td>0.992</td><td>0.014</td><td>0.973</td></tr><tr><td><b>SE-Universal-CFA · Tetracell (2×2)</b></td><td>64</td><td>34.56</td><td>0.988</td><td>0.025</td><td>0.953</td></tr><tr><td><b>SE-Universal-CFA · Hexadecacell (4×4)</b></td><td>64</td><td>30.27</td><td>0.971</td><td>0.075</td><td>0.920</td></tr><tr><td><b>MobileRemosaicNet + MHC · Tetracell (2×2)</b></td><td>3072</td><td>29.40</td><td>0.971</td><td>0.099</td><td>—</td></tr><tr><td><b>MobileRemosaicNet + MHC · Hexadecacell (4×4)</b></td><td>3072</td><td>25.56</td><td>0.932</td><td>0.161</td><td>—</td></tr><tr><td><b>Directional Remosaic + MHC · Tetracell (2×2)</b></td><td>3072</td><td>30.19</td><td>0.973</td><td>0.079</td><td>—</td></tr><tr><td><b>Directional Remosaic + MHC · Hexadecacell (4×4)</b></td><td>3072</td><td>26.24</td><td>0.939</td><td>0.179</td><td>—</td></tr></tbody>
+        </table>
+      </div>
+
+      <figure class="diagram" id="fig-ucfa-visual">
+        <div class="grid-2" style="align-items:center">
+          <div>
+            <img src="../../assets/img/candy_full_comparison.webp" alt="Tetracell full-image reconstruction comparison (Ground Truth vs Preview vs Generative Capture)" style="width:100%;height:auto;border-radius:8px;display:block;margin-bottom:8px">
+            <img src="../../assets/img/candy_zoom_comparison.webp" alt="Tetracell high-frequency text crop zoom comparison (false-color suppression and edge recovery)" style="width:100%;height:auto;border-radius:8px;display:block">
+          </div>
+          <div>
+            <img src="../../assets/img/01952_tetracell_zsl_capture.webp" alt="One-Pass ZSL diffusion capture generated from an in-sensor 64 KB Tetracell latent tensor" style="width:100%;max-height:310px;object-fit:cover;border-radius:8px;display:block">
+          </div>
+        </div>
+        <figcaption><b>Figure 4-3.</b> Visual reconstruction comparison on Tetracell (\(4\times 4\)) clustered CFA inputs. (Top-left &amp; Bottom-left) Full-frame and zoomed high-frequency text crops (Ground Truth · lightweight remosaicing artifacts · Universal CFA latent reconstruction); (Right) One-Pass ZSL latent diffusion capture reconstructed purely from the 64 KB bus tensor \(r\) without re-transmitting RAW.</figcaption>
+      </figure>
+
+      <div class="sim" id="sim-ucfa-bench">
+        <div class="sim-head">
+          <div class="sim-title">SIMULATOR 02 · Per-CFA Pattern &amp; Pipeline Quality (PSNR / SSIM / LPIPS) · Bandwidth Explorer</div>
+          <span class="badge b-ucfa">benchmark_summary.json Linked</span>
+        </div>
+        <div class="sim-body">
+          <p style="margin-top:0;">
+            Toggle comparison metrics to compare the in-sensor LSP compressor (64 KB) against conventional pixel-domain remosaicing (3,072 KB) across Bayer (2×2), Tetracell (4×4), and Hexadecacell (8×8).
+          </p>
+          <div class="sim-controls" id="ucfa-bench-ctrl"></div>
+          <canvas id="ucfa-bench-cv" data-w="920" data-h="250"></canvas>
+          <div class="sim-stats" id="ucfa-bench-stats"></div>
+        </div>
+      </div>
+
+      <div class="callout warn">
+        <div class="callout-title">Simulation Scope &amp; Fidelity Caveats</div>
+        <ul>
+          <li><strong>Synthetic CFA Inputs</strong>: Inputs in <code>universal_cfa/</code> experiments are simulated mosaics sampled from RGB images via <a class="src" href="../../../universal_cfa/src/cfa_physics.py" title="universal_cfa/src/cfa_physics.py" target="_blank" rel="noopener">cfa_physics.py</a> rather than physical RAW captures, and do not yet include on-chip IMX500 <code>.rpk</code> hardware measurements.</li>
+          <li><strong>Referenced Bus Latency</strong>: The <code>bus_latency_ms</code> values (2.9 ms / 52.91 ms) recorded in <a class="src" href="../../../universal_cfa/experiments/results/benchmark_summary.json" title="universal_cfa/experiments/results/benchmark_summary.json" target="_blank" rel="noopener">benchmark_summary.json</a> reference the physical Ch.02 LSP hardware measurements with matching payload sizes (64 KB vs 3,072 KB).</li>
+          <li><strong>Latent Cosine "—" Entries</strong>: Because pixel-domain algorithmic remosaicing baselines never produce a latent tensor \(\hat{z}\), the benchmark script (<a class="src" href="../../../universal_cfa/experiments/run_universal_benchmark.py" title="universal_cfa/experiments/run_universal_benchmark.py" target="_blank" rel="noopener">run_universal_benchmark.py</a>) logs a placeholder <code>0.0</code>, rendered as <code>—</code> in the table.</li>
+        </ul>
+      </div>
+    </section>
+
+    <section class="keypoints" id="summary">
+      <h3>Key Takeaways · Chapter 04</h3>
+      <ul>
+        <li><strong>Phase Scrambling in Clustered CFAs</strong>: Applying standard strided convolutions directly to Tetracell (\(4\times 4\)) and Hexadecacell (\(8\times 8\)) mosaics scans different color clusters at different spatial shifts, breaking phase alignment.</li>
+        <li><strong>PixelUnshuffle(\(r\)) + SE-ResBlock Phase Decomposition</strong>: Unshuffling the input mosaic by its fundamental period \(r \in \{2, 4, 8\}\) into \(r^2\) homogeneous phase planes followed by `SE-ResBlock` layers maps every CFA family into a unified 16-channel bus tensor \(r \in \mathbb{R}^{16\times 64\times 64}\) (`64 KB` INT8).</li>
+        <li><strong>100% Sensor-Invariant 16-Channel Host Pipeline</strong>: Even when the camera sensor module changes, the host's 16-channel translator (\(\mathcal{T}_B: 16\to 16\)) and `TAEF1` + `SE-PixelShuffle` decoder (\(\mathcal{D}_{\mathrm{rec}}\)) share <strong>100% identical frozen weights</strong>.</li>
+        <li><strong>`FLUX.1` / `TAEF1` 16-Channel Latent Alignment &amp; High-Fidelity Reconstruction</strong>: Achieves <strong>35.91 dB</strong> on Bayer ($1\times 1$), <strong>34.56 dB</strong> on Tetracell ($2\times 2$), and <strong>30.27 dB</strong> on Hexadecacell ($4\times 4$) on `BJDD_CVPR21` (and <strong>33.71 / 33.21 / 31.29 dB</strong> on `Kodak24`), outperforming <code>KLAP Unified</code> (34.06 / 29.74 dB) on both Tetracell and Hexadecacell.</li>
+      </ul>
+    </section>
+</main>
+<script>
+(function(){
+  // Interactive Architecture SVG Node Inspector (#ucfa-arch-svg)
+  const UCFA_NODES = {
+    bayer: {
+      t: 'BayerPhaseCompressor (E_A^Bayer · 1×1 Single · Period p=2)',
+      h: '<p>Decomposes a <code>1×512×512</code> Bayer RGGB mosaic via <code>PixelUnshuffle(2)</code> into <code>4×256×256</code> phase planes, then passes them through an SE-ResBlock pyramid to emit a unified <code>16×64×64</code> bus tensor <code>r</code> (`64 KB` INT8). 17,128 params (ch16) / 582,480 params (ch64, `568.8 KB` INT8; source: <code>phase_aware_compressor.py</code>).</p>'
+    },
+    tetra: {
+      t: 'TetracellPhaseCompressor (E_A^Tetra · 2×2 Cluster · Period p=4)',
+      h: '<p>Losslessly decomposes a <code>1×512×512</code> Tetracell mosaic of 2×2 same-color clusters via <code>PixelUnshuffle(4)</code> into <code>16×128×128</code> phase planes, then aligns them to the <code>16×64×64</code> bus tensor <code>r</code> through SE-ResBlocks (16,536 params @ ch16 / 572,144 params @ ch64).</p>'
+    },
+    hexa: {
+      t: 'HexadecaPhaseCompressor (E_A^Hexa · 4×4 Cluster · Period p=8)',
+      h: '<p>Transforms an ultra-high-megapixel Hexadecacell mosaic of 4×4 same-color clusters (16 pixels) in one step via <code>PixelUnshuffle(8)</code> into a <code>64×64×64</code> tensor, then mixes channels with 80ch SE-ResBlocks to emit the <code>16×64×64</code> bus tensor <code>r</code> (16,340 params @ ch16 / 413,680 params @ ch64).</p>'
+    },
+    bus: {
+      t: 'MIPI CSI-2 Single-Stream Bus Tensor r (64 KB INT8 · No-Raw-Retention)',
+      h: '<p>Regardless of sensor CFA type (Bayer 1×1 / Tetracell 2×2 / Hexadecacell 4×4), only a single <code>16×64×64</code> INT8 (64 KB) tensor <code>r</code> is transmitted over the MIPI CSI-2 metadata path. The raw mosaic is immediately discarded inside sensor SRAM, cutting bandwidth by 48× vs Raw RGB (3,072 KB).</p>'
+    },
+    tb: {
+      t: '100% Shared Unified Translator (T_B · 16 → 16 Residual)',
+      h: '<p>Executed on the host NPU, the 16-channel translator (1,524,208 params · 8× ResBlock(96ch)) is shared 100% identically across all CFA sensor modules. Its output <code>ẑ = r + T_B(r)</code> aligns with the <code>FLUX.1</code> / <code>TAEF1</code> 16-channel latent space at 0.921–0.973 cosine similarity.</p>'
+    },
+    teacher: {
+      t: '[Offline Training] 16-Ch FLUX.1 / TAEF1 Teacher (E_FLUX)',
+      h: '<p>During training, extracts the 16-channel target latent tensor <code>z_teacher = E_FLUX(X) ∈ R^(16×64×64)</code> from clean RGB images <code>X</code> to supervise the sensor compressor <code>E_A^CFA</code> and translator <code>T_B</code> via latent distillation loss.</p>'
+    },
+    dec: {
+      t: 'DemosaicPixelShuffleDecoder (D_rec · 16-Ch TAEF1 + Guided Pyramid)',
+      h: '<p>Reconstruction decoder combining a 16-channel <code>TAEF1</code> decoder trunk with <code>SE-PixelShuffle</code> and a 4-stage <code>Guided16ChDecoder</code> residual pyramid (<code>high_fidelity_decoder.py</code>). Operates 100% CFA-agnostically across all sensors, achieving 35.91 / 34.56 / 30.27 dB on BJDD_CVPR21 and outperforming KLAP Unified (34.06 / 29.74 dB).</p>'
+    },
+    zsl: {
+      t: 'One-Pass ZSL 16-Ch Latent Diffusion Capture (No-Raw-Retention)',
+      h: '<p>Because no raw mosaic is retained on the host (No-Raw-Retention), one-pass 16-channel diffusion synthesis conditions solely on the memory-resident 16-channel latent tensor <code>ẑ</code> and the Canny edge map <code>C</code> extracted from the preview decoder output.</p>'
+    }
+  };
+  const ucfaDet = document.getElementById('ucfa-detail');
+  function selectUcfaNode(g){
+    document.querySelectorAll('#ucfa-arch-svg .node').forEach(n => n.classList.toggle('sel', n === g));
+    const d = UCFA_NODES[g.dataset.key];
+    if(!d || !ucfaDet) return;
+    ucfaDet.querySelector('.detail-title').textContent = d.t;
+    ucfaDet.querySelector('.detail-body').innerHTML = d.h;
+  }
+  document.querySelectorAll('#ucfa-arch-svg .node[data-key]').forEach(g => {
+    g.addEventListener('click', () => selectUcfaNode(g));
+    g.addEventListener('keydown', e => {
+      if(e.key === 'Enter' || e.key === ' '){ e.preventDefault(); selectUcfaNode(g); }
+    });
+  });
+  const firstUcfaNode = document.querySelector('#ucfa-arch-svg .node[data-key="tetra"]');
+  if(firstUcfaNode) selectUcfaNode(firstUcfaNode);
+
+  // 0. 3D Stacked Sensor & CFA Cluster Explorer
+  const c3dCtrl = document.getElementById('ucfa-3d-ctrl');
+  const c3dView = document.getElementById('ucfa-3d-view');
+  const c3dStats = document.getElementById('ucfa-3d-stats');
+  let c3dMode = '4'; // '2' Bayer, '4' Tetracell, '8' Hexadecacell
+  let c3dExplode = 35; // 0..100 %
+  let c3dBinning = 'full'; // 'full' or 'bin'
+
+  if(c3dCtrl){
+    c3dCtrl.appendChild(SB.seg({
+      label: '3D Sensor CFA Pattern (Period r)',
+      options: [
+        ['2', 'Bayer (2×2)'],
+        ['4', 'Tetracell (4×4)'],
+        ['8', 'Hexadecacell (8×8)']
+      ],
+      value: '4',
+      onChange: v => { c3dMode = v; rebuild3DCfa(); }
+    }));
+    c3dCtrl.appendChild(SB.range({
+      label: 'Vertical Layer Separation (Exploded View)', min: 0, max: 100, step: 5, value: c3dExplode,
+      fmt: v => v + '%',
+      onInput: v => { c3dExplode = v; update3DExplosion(); }
+    }));
+    c3dCtrl.appendChild(SB.seg({
+      label: 'Sensor Readout Mode',
+      options: [
+        ['full', 'Daylight Full-Res (PixelUnshuffle)'],
+        ['bin', 'Low-Light Cluster Binning (Sum)']
+      ],
+      value: 'full',
+      onChange: v => { c3dBinning = v; rebuild3DCfa(); }
+    }));
+  }
+
+  const T3 = SB.three(c3dView, { camera: [6.8, 6.2, 8.8], target: [0, 0.2, 0], fov: 35, autoRotate: true, autoRotateSpeed: 0.55, pan: false, minDistance: 6, maxDistance: 18 });
+  let grpLens, grpCfa, grpPd, grpBond, grpNpu;
+
+  function cfaHex(x, y, r){
+    const cluster = r / 2;
+    const bx = Math.floor((x % r) / cluster);
+    const by = Math.floor((y % r) / cluster);
+    if(by === 0 && bx === 0) return 0xe0443e;
+    if(by === 0 && bx === 1) return 0x2da44e;
+    if(by === 1 && bx === 0) return 0x1f883d;
+    return 0x2f6fe0;
+  }
+
+  function update3DExplosion(){
+    if(!T3 || !grpLens) return;
+    const ex = c3dExplode / 100;
+    grpLens.position.y = 1.05 + ex * 1.35;
+    grpCfa.position.y  = 0.72 + ex * 0.65;
+    grpPd.position.y   = 0.15;
+    grpBond.position.y = -0.35 - ex * 0.45;
+    grpNpu.position.y  = -0.88 - ex * 1.05;
+  }
+
+  function rebuild3DCfa(){
+    if(!T3) return;
+    const { THREE, scene } = T3;
+    [grpLens, grpCfa, grpPd, grpBond, grpNpu].forEach(g => { if(g) scene.remove(g); });
+    grpLens = new THREE.Group();
+    grpCfa  = new THREE.Group();
+    grpPd   = new THREE.Group();
+    grpBond = new THREE.Group();
+    grpNpu  = new THREE.Group();
+
+    const r = parseInt(c3dMode, 10);
+    const N = 8, P = 0.56, off = -((N - 1) * P) / 2;
+    const lensGeo = new THREE.SphereGeometry(P * 0.47, 16, 10, 0, Math.PI * 2, 0, Math.PI / 2);
+
+    for(let iy = 0; iy < N; iy++){
+      for(let ix = 0; ix < N; ix++){
+        const x = off + ix * P, z = off + iy * P;
+        const hex = cfaHex(ix, iy, r);
+        // Microlens
+        const ml = new THREE.Mesh(lensGeo, new THREE.MeshPhysicalMaterial({ color: 0xdfefff, transparent: true, opacity: 0.58, roughness: 0.08, clearcoat: 1 }));
+        ml.scale.set(0.95, 0.58, 0.95);
+        ml.position.set(x, 0, z);
+        grpLens.add(ml);
+
+        // CFA filter tile
+        const isBinBorder = c3dBinning === 'bin' && (r > 2);
+        const cfScale = isBinBorder ? 0.96 : 0.90;
+        const cf = new THREE.Mesh(new THREE.BoxGeometry(P * cfScale, 0.22, P * cfScale), new THREE.MeshStandardMaterial({ color: hex, transparent: true, opacity: 0.88, roughness: 0.28 }));
+        cf.position.set(x, 0, z);
+        grpCfa.add(cf);
+
+        // Photodiode + DTI cell
+        const pd = new THREE.Mesh(new THREE.BoxGeometry(P * 0.86, 0.58, P * 0.86), T3.material(0x334155, { roughness: 0.45, metalness: 0.35 }));
+        pd.position.set(x, 0, z);
+        grpPd.add(pd);
+      }
+    }
+
+    const totalW = N * P;
+    const bondMesh = new THREE.Mesh(new THREE.BoxGeometry(totalW, 0.16, totalW), T3.material(0xd98a00, { roughness: 0.25, metalness: 0.8 }));
+    grpBond.add(bondMesh);
+
+    const npuMesh = new THREE.Mesh(new THREE.BoxGeometry(totalW, 0.55, totalW), new THREE.MeshStandardMaterial({ color: 0x123524, emissive: 0x1f9d55, emissiveIntensity: 0.28, roughness: 0.35, metalness: 0.45 }));
+    grpNpu.add(npuMesh);
+
+    scene.add(grpLens, grpCfa, grpPd, grpBond, grpNpu);
+    update3DExplosion();
+
+    if(c3dStats){
+      const clusterSz = (r / 2) + '×' + (r / 2);
+      c3dStats.innerHTML = [
+        SB.stat({ label: 'Selected CFA Topology', value: (r === 2 ? 'Bayer 2×2' : r === 4 ? 'Tetracell 4×4' : 'Hexadecacell 8×8') }),
+        SB.stat({ label: 'Same-Color Filter Cluster', value: clusterSz + ' (' + ((r / 2) * (r / 2)) + ' px/cluster)' }),
+        SB.stat({ label: 'PixelUnshuffle(r) Output', value: (r * r) + ' phase ch × ' + (512 / r) + '²' }),
+        SB.stat({ label: 'Sensor Readout Mode', value: c3dBinning === 'full' ? 'Full-Res Phase Decomp → 64 KB' : 'Adjacent Charge Binning (High SNR)' })
+      ].join('');
+    }
+  }
+  if(T3){
+    rebuild3DCfa();
+    T3.label('① Microlens (OCL)', [-2.5, 2.1, 0]);
+    T3.label('② Color Filter Array (CFA)', [2.5, 1.2, 0]);
+    T3.label('③ DTI Photodiodes', [-2.5, 0.15, 0]);
+    T3.label('④ Cu-Cu Hybrid Bonding', [2.5, -0.6, 0]);
+    T3.label('⑤ In-Sensor NPU Die (E_A^CFA)', [0, -1.65, 2.3]);
+  }
+
+  // 1. Simulator 01: CFA Grid & PixelUnshuffle Phase Decomposition
+  const phaseCtrl = document.getElementById('ucfa-phase-ctrl');
+  const phaseStats = document.getElementById('ucfa-phase-stats');
+  let cfaMode = '4'; // '2' Bayer, '4' Tetracell, '8' Hexadecacell
+  let scanStep = 0;
+
+  if(phaseCtrl){
+    phaseCtrl.appendChild(SB.seg({
+      label: 'CFA Cluster Pattern (Period r)',
+      options: [
+        ['2', 'Bayer (2×2, r=2)'],
+        ['4', 'Tetracell (4×4, r=4)'],
+        ['8', 'Hexadecacell (8×8, r=8)']
+      ],
+      value: '4',
+      onChange: v => { cfaMode = v; drawPhaseSim(); }
+    }));
+    phaseCtrl.appendChild(SB.range({
+      label: 'Stride-2 Kernel Scan Offset', min: 0, max: 3, step: 1, value: scanStep,
+      fmt: v => 'offset +' + (v * 2) + ' px',
+      onInput: v => { scanStep = v; drawPhaseSim(); }
+    }));
+  }
+
+  function cfaColor(x, y, r){
+    const cluster = r / 2;
+    const bx = Math.floor((x % r) / cluster);
+    const by = Math.floor((y % r) / cluster);
+    if(by === 0 && bx === 0) return { name: 'R', col: '#ef4444' };
+    if(by === 0 && bx === 1) return { name: 'Gr', col: '#10b981' };
+    if(by === 1 && bx === 0) return { name: 'Gb', col: '#059669' };
+    return { name: 'B', col: '#3b82f6' };
+  }
+
+  function drawPhaseSim(){
+    const r = parseInt(cfaMode, 10);
+    const { ctx, w, h } = SB.canvas('#ucfa-phase-cv');
+    ctx.clearRect(0, 0, w, h);
+    const dk = SB.isDark();
+    const tx = dk ? '#e6edf6' : '#12161f';
+    const tx3 = dk ? '#6e7e97' : '#7b8494';
+
+    // Left: 8x8 physical CFA array
+    const gx0 = 28, gy0 = 36, cell = 24;
+    ctx.fillStyle = tx;
+    ctx.textAlign = 'left';
+    ctx.font = '700 12px "Pretendard", sans-serif';
+    ctx.fillText('1) Sensor 8×8 Physical Photodiode Lattice & Stride-2 Kernel', gx0, 22);
+
+    for(let y = 0; y < 8; y++){
+      for(let x = 0; x < 8; x++){
+        const c = cfaColor(x, y, r);
+        ctx.fillStyle = c.col;
+        ctx.beginPath();
+        ctx.roundRect(gx0 + x * cell, gy0 + y * cell, cell - 2, cell - 2, 4);
+        ctx.fill();
+        ctx.fillStyle = '#ffffff';
+        ctx.textAlign = 'center';
+        ctx.font = '700 9.5px "JetBrains Mono", monospace';
+        ctx.fillText(c.name, gx0 + x * cell + (cell - 2) / 2, gy0 + y * cell + 15);
+      }
+    }
+
+    // Highlight 4x4 kernel window at stride-2 offset
+    const kx = (scanStep * 2) % 6;
+    ctx.strokeStyle = '#facc15';
+    ctx.lineWidth = 3;
+    ctx.strokeRect(gx0 + kx * cell - 2, gy0 - 2, cell * 4 + 2, cell * 4 + 2);
+
+    // Count colors inside the 4x4 kernel window
+    const counts = { R: 0, Gr: 0, Gb: 0, B: 0 };
+    for(let y = 0; y < 4; y++){
+      for(let x = kx; x < kx + 4; x++){
+        counts[cfaColor(x, y, r).name]++;
+      }
+    }
+
+    // Middle arrow & explanation
+    const mx = 246;
+    ctx.fillStyle = tx;
+    ctx.textAlign = 'left';
+    ctx.font = '700 11.5px "Pretendard", sans-serif';
+    ctx.fillText('Color Composition in Stride-2 4×4 Kernel:', mx, 56);
+    ctx.font = '600 11px "JetBrains Mono", monospace';
+    ctx.fillStyle = '#ef4444'; ctx.fillText('• Red (R)  : ' + counts.R + ' px', mx, 80);
+    ctx.fillStyle = '#10b981'; ctx.fillText('• Green(Gr): ' + counts.Gr + ' px', mx, 100);
+    ctx.fillStyle = '#059669'; ctx.fillText('• Green(Gb): ' + counts.Gb + ' px', mx, 120);
+    ctx.fillStyle = '#3b82f6'; ctx.fillText('• Blue (B) : ' + counts.B + ' px', mx, 140);
+
+    const phaseConsistent = (counts.R === 4 && counts.Gr === 4 && counts.Gb === 4 && counts.B === 4);
+    ctx.fillStyle = phaseConsistent ? '#10b981' : '#f59e0b';
+    ctx.font = '700 11px "Pretendard", sans-serif';
+    ctx.fillText(phaseConsistent ? '✓ Uniform Phase Across All Shifts' : '⚠ Color Ratio Shifts (Phase Scrambling)', mx, 172);
+    ctx.fillStyle = tx3;
+    ctx.font = '10.5px "Pretendard", sans-serif';
+    ctx.fillText('Fix: Isolate ' + (r * r) + ' phases via PixelUnshuffle(' + r + ')', mx, 196);
+
+    // Right: PixelUnshuffle(r) sub-phase channels
+    const rx0 = 528, ry0 = 36;
+    ctx.fillStyle = tx;
+    ctx.textAlign = 'left';
+    ctx.font = '700 12px "Pretendard", sans-serif';
+    ctx.fillText('2) PixelUnshuffle(' + r + ') Output: ' + (r * r) + ' Phase-Aligned Channels × (' + (512 / r) + '×' + (512 / r) + ')', rx0, 22);
+
+    const pCell = Math.min(36, Math.floor(190 / r));
+    for(let py = 0; py < r; py++){
+      for(let px = 0; px < r; px++){
+        const c = cfaColor(px, py, r);
+        ctx.fillStyle = c.col;
+        ctx.beginPath();
+        ctx.roundRect(rx0 + px * (pCell + 3), ry0 + py * (pCell + 3), pCell, pCell, 4);
+        ctx.fill();
+        if(pCell >= 22){
+          ctx.fillStyle = '#ffffff';
+          ctx.textAlign = 'center';
+          ctx.font = '700 9px "JetBrains Mono", monospace';
+          ctx.fillText('ch' + (py * r + px), rx0 + px * (pCell + 3) + pCell / 2, ry0 + py * (pCell + 3) + pCell / 2 + 3);
+        }
+      }
+    }
+
+    const macMap = { '2': '0.18 G / 15,092 params', '4': '0.14 G / 14,500 params', '8': '0.08 G / 19,092 params' };
+    if(phaseStats){
+      phaseStats.innerHTML = [
+        SB.stat({ label: 'CFA Fundamental Period (r×r)', value: r + '×' + r + ' (' + (r * r) + ' phase channels)' }),
+        SB.stat({ label: 'Post-Unshuffle Spatial Shape', value: (512 / r) + '×' + (512 / r) + '×' + (r * r) }),
+        SB.stat({ label: 'PhaseCompressor (ch16)', value: macMap[cfaMode] }),
+        SB.stat({ label: 'Host Stage B Modification', value: '0% (100% Frozen Reuse)' })
+      ].join('');
+    }
+  }
+  drawPhaseSim();
+
+  // 2. Simulator 02: Universal CFA Benchmark Explorer
+  const benchCtrl = document.getElementById('ucfa-bench-ctrl');
+  const benchStats = document.getElementById('ucfa-bench-stats');
+  let metric = 'psnr';
+
+  const BENCH_ITEMS = [
+    { name: 'RGB Ceiling (16-Ch FLUX.1 VAE)', kb: 3072, psnr: 35.91, ssim: 0.992, lpips: 0.014, cos: 1.000, col: '#64748b' },
+    { name: 'SE-Universal-CFA · Bayer (1×1)', kb: 64, psnr: 35.91, ssim: 0.992, lpips: 0.014, cos: 0.973, col: '#10b981' },
+    { name: 'SE-Universal-CFA · Tetracell (2×2)', kb: 64, psnr: 34.56, ssim: 0.988, lpips: 0.025, cos: 0.953, col: '#0ea5e9' },
+    { name: 'SE-Universal-CFA · Hexadeca (4×4)', kb: 64, psnr: 30.27, ssim: 0.971, lpips: 0.075, cos: 0.921, col: '#7c5cff' },
+    { name: 'KLAP Unified · Tetra (2×2)', kb: 3072, psnr: 34.06, ssim: 0.986, lpips: 0.029, cos: 0.000, col: '#f59e0b' },
+    { name: 'KLAP Unified · Hexa (4×4)', kb: 3072, psnr: 29.74, ssim: 0.967, lpips: 0.077, cos: 0.000, col: '#f97316' }
+  ];
+
+  if(benchCtrl){
+    benchCtrl.appendChild(SB.seg({
+      label: 'Select Comparison Metric',
+      options: [
+        ['psnr', 'PSNR (dB, higher is better)'],
+        ['cos', 'Latent Cosine Similarity (higher is better)'],
+        ['lpips', 'LPIPS Perceptual Distance (lower is better)'],
+        ['kb', 'Bus Payload (KB, lower is better)']
+      ],
+      value: 'psnr',
+      onChange: v => { metric = v; drawBenchSim(); }
+    }));
+  }
+
+  function drawBenchSim(){
+    const { ctx, w, h } = SB.canvas('#ucfa-bench-cv');
+    ctx.clearRect(0, 0, w, h);
+    const dk = SB.isDark();
+    const tx = dk ? '#e6edf6' : '#12161f';
+    const tx3 = dk ? '#6e7e97' : '#7b8494';
+
+    const x0 = 210, y0 = 22, gw = w - x0 - 150, bh = 24, gap = 12;
+    const maxVal = metric === 'psnr' ? 36.0 : (metric === 'kb' ? 3200 : 1.05);
+
+    BENCH_ITEMS.forEach((it, idx) => {
+      const y = y0 + idx * (bh + gap);
+      const val = it[metric];
+      const bw = Math.max(6, (val / maxVal) * gw);
+
+      ctx.fillStyle = tx;
+      ctx.textAlign = 'right';
+      ctx.font = '600 12px "Pretendard", sans-serif';
+      ctx.fillText(it.name, x0 - 12, y + 16);
+
+      ctx.fillStyle = it.col;
+      ctx.beginPath();
+      ctx.roundRect(x0, y, bw, bh, 5);
+      ctx.fill();
+
+      ctx.fillStyle = tx;
+      ctx.textAlign = 'left';
+      ctx.font = '700 11.5px "JetBrains Mono", monospace';
+      const valStr = metric === 'kb' ? val + ' KB' : (metric === 'psnr' ? val.toFixed(2) + ' dB' : val.toFixed(3));
+      const labelStr = metric === 'kb' ? valStr : valStr + ' (' + it.kb + ' KB)';
+      ctx.fillText(labelStr, x0 + bw + 8, y + 16);
+    });
+
+    if(benchStats){
+      benchStats.innerHTML = [
+        SB.stat({ label: 'LSP Bandwidth Reduction', value: '3072 KB → 64 KB INT8 (48×)' }),
+        SB.stat({ label: '16-Ch FLUX.1 Cosine Alignment', value: '0.921 ~ 0.973' }),
+        SB.stat({ label: 'BJDD_CVPR21 Recon PSNR', value: '35.91 / 34.56 / 30.27 dB' }),
+        SB.stat({ label: 'Host Pipeline Unification', value: '100% Unified 16-Ch Host' })
+      ].join('');
+    }
+  }
+  drawBenchSim();
+  window.addEventListener('sb:theme', () => { drawPhaseSim(); drawBenchSim(); });
+})();
+</script>
+</body>
+</html>

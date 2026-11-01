@@ -1,0 +1,1157 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Heterogeneous Edge Camera &amp; System Bottlenecks · AICAMERA Guidebook</title>
+<meta name="description" content="MIPI CSI-2 serialization bottleneck, IMX500 sensor NPU and Hailo-8 host NPU memory/bandwidth hierarchy, Dual-NPU cross-compilation (.rpk/.hef), and agent-driven development workflow.">
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/katex@0.16.11/dist/katex.min.css">
+<script defer src="https://cdn.jsdelivr.net/npm/katex@0.16.11/dist/katex.min.js"></script>
+<script defer src="https://cdn.jsdelivr.net/npm/katex@0.16.11/dist/contrib/auto-render.min.js"></script>
+<link rel="stylesheet" href="../css/style.css">
+<link rel="stylesheet" href="../css/glossary-tooltips.css">
+<script src="../js/glossary-data.js"></script>
+<script src="../js/common.js"></script>
+<script defer src="../js/glossary-tooltips.js"></script>
+</head>
+<body data-chapter="overview" data-root="../">
+<main class="chapter">
+  <header class="chapter-hero">
+    <div class="eyebrow">Chapter 01 · System Architecture, Dual-NPU SW Stack &amp; Agent Flow</div>
+    <h1>Heterogeneous Edge Camera &amp; System Bottlenecks</h1>
+    <p class="lead">When running neural ISPs and generative vision models in real time on modern edge camera systems, the first wall you hit is not a lack of NPU TOPS, but <strong>inter-chip data movement and memory bandwidth</strong>. This chapter examines why signal representation must change at the sensor–host boundary, how the repository's three research tracks (<strong>LSP · Software ISP · Universal CFA</strong>) solve this problem, and how the <strong>IMX500(<code>.rpk</code>) · Hailo-8(<code>.hef</code>) cross-compilation pipeline and Antigravity agent workflow</strong> operate.</p>
+    <ul class="objectives">
+      <li>Verify through equations and an interactive simulator how MIPI CSI-2 DMA serialization latency (52.91 ms) and memory contention during uncompressed frame transfer cap overall throughput (14.9 FPS).</li>
+      <li>Understand the hardware topology and memory constraints spanning Sony IMX500 (sensor NPU, <code>.rpk</code>) → MIPI CSI-2 → Raspberry Pi 5 (CPU/Vulkan GPU) + Hailo-8 (host NPU, <code>.hef</code>) → Workstation (RTX 5060 Ti).</li>
+      <li>Compare the structural differences between pixel-domain optimization (Software ISP · Halide kernel fusion) and latent-domain split inference (LSP · Universal CFA).</li>
+      <li>Master the software stack that converts PyTorch models into IMX500 <code>.rpk</code> (NCHW→NHWC transposition, real-frame MCT quantization) and Hailo-8 <code>.hef</code> (ONNX patching, real-distribution tensor PTQ) atop a 4-Tier isolated Python virtual environment hierarchy.</li>
+      <li>Learn the closed-loop agent workflow composed of the FastMCP server (<code>aicamera_mcp_server.py</code>), remote bridge (<code>rpi_remote.py</code>), 7 slash skills, and 10 specialist roles.</li>
+    </ul>
+  </header>
+
+  <!-- ============================================================ 01 -->
+  <section id="s-paradigm">
+    <h2>Why Split Sensor–Host Inference: MIPI CSI-2 Bandwidth &amp; Serialization Bottlenecks</h2>
+    <p>Conventional camera pipelines start after the sensor converts light into digital values by shipping the <strong>entire uncompressed pixel frame</strong> across the MIPI CSI-2 serial bus into the host SoC's DRAM. Even if you attach a fast NPU (e.g., a 26 TOPS Hailo-8) to the host, if the frame takes too long to arrive in host memory and be extracted by the driver, the overall frame rate remains locked to bus latency.</p>
+    <p>On our physical testbed (Sony IMX500 + Raspberry Pi 5 + Hailo-8), measuring the <code>IDENTITY</code> baseline—which forwards an unmodified \(512\times 512\) 3-channel FP32 frame (<strong>3072 KB</strong>) over the metadata path—shows that host-side tensor extraction (<code>bus_ms</code>) alone takes <strong>52.91 ms</strong>, capping camera-synchronized throughput at <strong>14.9 FPS</strong>. By contrast, when the in-sensor NPU reduces spatial resolution by \(s_A=8\times\) and emits only a 4-channel latent feature \(r\) (<strong>64 KB</strong>, \(48\times\) reduction), bus extraction drops to <strong>2.90 ms</strong>, reaching the camera's physical ceiling of <strong>30.0 FPS</strong>.</p>
+
+    <figure class="diagram" id="fig-ov-paradigm">
+      <svg viewBox="0 0 860 285" role="img" aria-label="Comparison of conventional uncompressed pixel transfer vs in-sensor split compressed transfer">
+        <defs>
+          <marker id="oa1" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="6" markerHeight="6" orient="auto"><path d="M0 0L10 5L0 10z" fill="var(--bad)"/></marker>
+          <marker id="oa2" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="6" markerHeight="6" orient="auto"><path d="M0 0L10 5L0 10z" fill="var(--ok)"/></marker>
+        </defs>
+        <!-- Row 1: Conventional -->
+        <rect x="16" y="18" width="828" height="112" rx="12" class="f-surface"/>
+        <text x="32" y="42" class="t" style="fill:var(--bad);font-weight:700">① Conventional Uncompressed Transfer (IDENTITY Baseline) — Bus Serialization Bottleneck</text>
+        <rect x="32" y="56" width="150" height="56" rx="8" class="f-elev"/>
+        <text x="107" y="80" text-anchor="middle" class="t">IMX500 Sensor</text>
+        <text x="107" y="98" text-anchor="middle" class="t-mono">512×512×3 FP32</text>
+        <line x1="184" y1="84" x2="490" y2="84" stroke="var(--bad)" stroke-width="6" marker-end="url(#oa1)"/>
+        <text x="337" y="72" text-anchor="middle" class="t" style="fill:var(--bad);font-weight:700">MIPI CSI-2 · 3072 KB (52.91 ms)</text>
+        <text x="337" y="104" text-anchor="middle" class="t-mono">DMA Serialization + Driver Extraction</text>
+        <rect x="502" y="56" width="155" height="56" rx="8" class="f-elev"/>
+        <text x="579" y="80" text-anchor="middle" class="t">Host SoC / NPU</text>
+        <text x="579" y="98" text-anchor="middle" class="t-mono">Idle Stall</text>
+        <rect x="676" y="56" width="150" height="56" rx="8" class="f-elev"/>
+        <text x="751" y="80" text-anchor="middle" class="t" style="fill:var(--bad);font-weight:700">14.9 FPS</text>
+        <text x="751" y="98" text-anchor="middle" class="t-mono">serial 57.21 ms</text>
+
+        <!-- Row 2: Split LSP -->
+        <rect x="16" y="148" width="828" height="120" rx="12" class="f-acc-soft"/>
+        <text x="32" y="172" class="t-acc">② Asymmetric Sensor–Host Split (LSP SA8) — 48× Payload Reduction Hits 30 FPS Cap</text>
+        <rect x="32" y="186" width="190" height="62" rx="8" class="f-elev"/>
+        <text x="127" y="210" text-anchor="middle" class="t" style="font-weight:700">IMX500 + Stage A (.rpk)</text>
+        <text x="127" y="230" text-anchor="middle" class="t-mono">5,924 params · cap 2.59 ms</text>
+        <line x1="224" y1="217" x2="368" y2="217" stroke="var(--ok)" stroke-width="2.5" marker-end="url(#oa2)"/>
+        <text x="296" y="205" text-anchor="middle" class="t" style="fill:var(--ok);font-weight:700">64 KB (2.90 ms)</text>
+        <text x="296" y="236" text-anchor="middle" class="t-mono">48× Bandwidth Compression</text>
+        <rect x="380" y="186" width="276" height="62" rx="8" class="f-elev"/>
+        <text x="518" y="210" text-anchor="middle" class="t" style="font-weight:700">Hailo-8 Stage B + TAESD (.hef)</text>
+        <text x="518" y="230" text-anchor="middle" class="t-mono">0.97 ms + 16.44 ms → ẑ &amp; Preview</text>
+        <rect x="676" y="186" width="150" height="62" rx="8" class="f-elev"/>
+        <text x="751" y="210" text-anchor="middle" class="t" style="fill:var(--ok);font-weight:700">30.0 FPS (Cap)</text>
+        <text x="751" y="230" text-anchor="middle" class="t-mono">serial 22.90 ms</text>
+      </svg>
+      <figcaption><b>Figure 1-1.</b> Latency breakdown comparison between uncompressed pixel streaming (top) and in-sensor split compression (bottom). Source: <a class="src" href="../../../lsp/benchmarks/rpi_table1_bench_results.json" title="lsp/benchmarks/rpi_table1_bench_results.json" target="_blank" rel="noopener">rpi_table1_bench_results.json</a>.</figcaption>
+    </figure>
+
+    <div class="sim" id="sim-bus">
+      <div class="sim-head"><span class="sim-tag">SIMULATOR</span><h3>MIPI Bus Bottleneck Simulator across Resolution · Format · Split Factor (s_A)</h3></div>
+      <div class="sim-body side">
+        <div class="sim-view"><canvas id="cv-bus"></canvas></div>
+        <div class="sim-controls">
+          <div class="ctrl"><span>Input Resolution</span>
+            <div class="seg" id="bus-res">
+              <button data-value="512" class="on">512×512</button>
+              <button data-value="640">640×480</button>
+              <button data-value="1520">3MP (2028×1520)</button>
+              <button data-value="3040">12MP (4056×3040)</button>
+            </div>
+          </div>
+          <div class="ctrl"><span>Transfer Mode / s_A</span>
+            <div class="seg" id="bus-mode">
+              <button data-value="id">IDENTITY (RGB)</button>
+              <button data-value="raw16">RAW16</button>
+              <button data-value="sa2">SA2 (↓2)</button>
+              <button data-value="sa4">SA4 (↓4)</button>
+              <button data-value="sa8" class="on">SA8 (↓8)</button>
+            </div>
+          </div>
+          <label class="ctrl"><span>Effective Extraction Bandwidth (Host DMA) <output id="bus-bw-out"></output></span>
+            <input type="range" id="bus-bw" min="20" max="160" step="5" value="58">
+          </label>
+          <label class="ctrl"><span>Host Decoder Latency (TAESD/ISP) <output id="bus-dec-out"></output></span>
+            <input type="range" id="bus-dec" min="5" max="60" step="0.5" value="16.5">
+          </label>
+        </div>
+      </div>
+      <div class="sim-readout">
+        <div class="stat"><span class="k">Bus Payload</span><span class="v" id="o-bus-kb">—</span></div>
+        <div class="stat"><span class="k">Est. Bus Extraction Time</span><span class="v" id="o-bus-ms">—</span></div>
+        <div class="stat"><span class="k">Dominant Bottleneck</span><span class="v" id="o-bus-bot" style="font-size:15px">—</span></div>
+        <div class="stat"><span class="k">Camera Sync FPS</span><span class="v" id="o-bus-fps">—</span></div>
+      </div>
+      <div class="sim-note">Try this: ① At 512×512, toggle between <b>IDENTITY</b> and <b>SA8</b> to watch bus latency (red bar) drop from 52.9 ms to 2.9 ms, shifting the bottleneck to the decoder (purple bar). ② Raise the resolution to <b>3MP</b> or <b>12MP</b> to immediately see why a real-time (30 FPS) viewfinder becomes impossible under uncompressed transfer.</div>
+    </div>
+  </section>
+
+  <!-- ============================================================ 02 -->
+  <section id="s-projects">
+    <h2>Architectural Comparison of the 3 Research Tracks (LSP · Software ISP · Universal CFA)</h2>
+    <p>This repository comprises three research projects that break through heterogeneous edge camera bottlenecks at different layers. All three share the same physical testbed and remote orchestration chain, but differ sharply in <strong>what the sensor emits and how the host reconstructs it</strong>.</p>
+
+    <div class="grid-3">
+      <article class="card">
+        <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:8px">
+          <span class="eyebrow">Project 1 · lsp/</span><span class="badge b-measured">HW Measured</span>
+        </div>
+        <h3>Latent Signal Processing</h3>
+        <p>Splits the encoder across the sensor NPU (Stage A, <code>.rpk</code>) and host NPU (Stage B, <code>.hef</code>) to transmit only a 64 KB tensor <code>r</code>, driving both a real-time preview (30.0 FPS) and ZSL generative capture from the standard SD VAE latent space <code>ẑ</code>.</p>
+        <p class="note">Canonical source: <a class="src" href="../../../lsp/README.md" title="lsp/README.md" target="_blank" rel="noopener">lsp/README.md</a> · <a href="lsp.html"><b>Go to Chapter 02 →</b></a></p>
+      </article>
+      <article class="card">
+        <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:8px">
+          <span class="eyebrow">Project 2 · hdrnet/</span><span class="badge b-measured">HW Measured</span>
+        </div>
+        <h3>Software ISP &amp; Halide</h3>
+        <p>Implements a 10-stage C99 reference ISP + 3A control loop, and applies Verified Lifting and Halide kernel fusion (Tier 3 CPU NEON · Tier 4 Vulkan DMA-BUF) to cut per-12MP-frame DRAM traffic by 13.8× and process frames in 128.78 ms.</p>
+        <p class="note">Canonical source: <a class="src" href="../../../hdrnet/README.md" title="hdrnet/README.md" target="_blank" rel="noopener">hdrnet/README.md</a> · <a href="isp.html"><b>Go to Chapter 03 →</b></a></p>
+      </article>
+      <article class="card">
+        <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:8px">
+          <span class="eyebrow">Project 3 · universal_cfa/</span><span class="badge b-sim">Simulation</span>
+        </div>
+        <h3>Universal CFA</h3>
+        <p>Connects high-megapixel mobile sensors with clustered CFAs (Bayer 2×2 · Tetracell 4×4 · Hexadecacell 8×8) directly to a single frozen host translator (\(\mathcal{T}_B\)) using only a phase-aware <code>PixelUnshuffle</code> compressor without dedicated remosaicing hardware.</p>
+        <svg viewBox="0 0 272 68" role="img" aria-label="Sensor microlens cross-section and Bayer, Tetracell, Hexadecacell CFA grid summary" style="margin:6px 0;border-radius:6px;background:var(--surface)">
+          <!-- Mini Sensor Cross-Section -->
+          <path d="M18,20 Q27,10 36,20 Q45,10 54,20 Q63,10 72,20 Z" fill="rgba(56,182,245,0.3)" stroke="var(--accent)" stroke-width="1.2"/>
+          <rect x="18" y="21" width="18" height="8" fill="#e0443e"/><rect x="36" y="21" width="18" height="8" fill="#2da44e"/><rect x="54" y="21" width="18" height="8" fill="#2f6fe0"/>
+          <rect x="18" y="30" width="54" height="12" rx="2" fill="#334155"/>
+          <rect x="18" y="44" width="54" height="10" rx="2" fill="rgba(31,157,85,0.28)" stroke="var(--ok)" stroke-width="1"/>
+          <text x="45" y="62" text-anchor="middle" class="t-mono" style="font-size:8.5px">BSI Sensor+NPU</text>
+          <!-- Bayer 2x2 -->
+          <g transform="translate(92,10)">
+            <rect x="0" y="0" width="16" height="16" fill="#e0443e"/><rect x="17" y="0" width="16" height="16" fill="#2da44e"/>
+            <rect x="0" y="17" width="16" height="16" fill="#1f883d"/><rect x="17" y="17" width="16" height="16" fill="#2f6fe0"/>
+            <text x="16.5" y="48" text-anchor="middle" class="t-mono" style="font-size:8.5px">Bayer 2×2</text>
+          </g>
+          <!-- Tetracell 4x4 -->
+          <g transform="translate(148,10)">
+            <rect x="0" y="0" width="7.5" height="7.5" fill="#e0443e"/><rect x="8.5" y="0" width="7.5" height="7.5" fill="#e0443e"/><rect x="17" y="0" width="7.5" height="7.5" fill="#2da44e"/><rect x="25.5" y="0" width="7.5" height="7.5" fill="#2da44e"/>
+            <rect x="0" y="8.5" width="7.5" height="7.5" fill="#e0443e"/><rect x="8.5" y="8.5" width="7.5" height="7.5" fill="#e0443e"/><rect x="17" y="8.5" width="7.5" height="7.5" fill="#2da44e"/><rect x="25.5" y="8.5" width="7.5" height="7.5" fill="#2da44e"/>
+            <rect x="0" y="17" width="7.5" height="7.5" fill="#1f883d"/><rect x="8.5" y="17" width="7.5" height="7.5" fill="#1f883d"/><rect x="17" y="17" width="7.5" height="7.5" fill="#2f6fe0"/><rect x="25.5" y="17" width="7.5" height="7.5" fill="#2f6fe0"/>
+            <rect x="0" y="25.5" width="7.5" height="7.5" fill="#1f883d"/><rect x="8.5" y="25.5" width="7.5" height="7.5" fill="#1f883d"/><rect x="17" y="25.5" width="7.5" height="7.5" fill="#2f6fe0"/><rect x="25.5" y="25.5" width="7.5" height="7.5" fill="#2f6fe0"/>
+            <text x="16.5" y="48" text-anchor="middle" class="t-mono" style="font-size:8.5px">Tetra 4×4</text>
+          </g>
+          <!-- Hexadecacell 8x8 -->
+          <g transform="translate(204,10)">
+            <rect x="0" y="0" width="16" height="16" fill="#e0443e" stroke="var(--bg)" stroke-width="0.6"/>
+            <rect x="17" y="0" width="16" height="16" fill="#2da44e" stroke="var(--bg)" stroke-width="0.6"/>
+            <rect x="0" y="17" width="16" height="16" fill="#1f883d" stroke="var(--bg)" stroke-width="0.6"/>
+            <rect x="17" y="17" width="16" height="16" fill="#2f6fe0" stroke="var(--bg)" stroke-width="0.6"/>
+            <line x1="0" y1="8" x2="33" y2="8" stroke="#fff" stroke-width="0.6" opacity="0.6"/><line x1="0" y1="25" x2="33" y2="25" stroke="#fff" stroke-width="0.6" opacity="0.6"/>
+            <line x1="8" y1="0" x2="8" y2="33" stroke="#fff" stroke-width="0.6" opacity="0.6"/><line x1="25" y1="0" x2="25" y2="33" stroke="#fff" stroke-width="0.6" opacity="0.6"/>
+            <text x="16.5" y="48" text-anchor="middle" class="t-mono" style="font-size:8.5px">Hexa 8×8</text>
+          </g>
+        </svg>
+        <p class="note">Canonical source: <a class="src" href="../../../universal_cfa/README.md" title="universal_cfa/README.md" target="_blank" rel="noopener">universal_cfa/README.md</a> · <a href="ucfa.html"><b>Go to Chapter 04 →</b></a></p>
+      </article>
+    </div>
+
+    <div class="table-wrap">
+      <table>
+        <thead>
+          <tr><th>Comparison Dimension</th><th>Project 1: LSP (<code>lsp/</code>)</th><th>Project 2: Software ISP (<code>hdrnet/</code>)</th><th>Project 3: Universal CFA (<code>universal_cfa/</code>)</th></tr>
+        </thead>
+        <tbody>
+          <tr><td><b>Sensor Input Domain</b></td><td>IMX500 on-chip ISP output RGB (512×512×3)</td><td>10-bit Bayer RGGB RAW (3MP / 12.3MP uint16)</td><td>1-ch synthetic CFA RAW (Bayer · 4×4 · 8×8, 512×512×1)</td></tr>
+          <tr><td><b>Sensor NPU (.rpk) Role</b></td><td>Stage A compressor (<code>EncoderStageA</code>, 5,924 params)</td><td>In-sensor face detection (SSD MobileNetV2 / BlazeFace)</td><td>CFA-specific phase-aware compression + implicit remosaicing (5.4K~19.1K)</td></tr>
+          <tr><td><b>MIPI Payload</b></td><td>Metadata tensor \(r \in \mathbb{R}^{64\times 64\times 4}\) (64 KB)</td><td>Uncompressed Bayer RAW frame (~24.6 MB at 12MP)</td><td>Metadata tensor \(r \in \mathbb{R}^{64\times 64\times 4}\) (64 KB)</td></tr>
+          <tr><td><b>Host NPU (.hef) Role</b></td><td>Stage B translator (0.97 ms) + TAESD_ft decoder (16.44 ms)</td><td>HDRnet Bilateral Grid coeff inference + YOLOv5n person seg</td><td>100% frozen single Stage B translator (\(\mathcal{T}_B\), zero retraining)</td></tr>
+          <tr><td><b>Host CPU / GPU Role</b></td><td>MJPEG viewfinder serving + ZSL capture trigger</td><td>Halide 4-Tier 10-stage ISP + 3A EMA control + ZAP tracking</td><td><code>DemosaicPixelShuffleDecoder</code> / One-Pass diffusion</td></tr>
+          <tr><td><b>Key Bottleneck Solved</b></td><td>MIPI bus serialization latency 52.91 ms → 2.90 ms (18.2× faster)</td><td>Inter-stage DRAM round-trips 1,197 MB → 87 MB (13.8× reduction)</td><td>Eliminates dedicated hardware remosaicing block for clustered CFAs</td></tr>
+        </tbody>
+      </table>
+    </div>
+  </section>
+
+  <!-- ============================================================ 03 -->
+  <section id="s-hardware">
+    <h2>Heterogeneous Hardware Topology &amp; Memory Hierarchy</h2>
+    <p>Our experimental platform is a heterogeneous architecture coupling four compute nodes in series and parallel. Because each chip has a distinct supported operator set, precision (INT8 vs FP16/FP32), and on-chip memory capacity, <strong>you must understand the hardware constraints first before designing the model and compiler schedule</strong>.</p>
+
+    <figure class="diagram" id="fig-ov-hw">
+      <svg viewBox="0 0 960 230" role="img" aria-label="4-tier heterogeneous hardware signal and memory hierarchy">
+        <defs><marker id="oha" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="6" markerHeight="6" orient="auto"><path d="M0 0L10 5L0 10z" fill="var(--accent)"/></marker></defs>
+        <g transform="translate(14,20)">
+          <rect width="218" height="185" rx="12" class="f-acc-soft"/>
+          <text x="109" y="28" text-anchor="middle" class="t-acc">① Sony IMX500 Sensor Die</text>
+          <rect x="14" y="42" width="190" height="42" rx="7" class="f-elev"/><text x="109" y="61" text-anchor="middle" class="t">12.3 MP RGGB Pixels</text><text x="109" y="76" text-anchor="middle" class="t-mono">4056×3040 · 1.55 µm</text>
+          <rect x="14" y="92" width="190" height="42" rx="7" class="f-elev"/><text x="109" y="111" text-anchor="middle" class="t">On-chip ISP + NPU</text><text x="109" y="126" text-anchor="middle" class="t-mono">.rpk (INT8) · SRAM &lt; 2 MB</text>
+          <text x="109" y="162" text-anchor="middle" class="t-dim" style="font-size:10px">No BN · GroupConv · Residual</text>
+        </g>
+        <line x1="236" y1="112" x2="260" y2="112" class="s-acc" marker-end="url(#oha)"/>
+        <g transform="translate(264,20)">
+          <rect width="214" height="185" rx="12" class="f-surface"/>
+          <text x="107" y="28" text-anchor="middle" class="t" style="font-weight:700">② Raspberry Pi 5 Host</text>
+          <rect x="14" y="42" width="186" height="42" rx="7" class="f-elev"/><text x="107" y="61" text-anchor="middle" class="t">BCM2712 Cortex-A76 ×4</text><text x="107" y="76" text-anchor="middle" class="t-mono">2.4 GHz · ARM NEON SIMD</text>
+          <rect x="14" y="92" width="186" height="42" rx="7" class="f-elev"/><text x="107" y="111" text-anchor="middle" class="t">VideoCore VII GPU</text><text x="107" y="126" text-anchor="middle" class="t-mono">Vulkan 1.2 · DMA-BUF Share</text>
+          <text x="107" y="162" text-anchor="middle" class="t-dim">LPDDR4X-4267 Shared DRAM</text>
+        </g>
+        <line x1="482" y1="112" x2="506" y2="112" class="s-acc" marker-end="url(#oha)"/>
+        <g transform="translate(510,20)">
+          <rect width="204" height="185" rx="12" class="f-acc2-soft"/>
+          <text x="102" y="28" text-anchor="middle" class="t" style="fill:var(--accent-2);font-weight:700">③ Hailo-8 AI HAT+</text>
+          <rect x="14" y="42" width="176" height="42" rx="7" class="f-elev"/><text x="102" y="61" text-anchor="middle" class="t">26 TOPS Dataflow NPU</text><text x="102" y="76" text-anchor="middle" class="t-mono">PCIe Gen 2/3 · .hef</text>
+          <rect x="14" y="92" width="176" height="42" rx="7" class="f-elev"/><text x="102" y="111" text-anchor="middle" class="t">Power-of-2 Quantization</text><text x="102" y="126" text-anchor="middle" class="t-mono">Stage B · TAESD · Grid</text>
+          <text x="102" y="162" text-anchor="middle" class="t-dim">Hailo DFC Compiler Target</text>
+        </g>
+        <line x1="718" y1="112" x2="742" y2="112" class="s-acc" marker-end="url(#oha)"/>
+        <g transform="translate(746,20)">
+          <rect width="200" height="185" rx="12" class="f-surface"/>
+          <text x="100" y="28" text-anchor="middle" class="t" style="font-weight:700">④ Workstation</text>
+          <rect x="14" y="42" width="172" height="42" rx="7" class="f-elev"/><text x="100" y="61" text-anchor="middle" class="t">RTX 5060 Ti GPU</text><text x="100" y="76" text-anchor="middle" class="t-mono">Blackwell sm_120 · cu130</text>
+          <rect x="14" y="92" width="172" height="42" rx="7" class="f-elev"/><text x="100" y="111" text-anchor="middle" class="t">Train · Compile · Diffuse</text><text x="100" y="126" text-anchor="middle" class="t-mono">SD 1.5 + ControlNet</text>
+          <text x="100" y="162" text-anchor="middle" class="t-dim" style="font-size:10.5px">SSH / SCP Remote Orchestration</text>
+        </g>
+      </svg>
+      <figcaption><b>Figure 1-2.</b> 4-tier hardware architecture of AICAMERA. Memory and precision constraints are stratified from in-sensor SRAM (&lt; 2 MB) to host shared DRAM, PCIe NPU, and workstation VRAM.</figcaption>
+    </figure>
+
+    <div class="sim" id="sim-sram">
+      <div class="sim-head"><span class="sim-tag">SIMULATOR</span><h3>IMX500 In-Sensor NPU SRAM Budget (&lt; 2 MB) &amp; Stage A Complexity Calculator</h3></div>
+      <div class="sim-body side">
+        <div class="sim-view"><canvas id="cv-sram"></canvas></div>
+        <div class="sim-controls">
+          <div class="ctrl"><span>Downsample Stages (s_A = 2^K)</span>
+            <div class="seg" id="sr-sa">
+              <button data-value="2">SA2 (1-stage)</button>
+              <button data-value="4">SA4 (2-stage)</button>
+              <button data-value="8" class="on">SA8 (3-stage · Canonical)</button>
+            </div>
+          </div>
+          <label class="ctrl"><span>Hidden Channels C_mid (Canonical 16) <output id="sr-ch-out"></output></span>
+            <input type="range" id="sr-ch" min="8" max="64" step="4" value="16">
+          </label>
+          <label class="ctrl"><span>Kernel Size k (Canonical 4×4) <output id="sr-k-out"></output></span>
+            <input type="range" id="sr-k" min="2" max="6" step="2" value="4">
+          </label>
+          <label class="ctrl"><span>Input Resolution H=W <output id="sr-res-out"></output></span>
+            <input type="range" id="sr-res" min="256" max="1024" step="128" value="512">
+          </label>
+        </div>
+      </div>
+      <div class="sim-readout">
+        <div class="stat"><span class="k">Stage A Parameters</span><span class="v" id="o-sr-params">—</span></div>
+        <div class="stat"><span class="k">Compute (MACs)</span><span class="v" id="o-sr-macs">—</span></div>
+        <div class="stat"><span class="k">Peak Activation + Weight SRAM</span><span class="v" id="o-sr-mem">—</span></div>
+        <div class="stat"><span class="k">IMX500 Deployable?</span><span class="v" id="o-sr-ok" style="font-size:15px">—</span></div>
+      </div>
+      <div class="sim-note">Try this: Under the canonical configuration (<code>SA8, C_mid=16, k=4, 512×512</code>), the parameter count is exactly <b>5,924</b> and compute is <b>0.122 GMACs</b> (<a class="src" href="../../../lsp/src/train/models/encoder.py" title="lsp/src/train/models/encoder.py (line 44)" target="_blank" rel="noopener">encoder.py:44</a>). Raising input resolution to <b>1024</b> or hidden channels to <b>64</b> exceeds the 2.0 MB SRAM limit due to the first layer's peak activation buffer.</div>
+    </div>
+  </section>
+
+  <!-- ============================================================ 04 -->
+  <section id="s-sw-stack">
+    <h2>SW Stack &amp; Dual-NPU Cross-Compilation Pipeline (<code>.rpk</code> / <code>.hef</code>)</h2>
+    <p>To run the heterogeneous edge camera pipeline on real hardware, a split model trained in a single PyTorch checkpoint must be cross-compiled to two completely different hardware targets: <strong>Sony IMX500 sensor NPU firmware (<code>.rpk</code>)</strong> and <strong>Hailo-8 host NPU executable binaries (<code>.hef</code>)</strong>. In parallel, the Software ISP track compiles C99 reference code into <strong>Halide AOT shared libraries (<code>.so</code>)</strong> and Vulkan shaders.</p>
+
+    <h3>4-Tier Python Virtual Environment Isolation Architecture</h3>
+    <p>Modern PyTorch GPU wheels, the Sony IMX500 converter (Keras 2 only), and the Hailo Dataflow Compiler (locked to Python 3.10 C-extensions) have mutually incompatible framework versions and Protobuf/ONNX dependencies. Therefore, this project strictly isolates <strong>three virtual environments on the Workstation (WSL2, RTX 5060 Ti)</strong> plus the <strong>system environment on the Raspberry Pi 5</strong>, exchanging artifacts across environments exclusively through framework-agnostic NumPy archives (<code>.npz</code> / <code>.npy</code>) and standard <code>.onnx</code> files (<a class="src" href="../../../lsp/src/train/export_stagea_weights.py" title="lsp/src/train/export_stagea_weights.py" target="_blank" rel="noopener">export_stagea_weights.py</a>, <a class="src" href="../../../lsp/src/train/generate_hailo_calib.py" title="lsp/src/train/generate_hailo_calib.py" target="_blank" rel="noopener">generate_hailo_calib.py</a>).</p>
+
+    <div class="table-wrap">
+      <table>
+        <thead>
+          <tr><th>Tier / Location</th><th>Virtualenv Path</th><th>Core Frameworks &amp; Compilers</th><th>Responsibilities &amp; Isolation Rationale</th></tr>
+        </thead>
+        <tbody>
+          <tr>
+            <td><b>Tier 1 · Train &amp; Orchestrate</b><br><span class="t-dim">Workstation (WSL2)</span></td>
+            <td><code>~/py311_train</code><br><span class="t-dim">Python 3.11</span></td>
+            <td>PyTorch + <b>CUDA 13.0 (<code>cu130</code>)</b>, Keras 3, Diffusers, FastMCP, pytest</td>
+            <td>Split autoencoder (AsymAE) distillation training, Power-of-2 QAT, weight export (<code>.npz</code> / <code>.onnx</code>), ZSL capture daemon (<a class="src" href="../../../lsp/src/train/generative_capture_service.py" title="lsp/src/train/generative_capture_service.py" target="_blank" rel="noopener">generative_capture_service.py</a>), MCP server (<a class="src" href="../../../tools/aicamera_mcp_server.py" title="tools/aicamera_mcp_server.py" target="_blank" rel="noopener">tools/aicamera_mcp_server.py</a>), guidebook builder (<a class="src" href="../../../docs/build_spec_portal.py" title="docs/build_spec_portal.py" target="_blank" rel="noopener">docs/build_spec_portal.py</a>).<br>※ On RTX 5060 Ti (Blackwell <code>sm_120</code>), <code>cu126</code> wheels trigger kernel crashes, so <code>cu130</code> wheels are mandatory.</td>
+          </tr>
+          <tr>
+            <td><b>Tier 2 · Sensor NPU Compile</b><br><span class="t-dim">Workstation (WSL2)</span></td>
+            <td><code>~/aicamera/venv</code><br><span class="t-dim">Python 3.10</span></td>
+            <td>TensorFlow 2.15, <b>tf-keras (Keras 2)</b>, Sony MCT, <code>imx500-converter</code> (<code>imxconv-tf</code>)</td>
+            <td>Loads Stage A <code>.npz</code> weights, reconstructs a Keras 2 (NHWC) model, and runs Sony <code>model_compression_toolkit</code> (MCT) INT8 PTQ and <code>imxconv-tf</code> packaging (<code>packerOut.zip</code>) (<a class="src" href="../../../lsp/src/server/convert_v2_imx500.py" title="lsp/src/server/convert_v2_imx500.py" target="_blank" rel="noopener">convert_v2_imx500.py</a>, <a class="src" href="../../../lsp/src/server/compile_all_imx500.py" title="lsp/src/server/compile_all_imx500.py" target="_blank" rel="noopener">compile_all_imx500.py</a>).<br>※ Isolated from Tier 1 because <code>imxconv-tf</code> cannot deserialize Keras 3 formats.</td>
+          </tr>
+          <tr>
+            <td><b>Tier 3 · Host NPU Compile</b><br><span class="t-dim">Workstation (WSL2)</span></td>
+            <td><code>~/aicamera/py310</code><br><span class="t-dim">Python 3.10</span></td>
+            <td><code>hailo_dataflow_compiler</code> (<code>hailo_sdk_client.ClientRunner</code>)</td>
+            <td>Parses Stage B (<code>enc_stgb_sa*_c4.onnx</code>) and preview decoder (<code>taesd_decoder_ft.onnx</code>), performs INT8 quantization/optimization using real-distribution <code>.npy</code> tensors, and emits <code>.hef</code> binaries (<a class="src" href="../../../lsp/src/server/compile_all_stgb_hef.py" title="lsp/src/server/compile_all_stgb_hef.py" target="_blank" rel="noopener">compile_all_stgb_hef.py</a>, <a class="src" href="../../../lsp/src/server/compile_taesd_hef.py" title="lsp/src/server/compile_taesd_hef.py" target="_blank" rel="noopener">compile_taesd_hef.py</a>).</td>
+          </tr>
+          <tr>
+            <td><b>Tier 4 · Edge Runtime</b><br><span class="t-dim">Raspberry Pi 5</span></td>
+            <td>System Python 3.13<br><span class="t-dim">Debian Bookworm/Trixie</span></td>
+            <td><code>picamera2</code>, <code>imx500-all</code> (<code>rpk_packager</code>), <code>hailo-all</code> (HailoRT), <code>libcamera 0.7.0+</code></td>
+            <td>On-device final <code>.rpk</code> firmware packaging, IMX500 CSI-2 metadata tensor extraction, HailoRT async inference, live web viewfinders (<a class="src" href="../../../lsp/src/rpi/v2_demo.py" title="lsp/src/rpi/v2_demo.py" target="_blank" rel="noopener">v2_demo.py</a>, <a class="src" href="../../../hdrnet/scripts/sw_isp_demo.py" title="hdrnet/scripts/sw_isp_demo.py" target="_blank" rel="noopener">sw_isp_demo.py</a>), and physical benchmarking (<a class="src" href="../../../lsp/src/rpi/run_hardware_benchmark.py" title="lsp/src/rpi/run_hardware_benchmark.py" target="_blank" rel="noopener">run_hardware_benchmark.py</a>).</td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+
+    <figure class="diagram" id="fig-ov-compile">
+      <svg viewBox="0 0 1160 390" role="img" aria-label="Dual-NPU cross-compilation pipeline diagram">
+        <defs>
+          <marker id="arr-c" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto">
+            <path d="M0,0 L10,5 L0,10 z" fill="var(--accent)"/>
+          </marker>
+          <marker id="arr-p" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto">
+            <path d="M0,0 L10,5 L0,10 z" fill="var(--accent-2)"/>
+          </marker>
+        </defs>
+
+        <!-- Source Checkpoint (Left) -->
+        <g transform="translate(14,115)">
+          <rect width="212" height="155" rx="12" class="f-surface"/>
+          <text x="106" y="28" text-anchor="middle" class="t-acc">Tier 1 · ~/py311_train</text>
+          <text x="106" y="52" text-anchor="middle" class="t" style="font-weight:700">AsymAE Checkpoint</text>
+          <text x="106" y="72" text-anchor="middle" class="t-mono">last.pt (PyTorch NCHW)</text>
+          <line x1="18" y1="86" x2="194" y2="86" class="s-axis"/>
+          <text x="106" y="106" text-anchor="middle" class="t-dim" style="font-size:10.5px">• Stage A: Conv×3 + LeakyReLU</text>
+          <text x="106" y="124" text-anchor="middle" class="t-dim" style="font-size:10.5px">• Stage B: _hailo_fq PoT QAT</text>
+          <text x="106" y="142" text-anchor="middle" class="t-mono">CUDA 13.0 (sm_120)</text>
+        </g>
+
+        <!-- Branch arrows from Checkpoint -->
+        <path d="M226 155 C246 155, 246 88, 268 88" class="s-acc" fill="none" marker-end="url(#arr-c)"/>
+        <path d="M226 230 C246 230, 246 292, 268 292" class="s-line" stroke="var(--accent-2)" stroke-width="2" fill="none" marker-end="url(#arr-p)"/>
+
+        <!-- ================= TOP: IMX500 .rpk Path ================= -->
+        <rect x="260" y="14" width="886" height="152" rx="14" class="f-acc-soft" stroke-dasharray="5 3"/>
+        <text x="278" y="34" class="t-acc">Top Path · Sony IMX500 Sensor NPU Cross-Compile (~/aicamera/venv → RPi 5)</text>
+
+        <!-- Step A1: NPZ Export -->
+        <g transform="translate(274,46)">
+          <rect width="194" height="106" rx="10" class="f-elev"/>
+          <text x="97" y="24" text-anchor="middle" class="t" style="font-weight:700">1. Weight &amp; Spec Dump</text>
+          <text x="97" y="44" text-anchor="middle" class="t-mono">export_stagea_weights.py</text>
+          <text x="97" y="66" text-anchor="middle" class="t-dim" style="font-size:10.5px">stageA_sa8_c4_weights.npz</text>
+          <text x="97" y="84" text-anchor="middle" class="t-mono">w0..w2 [Cout,Cin,kH,kW]</text>
+          <text x="97" y="98" text-anchor="middle" class="t-dim" style="font-size:10.5px">+ JSON Layer Metadata</text>
+        </g>
+        <path d="M468 99 H490" class="s-acc" marker-end="url(#arr-c)"/>
+
+        <!-- Step A2: Keras NHWC + MCT PTQ -->
+        <g transform="translate(494,46)">
+          <rect width="236" height="106" rx="10" class="f-elev"/>
+          <text x="118" y="24" text-anchor="middle" class="t" style="font-weight:700">2. NHWC &amp; MCT PTQ</text>
+          <text x="118" y="44" text-anchor="middle" class="t-mono">convert_v2_imx500.py</text>
+          <text x="118" y="64" text-anchor="middle" class="t-dim" style="font-size:10.5px">transpose(w, (2,3,1,0)) → Keras 2</text>
+          <text x="118" y="82" text-anchor="middle" class="t-acc" style="font-size:10.5px">imx500_calib_frames/ (30 frames)</text>
+          <text x="118" y="98" text-anchor="middle" class="t-mono">Sony MCT INT8 Quantization</text>
+        </g>
+        <path d="M730 99 H752" class="s-acc" marker-end="url(#arr-c)"/>
+
+        <!-- Step A3: imxconv-tf -->
+        <g transform="translate(756,46)">
+          <rect width="194" height="106" rx="10" class="f-elev"/>
+          <text x="97" y="24" text-anchor="middle" class="t" style="font-weight:700">3. IMX500 Compiler</text>
+          <text x="97" y="44" text-anchor="middle" class="t-mono">imxconv-tf -c cfg</text>
+          <text x="97" y="64" text-anchor="middle" class="t-dim">Emit packerOut.zip</text>
+          <text x="97" y="82" text-anchor="middle" class="t-mono">Model: 2.22 KB</text>
+          <text x="97" y="98" text-anchor="middle" class="t-mono">SRAM: 2.76 / 8.00 MB (35%)</text>
+        </g>
+        <path d="M950 99 H972" class="s-acc" marker-end="url(#arr-c)"/>
+
+        <!-- Step A4: RPi rpk_packager -->
+        <g transform="translate(976,46)">
+          <rect width="156" height="106" rx="10" class="f-surface"/>
+          <text x="78" y="24" text-anchor="middle" class="t" style="font-weight:700">4. RPi FW Packaging</text>
+          <text x="78" y="44" text-anchor="middle" class="t-mono">rpk_packager</text>
+          <text x="78" y="66" text-anchor="middle" class="t-acc">network.rpk</text>
+          <text x="78" y="86" text-anchor="middle" class="t-dim">Load to IMX500</text>
+          <text x="78" y="100" text-anchor="middle" class="t-mono">Capture 2.59 ms</text>
+        </g>
+
+        <!-- ================= BOTTOM: Hailo-8 .hef Path ================= -->
+        <rect x="260" y="198" width="886" height="164" rx="14" class="f-acc2-soft" stroke-dasharray="5 3"/>
+        <text x="278" y="218" class="t" style="font-weight:700;fill:var(--accent-2)">Bottom Path · Hailo-8 Host NPU Cross-Compile (~/py311_train → ~/aicamera/py310)</text>
+
+        <!-- Step B1: ONNX + Calib Export -->
+        <g transform="translate(274,232)">
+          <rect width="234" height="114" rx="10" class="f-elev"/>
+          <text x="117" y="24" text-anchor="middle" class="t" style="font-weight:700">1. ONNX Patch &amp; Calib</text>
+          <text x="117" y="44" text-anchor="middle" class="t-mono">export_decoder_onnx.py</text>
+          <text x="117" y="62" text-anchor="middle" class="t-dim" style="font-size:10.5px">opset=11, inject kernel_shape</text>
+          <text x="117" y="82" text-anchor="middle" class="t-mono">generate_hailo_calib.py</text>
+          <text x="117" y="100" text-anchor="middle" class="t-dim" style="font-size:10.5px">calib_bus(r) · calib_latent(z) .npy</text>
+        </g>
+        <path d="M508 289 H530" class="s-line" stroke="var(--accent-2)" stroke-width="2" marker-end="url(#arr-p)"/>
+
+        <!-- Step B2: ClientRunner Translate & Optimize -->
+        <g transform="translate(534,232)">
+          <rect width="252" height="114" rx="10" class="f-elev"/>
+          <text x="126" y="24" text-anchor="middle" class="t" style="font-weight:700">2. DFC Parse &amp; INT8 PTQ</text>
+          <text x="126" y="44" text-anchor="middle" class="t-mono">ClientRunner(hw_arch="hailo8")</text>
+          <text x="126" y="64" text-anchor="middle" class="t-dim" style="font-size:10.5px">translate_onnx_model(net_input_shapes)</text>
+          <text x="126" y="82" text-anchor="middle" class="t-dim" style="font-size:10.5px">compiler_optimization_level = max</text>
+          <text x="126" y="100" text-anchor="middle" class="t-mono">runner.optimize(calib_npy)</text>
+        </g>
+        <path d="M786 289 H808" class="s-line" stroke="var(--accent-2)" stroke-width="2" marker-end="url(#arr-p)"/>
+
+        <!-- Step B3: runner.compile() -> .hef -->
+        <g transform="translate(812,232)">
+          <rect width="166" height="114" rx="10" class="f-elev"/>
+          <text x="83" y="24" text-anchor="middle" class="t" style="font-weight:700">3. Dataflow Compile</text>
+          <text x="83" y="44" text-anchor="middle" class="t-mono">runner.compile()</text>
+          <text x="83" y="66" text-anchor="middle" class="t-dim" style="font-size:10.5px">enc_stgb_sa8_c4.hef</text>
+          <text x="83" y="84" text-anchor="middle" class="t-dim" style="font-size:10.5px">taesd_decoder_ft.hef</text>
+          <text x="83" y="102" text-anchor="middle" class="t-mono">Hailo-8 Context Map</text>
+        </g>
+        <path d="M978 289 H996" class="s-line" stroke="var(--accent-2)" stroke-width="2" marker-end="url(#arr-p)"/>
+
+        <!-- Step B4: HailoRT Edge Execution -->
+        <g transform="translate(1000,232)">
+          <rect width="136" height="114" rx="10" class="f-surface"/>
+          <text x="68" y="24" text-anchor="middle" class="t" style="font-weight:700">4. Edge Inference</text>
+          <text x="68" y="44" text-anchor="middle" class="t-mono">HailoRT PCIe</text>
+          <text x="68" y="66" text-anchor="middle" class="t-acc" style="font-size:11.5px">Stage B: 0.97 ms</text>
+          <text x="68" y="84" text-anchor="middle" class="t-acc" style="font-size:11.5px">TAESD: 16.44 ms</text>
+          <text x="68" y="102" text-anchor="middle" class="t-mono">30.0 FPS Preview</text>
+        </g>
+      </svg>
+      <figcaption><b>Figure 1-3.</b> Dual-NPU cross-compilation pipeline branching from a single PyTorch checkpoint. The sensor path (top) transposes <code>.npz</code> weights and calibrates with real camera frames to package <code>.rpk</code> firmware; the host path (bottom) patches <code>kernel_shape</code> in ONNX and uses real-distribution intermediate tensors (<code>r</code>, <code>z</code>) in <code>.npy</code> format to compile Hailo-8 <code>.hef</code> binaries.</figcaption>
+    </figure>
+
+    <div class="grid-2">
+      <div class="card">
+        <h3>1) Sony IMX500 <code>.rpk</code> Conversion Essentials</h3>
+        <p>Stage A deployed on the in-sensor NPU is a pure feed-forward stack of <code>Conv2d(k=4, s=2) → LeakyReLU(0.1)</code> (<a class="src" href="../../../lsp/src/train/models/encoder.py" title="lsp/src/train/models/encoder.py (line 44)" target="_blank" rel="noopener">encoder.py:44</a>). Cross-compilation requires strict adherence to three engineering rules (<a class="src" href="../../../lsp/src/train/export_stagea_weights.py" title="lsp/src/train/export_stagea_weights.py" target="_blank" rel="noopener">export_stagea_weights.py</a>, <a class="src" href="../../../lsp/src/server/convert_v2_imx500.py" title="lsp/src/server/convert_v2_imx500.py" target="_blank" rel="noopener">convert_v2_imx500.py</a>, <a class="src" href="../../../lsp/src/server/compile_all_imx500.py" title="lsp/src/server/compile_all_imx500.py" target="_blank" rel="noopener">compile_all_imx500.py</a>):</p>
+        <ol class="steps">
+          <li><strong>Keras Version Bridge (<code>.npz</code>)</strong>: A <code>.keras</code> file saved by Keras 3 in <code>py311_train</code> cannot be loaded by Keras 2 (<code>tf-keras</code>) in <code>~/aicamera/venv</code>. Thus <a class="src" href="../../../lsp/src/train/export_stagea_weights.py" title="lsp/src/train/export_stagea_weights.py" target="_blank" rel="noopener">export_stagea_weights.py</a> dumps pure NumPy arrays (<code>w0..w2</code>, <code>b0..b2</code>) and a JSON layer specification.</li>
+          <li><strong>NCHW → NHWC 4D Kernel Transposition</strong>: When injecting a PyTorch convolution weight tensor \(\mathbf{W}_{\text{PyTorch}} \in \mathbb{R}^{C_{\text{out}} \times C_{\text{in}} \times k_H \times k_W}\) into a Keras 2 NHWC convolution layer, the axes must be transposed in order <code>(2, 3, 1, 0)</code>.</li>
+          <li><strong>Domain-Aligned Empirical Calibration</strong>: Feeding synthetic DIV2K images into Sony MCT (<code>mct.ptq.keras_post_training_quantization</code>) causes quantization saturation due to mismatch with the real IMX500 sensor ISP exposure and black-level distribution. We always calibrate with real indoor camera captures stored in <code>docs/imx500_calib_frames/*.png</code>.</li>
+        </ol>
+        <div class="eq">
+          $$\mathbf{W}_{\text{Keras}}[k_H, k_W, c_{\text{in}}, c_{\text{out}}] = \mathbf{W}_{\text{PyTorch}}[c_{\text{out}}, c_{\text{in}}, k_H, k_W], \qquad \text{np.transpose}(\mathbf{W},\; (2, 3, 1, 0))$$
+          <span class="eq-label">(1.4) PyTorch→Keras Kernel Transposition</span>
+        </div>
+        <p class="note">Compilation report (<a class="src" href="../../../lsp/aicamera-models/model_quantized_MemoryReport.json" title="lsp/aicamera-models/model_quantized_MemoryReport.json" target="_blank" rel="noopener">model_quantized_MemoryReport.json</a>): SA8 physical weight size is <b>2.22KB</b>, and peak runtime memory is <b>2.76MB / 8.00MB (35%)</b>, achieving <code>Fit In Chip: true</code>.</p>
+<pre class="cmd"><code># [Step 1 · ~/py311_train] PyTorch checkpoint → version-agnostic .npz export
+~/py311_train/bin/python lsp/src/train/export_stagea_weights.py \
+  --ckpt lsp/src/train/runs/enc_sa8_c4_div2k_20k/last.pt \
+  --out  lsp/aicamera-models/stageA_sa8_c4_weights.npz
+
+# [Step 2 · ~/aicamera/venv] Keras 2 rebuild + MCT PTQ + imxconv-tf packaging (SA8·SA4·SA2 batch)
+~/aicamera/venv/bin/python lsp/src/server/compile_all_imx500.py --height 512 --width 512</code></pre>
+      </div>
+
+      <div class="card">
+        <h3>2) Hailo-8 <code>.hef</code> &amp; Halide <code>.so</code> Compilation Essentials</h3>
+        <p>Stage B and the <code>TAESD_ft</code> decoder running on the host Hailo-8 NPU are compiled via <code>ClientRunner(hw_arch="hailo8")</code> in <code>hailo_dataflow_compiler</code> (<a class="src" href="../../../lsp/src/train/export_decoder_onnx.py" title="lsp/src/train/export_decoder_onnx.py" target="_blank" rel="noopener">export_decoder_onnx.py</a>, <a class="src" href="../../../lsp/src/train/generate_hailo_calib.py" title="lsp/src/train/generate_hailo_calib.py" target="_blank" rel="noopener">generate_hailo_calib.py</a>, <a class="src" href="../../../lsp/src/server/compile_all_stgb_hef.py" title="lsp/src/server/compile_all_stgb_hef.py" target="_blank" rel="noopener">compile_all_stgb_hef.py</a>, <a class="src" href="../../../lsp/src/server/compile_taesd_hef.py" title="lsp/src/server/compile_taesd_hef.py" target="_blank" rel="noopener">compile_taesd_hef.py</a>):</p>
+        <ol class="steps">
+          <li><strong>ONNX Legacy Export &amp; <code>kernel_shape</code> Patching</strong>: PyTorch's new <code>dynamo=True</code> exporter omits certain operator attributes, while legacy export with <code>padding="same"</code> records only <code>auto_pad</code> and omits <code>kernel_shape</code>. <a class="src" href="../../../lsp/src/train/export_decoder_onnx.py" title="lsp/src/train/export_decoder_onnx.py" target="_blank" rel="noopener">export_decoder_onnx.py</a> exports with <code>dynamo=False, opset=11</code> and then traverses every <code>Conv</code> node in the ONNX graph to directly patch <code>kernel_shape=[kH, kW]</code> from the weight tensor dimensions.</li>
+          <li><strong>Per-Network Real-Distribution Calibration Tensors</strong>: The input to Stage B is not a 0–255 image but the bus tensor \(\mathbf{r} = \mathcal{E}_A(\mathbf{x})\) emitted by Stage A, and the input to <code>TAESD_ft</code> is the latent tensor \(\hat{\mathbf{z}} = \mathcal{E}_B(\mathbf{r})\). <a class="src" href="../../../lsp/src/train/generate_hailo_calib.py" title="lsp/src/train/generate_hailo_calib.py" target="_blank" rel="noopener">generate_hailo_calib.py</a> extracts the exact NHWC FP32 tensors (<code>calib_bus_*.npy</code>, <code>calib_latent_*.npy</code>) each network will encounter and feeds them to <code>runner.optimize()</code>.</li>
+          <li><strong>Halide AOT Cross-Compilation (Software ISP)</strong>: For the 10-stage pipeline in Chapter 03, <a class="src" href="../../../hdrnet/c_src/build_openisp_halide.py" title="hdrnet/c_src/build_openisp_halide.py" target="_blank" rel="noopener">build_openisp_halide.py</a> executes the Halide generator to compile C99-callable <code>libopenisp_halide.so</code> and Vulkan Compute backends.</li>
+        </ol>
+<pre class="cmd"><code># [Step 1 · ~/py311_train] Export Stage B ONNX and generate real-distribution calibration tensors (.npy)
+~/py311_train/bin/python lsp/src/train/export_decoder_onnx.py \
+  --ckpt lsp/src/train/runs/enc_sa8_c4_div2k_20k/last.pt \
+  --out  lsp/hailo-models/enc_stgb_sa8_c4.onnx --height 64 --width 64
+~/py311_train/bin/python lsp/src/train/generate_hailo_calib.py \
+  --ckpt lsp/src/train/runs/enc_sa8_c4_div2k_20k/last.pt --height 512 --width 512 \
+  --out-bus lsp/hailo-models/calib_bus_sa8_c4.npy --out-latent lsp/hailo-models/calib_latent_sa8_c4.npy
+
+# [Step 2 · ~/aicamera/py310] Hailo DFC optimization (INT8 PTQ) and .hef compilation
+~/aicamera/py310/bin/python lsp/src/server/compile_all_stgb_hef.py
+~/aicamera/py310/bin/python lsp/src/server/compile_taesd_hef.py</code></pre>
+      </div>
+    </div>
+  </section>
+
+  <!-- ============================================================ 05 -->
+  <section id="s-agent-flow">
+    <h2>Agent Workflow · MCP Server · Remote Edge Orchestration</h2>
+    <p>This repository is architected so that researchers and AI agents (Antigravity) can execute the entire cycle—<strong>model training → quantization &amp; compilation → remote deployment &amp; physical benchmarking on Raspberry Pi 5 → drift verification → documentation &amp; slide synchronization</strong>—in an automated closed loop (<a class="src" href="../../../GEMINI.md" title="GEMINI.md" target="_blank" rel="noopener">GEMINI.md</a>, <a class="src" href="../../../tools/aicamera_mcp_server.py" title="tools/aicamera_mcp_server.py" target="_blank" rel="noopener">tools/aicamera_mcp_server.py</a>, <a class="src" href="../../../tools/rpi_remote.py" title="tools/rpi_remote.py" target="_blank" rel="noopener">tools/rpi_remote.py</a>).</p>
+
+    <figure class="diagram" id="fig-ov-agent">
+      <svg viewBox="0 0 1160 350" role="img" aria-label="Antigravity agent and remote edge execution workflow diagram">
+        <defs>
+          <marker id="arr-a" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto">
+            <path d="M0,0 L10,5 L0,10 z" fill="var(--accent)"/>
+          </marker>
+          <marker id="arr-ok" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto">
+            <path d="M0,0 L10,5 L0,10 z" fill="var(--ok)"/>
+          </marker>
+        </defs>
+
+        <!-- 1. Agent & Skills Layer (Left) -->
+        <g transform="translate(14,22)">
+          <rect width="302" height="296" rx="14" class="f-acc-soft"/>
+          <text x="151" y="28" text-anchor="middle" class="t-acc">1. Antigravity Agent Layer</text>
+          <rect x="14" y="42" width="274" height="72" rx="10" class="f-elev"/>
+          <text x="151" y="64" text-anchor="middle" class="t" style="font-weight:700">7 Slash Skills (.agents/skills/)</text>
+          <text x="151" y="84" text-anchor="middle" class="t-mono">/bench · /train · /hp-sweep · /demo</text>
+          <text x="151" y="102" text-anchor="middle" class="t-mono">/design · /verify-figures · /patent</text>
+
+          <rect x="14" y="126" width="274" height="82" rx="10" class="f-elev"/>
+          <text x="151" y="148" text-anchor="middle" class="t" style="font-size:11.5px;font-weight:700">10 Specialist Roles (specialist_roles)</text>
+          <text x="151" y="168" text-anchor="middle" class="t-dim" style="font-size:10.5px">pipeline-verifier · bench-runner</text>
+          <text x="151" y="185" text-anchor="middle" class="t-dim" style="font-size:10.5px">keras-transpiler · algorithm-engineer</text>
+          <text x="151" y="201" text-anchor="middle" class="t-dim" style="font-size:10.5px">workflow/optimize/edge-ai-engineer</text>
+
+          <rect x="14" y="220" width="274" height="62" rx="10" class="f-surface"/>
+          <text x="151" y="242" text-anchor="middle" class="t" style="font-weight:700">Hard Guardrails (project_rules.md)</text>
+          <text x="151" y="262" text-anchor="middle" class="t-dim">Drift Gate · Canonical Metric Sync</text>
+        </g>
+
+        <path d="M316 115 H354" class="s-acc" marker-end="url(#arr-a)"/>
+        <path d="M316 225 H354" class="s-acc" marker-end="url(#arr-a)"/>
+
+        <!-- 2. Deterministic Bridge Layer (Center) -->
+        <g transform="translate(360,22)">
+          <rect width="302" height="136" rx="12" class="f-elev"/>
+          <text x="151" y="26" text-anchor="middle" class="t-acc">2A. FastMCP Tool Server</text>
+          <text x="151" y="46" text-anchor="middle" class="t-mono">tools/aicamera_mcp_server.py</text>
+          <text x="151" y="68" text-anchor="middle" class="t-dim" style="font-size:10.5px">• detect_environment / list_train_configs</text>
+          <text x="151" y="86" text-anchor="middle" class="t-dim" style="font-size:10.5px">• launch_training / read_train_csv</text>
+          <text x="151" y="104" text-anchor="middle" class="t-dim" style="font-size:10.5px">• run_benchmark / read_status_table</text>
+          <text x="151" y="122" text-anchor="middle" class="t-mono">• diff_bench (|ΔFPS|≥0.3 alert)</text>
+        </g>
+
+        <g transform="translate(360,176)">
+          <rect width="302" height="142" rx="12" class="f-elev"/>
+          <text x="151" y="26" text-anchor="middle" class="t" style="font-weight:700;fill:var(--accent-2)">2B. Remote SSH &amp; ZSL Watcher</text>
+          <text x="151" y="46" text-anchor="middle" class="t-mono">tools/rpi_remote.py</text>
+          <text x="151" y="68" text-anchor="middle" class="t-dim" style="font-size:10.5px">• start / stop / status / logs (:5000)</text>
+          <text x="151" y="86" text-anchor="middle" class="t-dim" style="font-size:10.5px">• start-isp / stop-isp (:5001)</text>
+          <text x="151" y="104" text-anchor="middle" class="t-mono">generative_capture_service.py --watch</text>
+          <text x="151" y="122" text-anchor="middle" class="t-dim">Detect RPi Capture → SD+ControlNet</text>
+        </g>
+
+        <path d="M662 90 H706" class="s-acc" marker-end="url(#arr-a)"/>
+        <path d="M662 245 H706" class="s-acc" marker-end="url(#arr-a)"/>
+        <text x="684" y="80" text-anchor="middle" class="t-mono">SSH</text>
+        <text x="684" y="235" text-anchor="middle" class="t-mono">SCP</text>
+
+        <!-- 3. Physical Edge & Verification Gate (Right) -->
+        <g transform="translate(712,22)">
+          <rect width="432" height="145" rx="12" class="f-acc2-soft"/>
+          <text x="216" y="26" text-anchor="middle" class="t" style="font-weight:700">3. Physical Edge Testbench (Raspberry Pi 5)</text>
+          <text x="216" y="46" text-anchor="middle" class="t-mono">IMX500 (.rpk) + MIPI CSI-2 + Hailo-8 (.hef)</text>
+          <rect x="16" y="58" width="194" height="72" rx="8" class="f-elev"/>
+          <text x="113" y="78" text-anchor="middle" class="t" style="font-weight:700">Live Web Demos</text>
+          <text x="113" y="96" text-anchor="middle" class="t-mono">v2_demo.py (:5000)</text>
+          <text x="113" y="114" text-anchor="middle" class="t-mono">sw_isp_demo.py (:5001)</text>
+          <rect x="222" y="58" width="194" height="72" rx="8" class="f-elev"/>
+          <text x="319" y="78" text-anchor="middle" class="t" style="font-weight:700">Hardware Benchmark</text>
+          <text x="319" y="96" text-anchor="middle" class="t-mono">run_hardware_benchmark</text>
+          <text x="319" y="114" text-anchor="middle" class="t-dim" style="font-size:10.5px">Measure ID · SA2 · SA4 · SA8</text>
+        </g>
+
+        <g transform="translate(712,184)">
+          <rect width="432" height="134" rx="12" class="f-surface"/>
+          <text x="216" y="26" text-anchor="middle" class="t-ok">4. Single-Source-of-Truth &amp; Regression Gate</text>
+          <text x="216" y="50" text-anchor="middle" class="t-mono">rpi_table1_bench_results.json · 3way_isp_results.json</text>
+          <text x="216" y="72" text-anchor="middle" class="t-dim" style="font-size:11px">pytest (LSP 7-Workflow · Verified Lifting · Universal CFA)</text>
+          <text x="216" y="94" text-anchor="middle" class="t-mono">docs/build_spec_portal.py (Auto Link · Math · Metric Audit)</text>
+          <text x="216" y="114" text-anchor="middle" class="t-dim">Approve Doc · Dashboard · Slide Sync Only on Zero Drift</text>
+        </g>
+
+        <!-- Feedback Loop Arrow -->
+        <path d="M928 167 V184" class="s-line" stroke="var(--ok)" stroke-width="2" marker-end="url(#arr-ok)"/>
+        <path d="M712 292 H165 V318" class="s-line" stroke="var(--ok)" stroke-width="1.8" stroke-dasharray="5 3" fill="none"/>
+      </svg>
+      <figcaption><b>Figure 1-4.</b> Antigravity agent-driven closed-loop research and deployment architecture. Rather than guessing ad-hoc shell scripts, the agent invokes deterministic tools exposed by the MCP server (<a class="src" href="../../../tools/aicamera_mcp_server.py" title="tools/aicamera_mcp_server.py" target="_blank" rel="noopener">tools/aicamera_mcp_server.py</a>) and remote bridge (<a class="src" href="../../../tools/rpi_remote.py" title="tools/rpi_remote.py" target="_blank" rel="noopener">tools/rpi_remote.py</a>), updating documentation only from canonical JSONs that pass the drift detector (<code>diff_bench</code>) and regression suite (<a class="src" href="../../../lsp/tests/test_pipeline_workflows.py" title="lsp/tests/test_pipeline_workflows.py" target="_blank" rel="noopener">test_pipeline_workflows.py</a>).</figcaption>
+    </figure>
+
+    <div class="grid-2">
+      <div class="card">
+        <h3>MCP Server (<code>aicamera_mcp_server.py</code>) Exposed Tools</h3>
+        <p>To prevent agents from making path or argument mistakes during training or hardware measurement, <a class="src" href="../../../tools/aicamera_mcp_server.py" title="tools/aicamera_mcp_server.py" target="_blank" rel="noopener">tools/aicamera_mcp_server.py</a> exposes <strong>7 deterministic tools</strong> over the standard Model Context Protocol (FastMCP):</p>
+        <div class="table-wrap" style="margin:8px 0">
+          <table>
+            <thead><tr><th>MCP Tool Name</th><th>Behavior &amp; Safety Gate</th></tr></thead>
+            <tbody>
+              <tr><td><code>detect_environment()</code></td><td>Automatically detects whether the host is <code>rpi</code> (IMX500 + <code>hailortcli</code> present) or <code>server</code> (GPU/WSL2)</td></tr>
+              <tr><td><code>run_benchmark(modes, n_frames)</code></td><td>Runs the physical benchmark and automatically compares results against <code>rpi_table1_bench_results.json</code></td></tr>
+              <tr><td><code>read_status_table()</code></td><td>Immediately returns all mode measurements from the canonical benchmark JSON (<a class="src" href="../../../lsp/benchmarks/rpi_table1_bench_results.json" title="lsp/benchmarks/rpi_table1_bench_results.json" target="_blank" rel="noopener">rpi_table1_bench_results.json</a>)</td></tr>
+              <tr><td><code>diff_bench(fresh, canonical)</code></td><td>Raises <code>drifted=true</code> alert if \(\lvert\Delta\text{FPS}\rvert \ge 0.3\) or \(\lvert\Delta t_{\text{total}}\rvert \ge 1.0\text{ ms}\)</td></tr>
+              <tr><td><code>list_train_configs()</code></td><td>Lists valid training configurations under <code>lsp/src/train/configs/*.yaml</code></td></tr>
+              <tr><td><code>launch_training(config, gpus)</code></td><td>Launches background training via <code>accelerate launch</code> and tracks logs/PID</td></tr>
+              <tr><td><code>read_train_csv(run_dir, tail)</code></td><td>Parses recent loss trends (L1, LPIPS) from <code>training_log.csv</code> to inspect convergence</td></tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+
+      <div class="card">
+        <h3>Slash Skills (<code>/skill</code>) &amp; Specialist Agent Roles</h3>
+        <p>Recurring research and engineering workflows are structured into 7 standard recipes under <code>.agents/skills/</code> and 10 specialist roles defined in <a class="src" href="../../../.agents/rules/specialist_roles.md" title=".agents/rules/specialist_roles.md" target="_blank" rel="noopener">specialist_roles.md</a>:</p>
+        <div class="table-wrap" style="margin:8px 0">
+          <table>
+            <thead><tr><th>Slash Command</th><th>Linked Skill &amp; Core Responsibility</th></tr></thead>
+            <tbody>
+              <tr><td><code>/bench</code></td><td><a class="src" href="../../../.agents/skills/run-benchmark/SKILL.md" title=".agents/skills/run-benchmark/SKILL.md" target="_blank" rel="noopener">run-benchmark</a> · <code>bench-runner</code>: Execute remote RPi 5 benchmarks and audit drift against canonical numbers</td></tr>
+              <tr><td><code>/train</code></td><td><a class="src" href="../../../.agents/skills/launch-training/SKILL.md" title=".agents/skills/launch-training/SKILL.md" target="_blank" rel="noopener">launch-training</a> · Verify CUDA 13.0 environment &amp; dataset, launch <code>accelerate</code> training, and monitor initial loss</td></tr>
+              <tr><td><code>/hp-sweep</code></td><td><a class="src" href="../../../.agents/skills/hp-sweep/SKILL.md" title=".agents/skills/hp-sweep/SKILL.md" target="_blank" rel="noopener">hp-sweep</a> · Sweep split points \(s_A \in \{8, 4, 2\}\) (<a class="src" href="../../../lsp/src/train/eval_sa_grid.py" title="lsp/src/train/eval_sa_grid.py" target="_blank" rel="noopener">eval_sa_grid.py</a>) and update the bandwidth–quality Pareto frontier</td></tr>
+              <tr><td><code>/demo</code></td><td><a class="src" href="../../../.agents/skills/edge-demo/SKILL.md" title=".agents/skills/edge-demo/SKILL.md" target="_blank" rel="noopener">edge-demo</a> · <code>edge-ai-engineer</code>: Control RPi 5 live viewfinders (<code>:5000</code> / <code>:5001</code>) and workstation ZSL capture daemon</td></tr>
+              <tr><td><code>/design</code></td><td><a class="src" href="../../../.agents/skills/design/SKILL.md" title=".agents/skills/design/SKILL.md" target="_blank" rel="noopener">design</a> · Synchronize canonical benchmark constants across research dashboards and visual assets</td></tr>
+              <tr><td><code>/verify-figures</code></td><td><a class="src" href="../../../.agents/skills/verify-figures/SKILL.md" title=".agents/skills/verify-figures/SKILL.md" target="_blank" rel="noopener">verify-figures</a> · Unify architecture diagram styling (<code>fig1_style.py</code>) and automatically check SVG text overlaps/bounds</td></tr>
+              <tr><td><code>/patent</code></td><td><a class="src" href="../../../.agents/skills/patent-deck/SKILL.md" title=".agents/skills/patent-deck/SKILL.md" target="_blank" rel="noopener">patent-deck</a> · <code>patent-helper</code>: Automatically generate invention disclosure block diagrams and 14-slide decks</td></tr>
+            </tbody>
+          </table>
+        </div>
+        <p class="note">Key specialist personas (<a class="src" href="../../../.agents/rules/specialist_roles.md" title=".agents/rules/specialist_roles.md" target="_blank" rel="noopener">specialist_roles.md</a>): <code>pipeline-verifier</code> (full pytest regression verification), <code>keras-transpiler</code> (PyTorch→Keras numerical equivalence and 2 MB SRAM guard), <code>algorithm-engineer</code> (10-stage ISP and 3A convergence), <code>workflow-engineer</code> (Verified Lifting), and <code>optimize-engineer</code> (Halide fusion and DMA-BUF zero-copy).</p>
+      </div>
+    </div>
+
+    <!-- ==================== Simulator 3: Dual-NPU Compile & Agent Drift Gate ==================== -->
+    <div class="sim" id="sim-devops">
+      <div class="sim-head">
+        <span class="badge">SIMULATOR 03</span>
+        <h3>Dual-NPU Cross-Compile &amp; Agent Benchmark Drift Gate</h3>
+      </div>
+      <div class="sim-controls">
+        <div class="ctrl">
+          <span>Target Compilation Pipeline</span>
+          <div class="seg" id="dv-target">
+            <button type="button" data-value="rpk" class="on">IMX500 Stage A (.rpk)</button>
+            <button type="button" data-value="stgb">Hailo-8 Stage B (.hef)</button>
+            <button type="button" data-value="taesd">Hailo-8 TAESD_ft (.hef)</button>
+            <button type="button" data-value="halide">Halide 10-Stage ISP (.so)</button>
+          </div>
+        </div>
+        <div class="ctrl">
+          <span>Quantization Calibration Data</span>
+          <div class="seg" id="dv-calib">
+            <button type="button" data-value="aligned" class="on">Domain-Aligned (Real Camera / r·z Tensors)</button>
+            <button type="button" data-value="mismatch">Distribution Mismatch (Synthetic DIV2K / 0~255 Pixels)</button>
+          </div>
+        </div>
+        <div class="ctrl">
+          <span>Kernel Transpose · ONNX Patch</span>
+          <div class="seg" id="dv-patch">
+            <button type="button" data-value="ok" class="on">Applied ((2,3,1,0) / kernel_shape)</button>
+            <button type="button" data-value="bug">Missing (Axis Mismatch / auto_pad Bug)</button>
+          </div>
+        </div>
+        <label class="ctrl">
+          <span>Simulated Remote Benchmark Jitter (\(\Delta t\)) <output id="dv-jitter-out">+0.2 ms</output></span>
+          <input type="range" id="dv-jitter" min="-2.0" max="3.0" step="0.1" value="0.2">
+        </label>
+      </div>
+      <div class="sim-view"><canvas id="cv-devops" data-w="860" data-h="250"></canvas></div>
+      <div class="sim-readout">
+        <div class="stat"><span class="k">Execution Venv (Tier)</span><span class="v" id="o-dv-venv" style="font-size:14px">—</span></div>
+        <div class="stat"><span class="k">Artifact Size · Latency</span><span class="v" id="o-dv-art" style="font-size:15px">—</span></div>
+        <div class="stat"><span class="k">Quantized Reconstruction (PSNR)</span><span class="v" id="o-dv-psnr">—</span></div>
+        <div class="stat"><span class="k">MCP diff_bench Verdict</span><span class="v" id="o-dv-gate" style="font-size:14.5px">—</span></div>
+      </div>
+      <div class="sim-note">Try this: Switching <b>Quantization Calibration Data</b> to <code>Distribution Mismatch</code> still succeeds at compile time, but misaligns the sensor/latent activation clipping ranges, causing PSNR to plummet by <b>4–6 dB</b>. Moving the <b>Simulated Remote Benchmark Jitter (\(\Delta t\))</b> slider beyond <b>±1.0 ms</b> triggers a <code>DRIFT DETECTED</code> alert in <a class="src" href="../../../tools/aicamera_mcp_server.py" title="tools/aicamera_mcp_server.py" target="_blank" rel="noopener">tools/aicamera_mcp_server.py</a>'s <code>diff_bench</code> gate, blocking automated documentation updates.</div>
+    </div>
+
+    <div class="grid-2">
+      <div class="card">
+        <h3>Remote Edge Control &amp; Full Regression Commands</h3>
+<pre class="cmd"><code># Raspberry Pi 5 remote control (tools/rpi_remote.py)
+python tools/rpi_remote.py status
+python tools/rpi_remote.py start      # LSP live viewfinder (:5000)
+python tools/rpi_remote.py start-isp  # 4-Tier SW ISP demo (:5001)
+python tools/rpi_remote.py bench      # Run physical hardware benchmark
+
+# Full pipeline regression tests across all 3 tracks (Workstation WSL2)
+~/py311_train/bin/pytest lsp/tests/test_pipeline_workflows.py
+~/py311_train/bin/pytest hdrnet/verified_lifting/tests/test_lifting.py
+~/py311_train/bin/pytest universal_cfa/tests/ -o testpaths=universal_cfa/tests
+
+# Rebuild interactive guidebook &amp; run self-verification
+~/py311_train/bin/python docs/build_spec_portal.py</code></pre>
+      </div>
+
+      <div class="card">
+        <h3>Canonical Source File Map by Topic</h3>
+        <div class="table-wrap" style="margin:6px 0">
+          <table>
+            <thead><tr><th>Topic</th><th>Canonical Source Links</th></tr></thead>
+            <tbody>
+              <tr><td>Repository Master Overview · Agent Charter</td><td><a class="src" href="../../../README.md" title="README.md" target="_blank" rel="noopener">README.md</a> · <a class="src" href="../../../GEMINI.md" title="GEMINI.md" target="_blank" rel="noopener">GEMINI.md</a></td></tr>
+              <tr><td>LSP Architecture · Training · HW Measurement</td><td><a class="src" href="../../../lsp/README.md" title="lsp/README.md" target="_blank" rel="noopener">lsp/README.md</a> · <a class="src" href="../../../lsp/benchmarks/rpi_table1_bench_results.json" title="lsp/benchmarks/rpi_table1_bench_results.json" target="_blank" rel="noopener">rpi_table1_bench_results.json</a> · <a class="src" href="../../../lsp/benchmarks/README.md" title="lsp/benchmarks/README.md" target="_blank" rel="noopener">lsp/benchmarks/README.md</a></td></tr>
+              <tr><td>IMX500 / Hailo-8 Cross-Compilers</td><td><a class="src" href="../../../lsp/src/server/convert_v2_imx500.py" title="lsp/src/server/convert_v2_imx500.py" target="_blank" rel="noopener">convert_v2_imx500.py</a> · <a class="src" href="../../../lsp/src/server/compile_all_imx500.py" title="lsp/src/server/compile_all_imx500.py" target="_blank" rel="noopener">compile_all_imx500.py</a> · <a class="src" href="../../../lsp/src/server/compile_all_stgb_hef.py" title="lsp/src/server/compile_all_stgb_hef.py" target="_blank" rel="noopener">compile_all_stgb_hef.py</a> · <a class="src" href="../../../lsp/src/server/compile_taesd_hef.py" title="lsp/src/server/compile_taesd_hef.py" target="_blank" rel="noopener">compile_taesd_hef.py</a></td></tr>
+              <tr><td>Software ISP · Verified Lifting</td><td><a class="src" href="../../../hdrnet/README.md" title="hdrnet/README.md" target="_blank" rel="noopener">hdrnet/README.md</a> · <a class="src" href="../../../hdrnet/verified_lifting/README.md" title="hdrnet/verified_lifting/README.md" target="_blank" rel="noopener">hdrnet/verified_lifting/README.md</a> · <a class="src" href="../../../hdrnet/c_src/build_openisp_halide.py" title="hdrnet/c_src/build_openisp_halide.py" target="_blank" rel="noopener">build_openisp_halide.py</a></td></tr>
+              <tr><td>Universal CFA Proposal &amp; Benchmarks</td><td><a class="src" href="../../../universal_cfa/README.md" title="universal_cfa/README.md" target="_blank" rel="noopener">universal_cfa/README.md</a> · <a class="src" href="../../../universal_cfa/docs/architecture_proposal.md" title="universal_cfa/docs/architecture_proposal.md" target="_blank" rel="noopener">architecture_proposal.md</a></td></tr>
+              <tr><td>MCP Server · Remote Bridge · Role Rules</td><td><a class="src" href="../../../tools/aicamera_mcp_server.py" title="tools/aicamera_mcp_server.py" target="_blank" rel="noopener">tools/aicamera_mcp_server.py</a> · <a class="src" href="../../../tools/rpi_remote.py" title="tools/rpi_remote.py" target="_blank" rel="noopener">tools/rpi_remote.py</a> · <a class="src" href="../../../.agents/rules/specialist_roles.md" title=".agents/rules/specialist_roles.md" target="_blank" rel="noopener">specialist_roles.md</a> · <a class="src" href="../../../.agents/rules/project_rules.md" title=".agents/rules/project_rules.md" target="_blank" rel="noopener">.agents/rules/project_rules.md</a></td></tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+
+    <div class="card">
+      <h3>Repository Directory Tree</h3>
+<pre class="tree">aicamera/
+├── README.md                  # Monorepo landing page &amp; 3-track summary
+├── GEMINI.md                  # Agent master context &amp; operating charter
+├── .agents/                   # Antigravity agent customizations
+│   ├── rules/                 # project_rules.md, specialist_roles.md (10 specialist roles)
+│   └── skills/                # /bench, /train, /hp-sweep, /demo, /design, /verify-figures, /patent
+├── docs/                      # Interactive guidebook (generated by build_spec_portal.py)
+│   ├── index.html             # Guidebook home (3D hardware pipeline + roadmap)
+│   ├── chapters/              # Ch.01~05 deep-dive chapters &amp; interactive simulators
+│   ├── imx500_calib_frames/   # Real indoor camera calibration frames for IMX500 MCT INT8 PTQ
+│   └── aicamera_architecture_spec.html
+├── lsp/                       # [Project 1] Latent Signal Processing
+│   ├── src/train/             # AsymAE distillation training, QAT, ONNX/NPZ/Calib export, ZSL watcher
+│   ├── src/server/            # convert_v2_imx500.py (.rpk) &amp; compile_*_hef.py (.hef) compilers
+│   ├── src/rpi/               # v2_demo.py live viewfinder &amp; run_hardware_benchmark.py
+│   ├── aicamera-models/       # Verified IMX500 .rpk firmware, .npz weights, MemoryReport.json
+│   ├── hailo-models/          # Verified Hailo-8 .hef binaries (Stage B, TAESD_ft) &amp; calib_*.npy
+│   └── benchmarks/            # Table 1 physical hardware measurement canonical JSON
+├── hdrnet/                    # [Project 2] 10-Stage Software ISP &amp; Halide/NPU
+│   ├── c_src/                 # C99 reference ISP, 3A loop, Halide CPU/Vulkan/DMA-BUF builders
+│   ├── verified_lifting/      # C99 → Halide automated lifting &amp; numerical parity verifier
+│   ├── src/  scripts/         # Dual-NPU edge AI (ZAP tracking, person seg) &amp; sw_isp_demo.py
+│   └── benchmarks/            # 12MP 6-engine benchmark canonical JSON
+├── universal_cfa/             # [Project 3] Universal CFA (Bayer / Tetracell / Hexadeca)
+│   ├── src/                   # PixelUnshuffle phase compressor, frozen translator, CFA physics
+│   └── experiments/           # Quantitative evaluation JSON against remosaicing baselines
+└── tools/                     # aicamera_mcp_server.py (FastMCP), rpi_remote.py (SSH bridge)</pre>
+    </div>
+  </section>
+
+  <!-- ============================================================ summary -->
+  <section class="keypoints" id="summary">
+    <h2>Key Takeaways</h2>
+    <ol>
+      <li>Streaming high-resolution uncompressed frames from an edge camera makes <strong>MIPI CSI-2 DMA serialization latency (52.91 ms @ 512²)</strong> the dominant bottleneck, capping frame rate at 14.9 FPS regardless of host NPU speed.</li>
+      <li><strong>LSP (Project 1)</strong> asymmetrically splits the encoder across the sensor NPU (Stage A, 5,924 params) and host NPU (Stage B, 595K params), shrinking bus payload by <strong>48× (64 KB, 2.90 ms)</strong> to achieve a 30.0 FPS live viewfinder and ZSL generative capture.</li>
+      <li><strong>Software ISP (Project 2)</strong> fuses a 10-stage C99 pipeline into a single Halide kernel (Tier 3) and applies VideoCore VII DMA-BUF zero-copy (Tier 4), cutting per-12MP-frame DRAM traffic by <strong>13.8× (811 → 59 MB)</strong>.</li>
+      <li><strong>Universal CFA (Project 3)</strong> processes Bayer (2×2), Tetracell (4×4), and Hexadecacell (8×8) clustered CFAs with an in-sensor phase-aware <code>PixelUnshuffle</code> compressor that shares a single frozen host translator (\(\mathcal{T}_B\)).</li>
+      <li><strong>Dual-NPU SW Stack &amp; Agent Workflow</strong> compiles <code>.rpk</code>/<code>.hef</code> binaries via NCHW→NHWC kernel transposition and real-distribution calibration across 4-Tier isolated Python virtualenvs (<code>py311_train</code>, <code>venv</code>, <code>py310</code>, RPi 5), automating physical benchmarks and drift guarding through the FastMCP server (<a class="src" href="../../../tools/aicamera_mcp_server.py" title="tools/aicamera_mcp_server.py" target="_blank" rel="noopener">tools/aicamera_mcp_server.py</a>) and remote bridge (<a class="src" href="../../../tools/rpi_remote.py" title="tools/rpi_remote.py" target="_blank" rel="noopener">tools/rpi_remote.py</a>).</li>
+    </ol>
+  </section>
+</main>
+
+<script>
+(function () {
+  "use strict";
+
+  // ==================== Simulator 1: MIPI Bus Bottleneck ====================
+  const resSeg = SB.seg("bus-res", () => cvBus.redraw());
+  const modeSeg = SB.seg("bus-mode", () => cvBus.redraw());
+  const bwRange = SB.range("bus-bw", (v) => v + " MB/s", () => cvBus.redraw());
+  const decRange = SB.range("bus-dec", (v) => v.toFixed(1) + " ms", () => cvBus.redraw());
+
+  const RES_MAP = {
+    "512": { w: 512, h: 512, label: "512×512" },
+    "640": { w: 640, h: 480, label: "640×480" },
+    "1520": { w: 2028, h: 1520, label: "2028×1520 (3MP)" },
+    "3040": { w: 4056, h: 3040, label: "4056×3040 (12MP)" },
+  };
+
+  function calcMetrics(w, h, mode, bwMBs, decMs) {
+    let kb = 0, capMs = 2.0, stgbMs = 0, dMs = decMs;
+    const pxScale = (w * h) / (512 * 512);
+    if (mode === "id") {
+      kb = (w * h * 3 * 4) / 1024;
+      capMs = 2.0; stgbMs = 0; dMs = 0;
+    } else if (mode === "raw16") {
+      kb = (w * h * 2) / 1024;
+      capMs = 2.0; stgbMs = 0; dMs = decMs * Math.min(4, Math.sqrt(pxScale));
+    } else {
+      const sa = mode === "sa2" ? 2 : mode === "sa4" ? 4 : 8;
+      kb = ((w / sa) * (h / sa) * 4 * 4) / 1024;
+      capMs = (sa === 8 ? 2.59 : sa === 4 ? 1.75 : 0.61) * Math.sqrt(pxScale);
+      stgbMs = (sa === 8 ? 0.97 : sa === 4 ? 5.64 : 18.51) * pxScale;
+      dMs = decMs * Math.sqrt(pxScale);
+    }
+    const busMs = 0.72 + (kb / 1024) / (bwMBs / 1000);
+    const serialMs = capMs + busMs + stgbMs + dMs;
+    const maxStage = Math.max(capMs, busMs, stgbMs, dMs);
+    const botName = maxStage === busMs ? "MIPI Bus Extract" : maxStage === stgbMs ? "Stage B (NPU)" : maxStage === dMs ? "Decoder / ISP" : "Sensor Capture";
+    const syncFps = Math.min(30.0, 1000 / Math.max(maxStage, 1));
+    return { kb, capMs, busMs, stgbMs, dMs, serialMs, maxStage, botName, syncFps };
+  }
+
+  const cvBus = SB.canvas("#cv-bus", (ctx, W, H) => {
+    const P = SB.palette();
+    const rInfo = RES_MAP[resSeg()] || RES_MAP["512"];
+    const curMode = modeSeg();
+    const bw = bwRange();
+    const dec = decRange();
+
+    const modes = [
+      { k: "id", lb: "IDENTITY (RGB)" },
+      { k: "raw16", lb: "RAW16" },
+      { k: "sa2", lb: "LSP · SA2" },
+      { k: "sa4", lb: "LSP · SA4" },
+      { k: "sa8", lb: "LSP · SA8" },
+    ];
+    const items = modes.map((m) => ({ ...m, ...calcMetrics(rInfo.w, rInfo.h, m.k, bw, dec) }));
+    const cur = items.find((x) => x.k === curMode) || items[4];
+
+    SB.stat("o-bus-kb", cur.kb >= 1024 ? (cur.kb / 1024).toFixed(2) + "<small>MB</small>" : cur.kb.toFixed(0) + "<small>KB</small>");
+    SB.stat("o-bus-ms", cur.busMs.toFixed(2) + "<small>ms</small>");
+    SB.stat("o-bus-bot", cur.botName);
+    SB.stat("o-bus-fps", cur.syncFps.toFixed(1) + "<small>FPS</small>");
+
+    const maxX = Math.max(65, ...items.map((x) => x.serialMs * 1.12));
+    const x0 = 118, y0 = 28, bh = 28, gap = 18;
+    const plotW = W - x0 - 95;
+    const scale = plotW / maxX;
+
+    ctx.font = "600 12px " + SB.color("font");
+    ctx.fillStyle = P.dim;
+    ctx.fillText(`Resolution ${rInfo.label} · Per-Stage Serial Latency Breakdown (Dashed = 33.3 ms / 30 FPS Budget)`, 16, 18);
+
+    // 33.3ms budget line
+    const x30 = x0 + 33.33 * scale;
+    if (x30 < W - 20) {
+      ctx.save();
+      ctx.strokeStyle = P.ok; ctx.setLineDash([5, 4]); ctx.lineWidth = 1.5;
+      ctx.beginPath(); ctx.moveTo(x30, y0); ctx.lineTo(x30, y0 + items.length * (bh + gap) - 6); ctx.stroke();
+      ctx.fillStyle = P.ok; ctx.font = "11px " + SB.color("mono");
+      ctx.fillText("33.3 ms (30 FPS)", x30 + 4, y0 + 10);
+      ctx.restore();
+    }
+
+    const segDefs = [
+      { k: "capMs", nm: "Sensor Cap", col: "#64748b" },
+      { k: "busMs", nm: "MIPI Bus", col: P.bad },
+      { k: "stgbMs", nm: "Stage B", col: P.warn },
+      { k: "dMs", nm: "Decoder/ISP", col: P.accent2 },
+    ];
+
+    items.forEach((it, idx) => {
+      const y = y0 + 12 + idx * (bh + gap);
+      const isSel = it.k === curMode;
+      if (isSel) {
+        ctx.fillStyle = P.surface;
+        ctx.fillRect(6, y - 5, W - 12, bh + 10);
+      }
+      ctx.fillStyle = isSel ? P.accent : P.text;
+      ctx.font = (isSel ? "700 " : "500 ") + "12.5px " + SB.color("font");
+      ctx.textAlign = "right"; ctx.textBaseline = "middle";
+      ctx.fillText(it.lb, x0 - 10, y + bh / 2);
+
+      let cx = x0;
+      segDefs.forEach((sg) => {
+        const val = it[sg.k];
+        if (val <= 0) return;
+        const wpx = Math.max(2, val * scale);
+        ctx.fillStyle = sg.col;
+        ctx.fillRect(cx, y, wpx, bh);
+        if (wpx > 36) {
+          ctx.fillStyle = "#fff";
+          ctx.font = "600 10.5px " + SB.color("mono");
+          ctx.textAlign = "center";
+          ctx.fillText(val.toFixed(1), cx + wpx / 2, y + bh / 2 + 1);
+        }
+        cx += wpx;
+      });
+
+      ctx.fillStyle = P.text;
+      ctx.font = "600 11.5px " + SB.color("mono");
+      ctx.textAlign = "left";
+      ctx.fillText(`${it.serialMs.toFixed(1)} ms (${it.syncFps.toFixed(1)} FPS)`, cx + 8, y + bh / 2);
+    });
+
+    // Legend
+    let lx = x0;
+    const ly = H - 16;
+    segDefs.forEach((sg) => {
+      ctx.fillStyle = sg.col;
+      ctx.fillRect(lx, ly - 9, 12, 10);
+      ctx.fillStyle = P.dim;
+      ctx.font = "11.5px " + SB.color("font");
+      ctx.textAlign = "left";
+      ctx.fillText(sg.nm, lx + 16, ly - 3);
+      lx += 110;
+    });
+  }, { height: 290 });
+
+  // ==================== Simulator 2: IMX500 SRAM Budget ====================
+  const srSa = SB.seg("sr-sa", () => cvSram.redraw());
+  const srCh = SB.range("sr-ch", (v) => v + " ch", () => cvSram.redraw());
+  const srK = SB.range("sr-k", (v) => v + "×" + v, () => cvSram.redraw());
+  const srRes = SB.range("sr-res", (v) => v + "×" + v, () => cvSram.redraw());
+
+  const cvSram = SB.canvas("#cv-sram", (ctx, W, H) => {
+    const P = SB.palette();
+    const sa = Number(srSa());
+    const ch = srCh();
+    const k = srK();
+    const res = srRes();
+    const stages = Math.round(Math.log2(sa)); // 1, 2, or 3
+
+    let params = 0, macs = 0, curH = res, inC = 3, peakActBytes = 0;
+    const layerInfo = [];
+    for (let s = 1; s <= stages; s++) {
+      const outC = s === stages ? 4 : ch;
+      const outH = curH / 2;
+      const lParams = inC * outC * k * k + outC;
+      const lMacs = outH * outH * inC * outC * k * k;
+      const actBytes = (curH * curH * inC + outH * outH * outC); // INT8 ping-pong buffer
+      params += lParams;
+      macs += lMacs;
+      peakActBytes = Math.max(peakActBytes, actBytes);
+      layerInfo.push({ name: `Conv${s} (${inC}→${outC}, s2)`, lParams, actKB: actBytes / 1024, outH, outC });
+      curH = outH;
+      inC = outC;
+    }
+    const weightKB = params / 1024;
+    const totalSramKB = weightKB + peakActBytes / 1024 + 180; // +180 KB runtime/firmware overhead
+    const totalSramMB = totalSramKB / 1024;
+    const limitMB = 2.0;
+    const ok = totalSramMB <= limitMB;
+
+    SB.stat("o-sr-params", params.toLocaleString());
+    SB.stat("o-sr-macs", (macs / 1e9).toFixed(3) + "<small>GMACs</small>");
+    SB.stat("o-sr-mem", totalSramMB.toFixed(2) + "<small>MB / 2.0 MB</small>");
+    SB.stat("o-sr-ok", ok ? '<span style="color:var(--ok)">PASS (Fits in SRAM)</span>' : '<span style="color:var(--bad)">OVERFLOW (Compile Fails)</span>');
+
+    ctx.font = "600 12.5px " + SB.color("font");
+    ctx.fillStyle = P.text;
+    ctx.fillText(`IMX500 On-Chip SRAM Utilization (${totalSramKB.toFixed(0)} KB / 2,048 KB Budget)`, 18, 26);
+
+    // Gauge bar
+    const gx = 18, gy = 40, gw = W - 36, gh = 30;
+    ctx.fillStyle = P.surface;
+    ctx.fillRect(gx, gy, gw, gh);
+    const limX = gx + (2.0 / 2.5) * gw;
+
+    const wFrac = (weightKB / 1024 / 2.5) * gw;
+    const aFrac = ((peakActBytes / 1024) / 1024 / 2.5) * gw;
+    const fFrac = (180 / 1024 / 2.5) * gw;
+
+    ctx.fillStyle = P.accent;
+    ctx.fillRect(gx, gy, Math.min(gw, aFrac), gh);
+    ctx.fillStyle = P.accent2;
+    ctx.fillRect(gx + aFrac, gy, Math.min(gw - aFrac, wFrac), gh);
+    ctx.fillStyle = P.warn;
+    ctx.fillRect(gx + aFrac + wFrac, gy, Math.min(gw - aFrac - wFrac, fFrac), gh);
+
+    ctx.strokeStyle = P.bad; ctx.lineWidth = 2; ctx.setLineDash([4, 3]);
+    ctx.beginPath(); ctx.moveTo(limX, gy - 6); ctx.lineTo(limX, gy + gh + 6); ctx.stroke();
+    ctx.setLineDash([]);
+    ctx.fillStyle = P.bad; ctx.font = "600 11px " + SB.color("mono");
+    ctx.fillText("2.0 MB Limit", limX - 40, gy - 9);
+
+    // Layer breakdown cards
+    let ly = 98;
+    layerInfo.forEach((l, i) => {
+      const bx = 18 + i * ((W - 36) / stages);
+      const bw = (W - 36) / stages - 10;
+      ctx.fillStyle = P.surface;
+      ctx.fillRect(bx, ly, bw, 92);
+      ctx.strokeStyle = P.border;
+      ctx.strokeRect(bx, ly, bw, 92);
+      ctx.fillStyle = P.accent;
+      ctx.font = "700 12px " + SB.color("mono");
+      ctx.fillText(l.name, bx + 10, ly + 22, bw - 18);
+      ctx.fillStyle = P.text;
+      ctx.font = "12px " + SB.color("font");
+      ctx.fillText(`Output Tensor: ${l.outH}×${l.outH}×${l.outC}`, bx + 10, ly + 44, bw - 18);
+      ctx.fillStyle = P.dim;
+      ctx.font = "11.5px " + SB.color("mono");
+      ctx.fillText(`Weights: ${l.lParams.toLocaleString()} params`, bx + 10, ly + 64, bw - 18);
+      ctx.fillText(`I/O Buffer: ${l.actKB.toFixed(0)} KB`, bx + 10, ly + 82, bw - 18);
+    });
+
+    ctx.fillStyle = P.dim; ctx.font = "11.5px " + SB.color("font");
+    ctx.fillText("■ Blue: Peak Activation Buffer (Ping-Pong)   ■ Purple: Quantized Weights   ■ Orange: Runtime FW Overhead", 18, H - 14, W - 36);
+  }, { height: 225 });
+
+  // ==================== Simulator 3: Dual-NPU Cross-Compile & Drift Gate ====================
+  const dvTarget = SB.seg("dv-target", () => cvDevops.redraw());
+  const dvCalib = SB.seg("dv-calib", () => cvDevops.redraw());
+  const dvPatch = SB.seg("dv-patch", () => cvDevops.redraw());
+  const dvJitter = SB.range("dv-jitter", (v) => (v >= 0 ? "+" : "") + v.toFixed(1) + " ms", () => cvDevops.redraw());
+
+  const TARGET_SPEC = {
+    rpk: {
+      venv: "~/py311_train → ~/aicamera/venv → RPi 5",
+      art: "network.rpk (2.22 KB · 2.59 ms)",
+      basePsnr: 27.31,
+      baseMs: 22.90,
+      baseFps: 30.0,
+      stages: [
+        { t: "1. PyTorch Stage A", s: "NCHW [16,3,4,4]", env: "py311_train" },
+        { t: "2. NPZ & NHWC Transpose", s: "transpose(2,3,1,0)", env: "venv (Keras 2)" },
+        { t: "3. Sony MCT PTQ", s: "imx500_calib (30 imgs)", env: "venv (INT8)" },
+        { t: "4. imxconv-tf", s: "packerOut.zip", env: "SRAM 2.76 MB" },
+        { t: "5. RPi rpk_packager", s: "network.rpk", env: "IMX500 2.59 ms" },
+      ],
+    },
+    stgb: {
+      venv: "~/py311_train → ~/aicamera/py310 → RPi 5",
+      art: "enc_stgb_sa8_c4.hef (0.97 ms)",
+      basePsnr: 27.31,
+      baseMs: 22.90,
+      baseFps: 30.0,
+      stages: [
+        { t: "1. Stage B (_hailo_fq)", s: "PoT QAT [64,64,4]", env: "py311_train" },
+        { t: "2. ONNX Export", s: "opset=11 + kernel_shape", env: "export_decoder_onnx" },
+        { t: "3. Real-Dist Calib", s: "calib_bus_sa8.npy (r)", env: "generate_hailo_calib" },
+        { t: "4. Hailo ClientRunner", s: "optimize(opt_level=max)", env: "py310 (DFC)" },
+        { t: "5. runner.compile()", s: "enc_stgb_sa8_c4.hef", env: "Hailo-8 0.97 ms" },
+      ],
+    },
+    taesd: {
+      venv: "~/py311_train → ~/aicamera/py310 → RPi 5",
+      art: "taesd_decoder_ft.hef (16.44 ms)",
+      basePsnr: 24.22,
+      baseMs: 22.90,
+      baseFps: 30.0,
+      stages: [
+        { t: "1. TAESD_ft Fine-Tune", s: "z(64×64×4) → RGB", env: "py311_train" },
+        { t: "2. ONNX Export", s: "taesd_decoder_ft.onnx", env: "opset=11" },
+        { t: "3. Latent Calibration", s: "calib_latent_sa8.npy (z)", env: "generate_hailo_calib" },
+        { t: "4. Hailo ClientRunner", s: "INT8 PTQ Optimize", env: "py310 (DFC)" },
+        { t: "5. runner.compile()", s: "taesd_decoder_ft.hef", env: "Hailo-8 16.44 ms" },
+      ],
+    },
+    halide: {
+      venv: "WSL2 clang/Halide → RPi 5 Cortex-A76 / V3D",
+      art: "libopenisp_halide.so (128.78 ms @ 12MP)",
+      basePsnr: 42.80,
+      baseMs: 128.78,
+      baseFps: 7.8,
+      stages: [
+        { t: "1. C99 10-Stage ISP", s: "openisp_ref.c", env: "C99 Reference" },
+        { t: "2. Verified Lifting", s: "Stencil IR → Halide", env: "PSNR ≥ 40 dB Check" },
+        { t: "3. Tiled Schedule Fusion", s: "256×128 Strip + SIMD", env: "13.8× DRAM Saved" },
+        { t: "4. AOT Cross-Compile", s: "build_openisp_halide.py", env: "libopenisp_halide.so" },
+        { t: "5. DMA-BUF Zero-Copy", s: "V3D Vulkan / ARM NEON", env: "12MP 128.78 ms" },
+      ],
+    },
+  };
+
+  const cvDevops = SB.canvas("#cv-devops", (ctx, W, H) => {
+    const P = SB.palette();
+    const tgt = TARGET_SPEC[dvTarget()] || TARGET_SPEC.rpk;
+    const calibOk = dvCalib() === "aligned";
+    const patchOk = dvPatch() === "ok";
+    const jitter = dvJitter();
+
+    let psnr = tgt.basePsnr;
+    if (!calibOk) psnr -= (dvTarget() === "halide" ? 1.8 : 5.4);
+    if (!patchOk) psnr = 9.1; // Broken spatial axes or compile failure
+
+    const measMs = tgt.baseMs + jitter;
+    const drifted = Math.abs(jitter) >= 1.0;
+
+    SB.stat("o-dv-venv", tgt.venv);
+    SB.stat("o-dv-art", patchOk ? tgt.art : '<span style="color:var(--bad)">Compile/Tensor Axis Error</span>');
+    SB.stat("o-dv-psnr", (patchOk ? psnr.toFixed(2) : "9.10 (Corrupted)") + "<small>dB</small>");
+    SB.stat(
+      "o-dv-gate",
+      !patchOk
+        ? '<span style="color:var(--bad)">Build Blocked (pytest Fail)</span>'
+        : drifted
+        ? `<span style="color:var(--warn)">DRIFT Alert (Δt=${jitter >= 0 ? "+" : ""}${jitter.toFixed(1)} ms)</span>`
+        : `<span style="color:var(--ok)">PASS (Δt=${jitter >= 0 ? "+" : ""}${jitter.toFixed(1)} ms &lt; 1.0 ms)</span>`
+    );
+
+    // Draw 5 pipeline stages across top half
+    const n = tgt.stages.length;
+    const padX = 16, gap = 12;
+    const boxW = (W - padX * 2 - gap * (n - 1)) / n;
+    const boxY = 22, boxH = 104;
+
+    tgt.stages.forEach((st, i) => {
+      const x = padX + i * (boxW + gap);
+      const isErr = (!patchOk && i === 1) || (!calibOk && i === 2);
+      ctx.fillStyle = isErr ? "rgba(214,69,69,0.14)" : P.surface;
+      ctx.fillRect(x, boxY, boxW, boxH);
+      ctx.strokeStyle = isErr ? P.bad : P.accent;
+      ctx.lineWidth = isErr ? 2 : 1.2;
+      ctx.strokeRect(x, boxY, boxW, boxH);
+
+      ctx.fillStyle = isErr ? P.bad : P.accent;
+      ctx.font = "700 11.5px " + SB.color("font");
+      ctx.textAlign = "left";
+      ctx.fillText(st.t, x + 8, boxY + 22, boxW - 14);
+
+      ctx.fillStyle = P.text;
+      ctx.font = "600 11px " + SB.color("mono");
+      ctx.fillText(isErr ? (i === 1 ? "Axis/Attr Mismatch!" : "Domain Clipping!") : st.s, x + 8, boxY + 52, boxW - 14);
+
+      ctx.fillStyle = P.dim;
+      ctx.font = "11px " + SB.color("mono");
+      ctx.fillText(st.env, x + 8, boxY + 82, boxW - 14);
+
+      if (i < n - 1) {
+        ctx.strokeStyle = P.axis;
+        ctx.lineWidth = 1.5;
+        ctx.beginPath();
+        ctx.moveTo(x + boxW + 2, boxY + boxH / 2);
+        ctx.lineTo(x + boxW + gap - 2, boxY + boxH / 2);
+        ctx.stroke();
+      }
+    });
+
+    // Bottom half: MCP diff_bench Drift Gate meter
+    const gy = 154, gx = 16, gw = W - 32, gh = 64;
+    ctx.fillStyle = P.surface;
+    ctx.fillRect(gx, gy, gw, gh);
+    ctx.strokeStyle = P.border;
+    ctx.lineWidth = 1;
+    ctx.strokeRect(gx, gy, gw, gh);
+
+    ctx.fillStyle = P.text;
+    ctx.font = "700 12px " + SB.color("font");
+    ctx.fillText(
+      `MCP diff_bench() Drift Gate: Canonical ${tgt.baseMs.toFixed(2)} ms vs Measured ${measMs.toFixed(2)} ms (Tolerance ±1.0 ms)`,
+      gx + 12,
+      gy + 20
+    );
+
+    // Draw center-zero drift scale (-3.0 ms to +3.0 ms)
+    const barX = gx + 12, barY = gy + 32, barW = gw - 24, barH = 18;
+    ctx.fillStyle = P.bg;
+    ctx.fillRect(barX, barY, barW, barH);
+
+    // Safe zone (-1.0 to +1.0 ms)
+    const mapX = (v) => barX + ((v + 3.0) / 6.0) * barW;
+    ctx.fillStyle = "rgba(31,157,85,0.22)";
+    ctx.fillRect(mapX(-1.0), barY, mapX(1.0) - mapX(-1.0), barH);
+
+    // Threshold lines at -1.0 and +1.0
+    [-1.0, 0, 1.0].forEach((tv) => {
+      const tx = mapX(tv);
+      ctx.strokeStyle = tv === 0 ? P.axis : P.warn;
+      ctx.lineWidth = tv === 0 ? 1.2 : 1.8;
+      ctx.beginPath();
+      ctx.moveTo(tx, barY - 3);
+      ctx.lineTo(tx, barY + barH + 3);
+      ctx.stroke();
+    });
+
+    // Marker for current jitter
+    const curX = mapX( Math.max(-2.9, Math.min(2.9, jitter)) );
+    ctx.fillStyle = drifted ? P.bad : P.ok;
+    ctx.beginPath();
+    ctx.arc(curX, barY + barH / 2, 7, 0, Math.PI * 2);
+    ctx.fill();
+  }, { height: 240 });
+})();
+</script>
+</body>
+</html>

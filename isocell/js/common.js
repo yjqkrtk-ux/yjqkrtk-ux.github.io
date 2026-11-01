@@ -174,7 +174,7 @@
 
       const foot = document.createElement("footer");
       foot.className = "sb-foot";
-      foot.innerHTML = `Samsung S.LSI · ISOCELL 200MP &amp; E2E AI Remosaic Architecture Guidebook · Yongjoon Song, Ph.D. · Build 2026-11-01 (<code>7a421af</code>)`;
+      foot.innerHTML = `Samsung S.LSI · ISOCELL 200MP &amp; E2E AI Remosaic Architecture Guidebook · Yongjoon Song, Ph.D. · Build 2026-11-01 (<code>d69795d</code>)`;
       main.appendChild(foot);
     });
   }

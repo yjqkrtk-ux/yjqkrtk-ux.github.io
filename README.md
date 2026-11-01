@@ -69,6 +69,23 @@
 
 ---
 
+## 📚 4. Published IEEE Papers, Granted US/KR Patents & Public Code
+
+### Peer-Reviewed Publications (First Author)
+1. **Y.-J. Song** and D.-H. Cho, "Local Alignment of DNA Sequence Based on Deep Reinforcement Learning," *IEEE Open Journal of Engineering in Medicine and Biology (OJEMB)*, vol. 2, pp. 170–178, Apr. 2021. — [**DOI: 10.1109/OJEMB.2021.3076156**](https://doi.org/10.1109/OJEMB.2021.3076156) · [**Code (`DQNalign`)**](https://github.com/syjqkrtk/DQNalign)
+2. **Y.-J. Song**, D. J. Ji, H. Seo, G.-B. Han, and D.-H. Cho, "Pairwise Heuristic Sequence Alignment Algorithm Based on Deep Reinforcement Learning," *IEEE Open Journal of Engineering in Medicine and Biology (OJEMB)*, vol. 2, pp. 36–43, Jan. 2021. — [**DOI: 10.1109/OJEMB.2021.3055424**](https://doi.org/10.1109/OJEMB.2021.3055424) · [**Code (`HeuristicAlignment`)**](https://github.com/syjqkrtk/HeuristicAlignment)
+3. **Y.-J. Song** and D.-H. Cho, "A Novel Estimation Algorithm of Evolutionary Distance Based on the Word Frequency Variation of Sequence Segment," *Proc. IEEE EMBS Int. Conf. on Biomedical and Health Informatics (BHI)*, pp. 287–290, 2018. — [**IEEE Xplore: 8333425**](https://ieeexplore.ieee.org/document/8333425) · [**Code (`EvolDist`)**](https://github.com/syjqkrtk/EvolDist)
+4. **Y.-J. Song** and D.-H. Cho, "Classification of Various Genomic Sequences Based on Distribution of Repeated K-Word," *Proc. 39th Annual Int. Conf. of the IEEE Engineering in Medicine and Biology Society (EMBC)*, 2017. — [**IEEE Xplore: 8037707**](https://ieeexplore.ieee.org/document/8037707) · [**Code (`REminerII`)**](https://github.com/syjqkrtk/REminerII)
+
+### Granted & Published Patents (Google Patents)
+* **[US 12,574,659 B2 (Granted Mar 2026)](https://patents.google.com/patent/US12574659B2/en)** — *Image signal processor, image sensor, and operating method of the image sensor* (Samsung Electronics)
+* **[US 12,363,458 B2 (Granted Jul 2025)](https://patents.google.com/patent/US12363458B2/en)** — *Image sensor and operating method* (Samsung Electronics)
+* **[US 12,496,917 B2 (Granted Dec 2025)](https://patents.google.com/patent/US12496917B2/en)** / **[KR 10-2370592 B1 (Granted)](https://patents.google.com/patent/KR102370592B1/en)** / **[WO 2021/101223 A1](https://patents.google.com/patent/WO2021101223A1/en)** — *Method and apparatus for vehicle location-based power control of wireless charging inverter* (KAIST & WiPowerOne) · [**Code (`EVGPSforWPT`)**](https://github.com/syjqkrtk/EVGPSforWPT)
+* **[KR 10-2021-0092933 A](https://patents.google.com/patent/KR20210092933A/en)** — *Wireless power transfer apparatus and method using image recognition* (KEPCO & KAIST) · [**Code (`ObjectDetectionForWPT`)**](https://github.com/syjqkrtk/ObjectDetectionForWPT)
+* **[US 2019/0385696 A1](https://patents.google.com/patent/US20190385696A1/en)** / **[KR 10-2019-0136733 A](https://patents.google.com/patent/KR20190136733A/en)** — *Method for predicting disease risk based on analysis of complex genetic information* (KAIST) · [**Code (`Bio / REDNN`)**](https://github.com/syjqkrtk/Bio)
+
+---
+
 ## 🗂️ Repository Layout
 
 ```text

@@ -616,7 +616,7 @@
 
     const foot = document.createElement("footer");
     foot.className = "sb-foot";
-    foot.innerHTML = `AICAMERA 인터랙티브 아키텍처 가이드북 · <code>docs/build_spec_portal.py</code> 로 생성 · build 2026-11-01 09:29 · commit <code>2c6b896</code>
+    foot.innerHTML = `AICAMERA 인터랙티브 아키텍처 가이드북 · <code>docs/build_spec_portal.py</code> 로 생성 · build 2026-11-01 09:33 · commit <code>2c6b896</code>
       <br>모든 벤치마크 수치는 저장소 JSON 정본에서, ISP·3A 기본값은 C99 헤더에서 빌드 시 자동 추출 및 검증됩니다.`;
     body.appendChild(foot);
 

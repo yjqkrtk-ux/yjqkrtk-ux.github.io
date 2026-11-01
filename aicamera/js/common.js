@@ -6,6 +6,29 @@
 (function () {
   "use strict";
 
+  const DOC_LANG = document.documentElement.lang === "en" ? "en" : "ko";
+  function otherLangHref() {
+    const fromChapter = document.body
+      ? (document.body.getAttribute("data-root") || "") === "../"
+      : /\/chapters\/[a-z0-9_-]+\.html$/i.test(location.pathname);
+    const p = location.pathname;
+    const m = p.match(/\/chapters\/([a-z0-9_-]+)\.html$/i);
+    const slug = m ? m[1] : "index";
+    if (DOC_LANG === "ko") {
+      return (fromChapter ? "../en/chapters/" + slug + ".html" : "en/index.html") + location.hash;
+    } else {
+      return (fromChapter ? "../../chapters/" + slug + ".html" : "../index.html") + location.hash;
+    }
+  }
+  try {
+    const urlLang = new URLSearchParams(location.search).get("lang");
+    if (urlLang === "ko" || urlLang === "en") localStorage.setItem("sb-lang", urlLang);
+    const savedLang = localStorage.getItem("sb-lang");
+    if ((savedLang === "en" && DOC_LANG === "ko") || (savedLang === "ko" && DOC_LANG === "en")) {
+      location.replace(otherLangHref());
+    }
+  } catch (e) {}
+
   const CHAPTERS = [
   {
     "slug": "overview",
@@ -444,7 +467,8 @@
     const root = body.dataset.root != null ? body.dataset.root : body.dataset.chapter ? "../" : "";
     const curSlug = body.dataset.chapter || "";
     const href = (slug) => (slug ? `${root}chapters/${slug}.html` : `${root}index.html`);
-    const papersHref = location.hostname.endsWith("github.io") ? `${root}../papers/index.html` : `${root}../lsp/paper/icassp_paper.html`;
+    const repoUp = DOC_LANG === "en" ? `${root}../../` : `${root}../`;
+    const papersHref = location.hostname.endsWith("github.io") ? `${repoUp}papers/index.html` : `${repoUp}lsp/paper/icassp_paper.html`;
 
     const bar = document.createElement("header");
     bar.className = "sb-topbar";
@@ -461,10 +485,22 @@
       <div class="book-nav-right">
         <a class="sb-btn series-link" href="${papersHref}" title="LSP · Universal CFA · White-Box Comp-LSP 논문 모음"><span>📚 논문 (Papers)</span></a>
         <a class="sb-btn series-link" href="${href("notes")}#glossary-sec" title="용어집 & 검증 노트"><span>용어집 · 검증</span></a>
+        <button class="sb-iconbtn sb-lang-toggle" id="sb-lang-btn" title="한국어 정본 · Click to switch to English (EN)"><span class="lg-on">KO</span><span class="lg-dim">/</span><span class="lg-dim">EN</span></button>
         <button class="sb-btn icon" id="sb-theme" aria-label="테마 전환"></button>
       </div>
       <div class="sb-progress" id="sb-progress"></div>`;
     body.prepend(bar);
+
+    const langBtn = bar.querySelector("#sb-lang-btn");
+    if (langBtn) {
+      langBtn.addEventListener("click", () => {
+        try {
+          localStorage.setItem("sb-lang", DOC_LANG === "en" ? "ko" : "en");
+          sessionStorage.setItem("sb-scroll-y", String(window.scrollY || 0));
+        } catch (e) {}
+        location.href = otherLangHref();
+      });
+    }
 
     const search = bar.querySelector(".book-search");
     const searchInput = search.querySelector("input");
@@ -616,9 +652,16 @@
 
     const foot = document.createElement("footer");
     foot.className = "sb-foot";
-    foot.innerHTML = `AICAMERA 인터랙티브 아키텍처 가이드북 · <code>docs/build_spec_portal.py</code> 로 생성 · build 2026-11-01 22:05 · commit <code>a627af9</code>
-      <br>모든 벤치마크 수치는 저장소 JSON 정본에서, ISP·3A 기본값은 C99 헤더에서 빌드 시 자동 추출 및 검증됩니다.`;
+    foot.innerHTML = `AICAMERA 인터랙티브 아키텍처 가이드북 · <code>docs/build_spec_portal.py</code> 로 생성 · build 2026-11-01 22:10 · commit <code>69da63d</code><br>모든 벤치마크 수치는 저장소 JSON 정본에서, ISP·3A 기본값은 C99 헤더에서 빌드 시 자동 추출 및 검증됩니다.`;
     body.appendChild(foot);
+
+    try {
+      const sy = sessionStorage.getItem("sb-scroll-y");
+      if (sy !== null) {
+        sessionStorage.removeItem("sb-scroll-y");
+        window.scrollTo(0, parseInt(sy, 10) || 0);
+      }
+    } catch (e) {}
 
     // Rewrite repo source code pills (<a class="src">) to GitHub repo URLs when hosted on GitHub Pages
     if (location.protocol === "http:" || location.protocol === "https:") {

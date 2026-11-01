@@ -26,13 +26,13 @@
 ## 🏢 1. Samsung S.LSI — ISOCELL 200MP & E2E AI Remosaic Guidebook
 🔗 **Main Portal**: [**https://yjqkrtk-ux.github.io/isocell/**](https://yjqkrtk-ux.github.io/isocell/)
 
-*An English technical guidebook detailing the public architecture, mathematical models, and interactive simulators corresponding to my Samsung Electronics S.LSI projects (Apr 2021 – Present).*
+*An English engineering guidebook accompanying my Resume, organized around my two core project tracks at Samsung Electronics S.LSI (Apr 2021 – Present).*
 
-| Chapter | Title | Core Topics & Interactive Simulators | Link |
+| Chapter | Title | Core Topics & Commercial Track Record | Link |
 | :---: | :--- | :--- | :---: |
-| **Home** | **Executive Architecture Overview** | Two-Pillar 200MP commercial imaging architecture map, live Hexadeca-to-HetSoC simulation & KPI summary | [View](https://yjqkrtk-ux.github.io/isocell/) |
-| **Ch.01** | **200MP ISOCELL Sensor Development — HP5 (`0.50µm`) · HP3/HP9 (`0.56µm`) · HP2 (`0.60µm`)** | Sub-micron pixel scaling (`0.60µm → 0.56µm → 0.50µm`), Airy diffraction & FWC physics, **Tetra²pixel (4×4 = 16-cell)** adaptive binning, **world-first DL Hexadeca Remosaic** (`HP3/HP9`, vivo X200 Pro ZEISS 200MP Tele), **in-sensor `QMSC` 4× zoom** (`HP2`, Galaxy S23 Ultra), and `0.50µm` Neural ISP (`HP5`) · **2 Interactive Simulators (SNR/MTF & 4× Zoom Lab)** | [View](https://yjqkrtk-ux.github.io/isocell/chapters/isocell_sensors.html) |
-| **Ch.02** | **E2E AI Remosaic (Gen 1–4) — Turn-Key 200MP S/W ISP Platform** | Overcoming the ~3.0s 200MP serial capture bottleneck via tile-streamed `CPU/GPU/NPU/ISP` parallelization (up to 3× faster, **SEC Annual Award 2023 Silver**), **Gen 1 → Gen 4 (DL Multi-Frame Remosaic on NPU)**, verified **30+ OEM Flagship Matrix** (HONOR Magic 9 / 9 Pro Max, vivo X200 Pro, Galaxy S23 Ultra, Redmi Note 13/15 Pro+) & **HetSoC Scheduler Simulator** | [View](https://yjqkrtk-ux.github.io/isocell/chapters/e2e_remosaic.html) |
+| **Home** | **Overview & Commercial Summary** | Career & role progression at Samsung S.LSI, two-pillar project overview, and consolidated commercial product summary table | [View](https://yjqkrtk-ux.github.io/isocell/) |
+| **Ch.01** | **200MP ISOCELL Sensor Development — HP2 (`0.6µm`) · HP3/HP9 (`0.56µm`) · HP5 (`0.5µm`)** | Core principle of Non-Bayer (`4×4 Hexadeca` / `2×2 Q-cell`) to standard Bayer **Remosaic** for full 200MP capture & 2×/4× In-Sensor Zoom, chronological sensor development history across **ISOCELL HP2** (in-sensor `QMSC` 4× zoom on Galaxy S23 Ultra), **ISOCELL HP3/HP9** (**World's 1st DL Hexadeca 16-cell Remosaic S/W** for main & tele cameras, e.g., vivo X200 Pro ZEISS 200MP Tele), and **ISOCELL HP5** (**Technical Leader** for the world's smallest `0.5µm` 200MP sensor), plus sensor product table | [View](https://yjqkrtk-ux.github.io/isocell/chapters/isocell_sensors.html) |
+| **Ch.02** | **E2E AI Remosaic (Gen 1–4) — Heterogeneous SoC Parallelization on the ISP Pipeline** | Distributing **DL Remosaic** and **Camera ISP** workloads across `CPU/GPU/NPU/ISP` and mounting them directly onto the **Camera ISP pipeline** (`cfa2yuv` up to **3× faster: `3s → 1s @ SM8550`**, **SEC Annual Award 2023 Silver**), chronological feature evolution from **Gen 1 → Gen 4 (DL Multi-Frame Remosaic on Flagship AP NPU)**, and commercial smartphone table/list (**30+ OEM products**: HONOR Magic 9 / 9 Pro Max, vivo X200 Pro ZEISS, HONOR Magic7 Pro, REDMI Note 15 Pro+ 5G, Redmi Note 13 Pro+ 5G, HONOR 80 Pro) | [View](https://yjqkrtk-ux.github.io/isocell/chapters/e2e_remosaic.html) |
 
 ---
 

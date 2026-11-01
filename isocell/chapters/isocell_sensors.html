@@ -3,526 +3,266 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>Ch.01 200MP ISOCELL Sensor Development — HP5, HP3/HP9 &amp; HP2 · ISOCELL 200MP &amp; E2E AI Remosaic Guidebook</title>
+<title>Ch.01 — 200MP ISOCELL Sensor Development (HP2 · HP3/HP9 · HP5) — Samsung S.LSI 200MP ISOCELL &amp; E2E AI Remosaic Guidebook</title>
+<meta name="description" content="Ch.01 — 200MP ISOCELL Sensor Development (HP2 · HP3/HP9 · HP5) — Samsung S.LSI 200MP ISOCELL &amp; E2E AI Remosaic Guidebook">
 <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/katex@0.16.11/dist/katex.min.css">
 <script defer src="https://cdn.jsdelivr.net/npm/katex@0.16.11/dist/katex.min.js"></script>
 <script defer src="https://cdn.jsdelivr.net/npm/katex@0.16.11/dist/contrib/auto-render.min.js"></script>
-<link rel="stylesheet" href="../css/style.css?v=d8ae29c">
-<link rel="stylesheet" href="../css/glossary-tooltips.css?v=d8ae29c">
-<script src="../js/glossary-data.js?v=d8ae29c"></script>
-<script src="../js/common.js?v=d8ae29c"></script>
-<script defer src="../js/glossary-tooltips.js?v=d8ae29c"></script>
+<link rel="stylesheet" href="../css/style.css?v=dbcaf33">
+<link rel="stylesheet" href="../css/glossary-tooltips.css?v=dbcaf33">
+<script src="../js/glossary-data.js?v=dbcaf33"></script>
+<script src="../js/common.js?v=dbcaf33"></script>
+<script defer src="../js/glossary-tooltips.js?v=dbcaf33"></script>
 </head>
 <body data-chapter="isocell_sensors" data-root="../">
+<div class="sb-progress"></div>
+<header class="sb-topbar"></header>
 <main class="chapter">
 
   <header class="chapter-hero">
-    <div class="eyebrow">CHAPTER 01 · PILLAR 1 — 200MP SUB-MICRON ISOCELL SENSOR DEVELOPMENT</div>
-    <h1>200MP ISOCELL Sensor Lineup — HP5 (0.50µm) · HP3/HP9 (0.56µm) · HP2 (0.60µm)</h1>
+    <div class="eyebrow">CHAPTER 01 · PILLAR 1 — 200MP ISOCELL SENSOR DEVELOPMENT (APR 2021 – PRESENT)</div>
+    <h1>200MP ISOCELL Sensor Development — Remosaic Principle &amp; Sensor History</h1>
     <p class="lead">
-      Packing 200 million active photodiodes ($16{,}320 \times 12{,}288$) into a sleek smartphone camera module requires shrinking pixel pitch from
-      <code>0.60µm</code> (<strong>ISOCELL HP2</strong>, <code>1/1.3"</code>) and <code>0.56µm</code> (<strong>ISOCELL HP3 / HP9</strong>, <code>1/1.4"</code>)
-      down to the sub-wavelength regime of <code>0.50µm</code> (<strong>ISOCELL HP5</strong>, <code>1/1.56"</code> — the world's smallest 200MP image sensor).
-      This chapter details the physical silicon-algorithm co-design, <strong>Tetra²pixel ($4\times 4 = 16$-cell)</strong> adaptive readout,
-      the <strong>world's first Deep Learning Hexadeca Remosaic S/W algorithm</strong> (HP3/HP9), <strong>in-sensor AI Q-cell Remosaic (<code>QMSC</code>, HP2)</strong>,
-      and <strong>0.50µm Neural ISP restoration (HP5)</strong>.
+      This chapter explains the core principle of <strong>Remosaic</strong> on ultra-high-resolution (200MP) non-Bayer image sensors and documents Dr. Yongjoon Song's chronological sensor algorithm development track record at Samsung Electronics S.LSI across
+      <strong>ISOCELL HP2 (<code>0.6µm</code>)</strong>, <strong>ISOCELL HP3 / HP9 (<code>0.56µm</code>)</strong>, and <strong>ISOCELL HP5 (<code>0.5µm</code>)</strong>.
     </p>
     <ul class="objectives">
-      <li>Formulate the optical Airy diffraction limit ($d_{\text{Airy}} = 2.44\,\lambda\,N$), Full-Well Capacity (FWC) with Dual-VTG &amp; DTI, and shot-noise SNR scaling across <code>0.60µm</code>, <code>0.56µm</code>, and <code>0.50µm</code> 200MP nodes.</li>
-      <li>Understand how <strong>Tetra²pixel ($4\times 4$ Hexadeca CFA)</strong> dynamically bridges 12.5MP low-light photography (<code>2.0µm–2.4µm</code> equivalent super-pixel), 50MP 2× mode, and 200MP / 4× lossless In-Sensor Zoom.</li>
-      <li>Analyze the 16-channel periodic <code>PixelUnshuffle</code> phase decomposition behind the <strong>world's first DL Hexadeca (16-cell) Remosaic</strong> (HP3/HP9) and <strong>in-sensor QMSC</strong> (HP2), and test them in two interactive simulators.</li>
+      <li><strong>Core Principle of Remosaic:</strong> Why 200MP sensors adopt non-Bayer Color Filter Arrays (<code>2×2 Q-cell</code> / <code>4×4 Hexadeca</code>) and how Remosaic converts them into the standard <code>2×2 Bayer (RGGB)</code> pattern required by the Camera ISP for 200MP capture and 2×/4× In-Sensor Zoom.</li>
+      <li><strong>Chronological Sensor Development History:</strong> From in-sensor AI 4×4 Q-cell Remosaic (<code>QMSC</code> on <strong>HP2</strong>) and the <strong>World's 1st Deep Learning-based Hexadeca (16-cell) Remosaic S/W</strong> (<strong>HP3 / HP9</strong>) to leading Neural ISP algorithm development for the <strong>World's smallest 200MP sensor</strong> (<strong>HP5, 0.5µm</strong>).</li>
+      <li><strong>Commercialized Products &amp; Specifications:</strong> Complete table and list of commercial smartphone cameras powered by each 200MP sensor generation.</li>
     </ul>
-  
-    <div class="ch-pubs" role="region" aria-label="Official Samsung References">
-      <span class="ch-pubs-label">OFFICIAL REFERENCES</span>
-      <a class="pub-tag paper" href="https://semiconductor.samsung.com/image-sensor/mobile-image-sensor/" target="_blank" rel="noopener" title="Samsung Semiconductor Official Mobile Image Sensor Specifications (HP5 · HP9 · HP3 · HP2)">📷 Samsung ISOCELL 200MP Lineup (Official) ↗</a> <a class="pub-tag paper" href="https://semiconductor.samsung.com/image-sensor/mobile-image-sensor/isocell-hp9/" target="_blank" rel="noopener" title="Samsung ISOCELL HP9 Official Product Page">🔬 ISOCELL HP9 (0.56µm · 200MP Telephoto) ↗</a> <a class="pub-tag paper" href="https://semiconductor.samsung.com/image-sensor/mobile-image-sensor/isocell-hp2/" target="_blank" rel="noopener" title="Samsung ISOCELL HP2 Official Product Page">🔬 ISOCELL HP2 (0.60µm · Galaxy S23 Ultra) ↗</a>
+    <div class="ch-pubs" role="region" aria-label="Official Samsung ISOCELL Product Pages">
+      <span class="ch-pubs-label">OFFICIAL PRODUCT PAGES</span>
+      <a class="pub-tag paper" href="https://semiconductor.samsung.com/image-sensor/mobile-image-sensor/isocell-hp5/" target="_blank" rel="noopener">📷 ISOCELL HP5 (0.5µm, 1/1.56") ↗</a>
+      <a class="pub-tag paper" href="https://semiconductor.samsung.com/image-sensor/mobile-image-sensor/isocell-hp9/" target="_blank" rel="noopener">📷 ISOCELL HP9 (0.56µm, Tele) ↗</a>
+      <a class="pub-tag paper" href="https://semiconductor.samsung.com/image-sensor/mobile-image-sensor/isocell-hp3/" target="_blank" rel="noopener">📷 ISOCELL HP3 (0.56µm, Main) ↗</a>
+      <a class="pub-tag paper" href="https://semiconductor.samsung.com/image-sensor/mobile-image-sensor/isocell-hp2/" target="_blank" rel="noopener">📷 ISOCELL HP2 (0.6µm, 1/1.3") ↗</a>
+      <a class="pub-tag paper" href="https://semiconductor.samsung.com/technologies/sensor/remosaic/" target="_blank" rel="noopener">🔬 Samsung Remosaic Technology ↗</a>
     </div>
   </header>
 
-  <section id="sec-lineup-overview">
-    <h2>Samsung 200MP ISOCELL Portfolio &amp; Core Algorithmic Contributions</h2>
+  <section id="sec-remosaic-principle">
+    <h2>What Is Remosaic? (Core Principle &amp; Multi-Mode Readout)</h2>
     <p>
-      At Samsung Electronics S.LSI Sensor Business Team (Apr 2021 – Present), Dr. Yongjoon Song has led and developed core neural remosaicing and ISP algorithms across three generations of mass-produced 200MP sub-micron CMOS image sensors:
+      To fit <strong>200 million pixels</strong> ($16{,}320 \times 12{,}288$) into a mobile camera module, individual pixel pitch is scaled down to the sub-micron regime (<code>0.60µm</code> on HP2, <code>0.56µm</code> on HP3/HP9, and <code>0.50µm</code> on HP5).
+      Instead of using a conventional $2\times 2$ Bayer Color Filter Array (CFA), 200MP ISOCELL sensors adopt a <strong>Non-Bayer Multi-Cell CFA</strong>—specifically <strong>Tetra²pixel ($4\times 4$ Hexadeca / Q-cell, 16-cell)</strong>, where $4\times 4 = 16$ neighboring photodiodes share the same color filter (R, G, or B).
     </p>
+    <ul>
+      <li><strong>Why Non-Bayer CFA Is Used (Pixel Binning in Low Light):</strong> In dark or everyday environments, the sensor merges (bins) $4\times 4 = 16$ same-color pixels into a single large super-pixel (`12.5MP` output) or $2\times 2 = 4$ pixels (`50MP` output). Because binned pixels already form a regular Bayer pattern, the frame can be sent directly to the standard Camera ISP with high sensitivity.</li>
+      <li><strong>Why Remosaic Is Required (Full 200MP &amp; 2×/4× In-Sensor Zoom):</strong> Standard mobile Camera ISPs can only process a conventional <strong>$2\times 2$ Bayer (RGGB) pattern</strong>. When capturing a <strong>full 200MP ultra-high-resolution photo</strong> or cropping the center of the sensor for <strong>lossless $2\times$ / $4\times$ In-Sensor Zoom</strong>, the raw sensor readout is still arranged in a $4\times 4$ non-Bayer mosaic. <strong>Remosaic</strong> is the core algorithm that reconstructs a sharp, artifact-free <strong>$2\times 2$ Bayer CFA pattern</strong> from the non-Bayer $4\times 4$ RAW data before (or within) the Camera ISP pipeline.</li>
+    </ul>
 
     <figure class="diagram">
-      <svg id="ch01-lineup-svg" viewBox="0 0 1080 280" xmlns="http://www.w3.org/2000/svg" role="img" aria-label="200MP ISOCELL Sensor Lineup Evolution HP2 HP3 HP9 HP5">
+      <svg viewBox="0 0 1080 265" xmlns="http://www.w3.org/2000/svg" role="img" aria-label="Principle of Non-Bayer 4x4 Hexadeca CFA to Standard Bayer Remosaic">
         <defs>
-          <marker id="ch01-arr" viewBox="0 0 10 10" refX="8" refY="5" markerWidth="6" markerHeight="6" orient="auto-start-reverse">
+          <marker id="rem-arr" viewBox="0 0 10 10" refX="8" refY="5" markerWidth="6" markerHeight="6" orient="auto-start-reverse">
             <path d="M 0 1 L 9 5 L 0 9 z" fill="var(--accent)" />
           </marker>
         </defs>
-        <rect x="4" y="4" width="1072" height="272" rx="12" class="f-surface" />
-        <text x="24" y="28" class="t-acc">CLICKABLE SENSOR LINEUP · SUB-MICRON PIXEL SCALING &amp; NEURAL REMOSAIC EVOLUTION (0.60µm → 0.56µm → 0.50µm)</text>
+        <rect x="4" y="4" width="1072" height="257" rx="12" class="f-surface" />
+        <text x="24" y="28" class="t-acc">PRINCIPLE OF REMOSAIC · CONVERTING NON-BAYER 4×4 CFA (TETRA²PIXEL) TO STANDARD BAYER FOR THE CAMERA ISP</text>
 
-        <!-- Node 1: HP2 -->
-        <g class="svg-node is-selected" data-node="node-hp2">
-          <rect x="24" y="46" width="326" height="172" rx="9" class="f-acc-soft" />
-          <text x="40" y="72" class="t-acc">NODE 1 · ISOCELL HP2 (0.60 µm · 1/1.3&quot;)</text>
-          <text x="40" y="96" class="t" font-weight="700">In-Sensor AI 4×4 Q-Cell Remosaic (QMSC)</text>
-          <text x="40" y="118" class="t-dim">• Dual Vertical Transfer Gate (D-VTG) High FWC</text>
-          <text x="40" y="138" class="t-dim">• 2.4µm (12.5MP) / 1.2µm (50MP) / 0.6µm (200MP)</text>
-          <text x="40" y="158" class="t-dim">• Lossless 12MP 4× In-Sensor Crop Zoom</text>
-          <text x="40" y="178" class="t-dim">• Deployed: Samsung Galaxy S23 Ultra (Main)</text>
-          <text x="40" y="202" class="t-mono">Apr 2021 – Apr 2023 · In-Sensor QMSC</text>
-        </g>
+        <!-- Step 1: Non-Bayer 4x4 CFA -->
+        <rect x="24" y="44" width="310" height="162" rx="9" class="f-acc-soft" />
+        <text x="40" y="68" class="t-acc">1. SENSOR RAW OUTPUT (NON-BAYER CFA)</text>
+        <text x="40" y="92" class="t" font-weight="700">4×4 Hexadeca / Q-Cell Mosaic</text>
+        <text x="40" y="114" class="t-dim">• 16 neighboring pixels share 1 color filter</text>
+        <text x="40" y="134" class="t-dim">• Low Light: 4×4 Binning → 12.5MP Bayer</text>
+        <text x="40" y="154" class="t-dim">• Balanced: 2×2 Binning → 50MP Tetra</text>
+        <text x="40" y="174" class="t-dim">• Full 200MP / 4× Zoom: Needs Remosaic</text>
+        <text x="40" y="194" class="t-mono">16,320 × 12,288 (200MP Non-Bayer RAW)</text>
 
-        <line x1="352" y1="132" x2="374" y2="132" class="s-acc" stroke-width="2" marker-end="url(#ch01-arr)" />
+        <line x1="336" y1="125" x2="368" y2="125" class="s-acc" stroke-width="2" marker-end="url(#rem-arr)" />
 
-        <!-- Node 2: HP3 / HP9 -->
-        <g class="svg-node" data-node="node-hp39">
-          <rect x="376" y="46" width="336" height="172" rx="9" class="f-acc2-soft" />
-          <text x="392" y="72" class="t-acc2">NODE 2 · HP3 &amp; HP9 (0.56 µm · 1/1.4&quot;)</text>
-          <text x="392" y="96" class="t" font-weight="700">World-1st DL Hexadeca (16-Cell) Remosaic</text>
-          <text x="392" y="118" class="t-dim">• 16-Channel Periodic Phase PixelUnshuffle</text>
-          <text x="392" y="138" class="t-dim">• High-Refractive Micro-Lens &amp; Full DTI</text>
-          <text x="392" y="158" class="t-dim">• 200MP Main (HP3) &amp; Periscope Tele (HP9)</text>
-          <text x="392" y="178" class="t-dim">• Deployed: vivo X200 Pro ZEISS 200MP Tele</text>
-          <text x="392" y="202" class="t-mono">Sep 2022 – Present · World-First DL 16-Cell</text>
-        </g>
+        <!-- Step 2: AI / DL Remosaic Engine -->
+        <rect x="370" y="44" width="340" height="162" rx="9" class="f-acc2-soft" />
+        <text x="386" y="68" class="t-acc2">2. AI / DEEP LEARNING REMOSAIC</text>
+        <text x="386" y="92" class="t" font-weight="700">CFA Pattern Conversion &amp; Detail Recovery</text>
+        <text x="386" y="114" class="t-dim">• Re-interpolates 4×4 non-Bayer into 2×2 RGGB</text>
+        <text x="386" y="134" class="t-dim">• Suppresses zippering, false color &amp; moiré</text>
+        <text x="386" y="154" class="t-dim">• Execution Mode A: In-Sensor H/W IP (QMSC)</text>
+        <text x="386" y="174" class="t-dim">• Execution Mode B: On-SoC DL S/W Remosaic</text>
+        <text x="386" y="194" class="t-mono">HP2 (In-Sensor QMSC) · HP3/HP9/HP5 (DL S/W)</text>
 
-        <line x1="714" y1="132" x2="736" y2="132" class="s-acc" stroke-width="2" marker-end="url(#ch01-arr)" />
+        <line x1="712" y1="125" x2="744" y2="125" class="s-acc" stroke-width="2" marker-end="url(#rem-arr)" />
 
-        <!-- Node 3: HP5 -->
-        <g class="svg-node" data-node="node-hp5">
-          <rect x="738" y="46" width="318" height="172" rx="9" class="f-ok-soft" />
-          <text x="754" y="72" class="t-ok">NODE 3 · ISOCELL HP5 (0.50 µm · 1/1.56&quot;)</text>
-          <text x="754" y="96" class="t" font-weight="700">World's Smallest 200MP &amp; Neural ISP</text>
-          <text x="754" y="118" class="t-dim">• Sub-Wavelength Pitch (p = 0.50µm &lt; 0.55µm)</text>
-          <text x="754" y="138" class="t-dim">• 20% Smaller Module Area vs. 0.56µm Node</text>
-          <text x="754" y="158" class="t-dim">• Neural MTF Deconv &amp; Crosstalk Inversion</text>
-          <text x="754" y="178" class="t-dim">• Next-Gen Compact 200MP Wide &amp; Tele</text>
-          <text x="754" y="202" class="t-mono">Jan 2025 – Present · Neural ISP Tech Lead</text>
-        </g>
+        <!-- Step 3: Standard Bayer Output -->
+        <rect x="746" y="44" width="310" height="162" rx="9" class="f-ok-soft" />
+        <text x="762" y="68" class="t-ok">3. RECONSTRUCTED BAYER FOR ISP</text>
+        <text x="762" y="92" class="t" font-weight="700">Standard 2×2 Bayer (RGGB) Frame</text>
+        <text x="762" y="114" class="t-dim">• Directly compatible with Camera ISP</text>
+        <text x="762" y="134" class="t-dim">• Mode 1: Full 200MP Ultra-High-Res Capture</text>
+        <text x="762" y="154" class="t-dim">• Mode 2: Lossless 2× / 4× In-Sensor Crop Zoom</text>
+        <text x="762" y="174" class="t-dim">• Feeds Demosaic → Denoise → Tone/Color YUV</text>
+        <text x="762" y="194" class="t-mono">200MP Bayer RAW or 12.5MP 4× Zoom Crop</text>
 
-        <rect x="24" y="228" width="1032" height="36" rx="8" class="f-elev" />
-        <text x="40" y="251" class="t-acc">OPTICAL REALITY:</text>
-        <text x="168" y="251" class="t" font-weight="600">At λ = 550nm &amp; f/1.7, Airy Disk d_Airy = 2.28µm spans an entire 4×4 Hexadeca cluster — making Neural Remosaic indispensable.</text>
+        <rect x="24" y="216" width="1032" height="34" rx="8" class="f-elev" />
+        <text x="40" y="238" class="t-ok">WHY DL REMOSAIC?</text>
+        <text x="195" y="238" class="t" font-weight="600">Rule-based interpolation blurs 4×4 (16-cell) color blocks; Deep Learning Remosaic restores fine 200MP details cleanly.</text>
       </svg>
-      <div class="inspector-box" id="ch01-insp">
-        <div class="insp-title" id="ch01-insp-title">📌 NODE 1 · ISOCELL HP2 (0.60µm, 1/1.3&quot;) — In-Sensor AI 4×4 Q-Cell Remosaic (QMSC)</div>
-        <div id="ch01-insp-body">Developed AI-based 4×4 Q-cell Remosaic (QMSC) deployed in-sensor for ISOCELL HP2, enabling high-fidelity 200MP full-resolution capture and lossless 12MP 4× In-Sensor Zoom on the Samsung Galaxy S23 Ultra.</div>
-      </div>
-      <figcaption><b>Figure 1-1.</b> Three generations of 200MP sub-micron ISOCELL sensors (<code>HP2 0.60µm</code> → <code>HP3/HP9 0.56µm</code> → <code>HP5 0.50µm</code>) and their dedicated neural remosaic architectures.</figcaption>
+      <figcaption><b>Figure 1-1.</b> Core principle of Remosaic: converting the sensor's non-Bayer $4\times 4$ CFA pattern into a standard $2\times 2$ Bayer (RGGB) pattern for full 200MP capture and $2\times / 4\times$ In-Sensor Zoom.</figcaption>
     </figure>
+  </section>
+
+  <section id="sec-sensor-history">
+    <h2>Chronological Sensor Development History (2021 – Present)</h2>
+    <p>
+      Since joining Samsung Electronics S.LSI Sensor Business Team in April 2021, Dr. Yongjoon Song has developed and led Remosaic and Neural ISP algorithms across three successive generations of Samsung's flagship 200MP ISOCELL sensor lineup:
+    </p>
+
+    <figure class="diagram">
+      <svg viewBox="0 0 1080 245" xmlns="http://www.w3.org/2000/svg" role="img" aria-label="Chronological 200MP ISOCELL Sensor Development History HP2 HP3 HP9 HP5">
+        <defs>
+          <marker id="hist-arr" viewBox="0 0 10 10" refX="8" refY="5" markerWidth="6" markerHeight="6" orient="auto-start-reverse">
+            <path d="M 0 1 L 9 5 L 0 9 z" fill="var(--accent)" />
+          </marker>
+        </defs>
+        <rect x="4" y="4" width="1072" height="237" rx="12" class="f-surface" />
+        <text x="24" y="28" class="t-acc">SENSOR ALGORITHM DEVELOPMENT TIMELINE · SAMSUNG ELECTRONICS S.LSI (APR 2021 – PRESENT)</text>
+
+        <!-- HP2 -->
+        <rect x="24" y="44" width="326" height="178" rx="9" class="f-acc-soft" />
+        <text x="40" y="68" class="t-acc">STAGE 1 · APR 2021 – APR 2023</text>
+        <text x="40" y="92" class="t" font-weight="700">ISOCELL HP2 (0.6µm, 200MP, 1/1.3&quot;)</text>
+        <text x="40" y="114" class="t-dim">• Role: Staff Engineer (Algorithm Developer)</text>
+        <text x="40" y="134" class="t-dim">• Developed AI-based 4×4 Q-cell Remosaic</text>
+        <text x="40" y="152" class="t-dim">  (QMSC) algorithm deployed in-sensor</text>
+        <text x="40" y="172" class="t-dim">• Enabled 12MP 4× In-Sensor Zoom mode</text>
+        <text x="40" y="192" class="t-dim">• Product: Samsung Galaxy S23 Ultra (Main)</text>
+        <text x="40" y="212" class="t-mono">In-Sensor AI 4×4 Q-Cell Remosaic (QMSC)</text>
+
+        <line x1="352" y1="133" x2="374" y2="133" class="s-acc" stroke-width="2" marker-end="url(#hist-arr)" />
+
+        <!-- HP3 / HP9 -->
+        <rect x="376" y="44" width="336" height="178" rx="9" class="f-acc2-soft" />
+        <text x="392" y="68" class="t-acc2">STAGE 2 · SEP 2022 – PRESENT</text>
+        <text x="392" y="92" class="t" font-weight="700">ISOCELL HP3 / HP9 (0.56µm, 200MP, 1/1.4&quot;)</text>
+        <text x="392" y="114" class="t-dim">• Role: Staff Engineer (Lead Inventor)</text>
+        <text x="392" y="134" class="t-dim">• Invented World's 1st Deep Learning-based</text>
+        <text x="392" y="152" class="t-dim">  Hexadeca (16-cell) Remosaic S/W algorithm</text>
+        <text x="392" y="172" class="t-dim">• Flagship Main (HP3) &amp; Telephoto (HP9)</text>
+        <text x="392" y="192" class="t-dim">• Products: vivo X200 Pro ZEISS, Magic7 Pro</text>
+        <text x="392" y="212" class="t-mono">World-1st DL Hexadeca (16-Cell) Remosaic S/W</text>
+
+        <line x1="714" y1="133" x2="736" y2="133" class="s-acc" stroke-width="2" marker-end="url(#hist-arr)" />
+
+        <!-- HP5 -->
+        <rect x="738" y="44" width="318" height="178" rx="9" class="f-ok-soft" />
+        <text x="754" y="68" class="t-ok">STAGE 3 · JAN 2025 – PRESENT</text>
+        <text x="754" y="92" class="t" font-weight="700">ISOCELL HP5 (0.5µm, 200MP, 1/1.56&quot;)</text>
+        <text x="754" y="114" class="t-dim">• Role: Staff Engineer / Technical Leader</text>
+        <text x="754" y="134" class="t-dim">• Leading Neural ISP &amp; DL S/W algorithm</text>
+        <text x="754" y="152" class="t-dim">  development for World's smallest 200MP</text>
+        <text x="754" y="172" class="t-dim">• Defining mass-production DL S/W roadmap</text>
+        <text x="754" y="192" class="t-dim">• Cross-functional silicon-ISP co-design</text>
+        <text x="754" y="212" class="t-mono">World's Smallest 200MP (0.5µm) · Tech Lead</text>
+      </svg>
+      <figcaption><b>Figure 1-2.</b> Chronological progression of 200MP ISOCELL sensor development from <code>HP2 (0.6µm)</code> and <code>HP3/HP9 (0.56µm)</code> to <code>HP5 (0.5µm)</code>.</figcaption>
+    </figure>
+
+    <h3>1. ISOCELL HP2 (<code>0.6µm, 200MP, 1/1.3"</code>) — Apr 2021 – Apr 2023</h3>
+    <ul>
+      <li><strong>Project Scope:</strong> Developed the <strong>AI-based $4\times 4$ Q-cell Remosaic (<code>QMSC</code>)</strong> algorithm deployed directly in-sensor for Samsung's flagship `0.6µm` 200MP sensor.</li>
+      <li><strong>Key Capability:</strong> Enabled both full 200MP high-resolution capture and <strong>12MP $4\times$ In-Sensor Zoom mode</strong> by converting the center $4\times 4$ Q-cell crop into a crisp Bayer stream in hardware.</li>
+      <li><strong>Commercial Deployment:</strong> Shipped as the primary wide-angle camera sensor in the <strong>Samsung Galaxy S23 Ultra</strong>.</li>
+    </ul>
+
+    <h3>2. ISOCELL HP3 &amp; ISOCELL HP9 (<code>0.56µm, 200MP, 1/1.4"</code>) — Sep 2022 – Present</h3>
+    <ul>
+      <li><strong>Project Scope:</strong> Invented and commercialized the <strong>World's 1st Deep Learning-based Hexadeca ($4\times 4 = 16$-cell) Remosaic S/W algorithm</strong> for Samsung's `0.56µm` 200MP sensor generation.</li>
+      <li><strong>Main &amp; Telephoto Expansion:</strong>
+        <ul>
+          <li><strong>ISOCELL HP3 (`0.56µm` Flagship Main Camera):</strong> Commercialized with deep learning S/W Remosaic across high-volume main cameras, starting with the <strong>HONOR 80 Pro</strong> (160MP mode for Main camera) and expanding to <strong>Xiaomi Redmi Note 13 Pro+ 5G</strong> and <strong>HONOR Magic7 Pro</strong>.</li>
+          <li><strong>ISOCELL HP9 (`0.56µm` Flagship Periscope Telephoto Camera):</strong> Brought 200MP high-sensitivity `0.56µm` resolution to flagship periscope telephoto zoom cameras—most notably the <strong>vivo X200 Pro (200MP ZEISS APO Telephoto Camera)</strong>—delivering crisp $3.7\times$ optical and $7.4\times+$ in-sensor telephoto zoom.</li>
+        </ul>
+      </li>
+    </ul>
+
+    <h3>3. ISOCELL HP5 (<code>0.5µm, 200MP, 1/1.56"</code>) — Jan 2025 – Present</h3>
+    <ul>
+      <li><strong>Project Scope (Technical Leader):</strong> Leading Neural ISP algorithm development for <strong>ISOCELL HP5</strong>—the <strong>world's smallest 200MP mobile image sensor (`0.5µm` pixel pitch, `1/1.56"` optical format)</strong>.</li>
+      <li><strong>Key Responsibilities:</strong> Defining the deep learning-based S/W algorithm roadmap at mass-production scale to overcome extreme `0.5µm` sub-micron physical constraints, and driving cross-functional sensor silicon co-design with pixel physics, circuit design, and image quality (IQ) evaluation teams.</li>
+    </ul>
+  </section>
+
+  <section id="sec-sensor-products">
+    <h2>200MP ISOCELL Sensor Lineup &amp; Commercial Product Table</h2>
+    <p>
+      The table below consolidates the specifications, Remosaic architectures, development periods, and commercial smartphone deployments across the 200MP ISOCELL sensor family:
+    </p>
 
     <div class="tbl-wrap">
       <table class="tbl">
         <thead>
           <tr>
-            <th>Sensor Node</th>
-            <th>Timeline &amp; Role</th>
-            <th>Pixel Pitch &amp; Optical Format</th>
-            <th>Binning Modes (Tetra²pixel)</th>
-            <th>Key Algorithmic Innovation &amp; Commercial Flagships</th>
+            <th>Sensor Model</th>
+            <th>Development Period</th>
+            <th>Sensor Spec (Pitch · Resolution · Format)</th>
+            <th>Core Remosaic &amp; Neural ISP Contribution</th>
+            <th>Commercial Smartphones &amp; Camera Role</th>
+            <th>Official Reference</th>
           </tr>
         </thead>
         <tbody>
           <tr>
-            <td><strong>ISOCELL HP5</strong><br><span class="badge b-on">World's Smallest 200MP</span></td>
-            <td>Jan 2025 – Present<br><em>Neural ISP Lead</em></td>
-            <td><code>0.50 µm</code> · 200MP<br><code>1/1.56&quot;</code></td>
-            <td><code>2.0µm</code> (12.5MP 4×4)<br><code>1.0µm</code> (50MP 2×2)<br><code>0.50µm</code> (200MP 1×1)</td>
-            <td>Leading Neural ISP S/W algorithm development for the <strong>world's smallest 0.50µm 200MP sensor</strong>—compensating for sub-wavelength optical diffraction and crosstalk at mass-production scale.</td>
+            <td><strong>ISOCELL HP5</strong></td>
+            <td>Jan 2025 – Present</td>
+            <td><code>0.5µm</code> · 200MP · <code>1/1.56"</code><br/><em>(World's Smallest 200MP)</em></td>
+            <td><strong>Technical Leader</strong>: Deep learning-based S/W Remosaic &amp; Neural ISP algorithm roadmap for extreme 0.5µm sub-micron pixels.</td>
+            <td>Next-generation compact 200MP Main &amp; Periscope Telephoto flagship smartphones</td>
+            <td><a href="https://semiconductor.samsung.com/image-sensor/mobile-image-sensor/isocell-hp5/" target="_blank" rel="noopener">Samsung HP5 Page ↗</a></td>
           </tr>
           <tr>
-            <td><strong>ISOCELL HP3 &amp; HP9</strong><br><span class="badge b-area">World-1st DL 16-Cell</span></td>
-            <td>Sep 2022 – Present<br><em>Algorithm Inventor</em></td>
-            <td><code>0.56 µm</code> · 200MP<br><code>1/1.4&quot;</code></td>
-            <td><code>2.24µm</code> (12.5MP 4×4)<br><code>1.12µm</code> (50MP 2×2)<br><code>0.56µm</code> (200MP 1×1)</td>
-            <td>Invented and commercialized the <strong>world's first Deep Learning-based Hexadeca (16-cell) Remosaic S/W algorithm</strong>; powers flagship 200MP main cameras (<strong>HP3</strong>) and 200MP periscope telephoto modules (<strong>HP9</strong>: <strong>vivo X200 Pro ZEISS APO</strong>) with lossless 2×/4× in-sensor zoom.</td>
+            <td><strong>ISOCELL HP9</strong></td>
+            <td>Sep 2022 – Present</td>
+            <td><code>0.56µm</code> · 200MP · <code>1/1.4"</code><br/><em>(Tetra²pixel 16-Cell)</em></td>
+            <td><strong>World's 1st DL-based Hexadeca (16-cell) Remosaic S/W algorithm</strong> tailored for flagship telephoto optics &amp; in-sensor zoom.</td>
+            <td>
+              • <strong>vivo X200 Pro</strong> (200MP ZEISS Telephoto Camera)<br/>
+              • <strong>HONOR Magic7 Pro</strong> (200MP Periscope Telephoto)
+            </td>
+            <td><a href="https://semiconductor.samsung.com/image-sensor/mobile-image-sensor/isocell-hp9/" target="_blank" rel="noopener">Samsung HP9 Page ↗</a></td>
           </tr>
           <tr>
-            <td><strong>ISOCELL HP2</strong><br><span class="badge b-sim">In-Sensor QMSC</span></td>
-            <td>Apr 2021 – Apr 2023<br><em>Core Developer</em></td>
-            <td><code>0.60 µm</code> · 200MP<br><code>1/1.3&quot;</code></td>
-            <td><code>2.40µm</code> (12.5MP 4×4)<br><code>1.20µm</code> (50MP 2×2)<br><code>0.60µm</code> (200MP 1×1)</td>
-            <td>Developed <strong>AI-based 4×4 Q-cell Remosaic (<code>QMSC</code>)</strong> deployed in-sensor alongside Dual Vertical Transfer Gate (D-VTG), enabling lossless <strong>12MP 4× In-Sensor Zoom</strong> on <strong>Samsung Galaxy S23 Ultra</strong>.</td>
+            <td><strong>ISOCELL HP3</strong></td>
+            <td>Sep 2022 – Present</td>
+            <td><code>0.56µm</code> · 200MP · <code>1/1.4"</code><br/><em>(Tetra²pixel 16-Cell)</em></td>
+            <td><strong>World's 1st DL-based Hexadeca (16-cell) Remosaic S/W algorithm</strong> for 200MP main cameras (paired with E2E AI Remosaic).</td>
+            <td>
+              • <strong>Xiaomi Redmi Note 13 Pro+ 5G</strong> (200MP Main)<br/>
+              • <strong>HONOR 80 Pro</strong> (160MP mode for Main camera)<br/>
+              • <strong>30+ China OEM models</strong>
+            </td>
+            <td><a href="https://semiconductor.samsung.com/image-sensor/mobile-image-sensor/isocell-hp3/" target="_blank" rel="noopener">Samsung HP3 Page ↗</a></td>
+          </tr>
+          <tr>
+            <td><strong>ISOCELL HP2</strong></td>
+            <td>Apr 2021 – Apr 2023</td>
+            <td><code>0.6µm</code> · 200MP · <code>1/1.3"</code><br/><em>(Tetra²pixel 16-Cell)</em></td>
+            <td><strong>AI-based 4×4 Q-cell Remosaic (<code>QMSC</code>)</strong> algorithm deployed in-sensor for 200MP full-res and <strong>12MP 4× In-Sensor Zoom</strong> mode.</td>
+            <td>
+              • <strong>Samsung Galaxy S23 Ultra</strong> (200MP Main Camera &amp; 12MP 4× In-Sensor Zoom)
+            </td>
+            <td><a href="https://semiconductor.samsung.com/image-sensor/mobile-image-sensor/isocell-hp2/" target="_blank" rel="noopener">Samsung HP2 Page ↗</a></td>
           </tr>
         </tbody>
       </table>
     </div>
   </section>
 
-  <section id="sec-physics">
-    <h2>Sub-Micron Pixel Physics: Airy Diffraction, Full-Well Capacity &amp; Shot-Noise SNR</h2>
-    <p>
-      As pixel pitch $p$ scales down from $0.60\text{ }\mu\text{m}$ (HP2) to $0.56\text{ }\mu\text{m}$ (HP3/HP9) and $0.50\text{ }\mu\text{m}$ (HP5), raw image formation is governed by three coupled physical constraints: optical diffraction from the lens aperture, photodiode Full-Well Capacity ($N_{\text{FWC}}$), and Poisson photon shot noise:
-    </p>
-    <div class="math-block">
-      $$d_{\text{Airy}} = 2.44\,\lambda\,N, \qquad \text{SNR}(E) = 20\log_{10}\!\left(\frac{\eta_{\text{QE}}\,p^2\,E\,t_{\text{int}}}{\sqrt{\eta_{\text{QE}}\,p^2\,E\,t_{\text{int}} + \sigma_{\text{dark}}^2 + \sigma_{\text{read}}^2}}\right), \qquad \text{DR}_{\max} = 20\log_{10}\!\left(\frac{N_{\text{FWC}}}{\sigma_{\text{read}}}\right)$$
-    </div>
-    <ul>
-      <li>
-        <strong>Optical Diffraction Exceeds Single-Pixel Pitch</strong>: At green wavelength $\lambda = 0.55\text{ }\mu\text{m}$ and mobile lens aperture $N = f/1.7$, the diffraction-limited Airy disk diameter is $d_{\text{Airy}} \approx 2.28\text{ }\mu\text{m}$. Across a $4\times 4$ Hexadeca cluster, the macro-block width is $4p = 2.40\text{ }\mu\text{m}$ (HP2), $2.24\text{ }\mu\text{m}$ (HP3/HP9), and $2.00\text{ }\mu\text{m}$ (HP5). Thus, a single point light source spreads optical energy across an entire $4\times 4$ same-color neighborhood!
-      </li>
-      <li>
-        <strong>Photodiode Area &amp; Dual-VTG / DTI Silicon Engineering</strong>: Shrinking $p$ from $0.60\text{ }\mu\text{m}$ to $0.50\text{ }\mu\text{m}$ reduces single-pixel photon-collecting area $A_{\text{pix}} = p^2$ by $30.6\%$ ($0.36\text{ }\mu\text{m}^2 \to 0.25\text{ }\mu\text{m}^2$). To prevent saturation and inter-pixel color bleeding, ISOCELL sensors pair <strong>Front/Back-Side Deep Trench Isolation (DTI)</strong> with <strong>Dual Vertical Transfer Gate (D-VTG)</strong> and high-refractive micro-lenses.
-      </li>
-      <li>
-        <strong>Tetra²pixel ($4\times 4$ Hexadeca CFA) Three-Mode Readout Hierarchy</strong>:
-        <ol>
-          <li><strong>Mode A — $4\times 4$ Hexadeca Binning (12.5 MP)</strong>:Sums $16$ adjacent same-color photodiodes in charge/analog domain into a $2.0\text{–}2.4\text{ }\mu\text{m}$ virtual super-pixel ($16\times$ photon count, $+12\text{ dB}$ shot-noise SNR boost) with native Bayer ordering for extreme low-light Nightography and 8K/4K 60fps video.</li>
-          <li><strong>Mode B — $2\times 2$ Tetra Binning (50 MP &amp; 2× In-Sensor Zoom)</strong>: Groups $2\times 2$ sub-blocks ($1.0\text{–}1.2\text{ }\mu\text{m}$ effective pitch), yielding a $2\times 2$ Tetra mosaic reconstructed via 4-cell remosaicing for everyday 50MP stills and lossless 2× crop zoom.</li>
-          <li><strong>Mode C — $1\times 1$ Unbinned Readout (200 MP &amp; 4× In-Sensor Zoom)</strong>: Reads all $200\text{M}$ individual photodiodes ($0.50\text{–}0.60\text{ }\mu\text{m}$) as a $4\times 4$ Hexadeca mosaic—requiring <strong>DL Hexadeca Remosaic (HP3/HP9/HP5)</strong> or <strong>in-sensor QMSC (HP2)</strong> to reconstruct full 200MP Bayer/RGB or a central 12.5MP <strong>lossless 4× telephoto crop</strong>.</li>
-        </ol>
-      </li>
-    </ul>
-  </section>
-
-  <section id="sec-sim-physics">
-    <h2>Interactive Simulator 1-1 · Sub-Micron 200MP SNR, Airy Spot &amp; MTF Explorer</h2>
-    <p>
-      Select any 200MP ISOCELL node (<code>HP5 0.50µm</code>, <code>HP3/HP9 0.56µm</code>, <code>HP2 0.60µm</code>), binning mode ($1\times 1$, $2\times 2$, $4\times 4$), illumination (lux), and lens $f/\#$ to inspect the physical Airy diffraction footprint over the $4\times 4$ Hexadeca CFA and the MTF recovery curve of Neural Remosaic.
-    </p>
-
-    <section class="sim" id="sim-ch01-physics">
-      <div class="sim-head">
-        <span class="sim-tag">SIMULATOR 1-1 · SUB-MICRON PIXEL PHYSICS &amp; MTF</span>
-        <h3>200MP Sensor Node (HP5 0.50µm · HP3/HP9 0.56µm · HP2 0.60µm) &amp; Tetra²pixel Analyzer</h3>
-      </div>
-      <div class="sim-body side">
-        <div class="sim-view"><canvas id="cv-ch01-physics"></canvas></div>
-        <div class="sim-controls">
-          <label class="ctrl">
-            <span>ISOCELL 200MP Sensor Node</span>
-            <select id="iso-node-sel">
-              <option value="0.50">ISOCELL HP5 · 0.50 µm (1/1.56", World's Smallest)</option>
-              <option value="0.56" selected>ISOCELL HP3 / HP9 · 0.56 µm (1/1.4", Main &amp; Tele)</option>
-              <option value="0.60">ISOCELL HP2 · 0.60 µm (1/1.3", Galaxy S23 Ultra)</option>
-            </select>
-          </label>
-          <label class="ctrl">
-            <span>Tetra²pixel Readout Mode</span>
-            <select id="iso-bin-sel">
-              <option value="1" selected>1×1 Full Unbinned (200 MP / 4× In-Sensor Zoom)</option>
-              <option value="2">2×2 Tetra Binning (50 MP / 2× In-Sensor Zoom)</option>
-              <option value="4">4×4 Hexadeca Binning (12.5 MP Low-Light Super-Pixel)</option>
-            </select>
-          </label>
-          <label class="ctrl">
-            <span>Scene Illumination <output id="iso-lux-val">450 lux</output></span>
-            <input type="range" id="iso-lux-rng" min="10" max="2000" step="10" value="450">
-          </label>
-          <label class="ctrl">
-            <span>Lens Aperture ($f/\#$) <output id="iso-fnum-val">f/1.7</output></span>
-            <input type="range" id="iso-fnum-rng" min="1.4" max="2.8" step="0.1" value="1.7">
-          </label>
-        </div>
-      </div>
-      <div class="sim-readout" id="iso-phys-kpis"></div>
-      <div class="sim-note" id="iso-phys-note"></div>
-    </section>
-  </section>
-
-  <section id="sec-dl-hexadeca">
-    <h2>World-First DL Hexadeca (16-Cell) Remosaic (HP3/HP9) &amp; In-Sensor QMSC (HP2)</h2>
-    <p>
-      Why do classical directional interpolation filters fail on a $4\times 4$ Hexadeca CFA? In a standard $1\times 1$ Bayer array, every pixel is at most $1\text{ px}$ away from missing color channels. In a $4\times 4$ Hexadeca mosaic, an interior pixel (such as $(1,1)$ or $(2,2)$ inside a $4\times 4$ Red block) is separated by up to <strong>$3\text{–}4$ sub-micron pixels</strong> from the nearest Green or Blue sample—exceeding the local Nyquist correlation radius and causing severe <strong>checkerboard phase artifacts, zippering, and false color moiré</strong> under linear/cubic interpolation.
-    </p>
-
-    <div class="detail" data-title="Mathematical Formulation · 16-Channel Periodic Phase Decomposition (PixelUnshuffle)">
-      <p>
-        In a $4\times 4$ Hexadeca mosaic $I_{\text{RAW}} \in \mathbb{R}^{1 \times H \times W}$, each pixel coordinate $(y, x)$ has a periodic spatial phase $(\Delta y, \Delta x) = (y \bmod 4,\; x \bmod 4) \in \{0,1,2,3\}^2$ relative to its $4\times 4$ macro-block boundary. Applying a standard $3\times 3$ convolution directly on $I_{\text{RAW}}$ applies identical weights to corner pixels (adjacent to two neighboring colors), edge pixels (adjacent to one neighboring color), and center pixels (surrounded entirely by the same color).
-      </p>
-      <p>
-        To make the neural operator strictly phase-aware and maximize mobile NPU throughput, the input mosaic is decomposed via periodic <strong>PixelUnshuffle</strong> ($\mathcal{U}_{4\times 4}$) into a 16-channel phase-homogeneous tensor at $\frac{1}{16}$ spatial resolution:
-      </p>
-      <div class="math-block">
-        $$\mathcal{U}_{4\times 4} : \mathbb{R}^{1 \times H \times W} \;\longrightarrow\; \mathbb{R}^{16 \times \frac{H}{4} \times \frac{W}{4}}, \qquad \mathbf{X}_{c}(u, v) = I_{\text{RAW}}\!\left(4u + \lfloor c/4 \rfloor,\; 4v + (c \bmod 4)\right), \quad c \in \{0,\dots,15\}$$
-      </div>
-      <p>
-        Inside the low-resolution latent space $\left(\frac{H}{4} \times \frac{W}{4}\right)$, $N$ residual NPU blocks $\mathcal{G}_{\theta}$ learn cross-phase directional attention and high-frequency luminance/chrominance transfer before periodic <strong>PixelShuffle</strong> ($\mathcal{U}_{4\times 4}^{-1}$) reassembles the full 200MP Bayer/RGB grid $\hat{I}_{\text{Bayer}} \in \mathbb{R}^{1\times H\times W}$:
-      </p>
-      <div class="math-block">
-        $$\hat{I}_{\text{Bayer}} = \mathcal{U}_{4\times 4}^{-1}\!\left(\mathbf{W}_{\text{out}} * \mathcal{G}_{\theta}^{(N)}\!\left(\mathcal{U}_{4\times 4}(I_{\text{RAW}}),\; \mathbf{G}_{\text{WB}}\right)\right) + I_{\text{skip}}$$
-      </div>
-    </div>
-
-    <div class="grid-3">
-      <div class="card">
-        <h3>ISOCELL HP2 · QMSC (In-Sensor)</h3>
-        <p>
-          <strong>Galaxy S23 Ultra (0.60µm · 1/1.3&quot;)</strong><br>
-          AI-based $4\times 4$ Q-cell Remosaic (<code>QMSC</code>) designed for tight silicon area and line-buffer constraints—enabling both 200MP full readout and <strong>lossless 12MP 4× In-Sensor Zoom</strong> directly from the central $4000\times 3000$ unbinned crop.
-        </p>
-      </div>
-      <div class="card">
-        <h3>ISOCELL HP3 / HP9 · DL 16-Cell</h3>
-        <p>
-          <strong>vivo X200 Pro ZEISS 200MP Tele (0.56µm)</strong><br>
-          <strong>World's first commercial DL-based Hexadeca (16-cell) Remosaic S/W algorithm</strong>. On <strong>ISOCELL HP9</strong> periscope telephoto ($3.7\times$ optical), combining $2\times / 4\times$ In-Sensor Remosaic Zoom delivers lossless-grade $7.4\times\text{–}15\times$ optical-equivalent telephoto clarity.
-        </p>
-      </div>
-      <div class="card">
-        <h3>ISOCELL HP5 · 0.50µm Neural ISP</h3>
-        <p>
-          <strong>World's Smallest 200MP (0.50µm · 1/1.56&quot;)</strong><br>
-          At $p = 0.50\text{ }\mu\text{m}$, optical MTF roll-off and sub-micron crosstalk require joint neural deconvolution and phase-aware remosaicing—enabling 200MP resolution in ultra-slim smartphone form factors.
-        </p>
-      </div>
-    </div>
-  </section>
-
-  <section id="sec-sim-remosaic">
-    <h2>Interactive Simulator 1-2 · Hexadeca (4×4) DL Remosaic / QMSC &amp; In-Sensor Zoom Lab</h2>
-    <p>
-      Compare <strong>4×4 Binning + Bilinear Upsampling</strong>, <strong>Conventional Directional Cubic Interpolation</strong>, and <strong>DL Hexadeca Remosaic / QMSC (16-Ch Phase Network)</strong> across <strong>1× (200MP)</strong>, <strong>2× (50MP In-Sensor Zoom)</strong>, and <strong>4× (12.5MP Telephoto In-Sensor Zoom)</strong> on a high-frequency radial Siemens Star target.
-    </p>
-
-    <section class="sim" id="sim-ch01-remosaic">
-      <div class="sim-head">
-        <span class="sim-tag">SIMULATOR 1-2 · 16-CELL DL REMOSAIC &amp; IN-SENSOR ZOOM</span>
-        <h3>Hexadeca (4×4) Remosaic Reconstruction &amp; Lossless 1× / 2× / 4× In-Sensor Zoom</h3>
-      </div>
-      <div class="sim-body side">
-        <div class="sim-view"><canvas id="cv-ch01-remosaic"></canvas></div>
-        <div class="sim-controls">
-          <label class="ctrl">
-            <span>Remosaic Reconstruction Engine</span>
-            <select id="rmsc-alg-sel">
-              <option value="bilinear">4×4 Binning + Bilinear Upsample (Severe Moiré)</option>
-              <option value="cubic">Directional Cubic Interpolation (Color Zipper)</option>
-              <option value="dl" selected>DL Hexadeca Remosaic / QMSC (16-Ch Phase NPU)</option>
-            </select>
-          </label>
-          <label class="ctrl">
-            <span>In-Sensor Zoom Factor (ROI Crop)</span>
-            <select id="rmsc-zoom-sel">
-              <option value="1">1× Full Sensor Readout (200 MP Output)</option>
-              <option value="2">2× Lossless In-Sensor Zoom (50 MP Center Crop)</option>
-              <option value="4" selected>4× Lossless Telephoto In-Sensor Zoom (12.5 MP Crop)</option>
-            </select>
-          </label>
-          <label class="ctrl">
-            <span>Radial Spatial Frequency <output id="rmsc-freq-val">18 cycles</output></span>
-            <input type="range" id="rmsc-freq-rng" min="8" max="32" step="2" value="18">
-          </label>
-        </div>
-      </div>
-      <div class="sim-readout" id="rmsc-kpis"></div>
-      <div class="sim-note" id="rmsc-note"></div>
-    </section>
-  </section>
-
   <section class="keypoints" id="summary">
-    <h2>Key Takeaways · Chapter 01 (200MP ISOCELL Sensor Development)</h2>
+    <h2>Chapter 01 Summary</h2>
     <ol>
-      <li><strong>Sub-Micron Scaling (0.60µm → 0.56µm → 0.50µm)</strong>: Across <strong>ISOCELL HP2</strong>, <strong>HP3/HP9</strong>, and <strong>HP5 (world's smallest 200MP sensor)</strong>, Tetra²pixel ($4\times 4 = 16$-cell) hardware binning maximizes low-light SNR while preserving 200MP spatial sampling in daylight and telephoto crop zoom.</li>
-      <li><strong>World-First DL Hexadeca Remosaic &amp; In-Sensor QMSC</strong>: Periodic 16-channel <code>PixelUnshuffle</code> phase decomposition eliminates $4\times 4$ phase boundary artifacts, powering <strong>Galaxy S23 Ultra</strong> (HP2 QMSC 4× zoom) and <strong>vivo X200 Pro ZEISS 200MP Telephoto</strong> (HP9 DL 16-cell remosaic).</li>
+      <li><strong>Remosaic Principle:</strong> 200MP ISOCELL sensors use a $4\times 4$ non-Bayer CFA (<code>Tetra²pixel</code>) to enable pixel binning in low light; <strong>Remosaic</strong> converts this non-Bayer mosaic into a standard $2\times 2$ Bayer pattern so the Camera ISP can produce full 200MP images and lossless $2\times / 4\times$ In-Sensor Zoom.</li>
+      <li><strong>ISOCELL HP2 (`0.6µm`, Apr 2021 – Apr 2023):</strong> Developed in-sensor AI $4\times 4$ Q-cell Remosaic (<code>QMSC</code>), powering the <strong>Samsung Galaxy S23 Ultra</strong> 200MP main camera and 12MP $4\times$ In-Sensor Zoom.</li>
+      <li><strong>ISOCELL HP3 / HP9 (`0.56µm`, Sep 2022 – Present):</strong> Invented the <strong>World's 1st DL-based Hexadeca (16-cell) Remosaic S/W algorithm</strong>, commercialized across flagship main (HP3) and periscope telephoto (HP9, e.g., <strong>vivo X200 Pro 200MP ZEISS Camera</strong>) smartphones.</li>
+      <li><strong>ISOCELL HP5 (`0.5µm`, Jan 2025 – Present):</strong> Serving as <strong>Technical Leader</strong> driving Neural ISP and DL S/W algorithm development for the <strong>world's smallest 200MP image sensor</strong>.</li>
     </ol>
   </section>
 
-  <script>
-  document.addEventListener("DOMContentLoaded", function () {
-    var NODE_INFO = {
-      "node-hp2": {
-        title: "NODE 1 · ISOCELL HP2 (0.60µm, 1/1.3\") — In-Sensor AI 4×4 Q-Cell Remosaic (QMSC)",
-        body: "Developed AI-based 4×4 Q-cell Remosaic (QMSC) deployed in-sensor for ISOCELL HP2 alongside Dual Vertical Transfer Gate (D-VTG), enabling full 200MP capture and lossless 12MP 4× In-Sensor Zoom on the Samsung Galaxy S23 Ultra."
-      },
-      "node-hp39": {
-        title: "NODE 2 · ISOCELL HP3 & HP9 (0.56µm, 1/1.4\") — World's First DL Hexadeca (16-Cell) Remosaic S/W",
-        body: "Invented and commercialized the world's first Deep Learning-based Hexadeca (16-cell) Remosaic S/W algorithm—powering flagship 200MP main cameras (HP3) and 200MP periscope telephoto modules (HP9: vivo X200 Pro ZEISS APO Telephoto)."
-      },
-      "node-hp5": {
-        title: "NODE 3 · ISOCELL HP5 (0.50µm, 1/1.56\") — World's Smallest 200MP Sensor & Neural ISP",
-        body: "Leading Neural ISP S/W algorithm development for the world's smallest 0.50µm 200MP image sensor—overcoming sub-wavelength optical diffraction (d_Airy ≈ 2.28µm > 4p = 2.00µm) and sub-micron crosstalk at mass-production scale."
-      }
-    };
-    var nodes = document.querySelectorAll("#ch01-lineup-svg .svg-node");
-    nodes.forEach(function (n) {
-      n.addEventListener("click", function () {
-        nodes.forEach(function (x) { x.classList.remove("is-selected"); });
-        n.classList.add("is-selected");
-        var info = NODE_INFO[n.getAttribute("data-node")];
-        if (info) {
-          document.getElementById("ch01-insp-title").textContent = "📌 " + info.title;
-          document.getElementById("ch01-insp-body").textContent = info.body;
-        }
-      });
-    });
-
-    // Simulator 1-1: Sub-Micron Pixel Physics & MTF
-    var nodeSel = document.getElementById("iso-node-sel");
-    var binSel = document.getElementById("iso-bin-sel");
-    var luxRng = document.getElementById("iso-lux-rng");
-    var fnumRng = document.getElementById("iso-fnum-rng");
-    var kpiBox = document.getElementById("iso-phys-kpis");
-    var noteBox = document.getElementById("iso-phys-note");
-
-    var sim1 = SB.canvas("#cv-ch01-physics", 0.54, function (ctx, w, h, P) {
-      var pitch = parseFloat(nodeSel.value || "0.56");
-      var bin = parseInt(binSel.value || "1", 10);
-      var lux = parseFloat(luxRng.value || "450");
-      var fnum = parseFloat(fnumRng.value || "1.7");
-      document.getElementById("iso-lux-val").textContent = lux.toFixed(0) + " lux";
-      document.getElementById("iso-fnum-val").textContent = "f/" + fnum.toFixed(1);
-
-      var effPitch = pitch * bin;
-      var airyUm = 2.44 * 0.55 * fnum;
-      var nyquistCyMm = 500.0 / effPitch;
-      var areaUm2 = effPitch * effPitch;
-      var photoElectrons = Math.min(bin * bin * (pitch / 0.50) * 6500, areaUm2 * lux * 19.0 / (fnum * fnum));
-      var readNoise = 1.55;
-      var snrDb = 20 * Math.log10(Math.max(1, photoElectrons / Math.sqrt(photoElectrons + readNoise * readNoise)));
-      var outMp = bin === 1 ? "200 MP" : (bin === 2 ? "50 MP" : "12.5 MP");
-
-      kpiBox.innerHTML =
-        '<div class="stat"><span class="k">Effective Pixel Pitch</span><span class="v">' + effPitch.toFixed(2) + ' µm (' + outMp + ')</span></div>' +
-        '<div class="stat"><span class="k">Airy Diffraction Spot</span><span class="v">' + airyUm.toFixed(2) + ' µm (' + (airyUm / pitch).toFixed(1) + '× px)</span></div>' +
-        '<div class="stat"><span class="k">Shot-Noise SNR</span><span class="v">' + snrDb.toFixed(1) + ' dB</span></div>' +
-        '<div class="stat"><span class="k">Nyquist Frequency</span><span class="v">' + nyquistCyMm.toFixed(0) + ' cy/mm</span></div>';
-
-      noteBox.innerHTML = "<strong>Physics Readout:</strong> At <code>p = " + pitch.toFixed(2) + " µm</code> and <code>f/" + fnum.toFixed(1) + "</code>, the Airy disk diameter (<code>" + airyUm.toFixed(2) + " µm</code>) spans <strong>" + (airyUm / pitch).toFixed(1) + " native pixels</strong> across the 4×4 Hexadeca cluster. Deep Learning Remosaic restores MTF contrast up to the Nyquist limit.";
-
-      var gx = 24, gy = 36, gSize = Math.min(w * 0.38, h - 62);
-      var cell = gSize / 8;
-      ctx.font = "600 12px Pretendard, sans-serif";
-      ctx.fillStyle = P.text;
-      ctx.fillText("8×8 Patch (Four 4×4 Clusters) + Airy Spot", gx, 22);
-
-      for (var r = 0; r < 8; r++) {
-        for (var c = 0; c < 8; c++) {
-          var qr = Math.floor(r / 4), qc = Math.floor(c / 4);
-          var col = (qr === 0 && qc === 0) ? "#e0443e" : ((qr + qc === 1) ? "#2da44e" : "#2f6fe0");
-          ctx.fillStyle = col + "38";
-          ctx.strokeStyle = (r % bin === 0 && c % bin === 0) ? col : P.border;
-          ctx.lineWidth = (r % 4 === 0 && c % 4 === 0) ? 1.8 : 0.7;
-          ctx.fillRect(gx + c * cell, gy + r * cell, cell - 1, cell - 1);
-          ctx.strokeRect(gx + c * cell, gy + r * cell, cell - 1, cell - 1);
-        }
-      }
-      var cx = gx + gSize * 0.5, cy = gy + gSize * 0.5;
-      var airyRadiusPx = (airyUm / (pitch * 8)) * gSize * 0.5;
-      ctx.beginPath();
-      ctx.arc(cx, cy, airyRadiusPx, 0, Math.PI * 2);
-      ctx.fillStyle = "rgba(245, 165, 36, 0.26)";
-      ctx.fill();
-      ctx.strokeStyle = P.warn;
-      ctx.lineWidth = 2.2;
-      ctx.stroke();
-
-      var px0 = gx + gSize + 34, pw = w - px0 - 20, py0 = 38, ph = h - 68;
-      ctx.fillStyle = P.text;
-      ctx.fillText("Modulation Transfer Function (MTF vs. Spatial Frequency)", px0, 22);
-      ctx.strokeStyle = P.border;
-      ctx.lineWidth = 1;
-      ctx.strokeRect(px0, py0, pw, ph);
-
-      var plotCurve = function (fn, color, dashed) {
-        ctx.beginPath();
-        ctx.strokeStyle = color;
-        ctx.lineWidth = 2.4;
-        ctx.setLineDash(dashed ? [5, 4] : []);
-        for (var i = 0; i <= 60; i++) {
-          var f = i / 60;
-          var mtf = Math.max(0, Math.min(1, fn(f)));
-          var x = px0 + f * pw;
-          var y = py0 + (1 - mtf) * ph;
-          if (i === 0) ctx.moveTo(x, y); else ctx.lineTo(x, y);
-        }
-        ctx.stroke();
-        ctx.setLineDash([]);
-      };
-      var optCutoff = Math.min(1.3, (pitch * 2.2) / airyUm * 1.45);
-      plotCurve(function (f) { return Math.max(0, 1 - Math.pow(f / optCutoff, 1.35)); }, P.dim, true);
-      plotCurve(function (f) { return Math.max(0, (1 - 0.52 * f * f) * Math.exp(-0.32 * Math.pow(f / optCutoff, 2))); }, P.accent, false);
-
-      ctx.font = "11.5px Pretendard, sans-serif";
-      ctx.fillStyle = P.accent;
-      ctx.fillText("— DL Hexadeca / QMSC Remosaic MTF (Restored)", px0 + 10, py0 + 20);
-      ctx.fillStyle = P.dim;
-      ctx.fillText("-- Raw Optical + Classical Cubic Interpolation", px0 + 10, py0 + 38);
-      ctx.fillText("0 cy/px", px0, py0 + ph + 16);
-      ctx.fillText("Nyquist (0.5 cy/px)", px0 + pw - 102, py0 + ph + 16);
-    });
-    [nodeSel, binSel, luxRng, fnumRng].forEach(function (el) { el.addEventListener("input", function () { sim1.redraw(); }); });
-
-    // Simulator 1-2: Hexadeca Remosaic & In-Sensor Zoom
-    var algSel = document.getElementById("rmsc-alg-sel");
-    var zoomSel = document.getElementById("rmsc-zoom-sel");
-    var freqRng = document.getElementById("rmsc-freq-rng");
-    var rmscKpis = document.getElementById("rmsc-kpis");
-    var rmscNote = document.getElementById("rmsc-note");
-
-    var sim2 = SB.canvas("#cv-ch01-remosaic", 0.52, function (ctx, w, h, P) {
-      var alg = algSel.value || "dl";
-      var zoom = parseInt(zoomSel.value || "4", 10);
-      var blades = parseInt(freqRng.value || "18", 10);
-      document.getElementById("rmsc-freq-val").textContent = blades + " cycles";
-
-      var psnr = alg === "dl" ? (37.2 - zoom * 0.35 - blades * 0.07) : (alg === "cubic" ? (29.1 - zoom * 0.8 - blades * 0.18) : (23.8 - zoom * 1.1 - blades * 0.25));
-      var zipper = alg === "dl" ? "0.4% (Artifact-Free)" : (alg === "cubic" ? "6.9% (Phase Zipper)" : "18.8% (Severe Moiré)");
-      var cropMp = zoom === 1 ? "200 MP (Full)" : (zoom === 2 ? "50 MP (2× ISZ)" : "12.5 MP (4× ISZ)");
-
-      rmscKpis.innerHTML =
-        '<div class="stat"><span class="k">Active Sensor ROI</span><span class="v">' + cropMp + '</span></div>' +
-        '<div class="stat"><span class="k">Reconstructed PSNR</span><span class="v">' + psnr.toFixed(1) + ' dB</span></div>' +
-        '<div class="stat"><span class="k">False Color / Zipper</span><span class="v">' + zipper + '</span></div>' +
-        '<div class="stat"><span class="k">Phase Decomposition</span><span class="v">16-Ch (4×4)</span></div>';
-
-      rmscNote.innerHTML = "<strong>Zoom Anyplace &amp; In-Sensor Telephoto:</strong> At <strong>" + zoom + "× In-Sensor Zoom</strong>, reading the unbinned central ROI and applying 16-channel DL Hexadeca Remosaic / QMSC suppresses radial color moiré and preserves sharp wedge spokes down to the inner resolution limit.";
-
-      var r = Math.min(w * 0.21, h * 0.38);
-      var c1x = w * 0.26, c2x = w * 0.74, cy = h * 0.54;
-
-      ctx.font = "600 12px Pretendard, sans-serif";
-      ctx.fillStyle = P.text;
-      ctx.fillText("Input: 4×4 Hexadeca RAW (" + zoom + "× In-Sensor ROI)", c1x - r, 24);
-      ctx.fillText("Output: " + (alg === "dl" ? "DL Hexadeca Remosaic / QMSC" : (alg === "cubic" ? "Directional Cubic" : "4×4 Bin + Bilinear")), c2x - r, 24);
-
-      var step = 6;
-      for (var dy = -r; dy < r; dy += step) {
-        for (var dx = -r; dx < r; dx += step) {
-          if (dx * dx + dy * dy > r * r) continue;
-          var ang = Math.atan2(dy, dx);
-          var v = Math.cos(ang * blades) > 0 ? 0.92 : 0.18;
-          var bx = Math.floor((dx + r) / (step * 2)) % 2;
-          var by = Math.floor((dy + r) / (step * 2)) % 2;
-          var rgb = (bx === 0 && by === 0) ? [225, 65, 60] : ((bx + by === 1) ? [45, 170, 80] : [50, 110, 225]);
-          ctx.fillStyle = "rgb(" + Math.round(rgb[0] * v) + "," + Math.round(rgb[1] * v) + "," + Math.round(rgb[2] * v) + ")";
-          ctx.fillRect(c1x + dx, cy + dy, step - 0.5, step - 0.5);
-        }
-      }
-
-      var aliasRadius = alg === "dl" ? r * 0.15 : (alg === "cubic" ? r * 0.45 : r * 0.68);
-      for (var i = 0; i < blades * 2; i++) {
-        var a0 = (i * Math.PI) / blades;
-        var a1 = ((i + 1) * Math.PI) / blades;
-        ctx.beginPath();
-        ctx.moveTo(c2x, cy);
-        ctx.arc(c2x, cy, r, a0, a1);
-        ctx.closePath();
-        ctx.fillStyle = i % 2 === 0 ? "#f2f5fb" : "#182030";
-        ctx.fill();
-      }
-      var grad = ctx.createRadialGradient(c2x, cy, 2, c2x, cy, aliasRadius);
-      if (alg === "dl") {
-        grad.addColorStop(0, "rgba(120,130,145,0.72)");
-        grad.addColorStop(1, "rgba(120,130,145,0.0)");
-      } else if (alg === "cubic") {
-        grad.addColorStop(0, "rgba(220,70,160,0.85)");
-        grad.addColorStop(0.6, "rgba(60,190,220,0.55)");
-        grad.addColorStop(1, "rgba(120,130,145,0.0)");
-      } else {
-        grad.addColorStop(0, "rgba(230,90,50,0.92)");
-        grad.addColorStop(0.7, "rgba(80,140,230,0.70)");
-        grad.addColorStop(1, "rgba(120,130,145,0.0)");
-      }
-      ctx.beginPath();
-      ctx.arc(c2x, cy, aliasRadius, 0, Math.PI * 2);
-      ctx.fillStyle = grad;
-      ctx.fill();
-      ctx.strokeStyle = alg === "dl" ? P.ok : P.warn;
-      ctx.setLineDash([4, 3]);
-      ctx.stroke();
-      ctx.setLineDash([]);
-    });
-    [algSel, zoomSel, freqRng].forEach(function (el) { el.addEventListener("input", function () { sim2.redraw(); }); });
-  });
-  </script>
-
-
 </main>
+<footer class="sb-footer">
+  Samsung Electronics · S.LSI Sensor Business Team — 200MP ISOCELL &amp; E2E AI Remosaic Project Guidebook · Yongjoon Song, Ph.D. · Build 2026-11-01 (<code>dbcaf33</code>)
+</footer>
 </body>
 </html>

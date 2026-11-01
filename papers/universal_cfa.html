@@ -694,14 +694,6 @@
         </li>
       </ul>
 
-      <!-- Figure 1b: Detailed Single-Stream 16-Channel Network Micro-Architecture spanning all columns -->
-      <div class="span-all fig-card">
-        <img src="figures/ucfa_klt_hf_network_architecture.webp" alt="SE-Universal-CFA 16-Channel Single-Stream Detailed Network Architecture">
-        <div class="caption">
-          <strong>Fig. 1b.</strong> Detailed layer-by-layer network micro-architecture of <strong>Proposed SE-Universal-CFA (16-Channel Single-Stream)</strong>. <strong>Zone 1 (Sony IMX500 In-Sensor NPU):</strong> A single phase-aware stream unpacks CFA channels via <code>PixelUnshuffle(p)</code> ($p \in \{2, 4, 8\}$ for Bayer $1\times 1$, Tetracell $2\times 2$, and Hexadecacell $4\times 4$) and compresses them through a 3-stage <code>SE-ResBlock</code> pyramid ($1\times 1$ Conv SE gating) into the standardized $64.0\text{ KB}$ INT8 bus tensor $r \in \mathbb{R}^{16\times 64\times 64}$ ($48\times$ reduction vs. Raw RGB). <strong>Zone 2 &amp; 3 (Host AP / Hailo-8 NPU):</strong> The 100% sensor-invariant translator $\mathcal{T}_B$ ($16 \to 16$) maps $r \to z_{\text{pred}} \in \mathbb{R}^{16\times 64\times 64}$ on the <code>FLUX.1</code> / <code>TAEF1</code> manifold, driving the 100% CFA-agnostic guided 16-channel decoder $\mathcal{D}_{\text{rec}}(z_{\text{pred}})$.
-        </div>
-      </div>
-
       <h2 class="sec-title">4. Experimental Evaluation</h2>
       <p>
         We train and evaluate our single-stream 16-channel architecture on an NVIDIA GeForce RTX 5060 Ti eGPU across <code>BJDD_CVPR21</code>, <code>KLAP_ICCV23 CIS</code> (<code>data_00001..00003.pickle</code>), <code>Kodak24</code>, and our 8-scene <code>Remosaic Stress Benchmark</code>. Table 1 compares our proposed <code>SE-Universal-CFA</code> against external pixel-space baselines on <code>BJDD_CVPR21</code>, and Table 2 summarizes cross-dataset generalization across all four benchmark suites.

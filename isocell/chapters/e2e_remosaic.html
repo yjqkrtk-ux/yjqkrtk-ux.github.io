@@ -1,0 +1,231 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Ch.02 E2E AI Remosaic (Gen 1–4) Turn-Key Platform · ISOCELL 200MP &amp; E2E AI Remosaic Guidebook</title>
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/katex@0.16.11/dist/katex.min.css">
+<script defer src="https://cdn.jsdelivr.net/npm/katex@0.16.11/dist/katex.min.js"></script>
+<script defer src="https://cdn.jsdelivr.net/npm/katex@0.16.11/dist/contrib/auto-render.min.js"></script>
+<link rel="stylesheet" href="../css/style.css">
+<link rel="stylesheet" href="../css/glossary-tooltips.css">
+<script src="../js/glossary-data.js"></script>
+<script src="../js/common.js"></script>
+<script defer src="../js/glossary-tooltips.js"></script>
+</head>
+<body data-chapter="e2e_remosaic" data-root="../">
+<main class="chapter">
+
+  <header class="chapter-hero">
+    <div class="eyebrow">CHAPTER 02 · E2E AI REMOSAIC (GEN 1 – GEN 4) · SEC ANNUAL AWARD 2023 SILVER</div>
+    <h1>E2E AI Remosaic — End-to-End 200MP Turn-Key S/W ISP Platform</h1>
+    <p class="lead">
+      Delivering a 200MP sensor to global smartphone OEMs requires more than a standalone remosaic model—it requires an <strong>End-to-End (E2E) S/W ISP turn-key platform</strong> that transforms 200MP non-Bayer RAW frames into ready-to-encode YUV within strict mobile thermal and shutter-lag budgets. Deployed across <strong>30+ commercial OEM flagship smartphones</strong>, this platform earned the <strong>Samsung Electronics Annual Awards 2023 (Silver Award)</strong>.
+    </p>
+    <ul class="objectives">
+      <li>Analyze why conventional serial 200MP capture pipelines (`RAW → Remosaic → Bayer → ISP → YUV`) suffer from severe latency (~3.0s) and DRAM bandwidth bottlenecks.</li>
+      <li>Trace the <strong>4-Generation architectural evolution (Gen 1 → Gen 4)</strong> from the foundational turn-key platform to heterogeneous SoC parallelization (`CPU/GPU/NPU/ISP`) and <strong>Gen 4 DL Multi-Frame Remosaic</strong>.</li>
+      <li>Simulate tile-level heterogeneous SoC scheduling in the interactive <strong>E2E AI Remosaic Latency &amp; Throughput Analyzer</strong>.</li>
+    </ul>
+  </header>
+
+  <section id="sec-serial-vs-e2e">
+    <h2>Overcoming the 200MP Serial Capture Bottleneck (Gen 2 Parallel Architecture)</h2>
+    <p>
+      A single 200MP 10-bit RAW frame (`16,320 × 12,288`) occupies ~250 MB in unpacked 16-bit memory, and a 3-channel 200MP RGB/YUV frame occupies 600 MB. In a conventional serial pipeline, the system must complete full-frame Remosaic before starting ISP tone/color processing—incurring multiple 200MP DRAM read/write round-trips and ~3 seconds of capture latency.
+    </p>
+    <div class="math-block">
+      $$T_{\text{serial}} = T_{\text{RAW-DMA}} + T_{\text{DL-Remosaic}} + T_{\text{DRAM- flush}} + T_{\text{SW/HW-ISP}} \;\approx\; 3.0\text{ s}$$
+      $$T_{\text{E2E-Parallel}} = \max_{k \in \{\text{NPU},\,\text{GPU},\,\text{ISP}\}}\!\left(T_{\text{tile}, k}\right) \cdot N_{\text{tiles}} + T_{\text{pipe-fill}} \;\approx\; 1.0\text{ s}\quad (\text{Up to } 3\times \text{ faster})$$
+    </div>
+    <p>
+      As publicly highlighted by Samsung Semiconductor Global (<em>&ldquo;Samsung Electronics Introduces ISOCELL Zoom Anyplace &amp; E2E AI Remosaic Solutions for the 200-Megapixel Image Sensor&rdquo;</em>), <strong>E2E AI Remosaic</strong> fuses DL Remosaic and ISP stages into a parallelized, tile-streamed heterogeneous pipeline across mobile <code>CPU</code>, <code>GPU</code>, <code>NPU</code>, and <code>ISP</code> engines (Qualcomm Snapdragon &amp; MediaTek Dimensity).
+    </p>
+  </section>
+
+  <section id="sec-4gen">
+    <h2>Four-Generation Architectural Evolution (Sep 2022 – Present)</h2>
+    <div class="diagram">
+      <svg viewBox="0 0 980 245" xmlns="http://www.w3.org/2000/svg" role="img" aria-label="E2E AI Remosaic Gen 1 to Gen 4 Roadmap">
+        <defs>
+          <marker id="arr-g" viewBox="0 0 10 10" refX="8" refY="5" markerWidth="6" markerHeight="6" orient="auto-start-reverse">
+            <path d="M 0 1 L 9 5 L 0 9 z" class="svg-arrow"/>
+          </marker>
+        </defs>
+        <g transform="translate(14, 20)">
+          <rect width="220" height="195" rx="10" class="svg-box a"/>
+          <text x="14" y="28" class="svg-title">Gen 1 (Sep 2022)</text>
+          <text x="14" y="50" class="svg-sub">Foundational Turn-Key ISP</text>
+          <text x="14" y="74" class="svg-sub">• First production E2E DL</text>
+          <text x="14" y="92" class="svg-sub">  Remosaic + SW ISP stack</text>
+          <text x="14" y="114" class="svg-sub">• Standardized sensor setfile</text>
+          <text x="14" y="132" class="svg-sub">  &amp; SoC integration SDK</text>
+          <text x="14" y="174" class="svg-lbl">200MP Turn-Key Foundation</text>
+        </g>
+        <line x1="236" y1="118" x2="256" y2="118" class="svg-line" marker-end="url(#arr-g)"/>
+        <g transform="translate(260, 20)">
+          <rect width="225" height="195" rx="10" class="svg-box b"/>
+          <text x="14" y="28" class="svg-title">Gen 2 (2023 – 2024)</text>
+          <text x="14" y="50" class="svg-sub">HetSoC Joint Parallelization</text>
+          <text x="14" y="74" class="svg-sub">• Concurrent CPU/GPU/NPU/ISP</text>
+          <text x="14" y="92" class="svg-sub">  tile-streamed execution</text>
+          <text x="14" y="114" class="svg-sub">• Up to 3× faster cfa2yuv</text>
+          <text x="14" y="132" class="svg-sub">  (HONOR Magic7 Pro, vivo</text>
+          <text x="14" y="150" class="svg-sub">  X200 Pro, Redmi Note 13 Pro+)</text>
+          <text x="14" y="174" class="svg-lbl">SEC 2023 Silver Award</text>
+        </g>
+        <line x1="487" y1="118" x2="507" y2="118" class="svg-line" marker-end="url(#arr-g)"/>
+        <g transform="translate(511, 20)">
+          <rect width="220" height="195" rx="10" class="svg-box warn"/>
+          <text x="14" y="28" class="svg-title">Gen 3 (Jan – Dec 2025)</text>
+          <text x="14" y="50" class="svg-sub">In-Sensor Zoom &amp; MF Expansion</text>
+          <text x="14" y="74" class="svg-sub">• Lossless 2× / 4× In-Sensor</text>
+          <text x="14" y="92" class="svg-sub">  Zoom (ISZ) pipeline fusion</text>
+          <text x="14" y="114" class="svg-sub">• Multi-frame burst fusion</text>
+          <text x="14" y="132" class="svg-sub">  for high-tier &amp; mid-range</text>
+          <text x="14" y="150" class="svg-sub">  (Redmi Note 15 Pro+ 5G)</text>
+          <text x="14" y="174" class="svg-lbl">Zoom &amp; Tier Expansion</text>
+        </g>
+        <line x1="733" y1="118" x2="753" y2="118" class="svg-line" marker-end="url(#arr-g)"/>
+        <g transform="translate(757, 20)">
+          <rect width="209" height="195" rx="10" class="svg-box ok"/>
+          <text x="14" y="28" class="svg-title">Gen 4 (2026 – Present)</text>
+          <text x="14" y="50" class="svg-sub">DL Multi-Frame Remosaic</text>
+          <text x="14" y="74" class="svg-sub">• Joint burst alignment,</text>
+          <text x="14" y="92" class="svg-sub">  detail synthesis &amp; NR</text>
+          <text x="14" y="114" class="svg-sub">• Flagship AP NPU native</text>
+          <text x="14" y="132" class="svg-sub">  operator optimization</text>
+          <text x="14" y="150" class="svg-sub">  (HONOR Magic 9 &amp; 9 Pro Max)</text>
+          <text x="14" y="174" class="svg-lbl">Commercial 200MP MF-NPU</text>
+        </g>
+      </svg>
+      <div class="cap"><strong>Figure 2-1.</strong> Evolution of the E2E AI Remosaic software ISP platform from Gen 1 (2022) through Gen 4 (2026).</div>
+    </div>
+  </section>
+
+  <section id="sim-e2e-sec">
+    <h2>Interactive Simulator · Serial ISP vs. E2E AI Remosaic (Gen 1–4) Scheduler</h2>
+    <div class="sim-box" id="sim-ch02-e2e">
+      <div class="sim-head">
+        <span class="sim-tag">SIM 2-1 · HETEROGENEOUS SOC PIPELINE SCHEDULER</span>
+        <h3>200MP cfa2yuv Latency, DRAM Traffic &amp; Multi-Frame SNR Simulator</h3>
+      </div>
+      <div class="sim-body side">
+        <div class="sim-view"><canvas id="cv-ch02-e2e"></canvas></div>
+        <div class="sim-controls">
+          <div class="ctrl">
+            <span>Architecture Generation</span>
+            <select id="e2e-gen-sel">
+              <option value="serial">Legacy Serial Pipeline (Sequential Remosaic → SW ISP)</option>
+              <option value="gen1">E2E AI Remosaic Gen 1 (Turn-Key Unified S/W Stack)</option>
+              <option value="gen2" selected>E2E AI Remosaic Gen 2 (HetSoC Parallel CPU/GPU/NPU/ISP)</option>
+              <option value="gen3">E2E AI Remosaic Gen 3 (In-Sensor Zoom + Burst Fusion)</option>
+              <option value="gen4">E2E AI Remosaic Gen 4 (DL Multi-Frame Joint Remosaic on NPU)</option>
+            </select>
+          </div>
+          <div class="ctrl">
+            <span>Burst Frame Count (Multi-Frame Input): <strong id="e2e-frames-val">4</strong> frames</span>
+            <input type="range" id="e2e-frames-rng" min="1" max="8" step="1" value="4">
+          </div>
+          <div class="ctrl">
+            <span>Tile Partition Granularity: <strong id="e2e-tiles-val">16</strong> tiles</span>
+            <input type="range" id="e2e-tiles-rng" min="4" max="32" step="4" value="16">
+          </div>
+          <div class="kpi-grid" id="e2e-kpis"></div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <section class="keypoints" id="summary">
+    <h2>Key Takeaways · Chapter 02</h2>
+    <ol>
+      <li><strong>End-to-End Co-Optimization</strong>: By overlapping NPU neural remosaicing with GPU/ISP color and tone processing at the tile level (Gen 2), 200MP capture latency drops from ~3.0s to ~1.0s while eliminating intermediate full-frame DRAM spills.</li>
+      <li><strong>Gen 4 Multi-Frame Neural Restoration</strong>: Jointly fusing multiple non-Bayer burst frames directly inside the DL Remosaic network recovers sub-Nyquist spatial detail and suppresses temporal noise on flagship AP NPUs (HONOR Magic 9 series).</li>
+    </ol>
+  </section>
+
+  <script>
+  (function() {
+    const genSel = document.getElementById("e2e-gen-sel");
+    const frRng = document.getElementById("e2e-frames-rng");
+    const tlRng = document.getElementById("e2e-tiles-rng");
+    const kpiBox = document.getElementById("e2e-kpis");
+
+    const PROFILES = {
+      serial: { name: "Legacy Serial", lat1: 3000, dramGb: 3.4, snrBoost: 0.0, overlap: 0.08 },
+      gen1:   { name: "E2E Gen 1",     lat1: 2100, dramGb: 2.3, snrBoost: 1.8, overlap: 0.35 },
+      gen2:   { name: "E2E Gen 2",     lat1: 980,  dramGb: 1.15, snrBoost: 2.4, overlap: 0.82 },
+      gen3:   { name: "E2E Gen 3",     lat1: 920,  dramGb: 1.05, snrBoost: 4.1, overlap: 0.86 },
+      gen4:   { name: "E2E Gen 4",     lat1: 840,  dramGb: 0.88, snrBoost: 6.5, overlap: 0.92 },
+    };
+
+    const sim = SB.canvas("#cv-ch02-e2e", 0.56, (ctx, w, h, P) => {
+      const key = genSel.value || "gen2";
+      const prof = PROFILES[key];
+      const frames = parseInt(frRng.value || "4", 10);
+      const tiles = parseInt(tlRng.value || "16", 10);
+      document.getElementById("e2e-frames-val").textContent = frames;
+      document.getElementById("e2e-tiles-val").textContent = tiles;
+
+      const mfScale = (key === "gen4" || key === "gen3") ? (1 + (frames - 1) * 0.14) : (1 + (frames - 1) * 0.32);
+      const tileFactor = 1.0 - Math.min(0.18, (tiles - 4) * 0.005 * prof.overlap);
+      const totalMs = Math.round(prof.lat1 * mfScale * tileFactor);
+      const speedup = (3000 * (1 + (frames - 1) * 0.32)) / totalMs;
+      const snrGain = prof.snrBoost + (key === "gen4" ? 3.0 * Math.log2(frames) : 1.4 * Math.log2(frames));
+
+      kpiBox.innerHTML = `
+        <div class="kpi"><div class="k">Total cfa2yuv Latency</div><div class="v">${(totalMs / 1000).toFixed(2)} s (${totalMs} ms)</div></div>
+        <div class="kpi"><div class="k">Speedup vs. Serial</div><div class="v">${speedup.toFixed(2)}× Faster</div></div>
+        <div class="kpi"><div class="k">DRAM Traffic / Capture</div><div class="v">${(prof.dramGb * (1 + (frames - 1) * 0.25)).toFixed(2)} GB</div></div>
+        <div class="kpi"><div class="k">Detail / SNR Gain</div><div class="v">+${snrGain.toFixed(1)} dB</div></div>
+      `;
+
+      ctx.font = "600 12px Inter, sans-serif";
+      ctx.fillStyle = P.text;
+      ctx.fillText(`Heterogeneous SoC Execution Timeline (${prof.name} · ${tiles} Tiles · ${frames}-Frame Input)`, 22, 26);
+
+      const tracks = [
+        { label: "CSI-2 / RAW DMA", col: "#0a84c6", offset: 0.0, dur: 0.26 },
+        { label: "NPU (DL Remosaic)", col: "#7a4ce0", offset: 0.12 * (1 - prof.overlap * 0.6), dur: 0.58 },
+        { label: "GPU / DSP (NR & Tone)", col: "#d98a00", offset: 0.32 * (1 - prof.overlap * 0.55), dur: 0.48 },
+        { label: "HW/SW ISP → YUV Out", col: "#1f9d55", offset: 0.52 * (1 - prof.overlap * 0.50), dur: 0.44 },
+      ];
+
+      const x0 = 155, tw = w - x0 - 28, y0 = 46, rowH = (h - 90) / tracks.length;
+      const normSpan = totalMs / 3600;
+
+      tracks.forEach((tr, idx) => {
+        const y = y0 + idx * rowH;
+        ctx.fillStyle = P.surface;
+        ctx.fillRect(x0, y, tw, rowH - 10);
+        ctx.fillStyle = P.text;
+        ctx.font = "600 11.5px Inter, sans-serif";
+        ctx.fillText(tr.label, 18, y + (rowH - 10) * 0.62);
+
+        const nBlocks = Math.min(8, tiles / 2);
+        const spanW = tw * Math.min(0.96, normSpan);
+        const blockW = (spanW * tr.dur) / nBlocks;
+        const stepX = (spanW * (1 - tr.offset)) / nBlocks;
+
+        for (let b = 0; b < nBlocks; b++) {
+          const bx = x0 + spanW * tr.offset + b * stepX;
+          ctx.fillStyle = tr.col;
+          ctx.fillRect(bx, y + 5, Math.max(8, blockW - 3), rowH - 20);
+        }
+      });
+
+      ctx.fillStyle = P.dim;
+      ctx.font = "11px Inter, sans-serif";
+      ctx.fillText("0.0 s", x0, h - 14);
+      ctx.fillText(`Capture Complete: ${(totalMs / 1000).toFixed(2)} s`, x0 + tw * Math.min(0.92, normSpan) - 80, h - 14);
+    });
+
+    [genSel, frRng, tlRng].forEach(el => el.addEventListener("input", () => sim.redraw()));
+  })();
+  </script>
+
+
+</main>
+</body>
+</html>

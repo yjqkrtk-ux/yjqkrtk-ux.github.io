@@ -1,0 +1,167 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Ch.04 Granted US Patents — Neural Bad-Pixel &amp; Cluster Defect Correction · ISOCELL 200MP &amp; E2E AI Remosaic Guidebook</title>
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/katex@0.16.11/dist/katex.min.css">
+<script defer src="https://cdn.jsdelivr.net/npm/katex@0.16.11/dist/katex.min.js"></script>
+<script defer src="https://cdn.jsdelivr.net/npm/katex@0.16.11/dist/contrib/auto-render.min.js"></script>
+<link rel="stylesheet" href="../css/style.css">
+<link rel="stylesheet" href="../css/glossary-tooltips.css">
+<script src="../js/glossary-data.js"></script>
+<script src="../js/common.js"></script>
+<script defer src="../js/glossary-tooltips.js"></script>
+</head>
+<body data-chapter="patents_bpc" data-root="../">
+<main class="chapter">
+
+  <header class="chapter-hero">
+    <div class="eyebrow">CHAPTER 04 · GRANTED US PATENTS (US 12,574,659 B2 &amp; US 12,363,458 B2)</div>
+    <h1>Neural Bad-Pixel &amp; Cluster Defect Restoration in 200MP Sensors</h1>
+    <p class="lead">
+      In 200MP sub-micron sensors (<code>0.50µm–0.60µm</code>), single defective pixels and multi-pixel cluster defects inevitably arise from silicon crystal imperfections, dark-current spikes, or PDAF/shielded pixel structures. Classical pre-interpolation blurs local gradients and corrupts the receptive field of downstream neural remosaic networks. This chapter examines two <strong>granted US patents</strong> invented at Samsung Electronics that solve this problem inside the neural network.
+    </p>
+    <ul class="objectives">
+      <li>Understand <strong>US Patent 12,574,659 B2 (Granted Mar 2026)</strong>: injecting encoded bad-pixel coordinate metadata directly into an intermediate feature layer of a neural ISP network.</li>
+      <li>Understand <strong>US Patent 12,363,458 B2 (Granted Jul 2025)</strong>: deep learning-based cluster bad-pixel correction across non-Bayer 4×4 same-color neighborhoods.</li>
+      <li>Experiment with single and cluster defect patterns in the interactive <strong>Neural Bad-Pixel Positional Injection Simulator</strong>.</li>
+    </ul>
+  </header>
+
+  <section id="sec-us12574659">
+    <h2>US 12,574,659 B2 — Intermediate-Layer Bad-Pixel Positional Injection</h2>
+    <p>
+      <strong>Patent Details</strong>: <em>&ldquo;Image signal processor, image sensor, and operating method of the image sensor&rdquo;</em> (Samsung Electronics Co., Ltd. · Filed Nov 8, 2023 · <strong>Granted Mar 10, 2026</strong> · {_ext_link("https://patents.google.com/patent/US12574659B2/en", "Google Patents US12574659B2")}).
+    </p>
+    <p>
+      If a defective pixel map $M_{\text{BPC}} \in \{0,1\}^{H\times W}$ is simply concatenated at the input layer of a deep CNN, every early convolutional layer must allocate channel capacity to propagate binary mask coordinates, increasing MACs and memory bandwidth. Conversely, if bad pixels are naively replaced before the network, the network cannot distinguish true high-frequency highlights from interpolated defects.
+    </p>
+    <div class="math-block">
+      $$\mathbf{F}_{\ell+1} = \sigma\!\left(\mathbf{W}_{\ell} * \mathbf{F}_{\ell} \;+\; \mathcal{E}_{\text{pos}}\!\left(M_{\text{BPC}}\right)\right), \qquad \mathcal{E}_{\text{pos}}(M_{\text{BPC}}) \in \mathbb{R}^{C_\ell \times \frac{H}{s} \times \frac{W}{s}}$$
+    </div>
+    <p>
+      In <strong>US 12,574,659 B2</strong>, the sensor or ISP encodes the bad-pixel position data $\mathcal{E}_{\text{pos}}(M_{\text{BPC}})$ and injects it directly into an <strong>intermediate layer $\ell$</strong> of the neural network, allowing early feature extractors to remain lightweight while guiding mid-level reconstruction kernels to dynamically re-weight valid neighboring phases.
+    </p>
+  </section>
+
+  <section id="sec-us12363458">
+    <h2>US 12,363,458 B2 — Deep Learning Cluster Bad-Pixel Correction</h2>
+    <p>
+      <strong>Patent Details</strong>: <em>&ldquo;Image sensor and operating method&rdquo;</em> (Samsung Electronics Co., Ltd. · Filed Oct 30, 2023 · <strong>Granted Jul 15, 2025</strong> · {_ext_link("https://patents.google.com/patent/US12363458B2/en", "Google Patents US12363458B2")}).
+    </p>
+    <p>
+      In $4\times 4$ Tetra²pixel / Hexadeca sensors, a cluster defect (e.g., $2\times 2$ or $3\times 3$ adjacent defective photodiodes) can wipe out a large fraction of a single color cluster, causing directional rules to fail along diagonal edges. <strong>US 12,363,458 B2</strong> introduces a learned cross-channel context restoration mechanism that leverages intact cross-color structural gradients to reconstruct cluster-corrupted sub-micron neighborhoods without edge haloing.
+    </p>
+  </section>
+
+  <section id="sim-bpc-sec">
+    <h2>Interactive Simulator · Neural Bad-Pixel Injection &amp; Cluster Recovery</h2>
+    <div class="sim-box" id="sim-ch04-bpc">
+      <div class="sim-head">
+        <span class="sim-tag">SIM 4-1 · US 12,574,659 B2 &amp; US 12,363,458 B2</span>
+        <h3>Compare Naive Pre-Replacement vs. Intermediate-Layer Positional BPC Injection</h3>
+      </div>
+      <div class="sim-body side">
+        <div class="sim-view"><canvas id="cv-ch04-bpc"></canvas></div>
+        <div class="sim-controls">
+          <div class="ctrl">
+            <span>Correction Architecture</span>
+            <select id="bpc-mode-sel">
+              <option value="none">Uncorrected Raw Defects (Hot / Dead Cluster)</option>
+              <option value="naive">Classical Pre-Interpolation (Edge Blur + Ringing)</option>
+              <option value="patent" selected>US 12,574,659 B2 + US 12,363,458 B2 (Intermediate Neural BPC)</option>
+            </select>
+          </div>
+          <div class="ctrl">
+            <span>Cluster Defect Density: <strong id="bpc-dens-val">3.5</strong>%</span>
+            <input type="range" id="bpc-dens-rng" min="0.5" max="8.0" step="0.5" value="3.5">
+          </div>
+          <div class="ctrl">
+            <span>Max Defect Cluster Size: <strong id="bpc-clust-val">3×3</strong> pixels</span>
+            <input type="range" id="bpc-clust-rng" min="1" max="4" step="1" value="3">
+          </div>
+          <div class="kpi-grid" id="bpc-kpis"></div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <section class="keypoints" id="summary">
+    <h2>Key Takeaways · Chapter 04</h2>
+    <ol>
+      <li><strong>US 12,574,659 B2 (Granted Mar 2026)</strong>: Injecting encoded bad-pixel position metadata into an intermediate neural network layer avoids input-channel bloat while preventing defective pixels from contaminating learned remosaic filters.</li>
+      <li><strong>US 12,363,458 B2 (Granted Jul 2025)</strong>: Deep learning cluster bad-pixel correction preserves sharp diagonal edges even when multi-pixel defect clusters occur inside $4\times 4$ non-Bayer CFA blocks.</li>
+    </ol>
+  </section>
+
+  <script>
+  (function() {
+    const modeSel = document.getElementById("bpc-mode-sel");
+    const densRng = document.getElementById("bpc-dens-rng");
+    const clustRng = document.getElementById("bpc-clust-rng");
+    const kpiBox = document.getElementById("bpc-kpis");
+
+    const sim = SB.canvas("#cv-ch04-bpc", 0.52, (ctx, w, h, P) => {
+      const mode = modeSel.value || "patent";
+      const dens = parseFloat(densRng.value || "3.5");
+      const clust = parseInt(clustRng.value || "3", 10);
+      document.getElementById("bpc-dens-val").textContent = dens.toFixed(1);
+      document.getElementById("bpc-clust-val").textContent = `${clust}×${clust}`;
+
+      const psnr = mode === "patent" ? (39.2 - dens * 0.35 - clust * 0.45) : (mode === "naive" ? (30.5 - dens * 0.9 - clust * 1.6) : (16.4 - dens * 1.4));
+      const macOverhead = mode === "patent" ? "+1.8% (Intermediate Layer)" : (mode === "naive" ? "+0% (Pre-Filter, Low IQ)" : "0%");
+
+      kpiBox.innerHTML = `
+        <div class="kpi"><div class="k">Edge Patch PSNR</div><div class="v">${psnr.toFixed(1)} dB</div></div>
+        <div class="kpi"><div class="k">Network MAC Overhead</div><div class="v">${macOverhead}</div></div>
+        <div class="kpi"><div class="k">Cluster Size Handled</div><div class="v">Up to ${clust}×${clust} px</div></div>
+        <div class="kpi"><div class="k">Patent Status</div><div class="v">2 US Granted</div></div>
+      `;
+
+      const N = 16;
+      const gSize = Math.min(w * 0.40, h - 64);
+      const cell = gSize / N;
+      const x1 = 28, x2 = w * 0.53, y0 = 42;
+
+      ctx.font = "600 12px Inter, sans-serif";
+      ctx.fillStyle = P.text;
+      ctx.fillText(`Corrupted 16×16 Patch + Encoded BPC Mask (${dens.toFixed(1)}%)`, x1, 26);
+      ctx.fillText(`Restored Output (${mode === "patent" ? "US 12,574,659 B2 + US 12,363,458 B2" : (mode === "naive" ? "Naive Pre-Interpolation" : "Uncorrected")})`, x2, 26);
+
+      for (let r = 0; r < N; r++) {
+        for (let c = 0; c < N; c++) {
+          const edgeVal = (c - r * 0.6 > 4) ? 215 : 48;
+          const seed = ((r * 31 + c * 17) % 97) / 97.0;
+          const isClusterCenter = seed < (dens * 0.012);
+          const inCluster = isClusterCenter || (clust >= 2 && (((r - 1) * 31 + c * 17) % 97) / 97.0 < (dens * 0.012));
+
+          // Left patch: show raw with hot/dead defects highlighted
+          ctx.fillStyle = inCluster ? "#ff4d4f" : `rgb(${edgeVal},${edgeVal + 8},${edgeVal + 18})`;
+          ctx.fillRect(x1 + c * cell, y0 + r * cell, cell - 1, cell - 1);
+
+          // Right patch: restored
+          let outVal = edgeVal;
+          if (inCluster) {
+            if (mode === "none") outVal = 255;
+            else if (mode === "naive") outVal = Math.round(edgeVal * 0.55 + 130 * 0.45);
+            else outVal = edgeVal + ((r + c) % 2 === 0 ? 3 : -3);
+          }
+          ctx.fillStyle = (mode === "none" && inCluster) ? "#ff4d4f" : `rgb(${outVal},${outVal + 8},${outVal + 18})`;
+          ctx.fillRect(x2 + c * cell, y0 + r * cell, cell - 1, cell - 1);
+          if (mode === "naive" && inCluster) {
+            ctx.strokeStyle = P.warn;
+            ctx.strokeRect(x2 + c * cell, y0 + r * cell, cell - 1, cell - 1);
+          }
+        }
+      }
+    });
+
+    [modeSel, densRng, clustRng].forEach(el => el.addEventListener("input", () => sim.redraw()));
+  })();
+  </script>
+
+
+</main>
+</body>
+</html>

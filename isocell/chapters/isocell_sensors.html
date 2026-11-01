@@ -1,0 +1,216 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Ch.03 ISOCELL 200MP Lineup — HP5, HP3/HP9 &amp; HP2 Neural Remosaic · ISOCELL 200MP &amp; E2E AI Remosaic Guidebook</title>
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/katex@0.16.11/dist/katex.min.css">
+<script defer src="https://cdn.jsdelivr.net/npm/katex@0.16.11/dist/katex.min.js"></script>
+<script defer src="https://cdn.jsdelivr.net/npm/katex@0.16.11/dist/contrib/auto-render.min.js"></script>
+<link rel="stylesheet" href="../css/style.css">
+<link rel="stylesheet" href="../css/glossary-tooltips.css">
+<script src="../js/glossary-data.js"></script>
+<script src="../js/common.js"></script>
+<script defer src="../js/glossary-tooltips.js"></script>
+</head>
+<body data-chapter="isocell_sensors" data-root="../">
+<main class="chapter">
+
+  <header class="chapter-hero">
+    <div class="eyebrow">CHAPTER 03 · ISOCELL 200MP SENSOR LINEUP (HP5 · HP3/HP9 · HP2)</div>
+    <h1>ISOCELL 200MP Lineup — Neural Remosaic for Main &amp; Periscope Telephoto</h1>
+    <p class="lead">
+      Across Samsung's flagship 200MP ISOCELL portfolio—from <strong>ISOCELL HP2</strong> (<code>0.60µm</code>, Galaxy S23 Ultra) and <strong>ISOCELL HP3 / HP9</strong> (<code>0.56µm</code>, world's first DL Hexadeca remosaic for wide &amp; periscope telephoto) to <strong>ISOCELL HP5</strong> (<code>0.50µm</code>, world's smallest 200MP sensor)—neural remosaic algorithms bridge sub-micron pixel physics with ultra-high-resolution optical zoom.
+    </p>
+    <ul class="objectives">
+      <li>Compare the architectural targets of <strong>HP2 (QMSC in-sensor 4× zoom)</strong>, <strong>HP3/HP9 (world's first DL Hexadeca 16-cell S/W remosaic)</strong>, and <strong>HP5 (0.50µm sub-wavelength restoration)</strong>.</li>
+      <li>Understand how 16-channel periodic <code>PixelUnshuffle</code> phase decomposition enables high-throughput neural remosaicing without spatial checkerboard artifacts.</li>
+      <li>Test 1× (200MP), 2× (50MP In-Sensor Zoom), and 4× (12.5MP In-Sensor Telephoto Zoom) reconstruction quality in the interactive lab below.</li>
+    </ul>
+  </header>
+
+  <section id="sec-lineup">
+    <h2>200MP ISOCELL Sensor Lineup &amp; Algorithmic Innovations</h2>
+    <div class="tbl-wrap">
+      <table class="tbl">
+        <thead>
+          <tr>
+            <th>Sensor Model</th>
+            <th>Pixel Pitch &amp; Format</th>
+            <th>CFA / Binning Topology</th>
+            <th>Core Neural Remosaic Innovation &amp; Commercial Flagships</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr>
+            <td><strong>ISOCELL HP5</strong><br><span class="badge b-on">Jan 2025 – Present</span></td>
+            <td><code>0.50 µm</code> · 200MP<br><code>1/1.56&quot;</code></td>
+            <td>4×4 Hexadeca<br>(Tetra²pixel)</td>
+            <td><strong>World's smallest 200MP sensor</strong>; leading Neural ISP S/W algorithm roadmap overcoming extreme 0.50µm diffraction &amp; crosstalk limits at mass-production scale.</td>
+          </tr>
+          <tr>
+            <td><strong>ISOCELL HP3 / HP9</strong><br><span class="badge b-area">Sep 2022 – Present</span></td>
+            <td><code>0.56 µm</code> · 200MP<br><code>1/1.4&quot;</code></td>
+            <td>4×4 Hexadeca<br>(16-cell CFA)</td>
+            <td>Invented the <strong>world's first DL-based Hexadeca (16-cell) Remosaic S/W algorithm</strong>; deployed in flagship 200MP periscope telephoto (<strong>HP9</strong>: vivo X200 Pro ZEISS) and 200MP main cameras (<strong>HP3</strong>).</td>
+          </tr>
+          <tr>
+            <td><strong>ISOCELL HP2</strong><br><span class="badge b-area">Apr 2021 – Apr 2023</span></td>
+            <td><code>0.60 µm</code> · 200MP<br><code>1/1.3&quot;</code></td>
+            <td>4×4 Q-Cell<br>(D-VTG Tetra²pixel)</td>
+            <td>Developed <strong>AI-based 4×4 Q-cell Remosaic (QMSC)</strong> deployed in-sensor, powering lossless <strong>12MP 4× In-Sensor Zoom</strong> on <strong>Samsung Galaxy S23 Ultra</strong>.</td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+  </section>
+
+  <section id="sec-phase-unshuffle">
+    <h2>16-Channel Periodic Phase Decomposition &amp; Lossless In-Sensor Zoom</h2>
+    <p>
+      In a $4\times 4$ Hexadeca mosaic, each pixel $(y, x)$ within a $4\times 4$ block has a distinct spatial offset $(\Delta y, \Delta x) \in \{0,1,2,3\}^2$ relative to the macro color block boundary. Applying a standard translation-invariant $3\times 3$ convolution directly on the 2D mosaic mixes interior pixels with boundary pixels. Instead, periodic <strong>PixelUnshuffle</strong> decomposes the $(1, H, W)$ mosaic into a 16-channel phase-homogeneous tensor:
+    </p>
+    <div class="math-block">
+      $$\mathcal{U}_{4\times 4} : \mathbb{R}^{1 \times H \times W} \;\longrightarrow\; \mathbb{R}^{16 \times \frac{H}{4} \times \frac{W}{4}}, \qquad \mathbf{X}_{c}(u, v) = I_{\text{RAW}}\!\left(4u + \lfloor c/4 \rfloor,\; 4v + (c \bmod 4)\right)$$
+    </div>
+    <p>
+      Every channel $c \in \{0,\dots,15\}$ now represents a uniform spatial sub-phase at $\frac{1}{16}$ spatial area, enabling compact residual NPU blocks to predict full-resolution Bayer/RGB phases before <code>PixelShuffle</code> ($\mathcal{U}_{4\times 4}^{-1}$) reassembles the 200MP grid. For <strong>2× (50MP) and 4× (12.5MP) In-Sensor Zoom</strong>—especially critical on <strong>ISOCELL HP9 200MP Telephoto</strong> (vivo X200 Pro ZEISS) and <strong>ISOCELL HP2</strong> (Galaxy S23 Ultra)—only the central ROI of the sensor is read out in $1\times 1$ unbinned mode and remosaiced, delivering lossless optical-equivalent zoom up to 4×–10×.
+    </p>
+  </section>
+
+  <section id="sim-remosaic-sec">
+    <h2>Interactive Simulator · Hexadeca (4×4) Remosaic &amp; In-Sensor Zoom Lab</h2>
+    <div class="sim-box" id="sim-ch03-remosaic">
+      <div class="sim-head">
+        <span class="sim-tag">SIM 3-1 · HEXADECA (16-CELL) REMOSAIC &amp; IN-SENSOR ZOOM</span>
+        <h3>Compare Bilinear vs. Cubic vs. DL Hexadeca Remosaic / QMSC Across Zoom Factors</h3>
+      </div>
+      <div class="sim-body side">
+        <div class="sim-view"><canvas id="cv-ch03-remosaic"></canvas></div>
+        <div class="sim-controls">
+          <div class="ctrl">
+            <span>Reconstruction Algorithm</span>
+            <select id="rmsc-alg-sel">
+              <option value="bilinear">4×4 Binning + Bilinear Upsample (Severe Aliasing)</option>
+              <option value="cubic">Conventional Directional Cubic Remosaic (Color Zipper)</option>
+              <option value="dl" selected>DL Hexadeca Remosaic / QMSC (16-Ch Phase Network)</option>
+            </select>
+          </div>
+          <div class="ctrl">
+            <span>In-Sensor Zoom Factor</span>
+            <select id="rmsc-zoom-sel">
+              <option value="1">1× Full Sensor Readout (200 MP Output)</option>
+              <option value="2">2× Lossless In-Sensor Zoom (50 MP Center Crop)</option>
+              <option value="4" selected>4× Lossless Telephoto In-Sensor Zoom (12.5 MP Center Crop)</option>
+            </select>
+          </div>
+          <div class="ctrl">
+            <span>Spatial Wedge Frequency: <strong id="rmsc-freq-val">18</strong> cycles</span>
+            <input type="range" id="rmsc-freq-rng" min="8" max="32" step="2" value="18">
+          </div>
+          <div class="kpi-grid" id="rmsc-kpis"></div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <section class="keypoints" id="summary">
+    <h2>Key Takeaways · Chapter 03</h2>
+    <ol>
+      <li><strong>World-First DL Hexadeca Remosaic</strong>: Commercialized on ISOCELL HP3 and HP9 (0.56µm), deep learning 16-cell remosaicing unlocks true 200MP resolution and lossless in-sensor telephoto zoom where conventional interpolation fails due to $4\times 4$ same-color phase gaps.</li>
+      <li><strong>Sub-Micron Scaling to 0.50µm (HP5)</strong>: On the world's smallest 200MP sensor (ISOCELL HP5, 1/1.56&quot;), neural remosaicing jointly compensates for optical diffraction and sub-micron SNR constraints.</li>
+    </ol>
+  </section>
+
+  <script>
+  (function() {
+    const algSel = document.getElementById("rmsc-alg-sel");
+    const zoomSel = document.getElementById("rmsc-zoom-sel");
+    const freqRng = document.getElementById("rmsc-freq-rng");
+    const kpiBox = document.getElementById("rmsc-kpis");
+
+    const sim = SB.canvas("#cv-ch03-remosaic", 0.54, (ctx, w, h, P) => {
+      const alg = algSel.value || "dl";
+      const zoom = parseInt(zoomSel.value || "4", 10);
+      const blades = parseInt(freqRng.value || "18", 10);
+      document.getElementById("rmsc-freq-val").textContent = blades;
+
+      const psnr = alg === "dl" ? (36.8 - zoom * 0.4 - blades * 0.08) : (alg === "cubic" ? (29.4 - zoom * 0.8 - blades * 0.18) : (24.1 - zoom * 1.1 - blades * 0.25));
+      const zipper = alg === "dl" ? "0.4% (Suppressed)" : (alg === "cubic" ? "6.8% (Moderate)" : "18.5% (Severe Moiré)");
+      const cropMp = zoom === 1 ? "200 MP" : (zoom === 2 ? "50 MP (2× ISZ)" : "12.5 MP (4× ISZ)");
+
+      kpiBox.innerHTML = `
+        <div class="kpi"><div class="k">Active Sensor ROI</div><div class="v">${cropMp}</div></div>
+        <div class="kpi"><div class="k">Reconstructed PSNR</div><div class="v">${psnr.toFixed(1)} dB</div></div>
+        <div class="kpi"><div class="k">False Color / Zipper</div><div class="v">${zipper}</div></div>
+        <div class="kpi"><div class="k">Phase Channels</div><div class="v">16-Ch (4×4)</div></div>
+      `;
+
+      // Draw Siemens Star resolution target comparison (Left: Raw 4x4 Hexadeca Mosaic, Right: Reconstructed)
+      const r = Math.min(w * 0.21, h * 0.38);
+      const c1x = w * 0.26, c2x = w * 0.74, cy = h * 0.54;
+
+      ctx.font = "600 12px Inter, sans-serif";
+      ctx.fillStyle = P.text;
+      ctx.fillText(`Input: 4×4 Hexadeca RAW (${zoom}× In-Sensor ROI)`, c1x - r, 26);
+      ctx.fillText(`Output: ${alg === "dl" ? "DL Hexadeca Remosaic / QMSC" : (alg === "cubic" ? "Directional Cubic" : "4×4 Bin + Bilinear")}`, c2x - r, 26);
+
+      // Left: blocky 4x4 mosaic visualization
+      const step = 6;
+      for (let dy = -r; dy < r; dy += step) {
+        for (let dx = -r; dx < r; dx += step) {
+          if (dx * dx + dy * dy > r * r) continue;
+          const ang = Math.atan2(dy, dx);
+          const v = Math.cos(ang * blades) > 0 ? 0.9 : 0.18;
+          const bx = Math.floor((dx + r) / (step * 2)) % 2;
+          const by = Math.floor((dy + r) / (step * 2)) % 2;
+          const rgb = (bx === 0 && by === 0) ? [225, 65, 60] : ((bx + by === 1) ? [45, 170, 80] : [50, 110, 225]);
+          ctx.fillStyle = `rgb(${Math.round(rgb[0] * v)},${Math.round(rgb[1] * v)},${Math.round(rgb[2] * v)})`;
+          ctx.fillRect(c1x + dx, cy + dy, step - 0.5, step - 0.5);
+        }
+      }
+
+      // Right: Reconstructed Siemens star with realistic aliasing/false-color radius
+      const aliasRadius = alg === "dl" ? r * 0.16 : (alg === "cubic" ? r * 0.44 : r * 0.68);
+      for (let i = 0; i < blades * 2; i++) {
+        const a0 = (i * Math.PI) / blades;
+        const a1 = ((i + 1) * Math.PI) / blades;
+        ctx.beginPath();
+        ctx.moveTo(c2x, cy);
+        ctx.arc(c2x, cy, r, a0, a1);
+        ctx.closePath();
+        ctx.fillStyle = i % 2 === 0 ? "#f2f5fb" : "#182030";
+        ctx.fill();
+      }
+      // False-color / blur inner zone where resolution collapses
+      const grad = ctx.createRadialGradient(c2x, cy, 2, c2x, cy, aliasRadius);
+      if (alg === "dl") {
+        grad.addColorStop(0, "rgba(120,130,145,0.75)");
+        grad.addColorStop(1, "rgba(120,130,145,0.0)");
+      } else if (alg === "cubic") {
+        grad.addColorStop(0, "rgba(220,70,160,0.85)");
+        grad.addColorStop(0.6, "rgba(60,190,220,0.55)");
+        grad.addColorStop(1, "rgba(120,130,145,0.0)");
+      } else {
+        grad.addColorStop(0, "rgba(230,90,50,0.92)");
+        grad.addColorStop(0.7, "rgba(80,140,230,0.70)");
+        grad.addColorStop(1, "rgba(120,130,145,0.0)");
+      }
+      ctx.beginPath();
+      ctx.arc(c2x, cy, aliasRadius, 0, Math.PI * 2);
+      ctx.fillStyle = grad;
+      ctx.fill();
+      ctx.strokeStyle = alg === "dl" ? P.ok : P.warn;
+      ctx.setLineDash([4, 3]);
+      ctx.stroke();
+      ctx.setLineDash([]);
+    });
+
+    [algSel, zoomSel, freqRng].forEach(el => el.addEventListener("input", () => sim.redraw()));
+  })();
+  </script>
+
+
+</main>
+</body>
+</html>

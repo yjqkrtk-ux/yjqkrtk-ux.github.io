@@ -125,14 +125,17 @@ hr { border: 0; border-top: 1px solid var(--border); margin: 48px 0; }
 .sb-logo .mark { width: 28px; height: 28px; flex: none; }
 .sb-logo small { font-weight: 500; color: var(--text-dim); font-size: 13px; }
 .sb-topbar .spacer { flex: 1; }
-.sb-btn {
+.sb-btn, .sb-iconbtn {
   display: inline-flex; align-items: center; justify-content: center; gap: 6px;
   height: 36px; padding: 0 12px; border-radius: 10px;
   border: 1px solid var(--border); background: var(--bg-elev); color: var(--text);
   font: inherit; font-size: 13.5px; cursor: pointer; text-decoration: none;
 }
-.sb-btn:hover { border-color: var(--accent); text-decoration: none; }
+.sb-btn:hover, .sb-iconbtn:hover { border-color: var(--accent); text-decoration: none; }
 .sb-btn.icon { width: 36px; padding: 0; }
+.sb-lang-toggle { font-family: var(--mono); font-weight: 700; font-size: 12.5px; letter-spacing: 0.02em; padding: 0 10px; gap: 4px; }
+.sb-lang-toggle .lg-on { color: var(--accent); }
+.sb-lang-toggle .lg-dim { color: var(--text-faint); font-weight: 500; }
 .sb-topbar .series-link { white-space: nowrap; text-decoration: none; }
 @media (max-width: 620px) { .sb-topbar .sb-logo small { display: none; } }
 @media (max-width: 420px) { .sb-topbar .sb-logo span { display: none; } }
@@ -189,6 +192,7 @@ strong { font-weight: 700; }
 .lead { font-size: 18px; color: var(--text-dim); line-height: 1.7; }
 .objectives { list-style: none; padding: 18px 20px !important; margin: 24px 0 0 !important; background: var(--bg-elev); border: 1px solid var(--border); border-radius: var(--radius); display: grid; gap: 6px; box-shadow: var(--shadow); }
 .objectives::before { content: "이 장에서 다루는 핵심 주제"; display: block; font-size: 12px; letter-spacing: .1em; color: var(--text-faint); font-weight: 700; margin-bottom: 4px; }
+html[lang="en"] .objectives::before { content: "KEY TOPICS IN THIS CHAPTER"; }
 .objectives li { padding-left: 24px; position: relative; margin: 0 !important; font-size: 15.5px; }
 .objectives li::before { content: ""; position: absolute; left: 4px; top: 0.62em; width: 9px; height: 9px; border-radius: 3px; background: var(--accent); opacity: .85; }
 
@@ -325,6 +329,7 @@ input[type="range"]::-moz-range-thumb { width: 14px; height: 14px; border-radius
 .isp-chip.sel { border-color: var(--accent); box-shadow: 0 0 0 2px var(--accent-soft); }
 .isp-chip.viewing { background: var(--accent-soft); }
 .isp-chip.viewing::before { content: "보는 중"; position: absolute; top: -9px; right: 4px; font-size: 9.5px; padding: 0 4px; border-radius: 4px; background: var(--accent); color: #fff; line-height: 1.4; }
+html[lang="en"] .isp-chip.viewing::before { content: "Viewing"; }
 .isp-ph { font-size: 14px; color: var(--text); padding-bottom: 6px; border-bottom: 1px dashed var(--border); }
 
 /* ------------------------------------------------------------------ Callouts, Formula, Cards */
@@ -335,6 +340,7 @@ input[type="range"]::-moz-range-thumb { width: 14px; height: 14px; border-radius
 .callout.warn, .callout.c-warn { background: color-mix(in srgb, var(--warn) 14%, transparent); border-left-color: var(--warn); }
 .callout.deep { background: var(--accent-2-soft); border-left-color: var(--accent-2); }
 .callout.deep > strong:first-child::before { content: "심화 · "; color: var(--accent-2); }
+html[lang="en"] .callout.deep > strong:first-child::before { content: "Deep Dive · "; }
 
 .formula, .eq { margin: 20px 0; padding: 14px 18px; background: var(--bg-elev); border: 1px solid var(--border); border-radius: var(--radius-sm); overflow-x: auto; position: relative; box-shadow: var(--shadow); }
 .formula .where { font-size: 14px; color: var(--text-dim); margin-top: 8px; border-top: 1px dashed var(--border); padding-top: 8px; }

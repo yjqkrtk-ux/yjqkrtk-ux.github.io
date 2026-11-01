@@ -59,7 +59,7 @@
   }
 
   function annotate(main, index) {
-    const aliases = [...index.keys()].filter((alias) => alias.length >= 2 || /[가-힣]/.test(alias));
+    const aliases = [...index.keys()].filter((alias) => alias.length >= 2 || /[\uac00-\ud7a3]/.test(alias));
     aliases.sort((a, b) => b.length - a.length);
     if (!aliases.length) return { count: 0 };
     const pattern = new RegExp(aliases.map(escape).join("|"), "gi");
@@ -81,7 +81,7 @@
         const label = match[0], start = match.index;
         if ((word(label[0]) && word(text[start - 1])) ||
             (word(label.at(-1)) && word(text[start + label.length])) ||
-            (/[가-힣]/.test(label[0]) && /[가-힣]/.test(text[start - 1] || ""))) continue;
+            (/[\uac00-\ud7a3]/.test(label[0]) && /[\uac00-\ud7a3]/.test(text[start - 1] || ""))) continue;
         const entry = index.get(norm(label));
         if (!entry || seenTerms.has(entry.title)) continue;
         seenTerms.add(entry.title);

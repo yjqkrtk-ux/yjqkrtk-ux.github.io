@@ -668,19 +668,19 @@
         <div class="header-badges" style="justify-content:flex-start;margin-bottom:0">
           <span class="badge">Paper II · Universal CFA LSP</span>
           <span class="badge">IEEE TIP / CVPR 2027 Track</span>
-          <span class="badge-green">BJDD · KLAP · Kodak24 Verified</span>
+          <span class="badge-green">16-Ch Single-Stream (FLUX.1 / TAEF1) Unified</span>
         </div>
         <a class="hub-card-title" href="universal_cfa.html">
-          2. Universal In-Sensor Latent Signal Processing for Heterogeneous CFAs: Phase-Aware Implicit Remosaicing, Karhunen-Loève Eigen-Subband Decomposition, and One-Pass Latent Diffusion
+          2. Universal In-Sensor Latent Signal Processing for Heterogeneous CFAs: Phase-Aware Implicit Remosaicing and 16-Channel Single-Stream Latent Unification
         </a>
         <p class="hub-card-desc">
-          Unifies Standard Bayer (2×2), Tetracell (4×4), and Hexadecacell (8×8) high-megapixel sensors onto a 100% frozen host translator (T_B) and a 100% CFA-agnostic host decoder (D_rec) via in-sensor phase-aware PixelUnshuffle + SE compressors and 3×3 Lapped Opponent-Color Karhunen-Loève Eigen-Subband Decomposition (KLT-HF, Rank-48: 32Y+8Cr+8Cb).
+          Unifies Standard Bayer (2×2), Tetracell (4×4), and Hexadecacell (8×8) high-megapixel sensors onto a single 16-channel host translator (T_B: 16→16) and a 100% CFA-agnostic host decoder (D_rec) on the FLUX.1 / TAEF1 latent manifold via in-sensor phase-aware PixelUnshuffle + SE-ResNet compressors (64 KB INT8 single-stream bus, zero auxiliary subband).
         </p>
         <div class="hub-kpis">
-          <span class="hub-kpi">Bayer: 36.94 dB</span>
-          <span class="hub-kpi">Tetracell: 34.63 dB (LPIPS 0.0201)</span>
-          <span class="hub-kpi">Hexadecacell: 30.34 dB (LPIPS 0.0669)</span>
-          <span class="hub-kpi">100% Frozen Host AP</span>
+          <span class="hub-kpi">Bayer: 29.43 dB</span>
+          <span class="hub-kpi">Tetracell: 28.82 dB (+6.30 dB vs. 4-Ch)</span>
+          <span class="hub-kpi">Hexadecacell: 27.38 dB (+1.14 dB vs. Dir+MHC)</span>
+          <span class="hub-kpi">100% Single-Stream 16-Ch</span>
         </div>
         <div>
           <a class="btn active" href="universal_cfa.html">Read Paper II (2-Col Interactive HTML) →</a>

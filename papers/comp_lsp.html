@@ -790,6 +790,50 @@
         boosting mean sRGB PSNR across all 10 hardware cameras to <strong>$27.18\text{ dB}$</strong> ($+2.14\text{ dB}$ over 0-Net, up to $32.55\text{ dB}$ on Google Pixel and $30.52\text{ dB}$ on OpenISP, <strong>Fig. 3B&ndash;D</strong>).
       </p>
 
+      <div class="span-all" style="background:var(--surface); border:1px solid var(--surface-border); border-left:4px solid var(--purple); border-radius:8px; padding:16px 20px; margin:18px 0; text-align:left !important;">
+        <div style="font-size:14.5px; font-weight:700; color:var(--text-bright); margin-bottom:8px;">
+          Algorithm 1: End-to-End Code Flow &amp; Tensor Execution Chain (How $J_{3\times 3}$ &amp; 144-D Kronecker AC Transport Execute in Code)
+        </div>
+        <div style="font-size:12.5px; color:var(--text-muted); margin-bottom:10px; line-height:1.55;">
+          입력 잠재 텐서 <code>z_0: (B, 16, h, w)</code> ($h=H/8, w=W/8$, 픽셀 대비 $1/64$ 크기)에서 <strong>Step 3의 $3\times 3$ 할선 야코비안 행렬 <code>J_3x3</code></strong>가 계산되고, 크기가 다른 16차원 고주파 잠재 벡터 <code>z_ac: (N, 16)</code>와 <strong>크로네커 외적($16 \times 9 = 144\text{D}$)</strong>으로 결합되는 실제 PyTorch 실행 체인(<code>latent_isp_ops.py</code> &rarr; <code>jet_basis.py</code> &rarr; <code>one_step_refiner.py</code>)입니다:
+        </div>
+        <pre style="background:var(--bg); border:1px solid var(--surface-border); border-radius:6px; padding:12px 14px; font-family:var(--font-mono); font-size:11.8px; line-height:1.5; overflow-x:auto; color:var(--text); margin:0;"><code># [Node 1] Subspace Readout: Extract 8x8 Patch Mean RGB c_in &amp; Intra-Patch Spread delta (latent_isp_ops.py)
+c_in = (extract_z_local_nb_features(z_0) @ W_z2c_nb).reshape(B, h, w, 3).permute(0, 3, 1, 2)  # (B, 3, h, w)
+u_jet = torch.einsum("cd,bdhw->bchw", Psi, z_0 - z_black) + b_jet                             # (B, 16, h, w)
+sigma_ac = ((u_jet[:,3:6]**2 + u_jet[:,6:9]**2 + u_jet[:,9:12]**2 + u_jet[:,12:15]**2) / 64.0).sqrt()
+delta = (1.22474487 * sigma_ac).clamp(0.015, 0.35)                                            # sqrt(1.5)*sigma_ac: (B, 3, h, w)
+
+# [Node 2] Step 2 — 3-Point Gauss-Legendre Quadrature on 1/64 Grid (latent_isp_ops.py)
+c_neg = PixelISPReference.run_pipeline((c_in - delta).clamp(0.0, 1.0), cfg_dc)                # Dark node  f_ISP(c_0 - delta)
+c_mid = PixelISPReference.run_pipeline(c_in, cfg_dc)                                          # Mean node  f_ISP(c_0)
+c_pos = PixelISPReference.run_pipeline((c_in + delta).clamp(0.0, 1.0), cfg_dc)                # Bright node f_ISP(c_0 + delta)
+c_out = (1/6) * c_neg + (4/6) * c_mid + (1/6) * c_pos                                         # New patch DC: (B, 3, h, w)
+
+# [Node 3] Step 3 — 3x3 Secant Jacobian J_3x3 via Axis-Aligned Perturbations b in {0:R, 1:G, 2:B} (latent_isp_ops.py)
+cols = []
+for b in range(3):                                                                            # Loop over input R, G, B axes
+    e_b = torch.zeros_like(c_in);  e_b[:, b:b+1] = delta[:, b:b+1]                            # Perturb ONLY channel b by +-delta_b
+    fp = PixelISPReference.run_pipeline((c_in + e_b).clamp(0.0, 1.0), cfg_dc)                 # [R_out^+, G_out^+, B_out^+]
+    fm = PixelISPReference.run_pipeline((c_in - e_b).clamp(0.0, 1.0), cfg_dc)                 # [R_out^-, G_out^-, B_out^-]
+    denom = ((c_in + e_b).clamp(0,1)[:, b:b+1] - (c_in - e_b).clamp(0,1)[:, b:b+1]).clamp(min=1.5e-2)
+    cols.append((fp - fm) / denom)                                                            # Column b of J_3x3: (B, 3, h, w)
+J_raw = torch.stack(cols, dim=2).clamp(-2.5, 5.5)                                             # (B, 3, 3, h, w)
+J_3x3 = 0.85 * J_raw + 0.15 * AvgPool3x3(J_raw)                                               # 3x3 Neighbor-Smoothed Jacobian
+
+# [Node 4] Step 4A — 144-D Kronecker Product z_ac (x) vec(J_3x3 - I_3) &amp; 0-Net Projection (jet_basis.py)
+z_ac = 1.25 * torch.tanh((z_0 - AvgPool3x3(z_0)).reshape(N, 16) / 1.25)                       # High-pass AC latent: (N, 16)
+dJ9  = 1.15 * torch.tanh((J_3x3 - I_3).reshape(N, 9) / 1.15)                                  # 9 entries of (J_3x3 - I_3): (N, 9)
+ac_kronecker = torch.cat([z_ac * dJ9[:, k:k+1] for k in range(9)], dim=1)                     # 16 * 9 = 144-D Kronecker AC transport
+tx_feat = torch.cat([dp3_local, dp3_nb, ac_kronecker, tangent_cross], dim=1)                  # Full transition feature: (N, 230)
+z_comp = z_0 + (tx_feat @ W_trans).reshape(B, h, w, 16).permute(0, 3, 1, 2)                   # Stage 4 (0-Net: 25.04 dB mean)
+
+# [Node 5] Step 4B — 4-Step Damped Iterative Manifold Refiner with 3x3 Spatial Convs (one_step_refiner.py)
+z_k = z_comp
+for k in range(4):                                                                            # 4 damped Euler steps (dt = 0.25)
+    v_k = F_theta(z_k, z_comp, z_0, c_in, c_out, Nabla_3x3(z_k), theta_ISP, tau=(k+0.5)/4)
+    z_k = z_k + (gate / 4.0) * v_k                                                            # Stage 6 (+4-Step: 27.18 dB mean)</code></pre>
+      </div>
+
       <div class="span-all figure-card">
         <img src="figures/comp_fig9_step_by_step_math_and_consistency.webp" alt="Patch-Level Latent ISP Verification: 3x3 Jacobian Heatmap, 16-Ch Match and 10-Camera PSNR">
         <div class="figure-caption">

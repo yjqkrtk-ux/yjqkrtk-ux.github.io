@@ -1,0 +1,329 @@
+<!doctype html>
+<html lang="ko">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>AICAMERA · 이종 엣지 카메라 인터랙티브 가이드북</title>
+<meta name="description" content="광자에서 잠재 텐서와 실시간 ISP까지 — Sony IMX500 센서 NPU, Hailo-8 호스트 NPU, Raspberry Pi 5를 아우르는 이종 엣지 카메라 인터랙티브 아키텍처 가이드북.">
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/katex@0.16.11/dist/katex.min.css">
+<script defer src="https://cdn.jsdelivr.net/npm/katex@0.16.11/dist/katex.min.js"></script>
+<script defer src="https://cdn.jsdelivr.net/npm/katex@0.16.11/dist/contrib/auto-render.min.js"></script>
+<link rel="stylesheet" href="css/style.css">
+<link rel="stylesheet" href="css/glossary-tooltips.css">
+<script src="js/glossary-data.js"></script>
+<script src="js/common.js"></script>
+<script defer src="js/glossary-tooltips.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/three@0.147.0/build/three.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/three@0.147.0/examples/js/controls/OrbitControls.js"></script>
+<style>
+  .chain { overflow-x: auto; }
+  .chain svg { min-width: 820px; }
+</style>
+<script>
+  // Legacy portal hash redirect (#lsp, #isp/isp-3a, #ucfa, #notes, #overview)
+  (function () {
+    var h = location.hash.slice(1);
+    if (!h) return;
+    var parts = h.split("/");
+    var valid = { overview: 1, lsp: 1, isp: 1, ucfa: 1, notes: 1 };
+    if (valid[parts[0]]) {
+      location.replace("chapters/" + parts[0] + ".html" + (parts[1] ? "#" + parts[1] : ""));
+    }
+  })();
+</script>
+</head>
+<body data-root="">
+
+<section class="home-hero">
+  <div class="inner">
+    <div>
+      <div class="eyebrow">Interactive Edge Camera Architecture Guidebook</div>
+      <h1>센서 픽셀에서<br><span class="grad">잠재 공간과 실시간 ISP까지</span></h1>
+      <p>센서 내장 NPU(Sony IMX500), 호스트 NPU(Hailo-8), 멀티코어 CPU·GPU(Raspberry Pi 5) 사이에서 <strong>영상 신호 처리를 어디서, 어떤 표현으로 나눌 것인가?</strong> 실제 하드웨어 측정치와 C99·PyTorch·Halide 소스를 슬라이더와 3D 구조로 직접 만지며 탐구하는 인터랙티브 가이드북입니다.</p>
+      <div class="cta">
+        <a class="primary" href="chapters/overview.html">1장부터 시작하기 →</a>
+        <a class="ghost" href="chapters/overview.html#s-sw-stack">IMX500 · Hailo-8 컴파일 스택</a>
+        <a class="ghost" href="chapters/lsp.html">LSP 분할 인코더 보기</a>
+        <a class="ghost" href="chapters/isp.html#isp-sim-sec">10단계 ISP 시뮬레이터</a>
+      </div>
+      <div class="hero-badges">
+        <span>5개 심층 챕터</span><span>13개 시뮬레이터</span><span>Dual-NPU 컴파일 · Agent Flow</span><span>JSON · C99 자동 검증</span>
+      </div>
+    </div>
+    <div class="hero-3d" id="hero3d"><span class="hint">드래그해서 돌려보세요 · 광자 입사 → IMX500 온칩 압축 → MIPI 64 KB → Hailo-8 잠재 디코딩</span></div>
+  </div>
+</section>
+
+<section class="home-section">
+  <h2>이종 엣지 카메라는 무엇을 어떻게 나누는가</h2>
+  <p class="sub">한 문장으로: <b>센서 안에서는 가장 가벼운 연산으로 대역폭을 줄이고, 호스트에서는 NPU와 융합 커널로 고차원 복원·생성을 수행한다.</b></p>
+  <figure class="diagram chain">
+    <svg viewBox="0 0 1150 270" role="img" aria-label="AICAMERA 엔드투엔드 신호 체인">
+      <defs>
+        <marker id="arr" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto"><path d="M0,0 L10,5 L0,10 z" fill="var(--accent)"/></marker>
+        <marker id="arr2" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto"><path d="M0,0 L10,5 L0,10 z" fill="var(--accent-2)"/></marker>
+      </defs>
+      <!-- 1. Sensor Optics & CFA -->
+      <g transform="translate(18,32)">
+        <rect width="150" height="145" rx="12" class="f-surface"/>
+        <rect x="22" y="22" width="24" height="24" rx="3" fill="#e0443e"/><rect x="48" y="22" width="24" height="24" rx="3" fill="#2da44e"/>
+        <rect x="22" y="48" width="24" height="24" rx="3" fill="#2da44e"/><rect x="48" y="48" width="24" height="24" rx="3" fill="#2f6fe0"/>
+        <rect x="80" y="22" width="46" height="50" rx="6" class="f-acc2-soft"/>
+        <text x="103" y="45" text-anchor="middle" class="t-mono">4×4</text>
+        <text x="103" y="61" text-anchor="middle" class="t-mono">8×8</text>
+        <text x="75" y="102" text-anchor="middle" class="t" style="font-weight:700">Sony IMX500 픽셀</text>
+        <text x="75" y="122" text-anchor="middle" class="t-dim">Bayer · Quad · Hexa</text>
+        <text x="75" y="170" text-anchor="middle" class="t">센서 광전변환 · CFA</text>
+        <text x="75" y="188" text-anchor="middle" class="t-mono">Ch.01 · Ch.04</text>
+      </g>
+      <path d="M174 104 H210" class="s-acc" marker-end="url(#arr)"/>
+      <!-- 2. In-Sensor NPU -->
+      <g transform="translate(216,32)">
+        <rect width="182" height="145" rx="12" class="f-acc-soft"/>
+        <rect x="14" y="20" width="154" height="46" rx="8" class="f-elev"/>
+        <text x="91" y="41" text-anchor="middle" class="t" style="font-weight:700">Stage A (.rpk)</text>
+        <text x="91" y="57" text-anchor="middle" class="t-mono">5.9K params · 2.59 ms</text>
+        <rect x="14" y="78" width="154" height="46" rx="8" class="f-elev"/>
+        <text x="91" y="99" text-anchor="middle" class="t" style="font-size:11.5px;font-weight:600">PixelUnshuffle 압축</text>
+        <text x="91" y="115" text-anchor="middle" class="t-mono">SRAM &lt; 2 MB</text>
+        <text x="91" y="170" text-anchor="middle" class="t">인센서 NPU 압축</text>
+        <text x="91" y="188" text-anchor="middle" class="t-mono">Ch.02 · Ch.04</text>
+      </g>
+      <path d="M404 104 H455" class="s-acc" marker-end="url(#arr)"/>
+      <text x="429" y="92" text-anchor="middle" class="t-mono">64 KB</text>
+      <text x="429" y="124" text-anchor="middle" class="t-mono">(48×↓)</text>
+      <!-- 3. MIPI CSI-2 Bus -->
+      <g transform="translate(462,32)">
+        <rect width="144" height="145" rx="12" class="f-surface"/>
+        <text x="72" y="44" text-anchor="middle" class="t" style="font-weight:700">MIPI CSI-2</text>
+        <text x="72" y="68" text-anchor="middle" class="t-acc">r: 2.90 ms</text>
+        <text x="72" y="92" text-anchor="middle" class="t-dim">vs 비압축 3072 KB</text>
+        <text x="72" y="112" text-anchor="middle" class="t-mono">(52.91 ms 병목)</text>
+        <text x="72" y="170" text-anchor="middle" class="t">버스 직렬화 극복</text>
+        <text x="72" y="188" text-anchor="middle" class="t-mono">Ch.01 · Ch.02</text>
+      </g>
+      <path d="M612 76 H658" class="s-acc" marker-end="url(#arr)"/>
+      <path d="M612 132 H658" class="s-line" marker-end="url(#arr2)" stroke-dasharray="5 3"/>
+      <!-- 4A. Hailo-8 Latent Path -->
+      <g transform="translate(664,18)">
+        <rect width="210" height="78" rx="10" class="f-acc2-soft"/>
+        <text x="105" y="28" text-anchor="middle" class="t" style="font-weight:700">Hailo-8 Stage B + TAESD</text>
+        <text x="105" y="48" text-anchor="middle" class="t-mono">0.97 ms + 16.44 ms → ẑ</text>
+        <text x="105" y="66" text-anchor="middle" class="t-mono">Ch.02 Latent Hub</text>
+      </g>
+      <!-- 4B. Software ISP Path -->
+      <g transform="translate(664,112)">
+        <rect width="210" height="78" rx="10" class="f-elev"/>
+        <text x="105" y="28" text-anchor="middle" class="t" style="font-weight:700">10단계 OpenISP · Halide</text>
+        <text x="105" y="48" text-anchor="middle" class="t-mono">12MP 128.78 ms (×3.68)</text>
+        <text x="105" y="66" text-anchor="middle" class="t-mono">Ch.03 Fused CPU / Vulkan</text>
+      </g>
+      <path d="M880 57 H922" class="s-acc" marker-end="url(#arr)"/>
+      <path d="M880 151 H922" class="s-acc" marker-end="url(#arr)"/>
+      <!-- 5. Outputs -->
+      <g transform="translate(928,24)">
+        <rect width="204" height="160" rx="12" class="f-acc-soft"/>
+        <text x="102" y="36" text-anchor="middle" class="t-acc">30.0 FPS 실시간 뷰파인더</text>
+        <text x="102" y="58" text-anchor="middle" class="t-mono">카메라 물리 상한 도달</text>
+        <line x1="20" y1="74" x2="184" y2="74" class="s-axis"/>
+        <text x="102" y="98" text-anchor="middle" class="t" style="font-weight:700">ZSL 생성형 캡처 &amp; 3A</text>
+        <text x="102" y="118" text-anchor="middle" class="t-dim">ControlNet · Bilateral Grid</text>
+        <text x="102" y="140" text-anchor="middle" class="t-mono">Ch.02 · Ch.03 · Ch.05</text>
+      </g>
+      <text x="575" y="252" text-anchor="middle" class="t-dim">전통적 픽셀 파이프라인(Ch.03 Software ISP)과 잠재 공간 분할 추론(Ch.02 LSP · Ch.04 Universal CFA)의 통합 연구 플랫폼</text>
+    </svg>
+    <figcaption><b>그림 0-1.</b> AICAMERA의 두 축: (상단) 인센서 NPU와 호스트 NPU로 인코더를 분할해 버스 병목을 깨는 잠재 신호 처리(LSP/UCFA)와, (하단) C99 10단계 레퍼런스 ISP를 Halide 커널 융합 및 DMA-BUF 제로카피로 가속하는 Software ISP.</figcaption>
+  </figure>
+</section>
+
+<section class="home-section" style="padding-top:0">
+  <h2>측정과 코드로 검증된 핵심 수치</h2>
+  <p class="sub">이 가이드북의 모든 수치는 빌드 시점에 저장소의 벤치마크 JSON과 C99 헤더에서 직접 추출됩니다.</p>
+  <div class="numbers">
+    <div><b>64 KB (48×↓)</b><span>SA8 MIPI 버스 페이로드 — 비압축 3072 KB 대비 52.91 ms → 2.90 ms로 단축</span></div>
+    <div><b>30.0 FPS</b><span>실시간 카메라 동기 프리뷰 — 직렬 지연 22.90 ms, 파이프라인 처리량 43.7 FPS로 30 FPS 상한 도달</span></div>
+    <div><b>5,924 params</b><span>IMX500 센서 내 Stage A(SA8) 파라미터 수 — 0.122 GMACs로 2 MB 미만 SRAM 예산 충족</span></div>
+    <div><b>128.78 ms (×3.68)</b><span>12.3MP 10단계 ISP Halide 단일 커널 융합 지연 — 순차 C99(474.04 ms) 대비 3.68배 가속</span></div>
+    <div><b>13.8× 절감</b><span>커널 융합을 통한 12MP 프레임당 DRAM 트래픽 감소 — 811 MB에서 59 MB로 축소</span></div>
+    <div><b>2×2 · 4×4 · 8×8</b><span>Bayer · Tetracell · Hexadecacell 군집형 CFA를 단일 고정 호스트 번역기(Stage B)로 통합</span></div>
+  </div>
+</section>
+
+<section class="home-section" style="padding-top:0">
+  <h2>전체 챕터</h2>
+  <p class="sub">각 장은 <b>개념 → 직관 도해(SVG) → 수식(KaTeX) → 인터랙티브 시뮬레이터 → 실제 측정치·소스 코드 링크 → 핵심 정리</b> 순서로 깊이 있게 전개됩니다.</p>
+  <div class="ch-grid" id="chgrid"></div>
+</section>
+
+<section class="home-section" style="padding-top:0">
+  <h2>추천 학습 경로</h2>
+  <p class="sub">관심 분야나 담당 역할에 따라 아래 순서로 읽고 시뮬레이터를 조작해 보세요.</p>
+  <div class="paths">
+    <div class="path">
+      <h3>시스템 아키텍트 · SW 스택 &amp; 에이전트</h3>
+      <p>MIPI 버스 병목부터 IMX500(.rpk)·Hailo-8(.hef) 크로스 컴파일, MCP 서버 및 에이전트 워크플로를 파악합니다.</p>
+      <div class="steps">
+        <a href="chapters/overview.html#s-paradigm">01 버스 병목</a>
+        <a href="chapters/overview.html#s-sw-stack">01 .rpk/.hef 컴파일</a>
+        <a href="chapters/overview.html#s-agent-flow">01 에이전트 &amp; MCP</a>
+        <a href="chapters/overview.html#sim-devops">01 컴파일 시뮬레이터</a>
+        <a href="chapters/notes.html#notes-audit">05 정합성 감사</a>
+      </div>
+    </div>
+    <div class="path">
+      <h3>분할 추론 · 생성형 AI (LSP)</h3>
+      <p>센서–호스트 분할 오토인코더 설계, Power-of-2 QAT, TAESD 실시간 디코딩과 ZSL 확산 캡처를 다룹니다.</p>
+      <div class="steps">
+        <a href="chapters/lsp.html#lsp-arch">02 분할 구조</a>
+        <a href="chapters/lsp.html#lsp-model">02 Stage A/B 수식</a>
+        <a href="chapters/lsp.html#lsp-bench">02 HW 실측</a>
+        <a href="chapters/lsp.html#lsp-capture">02 ZSL 캡처</a>
+        <a href="chapters/ucfa.html#ucfa-diffusion">04 One-Pass 확산</a>
+      </div>
+    </div>
+    <div class="path">
+      <h3>영상 처리 · 컴파일러 최적화 (ISP)</h3>
+      <p>10단계 C99 ISP 수학부터 3A 피드백 루프, Verified Lifting, Halide 타일 융합과 Vulkan DMA-BUF까지 따라갑니다.</p>
+      <div class="steps">
+        <a href="chapters/isp.html#isp-sim-sec">03 10단계 시뮬레이터</a>
+        <a href="chapters/isp.html#isp-raw">03 RAW·RGB 수식</a>
+        <a href="chapters/isp.html#isp-3a">03 3A 제어</a>
+        <a href="chapters/isp.html#isp-tiers">03 Halide 융합</a>
+        <a href="chapters/isp.html#isp-vl">03 Verified Lifting</a>
+      </div>
+    </div>
+    <div class="path">
+      <h3>센서 CFA · 엣지 비전 AI</h3>
+      <p>고화소 군집형 CFA(Tetracell/Hexadecacell)의 위상 분해 압축과 IMX500+Hailo-8 듀얼 NPU 추적·분할을 살펴봅니다.</p>
+      <div class="steps">
+        <a href="chapters/ucfa.html#ucfa-intro">04 군집형 CFA</a>
+        <a href="chapters/ucfa.html#ucfa-sim-cfa">04 PixelUnshuffle</a>
+        <a href="chapters/ucfa.html#ucfa-arch">04 위상 압축기</a>
+        <a href="chapters/isp.html#isp-ai">03 Dual-NPU AI</a>
+        <a href="chapters/notes.html#glossary-sec">05 용어집</a>
+      </div>
+    </div>
+  </div>
+</section>
+
+<section class="home-section" style="padding-top:0">
+  <h2>이 가이드북 사용법</h2>
+  <div class="flow">
+    <div><b>읽기 · 툴팁</b>본문 용어(점선 밑줄)에 마우스를 올리면 정의가 즉시 표시됩니다.</div>
+    <div><b>도해 클릭</b>아키텍처 SVG 블록을 클릭하면 해당 모듈의 하드웨어 제약과 코드 위치가 열립니다.</div>
+    <div><b>시뮬레이터 조작</b>슬라이더와 단계 스위치를 끝까지 움직여 병목 이동과 화질 변화를 직접 실험하세요.</div>
+    <div><b>소스 코드 추적</b>파란색 <code>파일명:줄번호</code> 칩은 빌드 시 검증된 실제 저장소 코드 링크입니다.</div>
+    <div><b>정합성 검증</b>5장 검증 노트에서 문서 서술과 실제 C/PyTorch 코드·측정 JSON의 차이를 투명하게 확인합니다.</div>
+  </div>
+</section>
+
+<script>
+(function () {
+  const grid = document.getElementById("chgrid");
+  const tagName = { sim: "시뮬레이터", "3d": "3D", "HW실측": "HW 실측" };
+  grid.innerHTML = SB.CHAPTERS.map((c) => `
+    <a class="ch-card" href="chapters/${c.slug}.html">
+      <span class="num">CHAPTER ${c.num}</span>
+      <h3>${c.title}</h3>
+      <p>${c.desc}</p>
+      <span class="tags">${c.tags.map((t) => `<span class="${t === "sim" ? "tag-sim" : t === "3d" ? "d3" : ""}">${tagName[t] || t}</span>`).join("")}</span>
+    </a>`).join("");
+
+  // Hero 3D: Sony IMX500 Stacked Sensor + MIPI CSI-2 Packet Stream + RPi 5 & Hailo-8 NPU
+  const el = document.getElementById("hero3d");
+  const T = SB.three(el, { camera: [0, 6.2, 13.5], target: [0, -0.2, 0], fov: 36, autoRotate: true, autoRotateSpeed: 0.45, pan: false, minDistance: 8, maxDistance: 22 });
+  if (!T) return;
+  const { THREE, scene } = T;
+
+  // Left: IMX500 Stacked Sensor (-4.2, y, 0)
+  const sx = -4.2;
+  const N = 4, P = 0.72, off = -((N - 1) * P) / 2;
+  const colors = { R: 0xe0443e, G: 0x2da44e, B: 0x2f6fe0 };
+  const cfaAt = (i, j) => (i % 2 === 0 ? (j % 2 === 0 ? "R" : "G") : j % 2 === 0 ? "G" : "B");
+  const lensGeo = new THREE.SphereGeometry(0.34, 20, 10, 0, Math.PI * 2, 0, Math.PI / 2);
+
+  for (let i = 0; i < N; i++) for (let j = 0; j < N; j++) {
+    const x = sx + off + j * P, z = off + i * P, c = cfaAt(i, j);
+    const cf = new THREE.Mesh(new THREE.BoxGeometry(P * 0.94, 0.22, P * 0.94), new THREE.MeshStandardMaterial({ color: colors[c], transparent: true, opacity: 0.85, roughness: 0.3 }));
+    cf.position.set(x, 1.15, z); scene.add(cf);
+    const ml = new THREE.Mesh(lensGeo, new THREE.MeshPhysicalMaterial({ color: 0xdfefff, transparent: true, opacity: 0.55, roughness: 0.08, clearcoat: 1 }));
+    ml.scale.set(0.95, 0.65, 0.95); ml.position.set(x, 1.26, z); scene.add(ml);
+  }
+  // Silicon Photodiode Die
+  const siDie = new THREE.Mesh(new THREE.BoxGeometry(3.2, 0.75, 3.2), T.material(0x3b485e, { roughness: 0.4, metalness: 0.3 }));
+  siDie.position.set(sx, 0.6, 0); scene.add(siDie);
+  // Cu-Cu Hybrid Bonding Layer
+  const bond = new THREE.Mesh(new THREE.BoxGeometry(3.2, 0.14, 3.2), T.material(0xd98a00, { roughness: 0.25, metalness: 0.8 }));
+  bond.position.set(sx, 0.14, 0); scene.add(bond);
+  // Logic + In-Sensor NPU Die (.rpk)
+  const npuDie = new THREE.Mesh(new THREE.BoxGeometry(3.2, 0.7, 3.2), new THREE.MeshStandardMaterial({ color: 0x123524, emissive: 0x1f9d55, emissiveIntensity: 0.25, roughness: 0.35, metalness: 0.4 }));
+  npuDie.position.set(sx, -0.32, 0); scene.add(npuDie);
+
+  // Center: MIPI CSI-2 Bus Bridge
+  const busBridge = new THREE.Mesh(new THREE.BoxGeometry(4.6, 0.12, 0.9), T.material(0x28354a, { roughness: 0.5, metalness: 0.4 }));
+  busBridge.position.set(-0.1, -0.32, 0); scene.add(busBridge);
+
+  // Right: Raspberry Pi 5 Board + Hailo-8 NPU + Latent Cube (3.8, y, 0)
+  const hx = 3.8;
+  const rpiPcb = new THREE.Mesh(new THREE.BoxGeometry(3.8, 0.24, 3.4), T.material(0x1b5e3a, { roughness: 0.5, metalness: 0.2 }));
+  rpiPcb.position.set(hx, -0.65, 0); scene.add(rpiPcb);
+  const hailoChip = new THREE.Mesh(new THREE.BoxGeometry(2.4, 0.45, 2.4), new THREE.MeshStandardMaterial({ color: 0x2c1b47, emissive: 0x7a4ce0, emissiveIntensity: 0.32, roughness: 0.3, metalness: 0.5 }));
+  hailoChip.position.set(hx, -0.22, 0); scene.add(hailoChip);
+
+  // Floating 4-channel Latent Tensor ẑ above Hailo-8
+  const latGroup = new THREE.Group();
+  latGroup.position.set(hx, 1.15, 0);
+  const latColors = [0x38b6f5, 0xa585ff, 0x3fcf7f, 0xf5b93a];
+  for (let c = 0; c < 4; c++) {
+    const slice = new THREE.Mesh(new THREE.BoxGeometry(1.5, 0.14, 1.5), new THREE.MeshStandardMaterial({ color: latColors[c], transparent: true, opacity: 0.82, roughness: 0.2 }));
+    slice.position.y = (c - 1.5) * 0.26;
+    latGroup.add(slice);
+  }
+  scene.add(latGroup);
+
+  // Animated Photons (falling into IMX500) & Compressed Latent Packets (traveling along MIPI bus)
+  const photons = [], packets = [];
+  const pGeo = new THREE.SphereGeometry(0.08, 10, 8);
+  const pktGeo = new THREE.BoxGeometry(0.28, 0.22, 0.45);
+  const pktMat = new THREE.MeshStandardMaterial({ color: 0x38b6f5, emissive: 0x38b6f5, emissiveIntensity: 0.6 });
+
+  let pAcc = 0, kAcc = 0;
+  T.onFrame((dt, t) => {
+    latGroup.rotation.y = t * 0.8;
+    pAcc += dt; kAcc += dt;
+    if (pAcc > 0.08 && photons.length < 28) {
+      pAcc = 0;
+      const pick = [0xe0443e, 0x2da44e, 0x2f6fe0][Math.floor(Math.random() * 3)];
+      const m = new THREE.Mesh(pGeo, new THREE.MeshBasicMaterial({ color: pick }));
+      m.position.set(sx + (Math.random() - 0.5) * 2.4, 3.2, (Math.random() - 0.5) * 2.4);
+      scene.add(m); photons.push(m);
+    }
+    if (kAcc > 0.28 && packets.length < 10) {
+      kAcc = 0;
+      const pk = new THREE.Mesh(pktGeo, pktMat);
+      pk.position.set(sx + 1.6, -0.18, 0);
+      scene.add(pk); packets.push(pk);
+    }
+    for (let i = photons.length - 1; i >= 0; i--) {
+      photons[i].position.y -= dt * 3.0;
+      if (photons[i].position.y < 0.7) {
+        scene.remove(photons[i]); photons.splice(i, 1);
+      }
+    }
+    for (let i = packets.length - 1; i >= 0; i--) {
+      packets[i].position.x += dt * 3.8;
+      if (packets[i].position.x > hx - 1.1) {
+        scene.remove(packets[i]); packets.splice(i, 1);
+      }
+    }
+  });
+
+  T.label("IMX500 픽셀 다이 (CFA + PD)", [sx, 1.85, 0]);
+  T.label("온칩 NPU (.rpk · Stage A)", [sx, -1.05, 1.4]);
+  T.label("MIPI CSI-2 (r: 64 KB · 2.90 ms)", [-0.1, 0.35, 0]);
+  T.label("Latent ẑ (64×64×4)", [hx, 2.05, 0]);
+  T.label("RPi 5 + Hailo-8 (.hef)", [hx, -1.1, 1.4]);
+})();
+</script>
+</body>
+</html>

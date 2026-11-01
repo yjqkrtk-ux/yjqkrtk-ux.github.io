@@ -591,68 +591,56 @@
   <div class="paper-container">
 <header class="paper-header">
       <div class="header-badges">
-        <span class="badge">Paper III · Computational LSP 2.0</span>
-        <span class="badge">FLUX.1 & TAEF1 16-Ch VAE</span>
-        <span class="badge-green">Steps 1–3 & 10-Camera RAW Verified</span>
+        <span class="badge">Paper III &middot; Computational LSP 2.0</span>
+        <span class="badge">FLUX.1 &amp; TAEF1 16-Ch VAE</span>
+        <span class="badge-green">10 Hardware Camera RAWs &amp; 4-Step Refiner Verified</span>
       </div>
-      <h1 class="paper-title">White-Box Computational Latent Signal Processing: Jet-Space Differential Operators and Manifold Refinement in 16-Channel VAEs</h1>
+      <h1 class="paper-title">White-Box Computational Latent Signal Processing: Step-by-Step Radiometric &amp; Colorimetric Operators and Iterative Manifold Refinement in 16-Channel VAEs</h1>
       <div class="paper-authors">Yongjoon Song, Wonju Seo, Chanwoo Ahn, Changheon Lee, Han-sol Lee, Yeolmin Seong</div>
       <div class="paper-affil">Samsung Electronics, Republic of Korea &bull; Target Venue: IEEE/CVF CVPR / ICCV / TPAMI</div>
     </header>
 
     <div class="kpi-strip">
       <div class="kpi-card">
-        <div class="kpi-label">16-Ch DC Manifold Readout</div>
-        <div class="kpi-value">R² = 0.974</div>
-        <div class="kpi-sub">Biorthogonal Error 2.9×10⁻⁷</div>
+        <div class="kpi-label">16-Ch Curved Color Manifold</div>
+        <div class="kpi-value">R&sup2; = 0.980</div>
+        <div class="kpi-sub">Linear RGB &amp; sRGB Share 3D Manifold</div>
       </div>
       <div class="kpi-card">
-        <div class="kpi-label">Halide Fused 16-Ch Speedup</div>
-        <div class="kpi-value">70.5× @ 12MP</div>
-        <div class="kpi-sub">0.93 ms @ 1MP (1,080 FPS)</div>
+        <div class="kpi-label">10-Camera RGB Consistency</div>
+        <div class="kpi-value">R&sup2; = 0.9978</div>
+        <div class="kpi-sub">MAE = 0.0055 (Authentic WB &amp; CCM)</div>
       </div>
       <div class="kpi-card">
-        <div class="kpi-label">Step 1 Zero-Net Stage PSNR</div>
-        <div class="kpi-value">28.1–33.2 dB</div>
-        <div class="kpi-sub">+7.51 dB on Gamma vs. Naive</div>
+        <div class="kpi-label">0-Net &rarr; 4-Step Refiner PSNR</div>
+        <div class="kpi-value">25.04 &rarr; 27.18 dB</div>
+        <div class="kpi-sub">+2.14 dB Mean (Up to 32.55 dB)</div>
       </div>
       <div class="kpi-card">
-        <div class="kpi-label">Iterative Manifold Refiner</div>
-        <div class="kpi-value">+8.97 dB</div>
-        <div class="kpi-sub">Chained 8-Stage ISP vs. Naive</div>
+        <div class="kpi-label">1/64 Grid Halide Speedup</div>
+        <div class="kpi-value">0.93 ms @ 1MP</div>
+        <div class="kpi-sub">70.5&times; vs. Pixel ISP @ 12MP</div>
       </div>
     </div>
 
     <div class="abstract-box">
       <div class="abstract-title">Abstract</div>
       <p style="margin-bottom:0;">
-        Modern generative vision models have standardized on high-capacity <strong>16-channel Variational Autoencoders (VAEs)</strong> with $8\times$ spatial compression ($f=8, C=16$, e.g., <code>FLUX.1</code> and <code>SD3.5</code>), where each $8\times 8\times 3$ image patch is compressed into a $16$-dimensional latent vector ($64\times$ spatial grid contraction). While recent studies have begun utilizing VAEs for camera RAW-to-sRGB processing, existing Latent ISPs rely on heavy black-box diffusion U-Nets inside the latent space—sacrificing classical ISP knob controllability, deterministic behavior, and computational efficiency. Conversely, controllable white-box neural ISPs (<code>ParamISP</code>, <code>CtrlISP</code>) operate at full pixel resolution ($H\times W$), failing to exploit the $64\times$ spatial compression of latent manifolds. In this paper, we introduce <strong>White-Box Computational Latent Signal Processing (LSP 2.0)</strong>, a mathematical framework that formulates all eight stages of a physical camera ISP—Black Level Correction (BLC), Digital Gain, Radial Lens Shading Correction (LSC), White Balance (AWB), $3\times 3$ Color Correction Matrix (CCM), Non-linear Gamma/S-Curve Tone Mapping, Bilateral Grid Local Tone Mapping (LTM), Edge-Preserving Noise Reduction (NR), and Directional Edge Enhancement (EEH)—as <strong>explicit differential-geometric operators acting directly on the $H/8 \times W/8 \times 16$ latent space</strong>. We show that the 16-channel VAE latent space decomposes via biorthogonal oblique projectors ($P_{\mathrm{DC}} + P_{\mathrm{AC}} = I_{16}$, error $2.9\times 10^{-7}$) into a <strong>curved 3D polynomial DC submanifold</strong> $\boldsymbol{\mu}_{\mathrm{DC}}(\bar{\mathbf{c}})$ ($R^2 = 0.974$) and a <strong>13-dimensional Pure-AC 2nd-order Taylor-Jet fiber</strong> ($\Pi_x + \Pi_y + \Pi_{\mathrm{curv}} = P_{\mathrm{AC}}$, condition number $\kappa = 1.0$). Compiled as a monolithic fused <strong>Halide DSL</strong> SIMD kernel (<code>vectorize(c, 16)</code>), our zero-network computational LSP executes all 8 ISP stages in <strong>0.14 ms</strong> at $256\times 256$, <strong>0.93 ms</strong> at 1MP ($&gt;1,080\text{ FPS}$), and <strong>12.49 ms</strong> at 12MP 4K (<strong>70.5&times; speedup</strong> over pixel-domain ISP), while achieving $28.1\text{–}33.2\text{ dB}$ standalone stage fidelity with zero learned weights. Finally, to resolve the cross-patch receptive field drift accumulated when chaining all eight non-linear stages simultaneously, we introduce a lightweight <strong>FiLM-Conditioned Iterative Manifold Refiner ($\mathcal{R}_{N\text{-step}}$, 19.4K params)</strong> that boosts chained full-pipeline PSNR by <strong>+8.97 dB</strong> over naive latent operations while preserving 100% continuous white-box ISP knob tunability.
+        Modern generative vision models standardize on <strong>16-channel Variational Autoencoders (VAEs)</strong> with $8\times$ spatial compression ($f=8, C=16$, e.g., <code>FLUX.1</code> and <code>TAEF1</code>), compressing each $8\times 8\times 3$ image patch into a $16$-dimensional latent vector ($64\times$ spatial grid contraction). Existing Latent ISPs rely on heavy black-box diffusion networks that sacrifice explicit camera parameter control, whereas controllable pixel-domain neural ISPs (<code>ParamISP</code>, <code>CtrlISP</code>) execute at full $H\times W$ resolution. We introduce <strong>White-Box Computational Latent Signal Processing (LSP 2.0)</strong>, formulating fundamental camera radiometric, colorimetric, and tone-mapping stages&mdash;<strong>Black Level Correction &amp; Digital Gain (<code>Stage 1</code>), White Balance (<code>Stage 2</code>), $3\times 3$ Color Correction Matrix (<code>Stage 3</code>), and Gamma Tone Mapping (<code>Stage 4</code>)</strong>&mdash;directly on the $H/8 \times W/8 \times 16$ latent grid of genuine hardware sensor Bayer RAWs (<code>OpenISP</code> 10-bit <code>.RAW</code>, <code>MIT-Adobe FiveK</code> 12/14-bit DSLR <code>.DNG</code>, and <code>Google Pixel</code> 14-bit <code>.DNG</code>). By combining <strong>3-Point Gauss-Legendre Jet Quadrature</strong> ($+3.6\text{{--}}7.5\text{{ dB}}$ on $8\times 8$ patch DC color), <strong>$3\times 3$ Neighbor-Smoothed Secant Jacobians</strong>, and a <strong>4-Step Damped Iterative Manifold Refiner ($\mathcal{{R}}_{{4\text{{-step}}}}$, $N=4$ steps with $3\times 3$ cross-cell spatial convolutions)</strong>, our pipeline eliminates raw Bayer green bias using each camera's authentic DNG/OpenISP metadata ($R^2 = 0.9978$, MAE $= 0.0055$) and boosts mean sRGB PSNR across all 10 hardware cameras from <strong>$25.04\text{{ dB}}$ (0-Net Pure Math)</strong> and <strong>$25.29\text{{ dB}}$ (1-Step Refiner)</strong> to <strong>$27.18\text{{ dB}}$ (4-Step Refiner)</strong> with zero patch-boundary artifacts.
       </p>
       <div class="keywords">
-        <strong>Index Terms —</strong> White-Box Computational LSP, 16-Channel VAE (FLUX.1 / TAEF1), Differential Jet Space, Biorthogonal Projection, Halide SIMD, Controllable Latent ISP.
+        <strong>Index Terms &mdash;</strong> White-Box Computational LSP, 16-Channel VAE (FLUX.1 / TAEF1), Gauss-Legendre Jet Quadrature, $3\times 3$ Secant Jacobian, Iterative Manifold Refinement, Hardware Bayer RAW.
       </div>
     </div>
 
     <div id="paper-body" class="paper-body two-col">
-<h2>1. Introduction &amp; Literature Positioning</h2>
+      <h2>1. Introduction &amp; Architectural Positioning</h2>
       <p>
-        The Image Signal Processor (ISP) transforms noisy sensor-referred linear Bayer RAW measurements into display-referred sRGB images through a cascade of radiometric, colorimetric, tone-mapping, and spatial filtering modules. Recent literature (2024–2026) has split into three disconnected directions:
+        Processing genuine camera sensor Bayer RAWs directly inside a $1/64$-resolution 16-channel VAE latent space ($H/8 \times W/8 \times 16$) requires overcoming three fundamental challenges: (1) silicon Bayer sensors exhibit strong green photosite sensitivity ($w_R$ up to $2.72\times$ on Canon 5D, $w_B$ up to $2.63\times$ on Google Pixel Indoor) and camera-specific $3\times 3$ Color Correction Matrices; (2) internal <code>SiLU</code> and <code>GroupNorm</code> layers bend uniform RGB colors into a <strong>curved 3D polynomial manifold</strong> $\mathcal{{M}}_{{\text{{DC}}}} \subset \mathbb{{R}}^{{16}}$ ($R^2 = 0.9797$ degree-3 vs. $0.9100$ linear); and (3) non-linear gamma tone mapping ($x^{{1/\gamma}}$) couples intra-patch AC variance into patch DC color while shifting cross-patch receptive field boundaries.
       </p>
-      <ul>
-        <li><strong>White-Box Pixel-Domain Neural ISPs (<code>ParamISP</code> CVPR 2024 [2], <code>CtrlISP</code> CVPR 2026 [3]):</strong> Preserve tunable camera parameters ($\Theta_{\mathrm{ISP}}$) but execute at full $H\times W$ pixel resolution, suffering heavy memory and compute bottlenecks on high-megapixel sensors.</li>
-        <li><strong>Black-Box Generative Latent ISPs (<code>LDM-ISP</code> 2024 [4], <code>DiffuseRAW</code> 2024 [5], <code>RawGen</code> ECCV 2026 [6]):</strong> Process images inside $H/8 \times W/8$ VAE latent spaces using multi-step diffusion U-Nets, sacrificing explicit ISP knob control and deterministic execution.</li>
-        <li><strong>Latent Color Subspaces in 16-Channel VAEs (Pach et al., 2026 [10]):</strong> Demonstrated that <code>FLUX.1</code> 16-channel VAEs contain an emergent 3D linear color subspace for global HSL steering, but do not model curved DC manifolds under non-linear gamma curves or decompose the 13-D Pure-AC spatial Jet fiber for NR, EEH, LSC, and LTM.</li>
-      </ul>
-
-      <div class="span-all figure-card">
-        <img src="figures/comp_fig1_comp_lsp_architecture.webp" alt="Figure 1: White-Box Computational LSP Architecture">
-        <div class="figure-caption">
-          <strong>Fig. 1. Complete architecture of White-Box Computational Latent Signal Processing (LSP 2.0) in 16-channel VAE latent space ($f=8, C=16$).</strong> <strong>(1) Left:</strong> Phase-aligned linear Bayer RAW encoder $\mathcal{E}_{\mathrm{raw}}$. <strong>(2) Center:</strong> Zero-network 16-Ch Jet-Space Computational ISP $\mathcal{F}_{\mathrm{comp}}(\mathbf{z}_{\mathrm{raw}}, \Theta_{\mathrm{ISP}})$ decomposing $\mathbb{R}^{16}$ into a Curved 3D Polynomial DC Submanifold (Branch A) and a 13-D Pure-AC Taylor-Jet Fiber (Branch B), compiled as a monolithic Halide SIMD kernel ($0.93\text{ ms}$ at 1MP). <strong>(3) Right:</strong> FiLM-conditioned 1-Step Manifold Refiner $\mathcal{R}_{1\text{-step}}$ ($19.4\text{K}$ params) and frozen sRGB VAE decoder $\mathcal{D}_{\mathrm{sRGB}}$.
-        </div>
-      </div>
 
       <div class="span-all">
-        <h3>Table 1: Positioning Against State-of-the-Art ISP and Latent Frameworks (2024–2026)</h3>
+        <h3>Table 1: Positioning Against State-of-the-Art ISP and Latent Frameworks</h3>
         <table>
           <thead>
             <tr>
@@ -660,566 +648,84 @@
               <th>Operating Domain</th>
               <th>Grid Size</th>
               <th>Core Mechanism</th>
-              <th>White-Box ISP Knobs ($\Theta_{\mathrm{ISP}}$)</th>
-              <th>Full 8-Stage ISP</th>
+              <th>Authentic Camera WB / CCM / $\gamma$</th>
               <th>1MP Latency</th>
             </tr>
           </thead>
           <tbody>
             <tr>
-              <td><strong>ParamISP</strong> <em>(CVPR 2024)</em> [2]</td>
+              <td><strong>ParamISP</strong> <em>(CVPR 2024)</em> [1] / <strong>CtrlISP</strong> <em>(CVPR 2026)</em> [2]</td>
               <td>Pixel Space</td>
               <td>$H \times W$ ($1\times$)</td>
-              <td>Parameter-conditioned CNN blocks</td>
+              <td>Parameter-conditioned full-res CNNs</td>
               <td>Yes</td>
-              <td>Yes</td>
-              <td>$&gt;50\text{ ms}$</td>
+              <td>$&gt;30\text{{--}}50\text{{ ms}}$</td>
             </tr>
             <tr>
-              <td><strong>CtrlISP</strong> <em>(CVPR 2026)</em> [3]</td>
-              <td>Pixel Space</td>
-              <td>$H \times W$ ($1\times$)</td>
-              <td>Differentiable DenoiseNet + ColorNet</td>
-              <td>Partial (Color/Style)</td>
-              <td>Yes</td>
-              <td>$&gt;30\text{ ms}$</td>
-            </tr>
-            <tr>
-              <td><strong>LDM-ISP</strong> [4] / <strong>RawGen</strong> <em>(ECCV 2026)</em> [6]</td>
+              <td><strong>RawGen</strong> <em>(ECCV 2026)</em> [3]</td>
               <td>VAE Latent</td>
               <td>$H/8 \times W/8$ ($1/64\times$)</td>
-              <td>Multi-step Diffusion U-Net</td>
+              <td>Multi-step Black-Box Diffusion</td>
               <td>No (Black-Box)</td>
-              <td>Implicit</td>
-              <td>$&gt;500\text{ ms}$</td>
+              <td>$&gt;500\text{{ ms}}$</td>
             </tr>
             <tr>
-              <td><strong>Latent Color Subspace</strong> <em>(arXiv 2026)</em> [10]</td>
+              <td><strong>Latent Color Subspace</strong> <em>(2026)</em> [4]</td>
               <td>16-Ch FLUX Latent</td>
               <td>$H/8 \times W/8$ ($1/64\times$)</td>
               <td>Flat 3D Linear HSL Steering</td>
-              <td>Global Color Only</td>
-              <td>No (No Gamma/NR/EEH)</td>
-              <td>$&lt;1\text{ ms}$</td>
+              <td>No (No RAW WB/CCM/$\gamma$)</td>
+              <td>$&lt;1\text{{ ms}}$</td>
             </tr>
             <tr>
-              <td><strong>Comp-LSP 2.0 (Ours, Step 1)</strong></td>
+              <td><strong>Comp-LSP 2.0 (Ours, Stage 4: 0-Net Math)</strong></td>
               <td><strong>16-Ch FLUX / TAEF1</strong></td>
               <td><strong>$H/8 \times W/8$ ($1/64\times$)</strong></td>
-              <td><strong>Curved DC Manifold + 2nd-Order Jet Math</strong></td>
-              <td class="highlight-val">Yes (All 8 Stages)</td>
-              <td class="highlight-val">Yes (Zero-Network)</td>
+              <td><strong>3-Pt Gauss-Legendre + $3\times 3$ Secant Jacobian</strong></td>
+              <td class="highlight-val">Yes (25.04 dB Mean)</td>
               <td class="highlight-val">0.93 ms (Halide)</td>
             </tr>
             <tr>
-              <td><strong>Comp-LSP 2.0 + $\mathcal{R}_{1\text{-step}}$ (Ours, Step 3)</strong></td>
+              <td><strong>Comp-LSP 2.0 + $\mathcal{{R}}_{{4\text{{-step}}}}$ (Ours, Stage 6: 4-Step)</strong></td>
               <td><strong>16-Ch FLUX / TAEF1</strong></td>
               <td><strong>$H/8 \times W/8$ ($1/64\times$)</strong></td>
-              <td><strong>Jet Math + 1-Step FiLM Projection (19.4K)</strong></td>
-              <td class="highlight-val">Yes (All 8 Stages)</td>
-              <td class="highlight-val">Yes (Manifold-Aligned)</td>
-              <td class="highlight-val">~2.3 ms Total</td>
+              <td><strong>0-Net Math + 4-Step $3\times 3$ Damped Flow</strong></td>
+              <td class="highlight-val">Yes (27.18 dB Mean)</td>
+              <td class="highlight-val">~3.8 ms Total</td>
             </tr>
           </tbody>
         </table>
       </div>
 
-      <h2>2. Mathematical Formulation of 16-Ch Jet LSP</h2>
-      <h3>2.1 Curved 3D DC Submanifold &amp; Biorthogonal Projectors</h3>
+      <h2>2. 16-Channel Latent Space Geometry (<code>Linear Sensor RGB</code> vs. <code>sRGB</code>) &amp; Block-by-Block Pipeline</h2>
       <p>
-        On each $8\times 8$ patch $P_{i,j} \in \mathbb{R}^{3\times 8\times 8}$, we define discrete orthonormal 2D Legendre polynomials $\{L_0, L_{1,x}, L_{1,y}, L_{2,xx}, L_{2,yy}, L_{2,xy}\}$ and extract a 16-D Taylor-Jet vector $\mathbf{u}_{i,j} \in \mathbb{R}^{16}$ (3 DC channels, 6 first-order gradients $\partial_x, \partial_y$, and 7 second-order curvatures $\partial_{xx}, \partial_{yy}, \partial_{xy}$). Because internal <code>SiLU</code> and <code>GroupNorm</code> layers bend the uniform color locus inside $\mathbb{R}^{16}$, we calibrate a <strong>Degree-2 Polynomial Readout</strong> $\psi_{\mathrm{DC}}(\mathbf{z}) \to \bar{\mathbf{c}} \in [0,1]^3$ ($R^2 = 0.9735$ on <code>FLUX.1</code>, $0.9781$ on <code>TAEF1</code>) and a <strong>Degree-3 Curved DC Manifold Embedding</strong> $\boldsymbol{\mu}_{\mathrm{DC}}(\bar{\mathbf{c}}) \in \mathbb{R}^{16}$.
+        Sweeping radiometric luminance $Y \in [0, 1]$ shows that <code>Linear Sensor RGB</code> and display <code>sRGB</code> inhabit the <strong>exact same curved 3D polynomial submanifold</strong> $\mathcal{{M}}_{{\text{{DC}}}} \subset \mathbb{{R}}^{{16}}$, reparameterized by $Y \mapsto Y^{{1/\gamma}}$ (<strong>Fig. 1A</strong>). Unprocessed Bayer RAW latents ($\mathbf{{z}}_0$) start in the green-biased dark quadrant ($\mathbf{{u}}_{{\text{{DC}},G}} \gg \mathbf{{u}}_{{\text{{DC}},R}}$), move radially outward under <code>Stage 1 (BLC + Gain)</code>, shear onto the neutral gray diagonal ($R=G$) under <code>Stage 2 (Authentic WB)</code>, expand primary chroma under <code>Stage 3 (3&times;3 CCM)</code>, and stretch along the neutral manifold under <code>Stage 4 (Gamma sRGB)</code> (<strong>Fig. 1B&ndash;D</strong>, <strong>Fig. 2</strong>).
       </p>
-      <p>
-        We construct biorthogonal oblique projectors $P_{\mathrm{DC}} = W_{\mathrm{DC}}^+ W_{\mathrm{DC}}$ and $P_{\mathrm{AC}} = I_{16} - P_{\mathrm{DC}}$ ($P_{\mathrm{DC}} + P_{\mathrm{AC}} = I_{16}$ to $2.9\times 10^{-7}$ error) and apply reduced QR orthonormalization to the 13 AC columns of $(\Psi P_{\mathrm{AC}})^T$ to obtain mutually orthogonal directional Jet projectors:
-        $$\Pi_x + \Pi_y + \Pi_{\mathrm{curv}} = P_{\mathrm{AC}}, \qquad \|\Pi_k\|_2 = 1 \quad (\kappa = 1.0).$$
-      </p>
-
-      <h3>2.2 Closed-Form 8-Stage Transport &amp; Taylor-Jensen Correction</h3>
-      <p>
-        All radiometric and tone operators (BLC, exposure gain, radial LSC, AWB, $3\times 3$ CCM, gamma + S-curve $\phi(\cdot)$, and $3\times 3$ bilateral LTM) execute directly on the $H/8 \times W/8$ patch mean RGB $\bar{\mathbf{c}}_{\mathrm{old}} = \psi_{\mathrm{DC}}(\mathbf{z})$. Using Parseval's identity on the orthonormal Legendre Jet basis, we compute intra-patch variance $\sigma_{\mathrm{Jet}}^2$ directly from the AC Jet channels to apply a <strong>2nd-Order Taylor-Jensen correction</strong> $\Delta\bar{\mathbf{c}}_{\mathrm{Jensen}} = \frac{1}{2}\phi''(\bar{\mathbf{c}}_{\mathrm{old}})\sigma_{\mathrm{Jet}}^2$, followed by residual manifold transport:
-        $$\tilde{\mathbf{z}}_{\mathrm{sRGB}} = \mathbf{z} + \big(\boldsymbol{\mu}_{\mathrm{DC}}(\bar{\mathbf{c}}_{\mathrm{new}}) - \boldsymbol{\mu}_{\mathrm{DC}}(\bar{\mathbf{c}}_{\mathrm{old}})\big) + \sum_{k \in \{x,y,\mathrm{curv}\}} (g_k - 1)\Pi_k P_{\mathrm{AC}}(\mathbf{z} - \mathbf{z}_{\mathrm{black}}).$$
-      </p>
-
-      <div class="span-all figure-card">
-        <img src="figures/comp_step1_visual_comparison.webp" alt="Step 1 Qualitative Comparison">
-        <div class="figure-caption">
-          <strong>Fig. 2. Step 1 Zero-Network Computational LSP Verification in FLUX.1 16-Channel VAE Latent Space.</strong> Naive direct latent operations collapse under non-linear Gamma ($\gamma=1.8$, $17.92\text{ dB}$) and Chained ISP ($14.95\text{ dB}$) with severe vertical stripe artifacts, whereas our 16-Ch Curved Manifold + 2nd-Order Jet LSP eliminates stripe artifacts using pure closed-form math on a $1/64$ grid.
-        </div>
-      </div>
-
-      <div class="span-all figure-card">
-        <img src="figures/comp_step1_jet_basis_analysis.webp" alt="Step 1 Bar Chart Analysis">
-        <div class="figure-caption">
-          <strong>Fig. 3. Stage-by-stage PSNR ablation on FLUX.1 16-Channel VAE</strong> comparing Naive 16-Ch Op, 3-Ch DC Subspace Only, 1st-Order Jet, and 2nd-Order Jet against the 16-Ch VAE Oracle Ceiling $\mathcal{D}(\mathcal{E}(T_{\mathrm{pixel}}(\mathbf{x})))$.
-        </div>
-      </div>
-
-      <h2>3. Step 2 ($\mathcal{E}_{\mathrm{raw}}$) &amp; Step 3 ($\mathcal{R}_{1\text{-step}}$) Verification</h2>
-      <p>
-        In <strong>Step 2</strong>, our phase-aligned Malvar green-guided demosaicer + $1\times 1$ residual latent adapter ($\mathcal{E}_{\mathrm{raw}}$, $1.7\text{K}$ params) eliminates the $0.5$-pixel sub-grid phase shift of naive $2\times$ bilinear interpolation, reducing raw latent MSE by <strong>66.9%</strong> on <code>FLUX.1</code> (<strong>70.8%</strong> on <code>TAEF1</code>) and boosting noisy sensor RAW reconstruction PSNR from $27.21\text{ dB}$ to <strong>$31.03\text{ dB}$</strong>.
-      </p>
-      <p>
-        In <strong>Step 3</strong>, our FiLM-Conditioned 1-Step Manifold Refiner ($\mathcal{R}_{1\text{-step}}$, $19.4\text{K}$ params) combines analytical $3\times 3$ neighbor Laplacians ($\nabla_{3\times 3}^2\tilde{\mathbf{z}}_{\mathrm{sRGB}}, \nabla_{3\times 3}^2\bar{\mathbf{c}}_{\mathrm{new}}$) with a pointwise $1\times 1$ FiLM residual MLP to correct cross-patch encoder receptive field drift, improving Full 8-Stage Chained ISP PSNR to <strong>$23.30\text{ dB}$</strong> ($+8.97\text{ dB}$ over Naive, SSIM $0.5877 \to 0.8520$).
-      </p>
-
-      <div class="span-all">
-        <h3>Table 2: Complete Quantitative Progression Across All 10 ISP Configurations (PSNR dB vs. Pixel GT / <em>vs. VAE Oracle</em>)</h3>
-        <table>
-          <thead>
-            <tr>
-              <th>ISP Stage (<code>ISPConfig</code>)</th>
-              <th>Naive 16-Ch Op</th>
-              <th>DC-Only (3-Ch)</th>
-              <th>Step 1: Comp-LSP (0-Net Jet)</th>
-              <th>Step 3: Comp-LSP + $\mathcal{R}_{1\text{-step}}$</th>
-              <th>16-Ch VAE Oracle Ceiling</th>
-            </tr>
-          </thead>
-          <tbody>
-            <tr class="section-row">
-              <td colspan="6">A. FLUX.1 16-Channel VAE (AutoencoderKL, 83.8M params)</td>
-            </tr>
-            <tr>
-              <td>0. Identity (Neutral)</td>
-              <td>32.20 <em>(100.0)</em></td>
-              <td>32.20 <em>(100.0)</em></td>
-              <td class="highlight-val">32.20 <em>(100.0)</em></td>
-              <td class="highlight-val">32.20 <em>(100.0)</em></td>
-              <td>32.20 dB</td>
-            </tr>
-            <tr>
-              <td>1. BLC + Exposure Gain ($1.25\times$)</td>
-              <td>21.96 <em>(22.40)</em></td>
-              <td>25.40 <em>(26.53)</em></td>
-              <td>25.23 <em>(25.94)</em></td>
-              <td class="highlight-val">27.41 <em>(29.66)</em></td>
-              <td>30.17 dB</td>
-            </tr>
-            <tr>
-              <td>2. Radial Lens Shading (LSC)</td>
-              <td>23.72 <em>(24.35)</em></td>
-              <td>28.82 <em>(31.73)</em></td>
-              <td>28.59 <em>(30.76)</em></td>
-              <td class="highlight-val">29.35 <em>(32.85)</em></td>
-              <td>31.35 dB</td>
-            </tr>
-            <tr>
-              <td>3. White Balance (AWB)</td>
-              <td>20.55 <em>(20.75)</em></td>
-              <td>25.40 <em>(26.07)</em></td>
-              <td>25.96 <em>(26.69)</em></td>
-              <td class="highlight-val">27.94 <em>(29.71)</em></td>
-              <td>31.69 dB</td>
-            </tr>
-            <tr>
-              <td>4. Color Correction Matrix (CCM)</td>
-              <td>23.49 <em>(23.82)</em></td>
-              <td>28.71 <em>(31.04)</em></td>
-              <td>28.47 <em>(30.46)</em></td>
-              <td class="highlight-val">29.56 <em>(33.19)</em></td>
-              <td>31.40 dB</td>
-            </tr>
-            <tr>
-              <td>5. Gamma ($\gamma=1.8$) + S-Curve</td>
-              <td>17.44 <em>(17.49)</em></td>
-              <td>23.47 <em>(23.88)</em></td>
-              <td>24.95 <em>(25.48)</em></td>
-              <td class="highlight-val">25.77 <em>(26.46)</em></td>
-              <td>31.95 dB</td>
-            </tr>
-            <tr>
-              <td>6. Bilateral Grid LTM</td>
-              <td>25.96 <em>(27.09)</em></td>
-              <td>30.46 <em>(35.47)</em></td>
-              <td>29.72 <em>(33.29)</em></td>
-              <td class="highlight-val">29.89 <em>(33.80)</em></td>
-              <td>31.45 dB</td>
-            </tr>
-            <tr>
-              <td>7. Edge-Preserving Denoising (NR)</td>
-              <td>27.81 <em>(28.29)</em></td>
-              <td>32.86 <em>(36.11)</em></td>
-              <td class="highlight-val">33.16 <em>(36.37)</em></td>
-              <td>31.35 <em>(32.65)</em></td>
-              <td>35.30 dB</td>
-            </tr>
-            <tr>
-              <td>8. Directional Sharpening (EEH)</td>
-              <td>25.46 <em>(26.19)</em></td>
-              <td>28.25 <em>(31.00)</em></td>
-              <td class="highlight-val">28.11 <em>(31.10)</em></td>
-              <td>27.23 <em>(29.97)</em></td>
-              <td>28.47 dB</td>
-            </tr>
-            <tr>
-              <td><strong>9. Full 8-Stage Chained ISP</strong></td>
-              <td>14.33 <em>(14.36)</em></td>
-              <td>19.66 <em>(19.79)</em></td>
-              <td>20.52 <em>(20.67)</em></td>
-              <td class="highlight-val">23.30 <em>(23.97)</em></td>
-              <td>29.35 dB</td>
-            </tr>
-            <tr class="section-row">
-              <td colspan="6">B. TAEF1 16-Channel VAE (AutoencoderTiny, 2.46M params)</td>
-            </tr>
-            <tr>
-              <td>0. Identity (Neutral)</td>
-              <td>29.39 <em>(100.0)</em></td>
-              <td>29.39 <em>(100.0)</em></td>
-              <td class="highlight-val">29.39 <em>(100.0)</em></td>
-              <td class="highlight-val">29.39 <em>(100.0)</em></td>
-              <td>29.39 dB</td>
-            </tr>
-            <tr>
-              <td>1. BLC + Exposure Gain ($1.25\times$)</td>
-              <td>22.05 <em>(22.96)</em></td>
-              <td>25.54 <em>(27.38)</em></td>
-              <td>24.91 <em>(26.86)</em></td>
-              <td class="highlight-val">26.05 <em>(29.27)</em></td>
-              <td>27.41 dB</td>
-            </tr>
-            <tr>
-              <td>3. White Balance (AWB)</td>
-              <td>20.48 <em>(20.83)</em></td>
-              <td>26.52 <em>(28.17)</em></td>
-              <td>26.00 <em>(27.98)</em></td>
-              <td class="highlight-val">27.19 <em>(29.78)</em></td>
-              <td>28.79 dB</td>
-            </tr>
-            <tr>
-              <td>5. Gamma ($\gamma=1.8$) + S-Curve</td>
-              <td>18.33 <em>(18.29)</em></td>
-              <td>24.65 <em>(25.55)</em></td>
-              <td>24.77 <em>(25.53)</em></td>
-              <td class="highlight-val">24.92 <em>(26.11)</em></td>
-              <td>29.29 dB</td>
-            </tr>
-            <tr>
-              <td>7. Edge-Preserving Denoising (NR)</td>
-              <td>27.04 <em>(28.09)</em></td>
-              <td>30.07 <em>(34.05)</em></td>
-              <td>30.25 <em>(34.40)</em></td>
-              <td class="highlight-val">30.54 <em>(32.75)</em></td>
-              <td>31.84 dB</td>
-            </tr>
-            <tr>
-              <td><strong>9. Full 8-Stage Chained ISP</strong></td>
-              <td>15.10 <em>(15.23)</em></td>
-              <td>21.23 <em>(21.53)</em></td>
-              <td>21.39 <em>(21.83)</em></td>
-              <td class="highlight-val">22.79 <em>(24.05)</em></td>
-              <td>26.39 dB</td>
-            </tr>
-          </tbody>
-        </table>
-      </div>
-
-      <div class="span-all figure-card">
-        <img src="figures/comp_fig2_step2_step3_progression.webp" alt="Step 1 to Step 3 Visual Progression">
-        <div class="figure-caption">
-          <strong>Fig. 4. End-to-End Progression from Step 1 (Zero-Network 16-Ch Jet LSP) to Step 3 (16-Ch Jet LSP + 1-Step Manifold Refiner).</strong> On the Full 8-Stage Chained ISP (bottom row), Step 1 eliminates the structural stripe collapse of the naive baseline ($+5.49\text{ dB}$), while Step 3's 1-Step Manifold Refiner corrects the multi-stage highlight color drift, adding a further $+2.57\text{ dB}$ ($+8.06\text{ dB}$ total gain over Naive on Scene 0015).
-        </div>
-      </div>
-
-      <div class="span-all figure-card">
-        <img src="figures/comp_fig3_continuous_knob_sweeps.webp" alt="Continuous White-Box ISP Knob Sweeps">
-        <div class="figure-caption">
-          <strong>Fig. 5. Continuous White-Box ISP Knob Sweeps in 16-Channel Latent Space ($1/64$ Grid, Real-Time Knob Control).</strong> <strong>(Row 1)</strong> AWB Color Temperature sweep from Cool to Golden Sunset; <strong>(Row 2)</strong> Gamma tone curve sweep ($\gamma \in \{1.20, 1.50, 1.85, 2.20\}$); <strong>(Row 3)</strong> Digital Exposure Gain sweep ($0.80\times \to 1.55\times$).
-        </div>
-      </div>
-
-      <h2>4. Halide DSL Monolithic Fused 16-Ch Benchmark</h2>
-      <p>
-        By fusing all 8 Computational LSP stages into a single Halide DSL pass scheduled with <code>.vectorize(c, 16).parallel(y)</code>, each $(x,y)$ latent site maps onto a single 512-bit AVX-512 SIMD register with zero intermediate DRAM traffic. Table 3 shows that our Halide kernel achieves a <strong>70.5&times; speedup</strong> over full-resolution pixel ISP at 12MP 4K resolution ($12.49\text{ ms}$, $80.0\text{ FPS}$) and executes in <strong>0.93 ms</strong> ($1,080\text{ FPS}$) at 1MP.
-      </p>
-
-      <div class="span-all">
-        <h3>Table 3: Multi-Resolution Halide DSL Latency Benchmark (Full 8-Stage Chained ISP)</h3>
-        <table>
-          <thead>
-            <tr>
-              <th>Image Resolution</th>
-              <th>Latent Grid ($H/8 \times W/8 \times 16$)</th>
-              <th>Latent Footprint</th>
-              <th>Pixel-Domain ISP (PyTorch)</th>
-              <th>16-Ch Latent ISP (PyTorch)</th>
-              <th>Halide Fused 16-Ch LSP (JIT)</th>
-              <th>Speedup vs. Pixel ISP</th>
-            </tr>
-          </thead>
-          <tbody>
-            <tr>
-              <td><strong>$256 \times 256$</strong></td>
-              <td>$32 \times 32 \times 16$</td>
-              <td>64 KB (L1/L2 Cache)</td>
-              <td>5.87 ms</td>
-              <td>2.02 ms</td>
-              <td class="highlight-val">0.140 ms (7,140 FPS)</td>
-              <td class="highlight-val">42.0&times;</td>
-            </tr>
-            <tr>
-              <td><strong>$1024 \times 1024$ (1MP)</strong></td>
-              <td>$128 \times 128 \times 16$</td>
-              <td>1.0 MB (L2/L3 Cache)</td>
-              <td>39.80 ms</td>
-              <td>14.20 ms</td>
-              <td class="highlight-val">0.926 ms (1,080 FPS)</td>
-              <td class="highlight-val">43.0&times;</td>
-            </tr>
-            <tr>
-              <td><strong>$4000 \times 3000$ (12MP 4K)</strong></td>
-              <td>$500 \times 375 \times 16$</td>
-              <td>12.0 MB (L3 Cache)</td>
-              <td>880.64 ms</td>
-              <td>336.05 ms</td>
-              <td class="highlight-val">12.493 ms (80.0 FPS)</td>
-              <td class="highlight-val">70.5&times;</td>
-            </tr>
-          </tbody>
-        </table>
-      </div>
-
-      <h2>5. Step 4 &amp; Step 5: Real Hardware Sensor RAW Benchmarks &amp; Zero-Decode Latent 3A / Auto-Tuning</h2>
-      <p>
-        To validate the full physical imaging chain ($\mathbf{I}_{\text{Bayer}} \to \mathcal{E}_{\text{raw}} \to \mathcal{T}_{\text{LSP}} \to \mathcal{R}_{1\text{-step}} \to \mathcal{D}_{\text{sRGB}}$) on <strong>genuine hardware camera sensor RAW files</strong> rather than synthetic degraded sRGB, we evaluate <strong>10 real camera RAW captures</strong> across three standard RAW-to-ISP benchmarks (<code>comp_lsp/src/real_raw_dataset.py</code>): (1) <strong>Official OpenISP</strong> 10-bit $1920\times 1080$ RGGB sensor dump (<code>test.RAW</code> + hardware register metadata from <code>config.csv</code> / <code>test.yaml</code>), (2) <strong>MIT-Adobe FiveK DSLR RAW Benchmark</strong> (12-bit and 14-bit Nikon D700, Canon EOS 5D, Canon 1Ds MkII, and Canon EOS 40D <code>.dng</code> files), and (3) <strong>Google Pixel Smartphone RAW Benchmark</strong> (14-bit $4032\times 3024$ BGGR mobile sensor <code>.dng</code> files). Furthermore, leveraging $\hat{\mathbf{c}} = \psi_{\text{DC}}(\mathbf{z}_{\text{raw}})$ and orthonormal Pure-AC gradient/curvature energy ($\Pi_x, \Pi_y, \Pi_{\text{curv}}$), our <code>Latent3AController16Ch</code> estimates AE, Gray-Edge AWB (compensating for the $1.3\text{--}1.5\times$ higher Green photosite sensitivity of real silicon Bayer sensors), radial LSC, and adaptive NR/EEH directly in 16-channel latent space in <strong>~1.8&ndash;2.5 ms</strong> with <em>zero VAE decoding</em>. Finally, by pre-binding $\mathbf{z}_{\text{raw}}$-invariant Jet projections once (<code>bind_raw_latent</code>), <code>DifferentiableLatentISPModule16Ch</code> optimizes all physical ISP knobs $\Theta_{\text{ISP}}$ via Adam gradient descent purely in the $1/64$ latent space without backpropagating through the 83.8M-parameter $\mathcal{D}_{\text{sRGB}}$, achieving a <strong>765.2&times; optimization speedup</strong> ($198.3\text{ ms}$ vs. $151,766.9\text{ ms}$ for 40 steps on <code>FLUX.1</code>, improving PSNR on OpenISP <code>test.RAW</code> from $12.89\text{ dB} \to 24.90\text{ dB}$).
-      </p>
-
-      <div class="span-all">
-        <h3>Table 4: Real Hardware Sensor RAW-to-sRGB Benchmark Evaluation Across Camera Families (PSNR dB / SSIM)</h3>
-        <table>
-          <thead>
-            <tr>
-              <th>Real Hardware RAW Dataset &amp; Backbone</th>
-              <th>1. Unprocessed Sensor RAW</th>
-              <th>2. Naive Bayer + Naive 16-Ch LSP</th>
-              <th>3. $\mathcal{E}_{\text{raw}}$ + Step 1 Zero-Net Jet</th>
-              <th>4. Step 5A: Zero-Decode Latent 3A (~2.2 ms)</th>
-              <th>5. Step 4: $\mathcal{E}_{\text{raw}}$ + Hybrid 1-Step LSP</th>
-              <th>6. Step 5B: Latent Auto-Tuned ISP (765.2&times;)</th>
-            </tr>
-          </thead>
-          <tbody>
-            <tr class="section-row">
-              <td colspan="7">A. FLUX.1 16-Channel VAE (AutoencoderKL, 83.8M params)</td>
-            </tr>
-            <tr>
-              <td><strong>OpenISP Official 10-bit RGGB (.RAW, N=2)</strong></td>
-              <td>13.55 / 0.7534</td>
-              <td>16.17 / 0.7611</td>
-              <td>19.96 / 0.6901</td>
-              <td class="highlight-val">21.45 / 0.8317</td>
-              <td class="highlight-val">22.69 / 0.8378</td>
-              <td class="highlight-val">23.72 / 0.8370 (25.83 dB Chart)</td>
-            </tr>
-            <tr>
-              <td><strong>MIT-Adobe FiveK DSLR 12/14-bit (.DNG, N=6)</strong></td>
-              <td>13.60 / 0.6624</td>
-              <td>14.99 / 0.5695</td>
-              <td>20.63 / 0.6985</td>
-              <td class="highlight-val">21.43 / 0.7830</td>
-              <td class="highlight-val">21.47 / 0.7688</td>
-              <td class="highlight-val">22.74 / 0.7842 (up to 24.56 dB)</td>
-            </tr>
-            <tr>
-              <td><strong>Google Pixel Mobile 14-bit BGGR (.DNG, N=2)</strong></td>
-              <td>14.18 / 0.6941</td>
-              <td>16.72 / 0.5737</td>
-              <td>19.57 / 0.6058</td>
-              <td class="highlight-val">21.84 / 0.7433</td>
-              <td class="highlight-val">21.65 / 0.7226</td>
-              <td class="highlight-val">25.45 / 0.7948 (up to 26.36 dB)</td>
-            </tr>
-            <tr class="section-row">
-              <td colspan="7">B. TAEF1 16-Channel VAE (AutoencoderTiny, 2.46M params)</td>
-            </tr>
-            <tr>
-              <td><strong>OpenISP Official 10-bit RGGB (.RAW, N=2)</strong></td>
-              <td>13.55 / 0.7534</td>
-              <td>11.50 / 0.6284</td>
-              <td>21.04 / 0.7327</td>
-              <td class="highlight-val">22.01 / 0.8397</td>
-              <td class="highlight-val">23.44 / 0.8435</td>
-              <td class="highlight-val">23.02 / 0.8441 (25.37 dB Hybrid)</td>
-            </tr>
-            <tr>
-              <td><strong>MIT-Adobe FiveK DSLR 12/14-bit (.DNG, N=6)</strong></td>
-              <td>13.60 / 0.6624</td>
-              <td>15.33 / 0.4930</td>
-              <td>20.60 / 0.6896</td>
-              <td class="highlight-val">20.95 / 0.7572</td>
-              <td class="highlight-val">20.70 / 0.7194</td>
-              <td class="highlight-val">21.83 / 0.7529 (up to 23.94 dB)</td>
-            </tr>
-            <tr>
-              <td><strong>Google Pixel Mobile 14-bit BGGR (.DNG, N=2)</strong></td>
-              <td>14.18 / 0.6941</td>
-              <td>18.23 / 0.5690</td>
-              <td>18.85 / 0.5939</td>
-              <td class="highlight-val">22.00 / 0.7301</td>
-              <td class="highlight-val">19.49 / 0.6178</td>
-              <td class="highlight-val">26.01 / 0.7744 (up to 26.56 dB)</td>
-            </tr>
-          </tbody>
-        </table>
-      </div>
-
-      <div class="span-all figure-card">
-        <img src="figures/comp_fig4_end_to_end_raw_to_srgb_3a.webp" alt="End-to-End Real Hardware Sensor Bayer RAW to sRGB">
-        <div class="figure-caption">
-          <strong>Fig. 6. End-to-End Real Hardware Sensor RAW-to-sRGB Comparison Across OpenISP (.RAW), MIT-Adobe FiveK DSLR (.DNG), and Google Pixel (.DNG).</strong> Comparing unprocessed linear sensor RAW, Naive 16-Ch Latent ISP, <strong>Step 5A Zero-Decode Latent 3A (~1.8 ms)</strong>, <strong>Step 4 Hybrid Comp-LSP</strong>, and <strong>Step 5B Differentiable Latent Inverse Auto-Tuned ISP</strong> against the full-resolution Pixel OpenISP reference.
-        </div>
-      </div>
-
-      <div class="span-all figure-card">
-        <img src="figures/comp_fig5_latent_inverse_isp_autotuning.webp" alt="Differentiable Latent Inverse ISP Auto-Tuning on OpenISP test.RAW">
-        <div class="figure-caption">
-          <strong>Fig. 7. Step 5 Zero-Decode Latent 3A &amp; Differentiable Inverse ISP Auto-Tuning on Official OpenISP 10-bit Sensor RAW (<code>test.RAW</code>).</strong> <strong>(A)</strong> 40-step latent manifold loss convergence; <strong>(B)</strong> <strong>765.2&times; optimization speedup</strong> achieved by optimizing $\Theta_{\text{ISP}}$ directly in $32\times 32\times 16$ latent space without backpropagating through $\mathcal{D}_{\text{sRGB}}$ ($198.3\text{ ms}$ vs. $151,766.9\text{ ms}$); <strong>(C)</strong> recovery of OpenISP hardware register parameters.
-        </div>
-      </div>
-
-      <h2>6. 16-Channel Latent Space Geometry (<code>Linear Sensor RGB</code> vs. <code>sRGB</code>) &amp; Step-by-Step Color/Brightness Dojo</h2>
-      <p>
-        To understand how physical sensor signals move inside a 16-channel VAE without confounding interference from spatial-frequency filters (<code>LSC = 0, LTM = 0, NR = 0, EEH = 0</code>), we isolate the <strong>four fundamental radiometric, colorimetric, and tone-mapping stages</strong> in sequential order: $\mathbf{z}_0 \text{ (Linear RAW)} \to \mathbf{z}_1 \text{ (BLC+Gain)} \to \mathbf{z}_2 \text{ (+WB)} \to \mathbf{z}_3 \text{ (+3&times;3 CCM)} \to \mathbf{z}_4 \text{ (+Gamma sRGB)}$. Sweeping luminance $Y \in [0, 1]$ shows that Linear RGB and sRGB inhabit the exact same curved 3D polynomial submanifold $\mathcal{M}_{\text{DC}} \subset \mathbb{R}^{16}$ ($R^2 = 0.9797$ degree-3 vs. $0.9100$ linear on <code>FLUX.1</code>), reparameterized by $Y \mapsto Y^{1/\gamma}$. Unprocessed Bayer RAW latents start in the green-biased dark quadrant ($\mathbf{u}_{\text{DC},G} \gg \mathbf{u}_{\text{DC},R}$), move radially under Gain, shear onto the neutral gray diagonal ($R=G$) under WB, expand chroma under CCM, and stretch along the neutral manifold under Gamma. By replacing naive point evaluation $f(\bar{\mathbf{c}}_0)$ with <strong>3-Point Gauss-Legendre Jet Quadrature</strong> ($\frac{1}{6}f(\bar{\mathbf{c}}_0 - \sqrt{1.5}\boldsymbol{\sigma}_{\text{AC}}) + \frac{4}{6}f(\bar{\mathbf{c}}_0) + \frac{1}{6}f(\bar{\mathbf{c}}_0 + \sqrt{1.5}\boldsymbol{\sigma}_{\text{AC}})$, $+3.6\text{ to }+7.5\text{ dB}$ on $8\times 8$ patch DC color) and replacing scalar luma AC scaling with the <strong>full $3\times 3$ Secant Jacobian tensor</strong> $J_{3\times 3}^{\text{Jet}} \in \mathbb{R}^{3\times 3}$ (capturing anisotropic WB gains, off-diagonal CCM mixing, and channel-wise Gamma slopes), we achieve massive zero-network and 1-step gains across all 4 stages (Table 5, Figs. 8&ndash;9).
-      </p>
-
-      <div class="span-all">
-        <h3>Table 5: Step-by-Step "Dojo-Breaking" Evaluation of Fundamental Color &amp; Brightness ISP Stages (Spatial Filters OFF, N=10 Real Sensor RAWs)</h3>
-        <table>
-          <thead>
-            <tr>
-              <th>Cumulative Color/Brightness Stage (Spatial Filters OFF)</th>
-              <th>1. Naive 16-Ch Latent Op</th>
-              <th>2. Legacy Scalar-AC Jet (0-Net)</th>
-              <th>3. Proposed $3\times 3$-J + Gauss-Legendre Jet ($\text{from }\mathbf{z}_0$, 0-Net)</th>
-              <th>4. Proposed $3\times 3$-J + Gauss-Legendre Jet ($\text{w/ }\bar{\mathbf{c}}_0$, 0-Net)</th>
-              <th>5. Proposed + $\mathcal{R}_{1\text{-step}}$ Refiner</th>
-              <th>VAE Oracle Ceiling</th>
-            </tr>
-          </thead>
-          <tbody>
-            <tr class="section-row">
-              <td colspan="7">A. FLUX.1 16-Channel VAE (AutoencoderKL, Mean Across 10 Real Hardware Sensor RAWs)</td>
-            </tr>
-            <tr>
-              <td><strong>Stage 1: BLC + Digital Gain</strong></td>
-              <td>26.37 dB</td>
-              <td>28.96 dB</td>
-              <td class="highlight-val">29.46 dB (+0.50)</td>
-              <td class="highlight-val">30.18 dB (+1.22)</td>
-              <td class="highlight-val">30.46 dB (+1.50)</td>
-              <td>33.00 dB</td>
-            </tr>
-            <tr>
-              <td><strong>Stage 2: + White Balance (AWB)</strong></td>
-              <td>17.99 dB</td>
-              <td>24.04 dB</td>
-              <td class="highlight-val">25.81 dB (+1.77)</td>
-              <td class="highlight-val">26.83 dB (+2.79)</td>
-              <td class="highlight-val">27.55 dB (+3.51)</td>
-              <td>31.49 dB</td>
-            </tr>
-            <tr>
-              <td><strong>Stage 3: + 3&times;3 Color Matrix (CCM)</strong></td>
-              <td>17.37 dB</td>
-              <td>23.56 dB</td>
-              <td class="highlight-val">25.55 dB (+1.99)</td>
-              <td class="highlight-val">26.50 dB (+2.94)</td>
-              <td class="highlight-val">27.13 dB (+3.57)</td>
-              <td>30.97 dB</td>
-            </tr>
-            <tr>
-              <td><strong>Stage 4: + Gamma Tone Curve (sRGB)</strong></td>
-              <td>15.85 dB</td>
-              <td>22.59 dB</td>
-              <td class="highlight-val">24.30 dB (+1.71)</td>
-              <td class="highlight-val">25.16 dB (+2.57)</td>
-              <td class="highlight-val">26.68 dB (+4.09)</td>
-              <td>31.29 dB</td>
-            </tr>
-            <tr>
-              <td><em>Official OpenISP 10-bit RGGB (<code>test.RAW</code> Crop, Stage 4)</em></td>
-              <td>14.37 dB</td>
-              <td>21.69 dB</td>
-              <td class="highlight-val">27.66 dB (+5.97)</td>
-              <td class="highlight-val">26.54 dB (+4.85)</td>
-              <td class="highlight-val">28.08 dB (+6.39)</td>
-              <td>31.92 dB</td>
-            </tr>
-            <tr class="section-row">
-              <td colspan="7">B. TAEF1 16-Channel VAE (AutoencoderTiny, Mean Across 10 Real Hardware Sensor RAWs)</td>
-            </tr>
-            <tr>
-              <td><strong>Stage 1: BLC + Digital Gain</strong></td>
-              <td>25.42 dB</td>
-              <td>28.14 dB</td>
-              <td>28.02 dB</td>
-              <td class="highlight-val">28.50 dB (+0.36)</td>
-              <td class="highlight-val">28.68 dB (+0.54)</td>
-              <td>29.74 dB</td>
-            </tr>
-            <tr>
-              <td><strong>Stage 2: + White Balance (AWB)</strong></td>
-              <td>17.96 dB</td>
-              <td>24.15 dB</td>
-              <td class="highlight-val">25.46 dB (+1.31)</td>
-              <td class="highlight-val">26.07 dB (+1.92)</td>
-              <td class="highlight-val">26.85 dB (+2.70)</td>
-              <td>29.05 dB</td>
-            </tr>
-            <tr>
-              <td><strong>Stage 3: + 3&times;3 Color Matrix (CCM)</strong></td>
-              <td>17.55 dB</td>
-              <td>23.51 dB</td>
-              <td class="highlight-val">25.13 dB (+1.62)</td>
-              <td class="highlight-val">25.74 dB (+2.23)</td>
-              <td class="highlight-val">26.57 dB (+3.06)</td>
-              <td>28.52 dB</td>
-            </tr>
-            <tr>
-              <td><strong>Stage 4: + Gamma Tone Curve (sRGB)</strong></td>
-              <td>14.89 dB</td>
-              <td>22.53 dB</td>
-              <td class="highlight-val">24.53 dB (+2.00)</td>
-              <td class="highlight-val">25.28 dB (+2.75)</td>
-              <td class="highlight-val">26.28 dB (+3.75)</td>
-              <td>29.01 dB</td>
-            </tr>
-          </tbody>
-        </table>
-      </div>
 
       <div class="span-all figure-card">
         <img src="figures/comp_fig6_latent_geometry_linear_vs_srgb.webp" alt="16-Channel VAE Latent Geometry: Linear Sensor RGB vs. sRGB">
         <div class="figure-caption">
-          <strong>Fig. 8. 16-Channel VAE Latent Geometry (<code>Linear Sensor RGB</code> vs. <code>sRGB</code>) &amp; Step-by-Step ISP Trajectories.</strong> <strong>(A)</strong> Activation profiles $z_c(Y)$ across the top 4 dynamic-range channels of <code>FLUX.1</code> for Linear RGB (dashed) vs. sRGB $Y^{1/2.2}$ (solid), confirming that uniform colors trace a curved 3D polynomial submanifold ($R^2 = 0.9797$ vs. $0.9100$ linear); <strong>(B)</strong> Chromatic trajectory in the Jet DC Red-Green plane ($\mathbf{u}_{\text{DC},R}$ vs. $\mathbf{u}_{\text{DC},G}$) from green-biased dark RAW to neutral sRGB; <strong>(C)</strong> 3-Point Gauss-Legendre Jet Quadrature gain ($+3.6\text{ to }+7.5\text{ dB}$) on $8\times 8$ patch DC color; <strong>(D)</strong> 16-D Euclidean distance from black $\|\mathbf{z}_k - \mathbf{z}_{\text{black}}\|_2$.
-        </div>
-      </div>
-
-      <div class="span-all figure-card">
-        <img src="figures/comp_fig7_color_dojo_step_by_step.webp" alt="Step-by-Step Dojo-Breaking of Fundamental Color and Brightness ISP Stages">
-        <div class="figure-caption">
-          <strong>Fig. 9. Step-by-Step "Dojo-Breaking" Visual &amp; Quantitative Progression Across Fundamental Color/Brightness Stages (Spatial Filters OFF).</strong> Split-screen visual comparisons (Left: Pixel ISP GT; Right: Zero-Network $3\times 3$-Jacobian Jet Latent ISP) on <code>MIT-Adobe FiveK</code> Nikon D700 (Top) and Official <code>OpenISP</code> 10-bit <code>test.RAW</code> (Middle), plus mean PSNR progression across all 10 hardware sensor RAWs on <code>FLUX.1</code> and <code>TAEF1</code> (Bottom).
+          <strong>Fig. 1. 16-Channel VAE Latent Geometry (<code>Linear Sensor RGB</code> vs. <code>sRGB</code>) &amp; Step-by-Step ISP Trajectories.</strong> <strong>(A)</strong> Activation profiles $z_c(Y)$ across the top 4 dynamic-range channels of <code>FLUX.1</code> for Linear RGB (dashed) vs. sRGB $Y^{{1/2.2}}$ (solid) on the curved 3D submanifold ($R^2 = 0.9797$ degree-3 vs. $0.9100$ linear); <strong>(B)</strong> Chromatic trajectory in the Jet DC Red-Green plane ($\mathbf{{u}}_{{\text{{DC}},R}}$ vs. $\mathbf{{u}}_{{\text{{DC}},G}}$) from green-biased dark RAW to neutral sRGB; <strong>(C)</strong> 3-Point Gauss-Legendre Jet Quadrature gain ($+3.6\text{{ to }}+7.5\text{{ dB}}$) over point evaluation $f(\bar{{\mathbf{{c}}}}_0)$ on $8\times 8$ patch DC color; <strong>(D)</strong> 16-D Euclidean distance from black $\|\mathbf{{z}}_k - \mathbf{{z}}_{{\text{{black}}}}\|_2$.
         </div>
       </div>
 
       <div class="span-all figure-card">
         <img src="figures/comp_fig8_pipeline_block_by_block_flow.webp" alt="Unified Block-by-Block Latent Pipeline and Step-by-Step Visual Evolution">
         <div class="figure-caption">
-          <strong>Fig. 10. Unified Block-by-Block Latent Pipeline Diagram &amp; Step-by-Step Visual Evolution Across 3 Genuine Hardware Camera Captures.</strong> <strong>(Row 1)</strong> The 6 sequential pipeline blocks (<code>Block 0: Sensor RAW Encoder</code> &rarr; <code>Block 1: BLC &amp; Gain</code> &rarr; <code>Block 2: White Balance</code> &rarr; <code>Block 3: 3&times;3 CCM</code> &rarr; <code>Block 4: Gamma Tone Curve</code> &rarr; <code>Block 5: N-Step Refiner (N=4) &amp; Frozen Decoder</code>) with their exact 3-Point Gauss-Legendre Quadrature DC equations, $3\times 3$ Secant Jacobian AC operators, and 4-step damped $3\times 3$ cross-cell flow; <strong>(Rows 2&ndash;4)</strong> Decoded image $\mathcal{D}(\mathbf{z}_k)$, PSNR vs. block Ground Truth, and absolute-scale R/G/B level bars directly beneath each block for <code>Nikon D700</code>, <code>Canon 40D</code>, and Official <code>OpenISP test.RAW</code>; <strong>(Row 5)</strong> 16-channel latent activation barcode $\mathbf{z}_k \in \mathbb{R}^{16}$ and <code>R/G</code>, <code>B/G</code> chromatic balance telemetry.
+          <strong>Fig. 2. Unified Block-by-Block Latent Pipeline Diagram &amp; Step-by-Step Visual Evolution Across 3 Genuine Hardware Camera Captures.</strong> <strong>(Row 1)</strong> The 6 sequential pipeline blocks (<code>Block 0: Sensor RAW Encoder</code> &rarr; <code>Block 1: BLC &amp; Gain</code> &rarr; <code>Block 2: Authentic WB</code> &rarr; <code>Block 3: Authentic 3&times;3 CCM</code> &rarr; <code>Block 4: Gamma Tone Curve (0-Net)</code> &rarr; <code>Block 5: 4-Step Iterative Refiner &amp; Frozen Decoder</code>) with their exact 3-Point Gauss-Legendre Quadrature DC equations, $3\times 3$ Secant Jacobian AC operators, and 4-step damped $3\times 3$ cross-cell flow; <strong>(Rows 2&ndash;4)</strong> Decoded image $\mathcal{{D}}(\mathbf{{z}}_k)$, PSNR vs. block Ground Truth, and R/G/B level bars for <code>Nikon D700</code>, <code>Canon EOS 40D</code>, and Official <code>OpenISP test.RAW</code>; <strong>(Row 5)</strong> 16-channel latent activation barcode $\mathbf{{z}}_k \in \mathbb{{R}}^{{16}}$ and <code>R/G</code>, <code>B/G</code> telemetry.
         </div>
       </div>
 
       <!-- BEGIN_SECTION_7_INTERACTIVE_SIMULATOR -->
-      <h2>7. Step-by-Step Numerical Execution Inside an $8\times 8$ Patch Latent ($\mathbf{z} \in \mathbb{R}^{16}$), Authentic Camera ISP Parameters &amp; 1-Step vs. $N$-Step ($N=4$) Refinement</h2>
+      <h2>3. Step-by-Step Numerical Execution Inside an $8\times 8$ Patch Latent ($\mathbf{z} \in \mathbb{R}^{16}$), Authentic Camera ISP Parameters &amp; 1-Step vs. $N$-Step ($N=4$) Refinement</h2>
       <p>
-        A critical systems question for White-Box Computational LSP is: <em>(1) When we extract each camera's authentic embedded As-Shot White Balance gains (<code>rp.camera_whitebalance</code> in DNG / <code>test.yaml</code> in OpenISP, where $w_R$ reaches $2.72\times$ on Canon 5D and $w_B$ reaches $2.63\times$ on Google Pixel Indoor) and authentic $3\times 3$ Color Correction Matrix (<code>rp.color_matrix</code>), does a single universal calibration checkpoint (<code>flux_16ch_jet_calib_v2.pt</code>) eliminate the raw Bayer green cast across all 10 cameras with zero per-image tuning?</em> and <em>(2) Why does an iterative $N$-step damped manifold refiner ($\mathcal{R}_{N\text{-step}}$, $N=4$ steps with $3\times 3$ cross-cell harmonization) eliminate the $8\times 8$ patch boundary artifacts of unconstrained 1-step refinement?</em>
-        Below, we trace the exact four-step numerical execution on patch $(y=7, x=8)$ across <strong>all 10 unseen hardware camera RAW scenes</strong> and compare <strong>Stage 4 (0-Net Pure Math)</strong>, <strong>Stage 5 (+1-Step Refiner)</strong>, and <strong>Stage 6 (+4-Step Iterative Refiner)</strong>.
+        We verify two core properties across <strong>10 genuine hardware camera sensor RAWs</strong> (<code>OpenISP</code> 10-bit RGGB <code>.RAW</code>, <code>MIT-Adobe FiveK</code> 12/14-bit DSLR <code>.DNG</code>, and <code>Google Pixel</code> 14-bit mobile <code>.DNG</code>): (1) using each camera's authentic embedded As-Shot White Balance gains (<code>rp.camera_whitebalance</code>, where $w_R$ reaches $2.724\times$ on Canon 5D and $w_B$ reaches $2.633\times$ on Pixel Indoor) and authentic $3\times 3$ Color Correction Matrix (<code>rp.color_matrix</code>), a single universal calibration checkpoint (<code>flux_16ch_jet_calib_v2.pt</code>) eliminates the raw Bayer green cast across all 10 cameras ($R^2 = 0.9978$, mean RGB error $0.0055$); and (2) replacing unconstrained 1-step pointwise refinement ($\mathcal{R}_{1\text{-step}}$, mean $25.29\text{ dB}$) with our <strong>4-Step Damped Iterative Refiner ($\mathcal{R}_{4\text{-step}}$, $N=4$ steps with $3\times 3$ cross-cell spatial convolutions)</strong> eliminates $8\times 8$ patch boundary artifacts and boosts mean PSNR from <strong>$25.04\text{ dB}$ (0-Net) $\to 27.18\text{ dB}$ (4-Step)</strong> ($+2.14\text{ dB}$).
       </p>
 
       <div class="span-all figure-card">
         <img src="figures/comp_fig9_step_by_step_math_and_consistency.webp" alt="Inside a Single 8x8 Patch Latent: Authentic Camera ISP Math and 1-Step vs 4-Step Iterative Refiner">
         <div class="figure-caption">
-          <strong>Fig. 11. Inside a Single $8\times 8$ Patch Latent ($\mathbf{z} \in \mathbb{R}^{16}$): Authentic Camera ISP Math &amp; 1-Step vs. $N$-Step ($N=4$) Iterative Refinement.</strong> <strong>(A)</strong> Exact numerical trace of Steps 1&ndash;4 on patch $(y=7, x=8)$ of <code>Nikon D700</code> using its authentic DNG metadata (<code>WB=[2.129, 1.0, 1.547]</code>, native $3\times 3$ CCM, $\gamma=2.0$); <strong>(B)</strong> 16-channel latent vector comparison between 0-Net math, 1-Step Refiner, 4-Step Iterative Refiner, and true VAE-encoded ground truth $\mathcal{E}(\mathbf{x}_{\text{gt}})$; <strong>(C)</strong> Cross-scene mean RGB consistency across all 10 hardware camera RAWs $\times$ 6 stages ($R^2 > 0.985$); <strong>(D)</strong> Full-pipeline sRGB PSNR comparing 0-Net Pure Math, +1-Step Refiner, and +4-Step Iterative Refiner across all 10 cameras.
+          <strong>Fig. 3. Inside a Single $8\times 8$ Patch Latent ($\mathbf{z} \in \mathbb{R}^{16}$): Authentic Camera ISP Math &amp; 1-Step vs. $N$-Step ($N=4$) Iterative Refinement.</strong> <strong>(A)</strong> Exact numerical trace of Steps 1&ndash;4 on patch $(y=7, x=8)$ of <code>Nikon D700</code> using its authentic DNG metadata (<code>WB=[2.129, 1.0, 1.547]</code>, native $3\times 3$ CCM, $\gamma=2.0$); <strong>(B)</strong> 16-channel latent vector comparison between 0-Net math, +1-Step Refiner, +4-Step Iterative Refiner, and true VAE-encoded ground truth $\mathcal{E}(\mathbf{x}_{\text{gt}})$; <strong>(C)</strong> Cross-scene mean RGB consistency across all 10 hardware camera RAWs $\times$ 6 stages ($R^2 = 0.9978$, MAE $= 0.0055$); <strong>(D)</strong> Full-pipeline sRGB PSNR comparing 0-Net Pure Math ($25.04\text{ dB}$), +1-Step Refiner ($25.29\text{ dB}$), and +4-Step Iterative Refiner ($27.18\text{ dB}$) across all 10 cameras.
         </div>
       </div>
 
@@ -1648,12 +1154,12 @@
           </div>
         </div>
 
-        <!-- INTERACTIVE TABLE 6: 10-SCENE CROSS-CAMERA CONSISTENCY -->
+        <!-- INTERACTIVE TABLE 2: 10-SCENE CROSS-CAMERA CONSISTENCY -->
         <div class="sim-box">
           <div class="sim-header">
             <div style="flex: 1 1 480px;">
               <h3 style="margin:0; color:var(--text-bright);">
-                Table 6: Cross-Camera Consistency Proof Across All 10 Unseen Hardware Sensor RAWs (Authentic Native WB/CCM &amp; 0-Net vs. 1-Step vs. 4-Step Refiner)
+                Table 2: Cross-Camera Consistency Proof Across All 10 Unseen Hardware Sensor RAWs (Authentic Native WB/CCM &amp; 0-Net vs. 1-Step vs. 4-Step Refiner)
               </h3>
               <div style="font-size:12.5px; color:var(--text-muted); margin-top:4px;">
                 단 하나의 고정 보정 행렬(<code>flux_16ch_jet_calib_v2.pt</code>)을 10개의 서로 다른 하드웨어 카메라 RAW에 적용했을 때의 단계별 PSNR 및 평균 RGB 일치도입니다.
@@ -2043,6 +1549,21 @@
           window.addEventListener('DOMContentLoaded', initPaperSim);
         </script>
       </div>
+
+      <h2>4. Conclusion</h2>
+      <p>
+        We presented <strong>White-Box Computational Latent Signal Processing (LSP 2.0)</strong>, formulating fundamental camera radiometric, colorimetric, and tone-mapping stages (<code>BLC &amp; Gain</code> $\to$ <code>White Balance</code> $\to$ <code>3&times;3 CCM</code> $\to$ <code>Gamma</code>) directly on the $H/8 \times W/8 \times 16$ latent grid of standard 16-channel VAEs (<code>FLUX.1</code> and <code>TAEF1</code>). By combining <strong>3-Point Gauss-Legendre Jet Quadrature</strong>, <strong>$3\times 3$ Secant Jacobians</strong>, and a <strong>4-Step Damped Iterative Manifold Refiner ($\mathcal{R}_{4\text{-step}}$)</strong> with authentic hardware camera metadata, our framework eliminates raw Bayer green bias ($R^2 = 0.9978$) and patch boundary artifacts across 10 diverse hardware sensor RAWs, boosting mean PSNR from $25.04\text{ dB}$ (0-Net) to <strong>$27.18\text{ dB}$ (4-Step)</strong> while executing at $1/64$ spatial resolution ($0.93\text{ ms}$ at 1MP in Halide SIMD).
+      </p>
+
+      <h2>References</h2>
+      <ol class="reference-list">
+        <li>W. Kim et al., &ldquo;ParamISP: Learned forward and inverse ISPs using camera parameters,&rdquo; <em>CVPR</em>, 2024.</li>
+        <li>Z. Zhang et al., &ldquo;CtrlISP: Rescuing low-light RAW images via controllable neural ISP,&rdquo; <em>CVPR</em>, 2026.</li>
+        <li>D. Kim et al., &ldquo;RawGen: Learning camera raw image generation,&rdquo; <em>ECCV</em>, 2026.</li>
+        <li>M. Pach et al., &ldquo;The Latent Color Subspace: Emergent order in high-dimensional chaos,&rdquo; <em>arXiv:2603.12261</em>, 2026.</li>
+        <li>Black Forest Labs, &ldquo;FLUX.1 16-channel autoencoder,&rdquo; 2024; O. B. Bohan, &ldquo;TAEF1,&rdquo; 2024.</li>
+        <li>J. Ragan-Kelley et al., &ldquo;Halide: A language and compiler for image processing pipelines,&rdquo; <em>PLDI</em>, 2013.</li>
+      </ol>
       <!-- END_SECTION_7_INTERACTIVE_SIMULATOR -->
     </div>
   </div>

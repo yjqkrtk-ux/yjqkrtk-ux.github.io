@@ -8,11 +8,11 @@
 <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/katex@0.16.11/dist/katex.min.css">
 <script defer src="https://cdn.jsdelivr.net/npm/katex@0.16.11/dist/katex.min.js"></script>
 <script defer src="https://cdn.jsdelivr.net/npm/katex@0.16.11/dist/contrib/auto-render.min.js"></script>
-<link rel="stylesheet" href="../css/style.css">
-<link rel="stylesheet" href="../css/glossary-tooltips.css">
-<script src="../js/glossary-data.js"></script>
-<script src="../js/common.js"></script>
-<script defer src="../js/glossary-tooltips.js"></script>
+<link rel="stylesheet" href="../css/style.css?v=d8ae29c">
+<link rel="stylesheet" href="../css/glossary-tooltips.css?v=d8ae29c">
+<script src="../js/glossary-data.js?v=d8ae29c"></script>
+<script src="../js/common.js?v=d8ae29c"></script>
+<script defer src="../js/glossary-tooltips.js?v=d8ae29c"></script>
 </head>
 <body data-chapter="bio" data-root="../">
 <main class="chapter">
@@ -22,9 +22,9 @@
     <p class="lead">
       차세대 시퀀싱(NGS) 및 3세대 롱리드(PacBio, Oxford Nanopore) 기술의 발전으로 단일 리드 길이가 수만~수십만 염기쌍(bp)에 달하면서,
       고전적인 전역 동적계획법(Needleman-Wunsch)의 $O(N_1 N_2)$ 시공간 복잡도는 심각한 병목이 되었습니다.
-      본 장에서는 송용준 박사의 학위논문 핵심 성과인 <strong>DQNAlign</strong>(<a class="src" href="../../2_Bioinformatics_and_Genomics/Deep_Learning_Biomarkers/DQNalign/tool/RL/agent.py#L10" target="_blank" rel="noopener" title="2_Bioinformatics_and_Genomics/Deep_Learning_Biomarkers/DQNalign/tool/RL/agent.py:10">agent.py:10</a>, <a class="src" href="../../2_Bioinformatics_and_Genomics/Deep_Learning_Biomarkers/DQNalign/tool/RL/Learning.py#L17" target="_blank" rel="noopener" title="2_Bioinformatics_and_Genomics/Deep_Learning_Biomarkers/DQNalign/tool/RL/Learning.py:17">Learning.py:17</a>)의 국소 슬라이딩 윈도우 MDP 정식화,
+      본 장에서는 송용준 박사의 학위논문 핵심 성과인 <strong>DQNAlign</strong>(<a class="src" href="../../2_Bioinformatics_and_Genomics/Deep_Learning_Biomarkers/DQNalign/tool/RL/agent.py#L10" target="_blank" rel="noopener" title="2_Bioinformatics_and_Genomics/Deep_Learning_Biomarkers/DQNalign/tool/RL/agent.py:10">agent.py:10</a>, <a class="src" href="../../2_Bioinformatics_and_Genomics/Deep_Learning_Biomarkers/DQNalign/tool/RL/Learning.py#L17" target="_blank" rel="noopener" title="2_Bioinformatics_and_Genomics/Deep_Learning_Biomarkers/DQNalign/tool/RL/Learning.py:17">Learning.py:17</a>, <a class="src" href="https://doi.org/10.1109/OJEMB.2021.3076156" target="_blank" rel="noopener">IEEE OJEMB '21a ↗</a>, <a class="src" href="https://doi.org/10.1109/OJEMB.2021.3055424" target="_blank" rel="noopener">IEEE OJEMB '21b ↗</a>)의 국소 슬라이딩 윈도우 MDP 정식화,
       <strong>Dueling Double DQN + Exact Match Skip</strong> 하이브리드 가속기, 그리고 염색체 규모 반복서열 발굴 엔진인
-      <strong>REminerII · PixelRE · REDNN</strong>(<a class="src" href="../../2_Bioinformatics_and_Genomics/Sequence_Mining_and_Alignment/REminerII/Insilico.py#L74" target="_blank" rel="noopener" title="2_Bioinformatics_and_Genomics/Sequence_Mining_and_Alignment/REminerII/Insilico.py:74">Insilico.py:74</a>, <a class="src" href="../../2_Bioinformatics_and_Genomics/Sequence_Mining_and_Alignment/PixelRE/PixelRE.m#L3" target="_blank" rel="noopener" title="2_Bioinformatics_and_Genomics/Sequence_Mining_and_Alignment/PixelRE/PixelRE.m:3">PixelRE.m:3</a>, <a class="src" href="../../2_Bioinformatics_and_Genomics/Deep_Learning_Biomarkers/REDNN/REDNN.py#L74" target="_blank" rel="noopener" title="2_Bioinformatics_and_Genomics/Deep_Learning_Biomarkers/REDNN/REDNN.py:74">REDNN.py:74</a>)을 수식과 시뮬레이터로 완전 해부합니다.
+      <strong>REminerII · PixelRE · REDNN</strong>(<a class="src" href="../../2_Bioinformatics_and_Genomics/Sequence_Mining_and_Alignment/REminerII/Insilico.py#L74" target="_blank" rel="noopener" title="2_Bioinformatics_and_Genomics/Sequence_Mining_and_Alignment/REminerII/Insilico.py:74">Insilico.py:74</a>, <a class="src" href="../../2_Bioinformatics_and_Genomics/Sequence_Mining_and_Alignment/PixelRE/PixelRE.m#L3" target="_blank" rel="noopener" title="2_Bioinformatics_and_Genomics/Sequence_Mining_and_Alignment/PixelRE/PixelRE.m:3">PixelRE.m:3</a>, <a class="src" href="../../2_Bioinformatics_and_Genomics/Deep_Learning_Biomarkers/REDNN/REDNN.py#L74" target="_blank" rel="noopener" title="2_Bioinformatics_and_Genomics/Deep_Learning_Biomarkers/REDNN/REDNN.py:74">REDNN.py:74</a>, <a class="src" href="https://patents.google.com/patent/US20190385696A1/en" target="_blank" rel="noopener">US 2019/0385696 A1 ↗</a>)을 수식과 시뮬레이터로 완전 해부합니다.
     </p>
     <ul class="objectives">
       <li>전역 동적계획법(Needleman-Wunsch)의 $O(N_1 N_2)$ 한계를 극복하는 <strong>국소 슬라이딩 윈도우 MDP</strong>와 <strong>Exact Match Skip</strong>을 이해한다.</li>
@@ -32,17 +32,9 @@
       <li>인터랙티브 시뮬레이터(Sim 02 · Sim 03)로 <strong>DQNAlign 정렬 궤적</strong>과 <strong>REminerII / PixelRE 2D 닷플롯 시드 확장</strong>을 직접 실험한다.</li>
     </ul>
   
-    <div class="pub-bar" role="region" aria-label="Representative Publications and Patents">
-      <div class="pub-bar-head">
-        <span>📄 본 챕터 대표 공개 논문 · 등록 특허 · 원문 바로가기 (Representative Papers, Patents &amp; Public Code)</span>
-        <span class="pub-bar-profiles">
-          <a href="https://scholar.google.com/citations?user=H3AQNpAAAAAJ" target="_blank" rel="noopener">🎓 Google Scholar ↗</a>
-          <a href="https://yjqkrtk-ux.github.io/" target="_blank" rel="noopener">📄 Web Resume ↗</a>
-          <a href="https://yjqkrtk-ux.github.io/isocell/">📷 Samsung ISOCELL ↗</a>
-          <a href="https://github.com/syjqkrtk" target="_blank" rel="noopener">💻 GitHub (@syjqkrtk) ↗</a>
-        </span>
-      </div>
-      <div class="pub-grid"><a class="pub-pill" href="https://doi.org/10.1109/OJEMB.2021.3076156" target="_blank" rel="noopener"><span class="p-badge paper">IEEE OJEMB &#x27;21</span><span class="p-body"><span class="p-title">Local Alignment of DNA Sequence Based on Deep Reinforcement Learning</span><span class="p-meta">1st Author · IEEE OJEMB, vol. 2, pp. 170–178, Apr. 2021 · DOI: 10.1109/OJEMB.2021.3076156</span></span><span class="p-arr">↗</span></a><a class="pub-pill" href="https://doi.org/10.1109/OJEMB.2021.3055424" target="_blank" rel="noopener"><span class="p-badge paper">IEEE OJEMB &#x27;21</span><span class="p-body"><span class="p-title">Pairwise Heuristic Sequence Alignment Algorithm Based on Deep Reinforcement Learning</span><span class="p-meta">1st Author · IEEE OJEMB, vol. 2, pp. 36–43, Jan. 2021 · DOI: 10.1109/OJEMB.2021.3055424</span></span><span class="p-arr">↗</span></a><a class="pub-pill" href="https://ieeexplore.ieee.org/document/8333425" target="_blank" rel="noopener"><span class="p-badge paper">IEEE BHI &#x27;18</span><span class="p-body"><span class="p-title">A Novel Estimation Algorithm of Evolutionary Distance Based on Word Frequency Variation</span><span class="p-meta">1st Author · Proc. IEEE EMBS BHI 2018, pp. 287–290 · IEEE Xplore: 8333425</span></span><span class="p-arr">↗</span></a><a class="pub-pill" href="https://ieeexplore.ieee.org/document/8037707" target="_blank" rel="noopener"><span class="p-badge paper">IEEE EMBC &#x27;17</span><span class="p-body"><span class="p-title">Classification of Various Genomic Sequences Based on Distribution of Repeated K-Word</span><span class="p-meta">1st Author · Proc. 39th Annual IEEE EMBC 2017 · IEEE Xplore: 8037707</span></span><span class="p-arr">↗</span></a><a class="pub-pill" href="https://patents.google.com/patent/US20190385696A1/en" target="_blank" rel="noopener"><span class="p-badge patent">US PAT APP</span><span class="p-body"><span class="p-title">US 2019/0385696 A1 &amp; KR 10-2019-0136733 A — Complex Genetic Disease Risk AI</span><span class="p-meta">KAIST · Somatic Mutation &amp; miRNA Biomarker CNN/DNN (REDNN · SNUBH &amp; Mediage)</span></span><span class="p-arr">↗</span></a><a class="pub-pill" href="https://github.com/syjqkrtk/DQNalign" target="_blank" rel="noopener"><span class="p-badge code">PUBLIC CODE</span><span class="p-body"><span class="p-title">DQNalign · REminerII · Bio · EvolDist (Public GitHub Source)</span><span class="p-meta">github.com/syjqkrtk/DQNalign · REminerII · Bio · EvolDist</span></span><span class="p-arr">↗</span></a></div>
+    <div class="ch-pubs" role="region" aria-label="관련 논문 및 특허 원문">
+      <span class="ch-pubs-label">논문·특허 원문</span>
+      <a class="pub-tag paper" href="https://doi.org/10.1109/OJEMB.2021.3076156" target="_blank" rel="noopener" title="Local Alignment of DNA Sequence Based on Deep Reinforcement Learning (IEEE OJEMB, Apr. 2021)">📄 IEEE OJEMB &#x27;21 (Local DRL) ↗</a> <a class="pub-tag paper" href="https://doi.org/10.1109/OJEMB.2021.3055424" target="_blank" rel="noopener" title="Pairwise Heuristic Sequence Alignment Algorithm Based on Deep Reinforcement Learning (IEEE OJEMB, Jan. 2021)">📄 IEEE OJEMB &#x27;21 (Pairwise DRL) ↗</a> <a class="pub-tag paper" href="https://ieeexplore.ieee.org/document/8333425" target="_blank" rel="noopener" title="A Novel Estimation Algorithm of Evolutionary Distance Based on Word Frequency Variation (IEEE BHI 2018)">📄 IEEE BHI &#x27;18 (EvolDist) ↗</a> <a class="pub-tag paper" href="https://ieeexplore.ieee.org/document/8037707" target="_blank" rel="noopener" title="Classification of Various Genomic Sequences Based on Distribution of Repeated K-Word (IEEE EMBC 2017)">📄 IEEE EMBC &#x27;17 (K-Word) ↗</a> <a class="pub-tag patent" href="https://patents.google.com/patent/US20190385696A1/en" target="_blank" rel="noopener" title="US 2019/0385696 A1 — Method and Apparatus for Predicting Disease Risk Based on Complex Genetic Information">📜 US 2019/0385696 A1 (REDNN) ↗</a>
     </div>
   </header>
 
@@ -378,14 +370,14 @@
     </p>
     <ul>
       <li>
-        <strong>REDNN &amp; RERNN (<a class="src" href="../../2_Bioinformatics_and_Genomics/Deep_Learning_Biomarkers/REDNN/REDNN.py#L74" target="_blank" rel="noopener" title="2_Bioinformatics_and_Genomics/Deep_Learning_Biomarkers/REDNN/REDNN.py:74">REDNN.py:74</a>)</strong>:
+        <strong>REDNN &amp; RERNN (<a class="src" href="../../2_Bioinformatics_and_Genomics/Deep_Learning_Biomarkers/REDNN/REDNN.py#L74" target="_blank" rel="noopener" title="2_Bioinformatics_and_Genomics/Deep_Learning_Biomarkers/REDNN/REDNN.py:74">REDNN.py:74</a>, <a class="src" href="https://patents.google.com/patent/US20190385696A1/en" target="_blank" rel="noopener">US 2019/0385696 A1 ↗</a>)</strong>:
         환자별 $12{,}288$차원 유전체 반복서열 특징 벡터 $x \in \mathbb{R}^{12288}$(<a class="src" href="../../2_Bioinformatics_and_Genomics/Deep_Learning_Biomarkers/REDNN/REDNN.py#L69" target="_blank" rel="noopener" title="2_Bioinformatics_and_Genomics/Deep_Learning_Biomarkers/REDNN/REDNN.py:69">REDNN.py:69</a>)를 입력받아
         6층 완전연결 신경망($12288 \to 512 \to 256 \to 128 \to 64 \to 32 \to 4$, ReLU 활성화 및 Softmax 교차 엔트로피 손실)과
         순환신경망(<code>RERNN</code>)으로 4개 임상 위험군 클래스를 분류합니다.
       </li>
       <li>
-        <strong>Population Genetics (<code>1092x</code> · <code>clustering205</code> · <code>EvolDist</code>)</strong>:
-        1000 Genomes Project의 $1{,}092$명 개인 유전체 데이터로부터 Jukes-Cantor 진화 거리 행렬을 계산하고 계통수(Phylogenetic Tree) 클러스터링을 수행합니다.
+        <strong>Population Genetics (<code>1092x</code> · <code>clustering205</code> · <code>EvolDist</code> · <code>RepeatLengthPdf</code>, <a class="src" href="https://ieeexplore.ieee.org/document/8333425" target="_blank" rel="noopener">IEEE BHI '18 ↗</a>, <a class="src" href="https://ieeexplore.ieee.org/document/8037707" target="_blank" rel="noopener">IEEE EMBC '17 ↗</a>)</strong>:
+        1000 Genomes Project의 $1{,}092$명 개인 유전체 데이터 및 바이러스·박테리아 서열로부터 반복 K-Word 길이 확률밀도함수(PDF)와 Jukes-Cantor 진화 거리 행렬을 계산하고 계통수(Phylogenetic Tree) 클러스터링을 수행합니다.
       </li>
     </ul>
   </section>

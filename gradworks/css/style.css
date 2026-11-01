@@ -353,109 +353,74 @@ main.chapter { min-width: 0; }
   color: var(--accent);
   letter-spacing: 0.03em;
 }
+:lang(en) .objectives::before {
+  content: "KEY LEARNING OBJECTIVES";
+}
 .objectives li { margin: 4px 0; }
 
-/* ---------- Representative Publications & Patents Bar ---------- */
-.pub-bar {
-  margin-top: 16px;
-  padding: 14px 18px;
-  background: linear-gradient(135deg, color-mix(in srgb, var(--accent) 8%, var(--bg-elev)), color-mix(in srgb, var(--accent-2) 7%, var(--bg-elev)));
-  border: 1px solid color-mix(in srgb, var(--accent) 38%, var(--border));
-  border-radius: var(--radius);
-  box-shadow: var(--shadow);
-}
-.pub-bar-head {
+/* ---------- Compact Chapter-Attributable Paper / Patent Chips ---------- */
+.ch-pubs {
   display: flex;
+  flex-wrap: wrap;
   align-items: center;
-  justify-content: space-between;
-  flex-wrap: wrap;
-  gap: 8px;
-  margin-bottom: 10px;
-  font-family: var(--mono);
-  font-size: 11.5px;
-  font-weight: 700;
-  letter-spacing: 0.04em;
-  color: var(--accent);
-  text-transform: uppercase;
-}
-.pub-bar-head .pub-bar-profiles {
-  display: inline-flex;
-  flex-wrap: wrap;
   gap: 6px;
+  margin: 14px 0 2px;
 }
-.pub-bar-head .pub-bar-profiles a {
-  text-decoration: none;
+.ch-pubs-label {
   font-family: var(--mono);
   font-size: 11px;
-  font-weight: 600;
-  padding: 2px 8px;
-  border-radius: 999px;
-  background: var(--bg-elev);
-  border: 1px solid var(--border);
-  color: var(--text);
-  transition: border-color .15s, color .15s, background .15s;
-}
-.pub-bar-head .pub-bar-profiles a:hover {
-  border-color: var(--accent);
-  color: var(--accent);
-  background: var(--accent-soft);
-}
-.pub-grid {
-  display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(265px, 1fr));
-  gap: 8px;
-}
-.pub-pill {
-  display: flex;
-  align-items: flex-start;
-  gap: 9px;
-  padding: 9px 11px;
-  border-radius: 9px;
-  background: var(--bg-elev);
-  border: 1px solid var(--border);
-  text-decoration: none;
-  color: var(--text);
-  transition: transform .12s, border-color .15s, box-shadow .15s;
-}
-.pub-pill:hover {
-  transform: translateY(-1px);
-  border-color: var(--accent);
-  box-shadow: 0 4px 12px rgba(10, 132, 198, 0.14);
-}
-.pub-pill .p-badge {
-  flex: none;
-  font-family: var(--mono);
-  font-size: 10px;
   font-weight: 700;
-  padding: 2px 6px;
-  border-radius: 5px;
+  color: var(--text-dim);
   letter-spacing: 0.03em;
-  margin-top: 1px;
+  margin-right: 4px;
   white-space: nowrap;
 }
-.pub-pill .p-badge.paper { background: var(--accent-soft); color: var(--accent); border: 1px solid color-mix(in srgb, var(--accent) 35%, transparent); }
-.pub-pill .p-badge.patent { background: color-mix(in srgb, var(--ok) 15%, transparent); color: var(--ok); border: 1px solid color-mix(in srgb, var(--ok) 35%, transparent); }
-.pub-pill .p-badge.code { background: var(--accent-2-soft); color: var(--accent-2); border: 1px solid color-mix(in srgb, var(--accent-2) 35%, transparent); }
-.pub-pill .p-body { flex: 1; min-width: 0; line-height: 1.35; }
-.pub-pill .p-title {
-  display: block;
-  font-size: 13px;
-  font-weight: 650;
-  color: var(--text);
-}
-.pub-pill .p-meta {
-  display: block;
-  font-size: 11.5px;
-  color: var(--text-dim);
-  margin-top: 2px;
-}
-.pub-pill .p-arr {
-  flex: none;
+a.pub-tag {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
   font-family: var(--mono);
-  font-size: 12px;
+  font-size: 11.8px;
+  font-weight: 600;
+  line-height: 1.3;
+  padding: 4px 10px;
+  border-radius: 999px;
+  text-decoration: none;
+  white-space: nowrap;
+  background: var(--bg-elev);
+  color: var(--text);
+  border: 1px solid var(--border);
+  transition: transform .1s, border-color .15s, background .15s, color .15s;
+}
+a.pub-tag:hover {
+  transform: translateY(-1px);
+}
+a.pub-tag.paper {
+  background: var(--accent-soft);
   color: var(--accent);
-  font-weight: 700;
-  align-self: center;
+  border-color: color-mix(in srgb, var(--accent) 36%, var(--border));
+}
+a.pub-tag.paper:hover {
+  background: var(--accent);
+  color: #fff;
+}
+a.pub-tag.patent {
+  background: color-mix(in srgb, var(--ok) 13%, var(--bg-elev));
+  color: var(--ok);
+  border-color: color-mix(in srgb, var(--ok) 38%, var(--border));
+}
+a.pub-tag.patent:hover {
+  background: var(--ok);
+  color: #fff;
+}
+a.pub-tag.code {
+  background: var(--accent-2-soft);
+  color: var(--accent-2);
+  border-color: color-mix(in srgb, var(--accent-2) 36%, var(--border));
+}
+a.pub-tag.code:hover {
+  background: var(--accent-2);
+  color: #fff;
 }
 
 /* ---------- Typography ---------- */
@@ -570,11 +535,13 @@ strong { font-weight: 650; }
   color: var(--accent);
 }
 .detail.open .detail-toggle::after { content: "접기 ▴"; }
+:lang(en) .detail-toggle::after { content: "Expand ▾"; }
+:lang(en) .detail.open .detail-toggle::after { content: "Collapse ▴"; }
 .detail-body { display: none; padding: 14px 18px; font-size: 14.5px; }
 .detail.open .detail-body { display: block; }
 
 /* ---------- Figures / SVG Diagrams ---------- */
-figure.diagram {
+figure.diagram, div.diagram {
   margin: 22px 0;
   background: var(--bg-elev);
   border: 1px solid var(--border);
@@ -583,20 +550,20 @@ figure.diagram {
   box-shadow: var(--shadow);
   overflow: hidden;
 }
-figure.diagram svg {
+figure.diagram svg, div.diagram svg {
   width: 100%;
   height: auto;
   max-height: 440px;
   display: block;
   margin: 0 auto;
 }
-figure.diagram figcaption {
+figure.diagram figcaption, div.diagram .cap {
   margin-top: 10px;
   font-size: 13.5px;
   color: var(--text-dim);
   text-align: center;
 }
-figure.diagram figcaption b { color: var(--text); }
+figure.diagram figcaption b, figure.diagram figcaption strong, div.diagram .cap b, div.diagram .cap strong { color: var(--text); }
 
 /* SVG helper classes that auto-adapt to theme */
 svg .t         { fill: var(--text); font-family: var(--font); font-size: 12.5px; }
@@ -609,11 +576,17 @@ svg .t-warn    { fill: var(--warn); font-family: var(--font); font-weight: 600; 
 svg .t-bad     { fill: var(--bad); font-family: var(--font); font-weight: 600; font-size: 12.5px; }
 svg .f-surface { fill: var(--surface); stroke: var(--border); }
 svg .f-elev    { fill: var(--bg-elev); stroke: var(--border); }
-svg .f-acc-soft  { fill: var(--accent-soft); stroke: var(--accent); }
-svg .f-acc2-soft { fill: var(--accent-2-soft); stroke: var(--accent-2); }
-svg .f-ok-soft   { fill: color-mix(in srgb, var(--ok) 12%, var(--bg-elev)); stroke: var(--ok); }
-svg .f-warn-soft { fill: color-mix(in srgb, var(--warn) 13%, var(--bg-elev)); stroke: var(--warn); }
-svg .f-bad-soft  { fill: color-mix(in srgb, var(--bad) 12%, var(--bg-elev)); stroke: var(--bad); }
+svg .f-acc-soft, svg .svg-box.a  { fill: var(--accent-soft); stroke: var(--accent); stroke-width: 1.5px; }
+svg .f-acc2-soft, svg .svg-box.b { fill: var(--accent-2-soft); stroke: var(--accent-2); stroke-width: 1.5px; }
+svg .f-ok-soft, svg .svg-box.ok   { fill: color-mix(in srgb, var(--ok) 12%, var(--bg-elev)); stroke: var(--ok); stroke-width: 1.5px; }
+svg .f-warn-soft, svg .svg-box.warn { fill: color-mix(in srgb, var(--warn) 13%, var(--bg-elev)); stroke: var(--warn); stroke-width: 1.5px; }
+svg .f-bad-soft, svg .svg-box.bad  { fill: color-mix(in srgb, var(--bad) 12%, var(--bg-elev)); stroke: var(--bad); stroke-width: 1.5px; }
+svg .svg-box   { fill: var(--bg-elev); stroke: var(--border); stroke-width: 1.5px; }
+svg .svg-title { fill: var(--text); font-family: var(--font); font-weight: 700; font-size: 12.5px; }
+svg .svg-sub   { fill: var(--text-dim); font-family: var(--font); font-size: 11px; }
+svg .svg-lbl   { fill: var(--accent); font-family: var(--mono); font-weight: 600; font-size: 10.5px; }
+svg .svg-line  { stroke: var(--accent); stroke-width: 2px; fill: none; }
+svg .svg-arrow { fill: var(--accent); }
 svg .s-border  { stroke: var(--border); fill: none; }
 svg .s-axis    { stroke: var(--axis); fill: none; }
 svg .s-acc     { stroke: var(--accent); fill: none; }
@@ -1257,20 +1230,24 @@ a.src:hover {
   height: auto;
   border-radius: var(--radius-sm);
 }
-.sim-stats {
+.sim-stats, .kpi-grid {
   display: grid;
   grid-template-columns: repeat(auto-fit, minmax(125px, 1fr));
   gap: 8px;
   margin-top: 12px;
 }
-.stat-card {
-  background: var(--surface);
+.stat-card, .kpi {
+  background: var(--bg-elev);
   border: 1px solid var(--border);
   border-radius: var(--radius-sm);
   padding: 8px 11px;
 }
-.stat-card .k { font-size: 11.5px; color: var(--text-dim); display: block; }
-.stat-card .v { font-family: var(--mono); font-size: 14.5px; font-weight: 600; color: var(--text); }
+.stat-card .k, .kpi .k { font-size: 11.5px; color: var(--text-dim); display: block; }
+.stat-card .v, .kpi .v { font-family: var(--mono); font-size: 14.5px; font-weight: 600; color: var(--text); }
+.ch-card .ch-num { font-family: var(--mono); font-size: 12px; color: var(--accent); font-weight: 600; }
+.ch-card .ch-title { margin: 4px 0 8px; font-size: 18px; line-height: 1.3; font-weight: 700; }
+.ch-card .ch-desc { margin: 0 0 12px; font-size: 13.8px; color: var(--text-dim); line-height: 1.55; flex: 1; }
+.ch-card .ch-tags { display: flex; gap: 6px; flex-wrap: wrap; align-items: center; }
 .seg-group { display: flex; flex-wrap: wrap; gap: 5px; }
 .seg-btn, .sb-btn, .chip-btn {
   appearance: none;

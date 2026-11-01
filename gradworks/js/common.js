@@ -178,12 +178,6 @@
       <a class="sb-iconbtn series-link" href="https://yjqkrtk-ux.github.io/" target="_blank" rel="noopener" title="Yongjoon Song — Interactive Web Resume / CV">
         <span>📄 Resume</span>
       </a>
-      <a class="sb-iconbtn series-link" href="https://yjqkrtk-ux.github.io/isocell/" title="Samsung S.LSI ISOCELL 200MP &amp; E2E AI Remosaic Guidebook">
-        <span>📷 ISOCELL</span>
-      </a>
-      <a class="sb-iconbtn series-link" href="https://github.com/syjqkrtk" target="_blank" rel="noopener" title="Public Research GitHub (@syjqkrtk · 18 Public Repos)">
-        <span>💻 GitHub</span>
-      </a>
       <a class="sb-iconbtn series-link" href="${root}chapters/notes.html" title="용어집 및 코드·문서·아카이브 정합성 검증 노트">
         <span>용어집 · 검증</span>
       </a>
@@ -356,7 +350,7 @@
 
       const foot = document.createElement("footer");
       foot.className = "sb-foot";
-      foot.innerHTML = `GoogleDrive Master Workspace (Development · Documents · Photos) · 인터랙티브 아키텍처 가이드북 · Build 2026-11-01 (<code>d69795d</code>) · <code>docs/build_spec_portal.py</code> 자동 생성`;
+      foot.innerHTML = `GoogleDrive Master Workspace (Development · Documents · Photos) · 인터랙티브 아키텍처 가이드북 · Build 2026-11-01 (<code>d8ae29c</code>) · <code>docs/build_spec_portal.py</code> 자동 생성`;
       main.appendChild(foot);
     });
   }

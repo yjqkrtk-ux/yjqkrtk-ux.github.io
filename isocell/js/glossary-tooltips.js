@@ -14,7 +14,8 @@
   const SKIP_CLASSES = [
     "katex", "formula", "math-block", "sim", "sim-card", "sb-topbar", "sb-drawer",
     "sb-toc", "sb-pager", "gl-term", "src", "diagram", "svg-wrap", "inspector-box",
-    "ch-card", "numbers", "paths", "flow", "filter-row", "gl-list", "glossary-grid"
+    "ch-card", "numbers", "paths", "flow", "filter-row", "gl-list", "glossary-grid",
+    "ch-pubs", "pub-tag", "kpi-grid", "sim-stats"
   ];
 
   const entries = [];

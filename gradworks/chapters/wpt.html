@@ -9,11 +9,11 @@
 <script defer src="https://cdn.jsdelivr.net/npm/katex@0.16.11/dist/katex.min.js"></script>
 <script defer src="https://cdn.jsdelivr.net/npm/katex@0.16.11/dist/contrib/auto-render.min.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/three@0.128.0/build/three.min.js"></script>
-<link rel="stylesheet" href="../css/style.css">
-<link rel="stylesheet" href="../css/glossary-tooltips.css">
-<script src="../js/glossary-data.js"></script>
-<script src="../js/common.js"></script>
-<script defer src="../js/glossary-tooltips.js"></script>
+<link rel="stylesheet" href="../css/style.css?v=d8ae29c">
+<link rel="stylesheet" href="../css/glossary-tooltips.css?v=d8ae29c">
+<script src="../js/glossary-data.js?v=d8ae29c"></script>
+<script src="../js/common.js?v=d8ae29c"></script>
+<script defer src="../js/glossary-tooltips.js?v=d8ae29c"></script>
 </head>
 <body data-chapter="wpt" data-root="../">
 <main class="chapter">
@@ -23,7 +23,7 @@
     <p class="lead">
       자유 공간 내 이동하는 전자기기에 1kW급 전력을 고효율·안전하게 무선 공급하려면, 수신 코일의 3차원 위치 $(X, Y, Z)$를 밀리미터 단위로 추적하는 동시에
       강한 자기장 영역으로 진입하는 인체나 반려동물을 즉시 감지하여 송신 출력을 차단해야 합니다.
-      본 장에서는 미국 등록특허 <strong>US 12,496,917 B2</strong> 및 국내 특허 <strong>KR 10-2021-0092933 A</strong>로 결실을 맺은
+      본 장에서는 미국 등록특허 <a class="src" href="https://patents.google.com/patent/US12496917B2/en" target="_blank" rel="noopener">US 12,496,917 B2 ↗</a>(<a class="src" href="https://patents.google.com/patent/KR102370592B1/en" target="_blank" rel="noopener">KR 10-2370592 B1 ↗</a>) 및 국내 특허 <a class="src" href="https://patents.google.com/patent/KR20210092933A/en" target="_blank" rel="noopener">KR 10-2021-0092933 A ↗</a>로 결실을 맺은
       <strong>Tsai 양안 3D 비전 삼각측량 · FLIR 열화상 · Coral EdgeTPU</strong> 제어 루프(<a class="src" href="../../1_Wireless_Power_Transfer_and_EV/3D_Positioning_and_Vision/ObjectDetection/TsaiCalibration.py#L4" target="_blank" rel="noopener" title="1_Wireless_Power_Transfer_and_EV/3D_Positioning_and_Vision/ObjectDetection/TsaiCalibration.py:4">TsaiCalibration.py:4</a>, <a class="src" href="../../1_Wireless_Power_Transfer_and_EV/3D_Positioning_and_Vision/FIR" target="_blank" rel="noopener" title="1_Wireless_Power_Transfer_and_EV/3D_Positioning_and_Vision/FIR">FIR</a>, <a class="src" href="../../1_Wireless_Power_Transfer_and_EV/3D_Positioning_and_Vision/edgetpu_models" target="_blank" rel="noopener" title="1_Wireless_Power_Transfer_and_EV/3D_Positioning_and_Vision/edgetpu_models">edgetpu_models</a>)와
       85kHz 주행중 무선충전 전기버스(OLEV)의 <strong>UTM 궤적 예측 텔레매틱스</strong>(<a class="src" href="../../1_Wireless_Power_Transfer_and_EV/Telematics_and_GPS/GPS/get_lane_distance.m#L1" target="_blank" rel="noopener" title="1_Wireless_Power_Transfer_and_EV/Telematics_and_GPS/GPS/get_lane_distance.m:1">get_lane_distance.m:1</a>, <a class="src" href="../../1_Wireless_Power_Transfer_and_EV/Telematics_and_GPS/GPS/get_predicted_time.m#L1" target="_blank" rel="noopener" title="1_Wireless_Power_Transfer_and_EV/Telematics_and_GPS/GPS/get_predicted_time.m:1">get_predicted_time.m:1</a>)를 해부합니다.
     </p>
@@ -33,17 +33,9 @@
       <li>85kHz OLEV 전기버스의 <strong>사분위 25% 절사 차선 편차 필터</strong>와 <strong>0.9x 보수적 속도 마진 인버터 예열 제어</strong>(Sim 05)를 검증한다.</li>
     </ul>
   
-    <div class="pub-bar" role="region" aria-label="Representative Publications and Patents">
-      <div class="pub-bar-head">
-        <span>📄 본 챕터 대표 공개 논문 · 등록 특허 · 원문 바로가기 (Representative Papers, Patents &amp; Public Code)</span>
-        <span class="pub-bar-profiles">
-          <a href="https://scholar.google.com/citations?user=H3AQNpAAAAAJ" target="_blank" rel="noopener">🎓 Google Scholar ↗</a>
-          <a href="https://yjqkrtk-ux.github.io/" target="_blank" rel="noopener">📄 Web Resume ↗</a>
-          <a href="https://yjqkrtk-ux.github.io/isocell/">📷 Samsung ISOCELL ↗</a>
-          <a href="https://github.com/syjqkrtk" target="_blank" rel="noopener">💻 GitHub (@syjqkrtk) ↗</a>
-        </span>
-      </div>
-      <div class="pub-grid"><a class="pub-pill" href="https://patents.google.com/patent/US12496917B2/en" target="_blank" rel="noopener"><span class="p-badge patent">US PATENT B2</span><span class="p-body"><span class="p-title">US 12,496,917 B2 (Granted) — Vehicle Location-Based Wireless Charging Inverter Control</span><span class="p-meta">KAIST &amp; WiPowerOne · Granted Dec 16, 2025 · Google Patents Full Text &amp; PDF</span></span><span class="p-arr">↗</span></a><a class="pub-pill" href="https://patents.google.com/patent/KR102370592B1/en" target="_blank" rel="noopener"><span class="p-badge patent">KR PATENT B1</span><span class="p-body"><span class="p-title">KR 10-2370592 B1 (Granted) &amp; PCT WO 2021/101223 A1 — 무선 충전 인버터 전력 제어</span><span class="p-meta">KAIST &amp; 와이파워원 · 2022-03-08 등록특허 원문 및 국제 PCT 출원 공개문</span></span><span class="p-arr">↗</span></a><a class="pub-pill" href="https://patents.google.com/patent/KR20210092933A/en" target="_blank" rel="noopener"><span class="p-badge patent">KR PATENT A</span><span class="p-body"><span class="p-title">KR 10-2021-0092933 A — 이미지 인식 기반 무선 전력 전송 장치 및 방법</span><span class="p-meta">KEPCO &amp; KAIST · 양안 3D 비전 좌표 추적 및 열화상 인체 감지 기반 빔포밍 전력 제어</span></span><span class="p-arr">↗</span></a><a class="pub-pill" href="https://github.com/syjqkrtk/ObjectDetectionForWPT" target="_blank" rel="noopener"><span class="p-badge code">PUBLIC CODE</span><span class="p-body"><span class="p-title">ObjectDetectionForWPT — 3D Stereo Vision &amp; Thermal Safety Control</span><span class="p-meta">github.com/syjqkrtk/ObjectDetectionForWPT (Tsai 11-DoF · Skew-Ray · EdgeTPU/FIR)</span></span><span class="p-arr">↗</span></a><a class="pub-pill" href="https://github.com/syjqkrtk/EVGPSforWPT" target="_blank" rel="noopener"><span class="p-badge code">PUBLIC CODE</span><span class="p-body"><span class="p-title">EVGPSforWPT — 85kHz OLEV Telematics &amp; Inverter Predictive Power Control</span><span class="p-meta">github.com/syjqkrtk/EVGPSforWPT (UTM Projection · Lane Distance · ETA Pre-ON)</span></span><span class="p-arr">↗</span></a></div>
+    <div class="ch-pubs" role="region" aria-label="관련 논문 및 특허 원문">
+      <span class="ch-pubs-label">논문·특허 원문</span>
+      <a class="pub-tag patent" href="https://patents.google.com/patent/US12496917B2/en" target="_blank" rel="noopener" title="US 12,496,917 B2 (Granted Dec 2025) — Apparatus and Method for Controlling Output Power of Inverter Based on Vehicle Location">📜 US 12,496,917 B2 (Granted · WPT Control) ↗</a> <a class="pub-tag patent" href="https://patents.google.com/patent/KR102370592B1/en" target="_blank" rel="noopener" title="KR 10-2370592 B1 (등록특허) — 차량의 위치에 기반하여 무선으로 전력을 공급하는 인버터의 출력 전력을 제어하기 위한 장치 및 방법">📜 KR 10-2370592 B1 (등록특허) ↗</a> <a class="pub-tag patent" href="https://patents.google.com/patent/KR20210092933A/en" target="_blank" rel="noopener" title="KR 10-2021-0092933 A — 이미지 인식 기반 무선 전력 전송 장치 및 방법 (KEPCO &amp; KAIST)">📜 KR 10-2021-0092933 A (3D 비전 WPT) ↗</a>
     </div>
   </header>
 

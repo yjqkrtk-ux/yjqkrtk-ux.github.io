@@ -1,10 +1,10 @@
 <!DOCTYPE html>
-<html lang="en">
+<html lang="en" data-theme="light">
 
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Paper II · Universal In-Sensor Latent Signal Processing for Heterogeneous CFAs</title>
+  <title>Universal In-Sensor Latent Signal Processing for Heterogeneous CFAs — Research Paper</title>
 
   <!-- Fonts -->
   <link rel="preconnect" href="https://fonts.googleapis.com">
@@ -20,7 +20,27 @@
     onload="renderMathInElement(document.body, {delimiters: [{left: '$$', right: '$$', display: true}, {left: '$', right: '$', display: false}]});"></script>
 
   <style>
-    :root {
+    :root,
+    [data-theme="light"] {
+      --bg: #f6f8fa;
+      --surface: #ffffff;
+      --surface-alt: #f0f3f6;
+      --surface-border: #d0d7de;
+      --text: #24292f;
+      --text-bright: #0d1117;
+      --text-muted: #57606a;
+      --accent: #0969da;
+      --accent-glow: rgba(9, 105, 218, 0.08);
+      --green: #1a7f37;
+      --green-bg: rgba(26, 127, 55, 0.10);
+      --orange: #bc4c00;
+      --purple: #8250df;
+      --font-body: 'Newsreader', Georgia, serif;
+      --font-ui: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
+      --font-mono: 'JetBrains Mono', monospace;
+    }
+
+    [data-theme="dark"] {
       --bg: #0d1117;
       --surface: #161b22;
       --surface-alt: #1f242d;
@@ -34,25 +54,6 @@
       --green-bg: rgba(63, 185, 80, 0.14);
       --orange: #f0883e;
       --purple: #bc8cff;
-      --font-body: 'Newsreader', Georgia, serif;
-      --font-ui: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
-      --font-mono: 'JetBrains Mono', monospace;
-    }
-
-    [data-theme="light"] {
-      --bg: #f6f8fa;
-      --surface: #ffffff;
-      --surface-alt: #f0f3f6;
-      --surface-border: #d0d7de;
-      --text: #24292f;
-      --text-bright: #0969da;
-      --text-muted: #57606a;
-      --accent: #0969da;
-      --accent-glow: rgba(9, 105, 218, 0.08);
-      --green: #1a7f37;
-      --green-bg: rgba(26, 127, 55, 0.10);
-      --orange: #bc4c00;
-      --purple: #8250df;
     }
 
     * {
@@ -427,7 +428,7 @@
       height: auto;
       border-radius: 6px;
       border: 1px solid var(--surface-border);
-      background: #000000;
+      background: #ffffff;
       display: block;
       margin: 0 auto 10px;
     }
@@ -582,13 +583,13 @@
     <div class="top-bar-right">
       <button class="btn active" id="btn-2col" type="button" onclick="setPaperCols(2)">2-Col</button>
       <button class="btn" id="btn-1col" type="button" onclick="setPaperCols(1)">1-Col</button>
-      <button class="btn" id="btn-theme" type="button" onclick="togglePaperTheme()">🌙 Dark</button>
+      <button class="btn" id="btn-theme" type="button" onclick="togglePaperTheme()">☀️ Light</button>
       <button class="btn" type="button" onclick="window.print()">🖨️ Print / PDF</button>
     </div>
   </div>
 
   <div class="paper-container">
-    <header class="paper-header">
+<header class="paper-header">
       <div class="header-badges">
         <span class="badge">Paper II · Universal CFA LSP</span>
         <span class="badge">IEEE TIP / CVPR 2027 Track</span>
@@ -944,12 +945,12 @@
     function togglePaperTheme() {
       const root = document.documentElement;
       const btn = document.getElementById('btn-theme');
-      if (root.getAttribute('data-theme') === 'light') {
-        root.removeAttribute('data-theme');
-        if (btn) btn.textContent = '🌙 Dark';
-      } else {
+      if (root.getAttribute('data-theme') === 'dark') {
         root.setAttribute('data-theme', 'light');
         if (btn) btn.textContent = '☀️ Light';
+      } else {
+        root.setAttribute('data-theme', 'dark');
+        if (btn) btn.textContent = '🌙 Dark';
       }
     }
 

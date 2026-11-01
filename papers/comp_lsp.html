@@ -1,10 +1,10 @@
 <!DOCTYPE html>
-<html lang="en">
+<html lang="en" data-theme="light">
 
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Paper III · White-Box Computational Latent Signal Processing (LSP 2.0)</title>
+  <title>White-Box Computational Latent Signal Processing (LSP 2.0) — Research Paper</title>
 
   <!-- Fonts -->
   <link rel="preconnect" href="https://fonts.googleapis.com">
@@ -20,7 +20,27 @@
     onload="renderMathInElement(document.body, {delimiters: [{left: '$$', right: '$$', display: true}, {left: '$', right: '$', display: false}]});"></script>
 
   <style>
-    :root {
+    :root,
+    [data-theme="light"] {
+      --bg: #f6f8fa;
+      --surface: #ffffff;
+      --surface-alt: #f0f3f6;
+      --surface-border: #d0d7de;
+      --text: #24292f;
+      --text-bright: #0d1117;
+      --text-muted: #57606a;
+      --accent: #0969da;
+      --accent-glow: rgba(9, 105, 218, 0.08);
+      --green: #1a7f37;
+      --green-bg: rgba(26, 127, 55, 0.10);
+      --orange: #bc4c00;
+      --purple: #8250df;
+      --font-body: 'Newsreader', Georgia, serif;
+      --font-ui: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
+      --font-mono: 'JetBrains Mono', monospace;
+    }
+
+    [data-theme="dark"] {
       --bg: #0d1117;
       --surface: #161b22;
       --surface-alt: #1f242d;
@@ -34,25 +54,6 @@
       --green-bg: rgba(63, 185, 80, 0.14);
       --orange: #f0883e;
       --purple: #bc8cff;
-      --font-body: 'Newsreader', Georgia, serif;
-      --font-ui: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
-      --font-mono: 'JetBrains Mono', monospace;
-    }
-
-    [data-theme="light"] {
-      --bg: #f6f8fa;
-      --surface: #ffffff;
-      --surface-alt: #f0f3f6;
-      --surface-border: #d0d7de;
-      --text: #24292f;
-      --text-bright: #0969da;
-      --text-muted: #57606a;
-      --accent: #0969da;
-      --accent-glow: rgba(9, 105, 218, 0.08);
-      --green: #1a7f37;
-      --green-bg: rgba(26, 127, 55, 0.10);
-      --orange: #bc4c00;
-      --purple: #8250df;
     }
 
     * {
@@ -427,7 +428,7 @@
       height: auto;
       border-radius: 6px;
       border: 1px solid var(--surface-border);
-      background: #000000;
+      background: #ffffff;
       display: block;
       margin: 0 auto 10px;
     }
@@ -582,13 +583,13 @@
     <div class="top-bar-right">
       <button class="btn active" id="btn-2col" type="button" onclick="setPaperCols(2)">2-Col</button>
       <button class="btn" id="btn-1col" type="button" onclick="setPaperCols(1)">1-Col</button>
-      <button class="btn" id="btn-theme" type="button" onclick="togglePaperTheme()">🌙 Dark</button>
+      <button class="btn" id="btn-theme" type="button" onclick="togglePaperTheme()">☀️ Light</button>
       <button class="btn" type="button" onclick="window.print()">🖨️ Print / PDF</button>
     </div>
   </div>
 
   <div class="paper-container">
-    <header class="paper-header">
+<header class="paper-header">
       <div class="header-badges">
         <span class="badge">Paper III · Computational LSP 2.0</span>
         <span class="badge">FLUX.1 & TAEF1 16-Ch VAE</span>
@@ -1204,7 +1205,7 @@
       <div class="span-all figure-card">
         <img src="figures/comp_fig8_pipeline_block_by_block_flow.webp" alt="Unified Block-by-Block Latent Pipeline and Step-by-Step Visual Evolution">
         <div class="figure-caption">
-          <strong>Fig. 10. Unified Block-by-Block Latent Pipeline Diagram &amp; Step-by-Step Visual Evolution Across 3 Genuine Hardware Camera Captures.</strong> <strong>(Row 1)</strong> The 6 sequential pipeline blocks (<code>Block 0: Sensor RAW Encoder</code> &rarr; <code>Block 1: BLC &amp; Gain</code> &rarr; <code>Block 2: White Balance</code> &rarr; <code>Block 3: 3&times;3 CCM</code> &rarr; <code>Block 4: Gamma Tone Curve</code> &rarr; <code>Block 5: 1-Step Refiner &amp; Frozen Decoder</code>) with their exact 3-Point Gauss-Legendre Quadrature DC equations and $3\times 3$ Secant Jacobian AC operators; <strong>(Rows 2&ndash;4)</strong> Decoded image $\mathcal{D}(\mathbf{z}_k)$, PSNR vs. block Ground Truth, and absolute-scale R/G/B level bars directly beneath each block for <code>Nikon D700</code>, <code>Canon 40D</code>, and Official <code>OpenISP test.RAW</code>; <strong>(Row 5)</strong> 16-channel latent activation barcode $\mathbf{z}_k \in \mathbb{R}^{16}$ and <code>R/G</code>, <code>B/G</code> chromatic balance telemetry.
+          <strong>Fig. 10. Unified Block-by-Block Latent Pipeline Diagram &amp; Step-by-Step Visual Evolution Across 3 Genuine Hardware Camera Captures.</strong> <strong>(Row 1)</strong> The 6 sequential pipeline blocks (<code>Block 0: Sensor RAW Encoder</code> &rarr; <code>Block 1: BLC &amp; Gain</code> &rarr; <code>Block 2: White Balance</code> &rarr; <code>Block 3: 3&times;3 CCM</code> &rarr; <code>Block 4: Gamma Tone Curve</code> &rarr; <code>Block 5: N-Step Refiner (N=4) &amp; Frozen Decoder</code>) with their exact 3-Point Gauss-Legendre Quadrature DC equations, $3\times 3$ Secant Jacobian AC operators, and 4-step damped $3\times 3$ cross-cell flow; <strong>(Rows 2&ndash;4)</strong> Decoded image $\mathcal{D}(\mathbf{z}_k)$, PSNR vs. block Ground Truth, and absolute-scale R/G/B level bars directly beneath each block for <code>Nikon D700</code>, <code>Canon 40D</code>, and Official <code>OpenISP test.RAW</code>; <strong>(Row 5)</strong> 16-channel latent activation barcode $\mathbf{z}_k \in \mathbb{R}^{16}$ and <code>R/G</code>, <code>B/G</code> chromatic balance telemetry.
         </div>
       </div>
 
@@ -2069,12 +2070,12 @@
     function togglePaperTheme() {
       const root = document.documentElement;
       const btn = document.getElementById('btn-theme');
-      if (root.getAttribute('data-theme') === 'light') {
-        root.removeAttribute('data-theme');
-        if (btn) btn.textContent = '🌙 Dark';
-      } else {
+      if (root.getAttribute('data-theme') === 'dark') {
         root.setAttribute('data-theme', 'light');
         if (btn) btn.textContent = '☀️ Light';
+      } else {
+        root.setAttribute('data-theme', 'dark');
+        if (btn) btn.textContent = '🌙 Dark';
       }
     }
 

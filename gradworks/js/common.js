@@ -241,10 +241,6 @@
           <span class="num">US</span>
           <span>US 2019/0385696 A1<div class="sub">Predicting Disease Risk from Complex Genetic Info</div></span>
         </a>
-        <a href="https://patents.google.com/patent/US12574659B2/en" target="_blank" rel="noopener">
-          <span class="num">US</span>
-          <span>US 12,574,659 B2 &amp; US 12,363,458 B2<div class="sub">Samsung S.LSI Neural Bad-Pixel Correction Patents</div></span>
-        </a>
         <a href="https://github.com/syjqkrtk" target="_blank" rel="noopener">
           <span class="num">GIT</span>
           <span>github.com/syjqkrtk<div class="sub">DQNalign · REminerII · ObjectDetectionForWPT 등 18개 공개 저장소</div></span>

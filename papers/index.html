@@ -1,0 +1,758 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>AICAMERA Research Papers — Latent Signal Processing Series</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link
+    href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Newsreader:ital,opsz,wght@0,6..72,400;0,6..72,500;0,6..72,600;1,6..72,400&family=JetBrains+Mono:wght@400;500&display=swap"
+    rel="stylesheet">
+  <style>
+    :root {
+      --bg: #0d1117;
+      --surface: #161b22;
+      --surface-alt: #1f242d;
+      --surface-border: #30363d;
+      --text: #c9d1d9;
+      --text-bright: #f0f6fc;
+      --text-muted: #8b949e;
+      --accent: #58a6ff;
+      --accent-glow: rgba(88, 166, 255, 0.15);
+      --green: #3fb950;
+      --green-bg: rgba(63, 185, 80, 0.14);
+      --orange: #f0883e;
+      --purple: #bc8cff;
+      --font-body: 'Newsreader', Georgia, serif;
+      --font-ui: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
+      --font-mono: 'JetBrains Mono', monospace;
+    }
+
+    [data-theme="light"] {
+      --bg: #f6f8fa;
+      --surface: #ffffff;
+      --surface-alt: #f0f3f6;
+      --surface-border: #d0d7de;
+      --text: #24292f;
+      --text-bright: #0969da;
+      --text-muted: #57606a;
+      --accent: #0969da;
+      --accent-glow: rgba(9, 105, 218, 0.08);
+      --green: #1a7f37;
+      --green-bg: rgba(26, 127, 55, 0.10);
+      --orange: #bc4c00;
+      --purple: #8250df;
+    }
+
+    * {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+    }
+
+    body {
+      background-color: var(--bg);
+      color: var(--text);
+      font-family: var(--font-body);
+      font-size: 16px;
+      line-height: 1.72;
+      padding: 0;
+      transition: background 0.2s ease, color 0.2s ease;
+    }
+
+    /* Unified Sticky Top Control Bar */
+    .top-bar {
+      position: sticky;
+      top: 0;
+      z-index: 1000;
+      background: var(--surface);
+      border-bottom: 1px solid var(--surface-border);
+      backdrop-filter: blur(12px);
+      padding: 10px 24px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      font-family: var(--font-ui);
+      font-size: 13px;
+      flex-wrap: wrap;
+      gap: 10px;
+    }
+
+    .top-bar-left,
+    .top-bar-right {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      flex-wrap: wrap;
+    }
+
+    .nav-pill {
+      background: var(--bg);
+      border: 1px solid var(--surface-border);
+      color: var(--text-muted);
+      padding: 5px 11px;
+      border-radius: 6px;
+      font-family: var(--font-ui);
+      font-size: 12px;
+      font-weight: 600;
+      text-decoration: none;
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      transition: all 0.15s ease;
+    }
+
+    .nav-pill:hover {
+      border-color: var(--accent);
+      color: var(--text-bright);
+    }
+
+    .nav-pill.active {
+      background: var(--accent-glow);
+      color: var(--accent);
+      border-color: var(--accent);
+    }
+
+    .nav-sep {
+      width: 1px;
+      height: 18px;
+      background: var(--surface-border);
+      margin: 0 2px;
+    }
+
+    .btn {
+      background: var(--bg);
+      border: 1px solid var(--surface-border);
+      color: var(--text);
+      padding: 6px 12px;
+      border-radius: 6px;
+      font-family: var(--font-ui);
+      font-size: 12px;
+      font-weight: 600;
+      cursor: pointer;
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      text-decoration: none;
+      transition: all 0.15s ease;
+    }
+
+    .btn:hover,
+    .btn.active {
+      border-color: var(--accent);
+      color: var(--accent);
+      background: var(--accent-glow);
+    }
+
+    /* Unified Paper Container */
+    .paper-container {
+      max-width: 1320px;
+      margin: 28px auto 80px;
+      padding: 44px 52px;
+      background: var(--surface);
+      border: 1px solid var(--surface-border);
+      border-radius: 12px;
+      box-shadow: 0 14px 40px rgba(0, 0, 0, 0.25);
+    }
+
+    /* Unified Paper Header */
+    .paper-header {
+      text-align: center;
+      border-bottom: 1px solid var(--surface-border);
+      padding-bottom: 26px;
+      margin-bottom: 28px;
+    }
+
+    .header-badges {
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      gap: 8px;
+      flex-wrap: wrap;
+      margin-bottom: 14px;
+      font-family: var(--font-ui);
+    }
+
+    .badge,
+    .badge-venue {
+      background: var(--accent-glow);
+      color: var(--accent);
+      border: 1px solid var(--accent);
+      padding: 3px 10px;
+      border-radius: 999px;
+      font-size: 11px;
+      font-weight: 600;
+      font-family: var(--font-ui);
+      letter-spacing: 0.3px;
+    }
+
+    .badge-green,
+    .badge-done {
+      background: var(--green-bg);
+      color: var(--green);
+      border: 1px solid var(--green);
+      padding: 3px 10px;
+      border-radius: 999px;
+      font-size: 11px;
+      font-weight: 600;
+      font-family: var(--font-ui);
+    }
+
+    .paper-title {
+      font-family: var(--font-ui);
+      font-size: 27px;
+      line-height: 1.32;
+      color: var(--text-bright);
+      font-weight: 700;
+      max-width: 1080px;
+      margin: 0 auto 14px;
+      letter-spacing: -0.25px;
+    }
+
+    .paper-authors,
+    .author-name {
+      font-family: var(--font-ui);
+      font-size: 15px;
+      font-weight: 600;
+      color: var(--text);
+      margin-bottom: 5px;
+    }
+
+    .paper-affil,
+    .author-affil {
+      font-family: var(--font-ui);
+      font-size: 13px;
+      color: var(--text-muted);
+    }
+
+    /* Unified 4-Card KPI Strip */
+    .kpi-strip,
+    .kpi-grid {
+      display: grid;
+      grid-template-columns: repeat(4, minmax(0, 1fr));
+      gap: 14px;
+      margin-bottom: 28px;
+      font-family: var(--font-ui);
+    }
+
+    @media (max-width: 980px) {
+      .kpi-strip,
+      .kpi-grid {
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+      }
+      .paper-container {
+        padding: 28px 22px;
+        margin: 16px 12px 60px;
+      }
+    }
+
+    .kpi-card {
+      background: var(--bg);
+      border: 1px solid var(--surface-border);
+      border-radius: 8px;
+      padding: 14px 16px;
+    }
+
+    .kpi-label {
+      font-size: 11px;
+      text-transform: uppercase;
+      letter-spacing: 0.05em;
+      color: var(--text-muted);
+      margin-bottom: 4px;
+    }
+
+    .kpi-value {
+      font-size: 20px;
+      font-weight: 700;
+      color: var(--accent);
+      font-family: var(--font-mono);
+    }
+
+    .kpi-sub {
+      font-size: 12px;
+      color: var(--green);
+      margin-top: 3px;
+    }
+
+    /* Unified Abstract Box */
+    .abstract-box {
+      background: var(--bg);
+      border: 1px solid var(--surface-border);
+      border-left: 4px solid var(--accent);
+      padding: 18px 22px;
+      border-radius: 8px;
+      margin-bottom: 30px;
+      text-align: left;
+      font-size: 15px;
+      line-height: 1.68;
+    }
+
+    .abstract-title,
+    .abstract-box > strong:first-child {
+      font-family: var(--font-ui);
+      font-size: 12.5px;
+      text-transform: uppercase;
+      letter-spacing: 0.08em;
+      color: var(--accent);
+      font-weight: 700;
+      display: block;
+      margin-bottom: 6px;
+    }
+
+    .keywords {
+      margin-top: 10px;
+      font-family: var(--font-ui);
+      font-size: 12.5px;
+      color: var(--text-muted);
+    }
+
+    .keywords strong {
+      display: inline;
+      text-transform: none;
+      color: var(--text);
+    }
+
+    /* Unified 2-Column Academic Body */
+    .paper-body.two-col,
+    .two-col,
+    .two-column-layout {
+      column-count: 2;
+      column-gap: 38px;
+      column-rule: 1px solid var(--surface-border);
+      text-align: justify;
+    }
+
+    .paper-body.one-col,
+    .one-col {
+      column-count: 1;
+      text-align: justify;
+    }
+
+    @media (max-width: 980px) {
+      .paper-body.two-col,
+      .two-col,
+      .two-column-layout {
+        column-count: 1;
+      }
+    }
+
+    .span-all,
+    .full-width {
+      column-span: all;
+      margin: 24px 0;
+    }
+
+    /* Headings & Text */
+    h2,
+    h2.sec-title {
+      font-family: var(--font-ui);
+      font-size: 18px;
+      font-weight: 700;
+      color: var(--text-bright);
+      margin: 26px 0 12px 0;
+      padding-bottom: 6px;
+      border-bottom: 1px solid var(--surface-border);
+      break-after: avoid;
+    }
+
+    h2:first-child,
+    h2.sec-title:first-child {
+      margin-top: 0;
+    }
+
+    h3,
+    h3.subsec-title {
+      font-family: var(--font-ui);
+      font-size: 15px;
+      font-weight: 600;
+      color: var(--accent);
+      margin: 18px 0 8px 0;
+      break-after: avoid;
+    }
+
+    p {
+      margin-bottom: 13px;
+    }
+
+    .no-indent {
+      text-indent: 0;
+    }
+
+    ul,
+    ol {
+      margin: 0 0 15px 22px;
+    }
+
+    li {
+      margin-bottom: 6px;
+    }
+
+    .equation {
+      margin: 12px 0;
+      padding: 8px 0;
+      text-align: center;
+      overflow-x: auto;
+      break-inside: avoid;
+    }
+
+    /* Figures & Tables */
+    figure,
+    .fig-card,
+    .figure-card,
+    .table-card {
+      background: var(--bg);
+      border: 1px solid var(--surface-border);
+      border-radius: 10px;
+      padding: 16px;
+      margin: 20px 0;
+      text-align: center;
+      break-inside: avoid;
+    }
+
+    figure img,
+    .fig-card img,
+    .figure-card img {
+      max-width: 100%;
+      height: auto;
+      border-radius: 6px;
+      border: 1px solid var(--surface-border);
+      background: #000000;
+      display: block;
+      margin: 0 auto 10px;
+    }
+
+    figcaption,
+    .caption,
+    .figure-caption {
+      font-family: var(--font-ui);
+      font-size: 12.5px;
+      color: var(--text-muted);
+      text-align: justify;
+      margin-top: 8px;
+      line-height: 1.5;
+    }
+
+    .table-container {
+      margin: 18px 0;
+      overflow-x: auto;
+      break-inside: avoid;
+    }
+
+    table,
+    table.academic-table {
+      width: 100%;
+      border-collapse: collapse;
+      font-family: var(--font-ui);
+      font-size: 12.5px;
+      line-height: 1.45;
+      margin: 10px 0;
+      background: var(--bg);
+      border: 1px solid var(--surface-border);
+      border-radius: 8px;
+      overflow: hidden;
+    }
+
+    th,
+    td,
+    table.academic-table th,
+    table.academic-table td {
+      padding: 8px 11px;
+      border-bottom: 1px solid var(--surface-border);
+      text-align: left;
+    }
+
+    th,
+    table.academic-table th {
+      background: rgba(88, 166, 255, 0.10);
+      color: var(--text-bright);
+      font-weight: 600;
+    }
+
+    tr.highlight-row td,
+    table.academic-table tr.highlight-row td {
+      background: var(--green-bg);
+      font-weight: 600;
+    }
+
+    tr.section-row td {
+      background: rgba(188, 140, 255, 0.10);
+      color: var(--purple);
+      font-weight: 700;
+      text-align: left;
+    }
+
+    .highlight-val {
+      color: var(--green);
+      font-weight: 700;
+    }
+
+    .metric-pill {
+      display: inline-block;
+      padding: 1px 6px;
+      border-radius: 4px;
+      font-size: 10.5px;
+      font-weight: 600;
+      font-family: var(--font-mono);
+    }
+
+    .pill-green {
+      background: rgba(63, 185, 80, 0.18);
+      color: var(--green);
+    }
+
+    .pill-orange {
+      background: rgba(240, 136, 62, 0.18);
+      color: var(--orange);
+    }
+
+    .pill-purple {
+      background: rgba(188, 140, 255, 0.18);
+      color: var(--purple);
+    }
+
+    code {
+      font-family: var(--font-mono);
+      font-size: 0.88em;
+      background: var(--bg);
+      padding: 2px 6px;
+      border-radius: 4px;
+      border: 1px solid var(--surface-border);
+    }
+
+    .reference-list {
+      font-family: var(--font-ui);
+      font-size: 12.5px;
+      line-height: 1.55;
+      padding-left: 20px;
+    }
+
+    .reference-list li {
+      margin-bottom: 6px;
+    }
+
+    @media print {
+      body {
+        background: #ffffff;
+        color: #000000;
+        font-size: 10pt;
+      }
+      .top-bar {
+        display: none !important;
+      }
+      .paper-container {
+        box-shadow: none;
+        border: none;
+        padding: 0;
+        margin: 0;
+        width: 100%;
+        max-width: 100%;
+      }
+      .paper-body.two-col {
+        column-count: 2;
+        column-gap: 20px;
+      }
+    }
+
+    .hub-grid {
+      display: grid;
+      grid-template-columns: 1fr;
+      gap: 22px;
+      margin-top: 24px;
+    }
+    .hub-card {
+      background: var(--bg);
+      border: 1px solid var(--surface-border);
+      border-radius: 12px;
+      padding: 26px 30px;
+      transition: border-color 0.2s ease, transform 0.15s ease;
+      display: flex;
+      flex-direction: column;
+      gap: 12px;
+    }
+    .hub-card:hover {
+      border-color: var(--accent);
+      transform: translateY(-2px);
+    }
+    .hub-card-title {
+      font-family: var(--font-ui);
+      font-size: 21px;
+      font-weight: 700;
+      color: var(--text-bright);
+      text-decoration: none;
+      line-height: 1.35;
+    }
+    .hub-card-title:hover {
+      color: var(--accent);
+    }
+    .hub-card-desc {
+      font-size: 15px;
+      color: var(--text);
+      line-height: 1.65;
+      margin: 0;
+    }
+    .hub-kpis {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 10px;
+      font-family: var(--font-mono);
+      font-size: 12px;
+    }
+    .hub-kpi {
+      background: var(--surface);
+      border: 1px solid var(--surface-border);
+      padding: 4px 10px;
+      border-radius: 6px;
+      color: var(--text-bright);
+    }
+  </style>
+</head>
+
+<body>
+  <div class="top-bar">
+    <div class="top-bar-left">
+      <a class="nav-pill active" href="index.html">📚 Papers Hub</a>
+      <span class="nav-sep"></span>
+      <a class="nav-pill" href="lsp.html">Paper I · LSP</a>
+      <a class="nav-pill" href="universal_cfa.html">Paper II · Universal CFA</a>
+      <a class="nav-pill" href="comp_lsp.html">Paper III · White-Box Comp-LSP</a>
+      <span class="nav-sep"></span>
+      <a class="nav-pill" href="../aicamera/index.html">📘 Guidebook</a>
+      <a class="nav-pill" href="../index.html">👤 Resume</a>
+    </div>
+    <div class="top-bar-right">
+      <button class="btn" id="btn-theme" type="button" onclick="togglePaperTheme()">🌙 Dark</button>
+    </div>
+  </div>
+
+  <div class="paper-container">
+    <header class="paper-header">
+      <div class="header-badges">
+        <span class="badge">AICAMERA Research Series</span>
+        <span class="badge-green">3 Interactive 2-Column Manuscripts</span>
+      </div>
+      <h1 class="paper-title">From Image Signal Processing to Latent Signal Processing: Research Manuscript Portal</h1>
+      <div class="paper-authors">Yongjoon Song, Wonju Seo, Chanwoo Ahn, Changheon Lee, Han-sol Lee, Yeolmin Seong</div>
+      <div class="paper-affil">Samsung Electronics, Republic of Korea</div>
+    </header>
+
+    <div class="hub-grid">
+      <!-- Paper I -->
+      <article class="hub-card">
+        <div class="header-badges" style="justify-content:flex-start;margin-bottom:0">
+          <span class="badge">Paper I · Core LSP Architecture</span>
+          <span class="badge">IEEE ICASSP 2027 &amp; Sensors</span>
+          <span class="badge-green">Physical Dual-NPU Verified</span>
+        </div>
+        <a class="hub-card-title" href="lsp.html">
+          1. From Image Signal Processing to Latent Signal Processing: Sensor-AP Collaborative Inference for Real-Time Generative Imaging
+        </a>
+        <p class="hub-card-desc">
+          Resolves the MIPI CSI-2 inter-chip serialization bottleneck (52.91 ms for 3,072 KB raw frames, 14.9 FPS) by factoring the neural encoder across the Sony IMX500 in-sensor NPU (Stage A, 9.59K params, 64 KB payload, 2.90 ms DMA) and Hailo-8 host NPU (Stage B, 0.97 ms), simultaneously driving 30.0 FPS live viewfinder preview and Zero-Shutter-Lag (ZSL) ControlNet diffusion capture.
+        </p>
+        <div class="hub-kpis">
+          <span class="hub-kpi">48.0× Bus Contraction (64 KB)</span>
+          <span class="hub-kpi">30.0 FPS Live Sync (43.7 FPS Compute)</span>
+          <span class="hub-kpi">22.90 ms Serial Latency</span>
+          <span class="hub-kpi">27.31 dB PSNR (SD 2.1 VAE Manifold)</span>
+        </div>
+        <div>
+          <a class="btn active" href="lsp.html">Read Paper I (2-Col Interactive HTML) →</a>
+        </div>
+      </article>
+
+      <!-- Paper II -->
+      <article class="hub-card">
+        <div class="header-badges" style="justify-content:flex-start;margin-bottom:0">
+          <span class="badge">Paper II · Universal CFA LSP</span>
+          <span class="badge">IEEE TIP / CVPR 2027 Track</span>
+          <span class="badge-green">BJDD · KLAP · Kodak24 Verified</span>
+        </div>
+        <a class="hub-card-title" href="universal_cfa.html">
+          2. Universal In-Sensor Latent Signal Processing for Heterogeneous CFAs: Phase-Aware Implicit Remosaicing, Karhunen-Loève Eigen-Subband Decomposition, and One-Pass Latent Diffusion
+        </a>
+        <p class="hub-card-desc">
+          Unifies Standard Bayer (2×2), Tetracell (4×4), and Hexadecacell (8×8) high-megapixel sensors onto a 100% frozen host translator (T_B) and a 100% CFA-agnostic host decoder (D_rec) via in-sensor phase-aware PixelUnshuffle + SE compressors and 3×3 Lapped Opponent-Color Karhunen-Loève Eigen-Subband Decomposition (KLT-HF, Rank-48: 32Y+8Cr+8Cb).
+        </p>
+        <div class="hub-kpis">
+          <span class="hub-kpi">Bayer: 36.94 dB</span>
+          <span class="hub-kpi">Tetracell: 34.63 dB (LPIPS 0.0201)</span>
+          <span class="hub-kpi">Hexadecacell: 30.34 dB (LPIPS 0.0669)</span>
+          <span class="hub-kpi">100% Frozen Host AP</span>
+        </div>
+        <div>
+          <a class="btn active" href="universal_cfa.html">Read Paper II (2-Col Interactive HTML) →</a>
+        </div>
+      </article>
+
+      <!-- Paper III -->
+      <article class="hub-card">
+        <div class="header-badges" style="justify-content:flex-start;margin-bottom:0">
+          <span class="badge">Paper III · Computational LSP 2.0</span>
+          <span class="badge">FLUX.1 &amp; TAEF1 16-Ch VAE</span>
+          <span class="badge-green">Steps 1–3 + Interactive Patch Simulator</span>
+        </div>
+        <a class="hub-card-title" href="comp_lsp.html">
+          3. White-Box Computational Latent Signal Processing: Jet-Space Differential Operators and Manifold Refinement in 16-Channel VAEs
+        </a>
+        <p class="hub-card-desc">
+          Formulates all eight physical camera ISP stages (BLC, Gain, LSC, AWB, CCM, Gamma/S-Curve, LTM, NR, EEH) as explicit differential-geometric operators acting directly on 16-channel VAE latent space (f=8, C=16) via biorthogonal oblique projection into a curved 3D polynomial DC submanifold (R² = 0.974) and a 13-D Pure-AC Taylor-Jet fiber, compiled into a monolithic Halide SIMD kernel (0.93 ms @ 1MP, 70.5× speedup @ 12MP) with an interactive 10-camera numerical simulator.
+        </p>
+        <div class="hub-kpis">
+          <span class="hub-kpi">DC Readout R² = 0.974</span>
+          <span class="hub-kpi">70.5× Halide Speedup @ 12MP</span>
+          <span class="hub-kpi">0.93 ms @ 1MP (1,080 FPS)</span>
+          <span class="hub-kpi">+8.97 dB Refiner Gain</span>
+        </div>
+        <div>
+          <a class="btn active" href="comp_lsp.html">Read Paper III (2-Col Interactive HTML + Simulator) →</a>
+        </div>
+      </article>
+    </div>
+  </div>
+
+  <script>
+    function setPaperCols(n) {
+      const body = document.getElementById('paper-body') || document.getElementById('main-paper-body');
+      const b1 = document.getElementById('btn-1col');
+      const b2 = document.getElementById('btn-2col');
+      if (!body) return;
+      if (n === 2) {
+        body.classList.add('two-col');
+        body.classList.remove('one-col');
+        if (b2) b2.classList.add('active');
+        if (b1) b1.classList.remove('active');
+      } else {
+        body.classList.remove('two-col');
+        body.classList.remove('two-column-layout');
+        body.classList.add('one-col');
+        if (b1) b1.classList.add('active');
+        if (b2) b2.classList.remove('active');
+      }
+    }
+
+    function togglePaperTheme() {
+      const root = document.documentElement;
+      const btn = document.getElementById('btn-theme');
+      if (root.getAttribute('data-theme') === 'light') {
+        root.removeAttribute('data-theme');
+        if (btn) btn.textContent = '🌙 Dark';
+      } else {
+        root.setAttribute('data-theme', 'light');
+        if (btn) btn.textContent = '☀️ Light';
+      }
+    }
+
+    // Legacy aliases for backward compatibility
+    window.setCols = setPaperCols;
+    window.toggleCols = function() {
+      const body = document.getElementById('paper-body') || document.getElementById('main-paper-body');
+      setPaperCols(body && body.classList.contains('one-col') ? 2 : 1);
+    };
+    window.toggleLayout = window.toggleCols;
+    window.toggleTheme = togglePaperTheme;
+  </script>
+</body>
+
+</html>

@@ -444,6 +444,7 @@
     const root = body.dataset.root != null ? body.dataset.root : body.dataset.chapter ? "../" : "";
     const curSlug = body.dataset.chapter || "";
     const href = (slug) => (slug ? `${root}chapters/${slug}.html` : `${root}index.html`);
+    const papersHref = location.hostname.endsWith("github.io") ? `${root}../papers/index.html` : `${root}../lsp/paper/icassp_paper.html`;
 
     const bar = document.createElement("header");
     bar.className = "sb-topbar";
@@ -458,6 +459,7 @@
         <div class="book-search-results" aria-live="polite"></div>
       </div>
       <div class="book-nav-right">
+        <a class="sb-btn series-link" href="${papersHref}" title="LSP · Universal CFA · White-Box Comp-LSP 논문 모음"><span>📚 논문 (Papers)</span></a>
         <a class="sb-btn series-link" href="${href("notes")}#glossary-sec" title="용어집 & 검증 노트"><span>용어집 · 검증</span></a>
         <button class="sb-btn icon" id="sb-theme" aria-label="테마 전환"></button>
       </div>
@@ -614,7 +616,7 @@
 
     const foot = document.createElement("footer");
     foot.className = "sb-foot";
-    foot.innerHTML = `AICAMERA 인터랙티브 아키텍처 가이드북 · <code>docs/build_spec_portal.py</code> 로 생성 · build 2026-11-01 09:02 · commit <code>dac0d27</code>
+    foot.innerHTML = `AICAMERA 인터랙티브 아키텍처 가이드북 · <code>docs/build_spec_portal.py</code> 로 생성 · build 2026-11-01 09:29 · commit <code>2c6b896</code>
       <br>모든 벤치마크 수치는 저장소 JSON 정본에서, ISP·3A 기본값은 C99 헤더에서 빌드 시 자동 추출 및 검증됩니다.`;
     body.appendChild(foot);
 

@@ -1,0 +1,1009 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Paper I · From Image Signal Processing to Latent Signal Processing (LSP)</title>
+
+  <!-- Fonts -->
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link
+    href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Newsreader:ital,opsz,wght@0,6..72,400;0,6..72,500;0,6..72,600;1,6..72,400&family=JetBrains+Mono:wght@400;500&display=swap"
+    rel="stylesheet">
+
+  <!-- KaTeX for Math rendering -->
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/katex@0.16.10/dist/katex.min.css">
+  <script defer src="https://cdn.jsdelivr.net/npm/katex@0.16.10/dist/katex.min.js"></script>
+  <script defer src="https://cdn.jsdelivr.net/npm/katex@0.16.10/dist/contrib/auto-render.min.js"
+    onload="renderMathInElement(document.body, {delimiters: [{left: '$$', right: '$$', display: true}, {left: '$', right: '$', display: false}]});"></script>
+
+  <style>
+    :root {
+      --bg: #0d1117;
+      --surface: #161b22;
+      --surface-alt: #1f242d;
+      --surface-border: #30363d;
+      --text: #c9d1d9;
+      --text-bright: #f0f6fc;
+      --text-muted: #8b949e;
+      --accent: #58a6ff;
+      --accent-glow: rgba(88, 166, 255, 0.15);
+      --green: #3fb950;
+      --green-bg: rgba(63, 185, 80, 0.14);
+      --orange: #f0883e;
+      --purple: #bc8cff;
+      --font-body: 'Newsreader', Georgia, serif;
+      --font-ui: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
+      --font-mono: 'JetBrains Mono', monospace;
+    }
+
+    [data-theme="light"] {
+      --bg: #f6f8fa;
+      --surface: #ffffff;
+      --surface-alt: #f0f3f6;
+      --surface-border: #d0d7de;
+      --text: #24292f;
+      --text-bright: #0969da;
+      --text-muted: #57606a;
+      --accent: #0969da;
+      --accent-glow: rgba(9, 105, 218, 0.08);
+      --green: #1a7f37;
+      --green-bg: rgba(26, 127, 55, 0.10);
+      --orange: #bc4c00;
+      --purple: #8250df;
+    }
+
+    * {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+    }
+
+    body {
+      background-color: var(--bg);
+      color: var(--text);
+      font-family: var(--font-body);
+      font-size: 16px;
+      line-height: 1.72;
+      padding: 0;
+      transition: background 0.2s ease, color 0.2s ease;
+    }
+
+    /* Unified Sticky Top Control Bar */
+    .top-bar {
+      position: sticky;
+      top: 0;
+      z-index: 1000;
+      background: var(--surface);
+      border-bottom: 1px solid var(--surface-border);
+      backdrop-filter: blur(12px);
+      padding: 10px 24px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      font-family: var(--font-ui);
+      font-size: 13px;
+      flex-wrap: wrap;
+      gap: 10px;
+    }
+
+    .top-bar-left,
+    .top-bar-right {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      flex-wrap: wrap;
+    }
+
+    .nav-pill {
+      background: var(--bg);
+      border: 1px solid var(--surface-border);
+      color: var(--text-muted);
+      padding: 5px 11px;
+      border-radius: 6px;
+      font-family: var(--font-ui);
+      font-size: 12px;
+      font-weight: 600;
+      text-decoration: none;
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      transition: all 0.15s ease;
+    }
+
+    .nav-pill:hover {
+      border-color: var(--accent);
+      color: var(--text-bright);
+    }
+
+    .nav-pill.active {
+      background: var(--accent-glow);
+      color: var(--accent);
+      border-color: var(--accent);
+    }
+
+    .nav-sep {
+      width: 1px;
+      height: 18px;
+      background: var(--surface-border);
+      margin: 0 2px;
+    }
+
+    .btn {
+      background: var(--bg);
+      border: 1px solid var(--surface-border);
+      color: var(--text);
+      padding: 6px 12px;
+      border-radius: 6px;
+      font-family: var(--font-ui);
+      font-size: 12px;
+      font-weight: 600;
+      cursor: pointer;
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      text-decoration: none;
+      transition: all 0.15s ease;
+    }
+
+    .btn:hover,
+    .btn.active {
+      border-color: var(--accent);
+      color: var(--accent);
+      background: var(--accent-glow);
+    }
+
+    /* Unified Paper Container */
+    .paper-container {
+      max-width: 1320px;
+      margin: 28px auto 80px;
+      padding: 44px 52px;
+      background: var(--surface);
+      border: 1px solid var(--surface-border);
+      border-radius: 12px;
+      box-shadow: 0 14px 40px rgba(0, 0, 0, 0.25);
+    }
+
+    /* Unified Paper Header */
+    .paper-header {
+      text-align: center;
+      border-bottom: 1px solid var(--surface-border);
+      padding-bottom: 26px;
+      margin-bottom: 28px;
+    }
+
+    .header-badges {
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      gap: 8px;
+      flex-wrap: wrap;
+      margin-bottom: 14px;
+      font-family: var(--font-ui);
+    }
+
+    .badge,
+    .badge-venue {
+      background: var(--accent-glow);
+      color: var(--accent);
+      border: 1px solid var(--accent);
+      padding: 3px 10px;
+      border-radius: 999px;
+      font-size: 11px;
+      font-weight: 600;
+      font-family: var(--font-ui);
+      letter-spacing: 0.3px;
+    }
+
+    .badge-green,
+    .badge-done {
+      background: var(--green-bg);
+      color: var(--green);
+      border: 1px solid var(--green);
+      padding: 3px 10px;
+      border-radius: 999px;
+      font-size: 11px;
+      font-weight: 600;
+      font-family: var(--font-ui);
+    }
+
+    .paper-title {
+      font-family: var(--font-ui);
+      font-size: 27px;
+      line-height: 1.32;
+      color: var(--text-bright);
+      font-weight: 700;
+      max-width: 1080px;
+      margin: 0 auto 14px;
+      letter-spacing: -0.25px;
+    }
+
+    .paper-authors,
+    .author-name {
+      font-family: var(--font-ui);
+      font-size: 15px;
+      font-weight: 600;
+      color: var(--text);
+      margin-bottom: 5px;
+    }
+
+    .paper-affil,
+    .author-affil {
+      font-family: var(--font-ui);
+      font-size: 13px;
+      color: var(--text-muted);
+    }
+
+    /* Unified 4-Card KPI Strip */
+    .kpi-strip,
+    .kpi-grid {
+      display: grid;
+      grid-template-columns: repeat(4, minmax(0, 1fr));
+      gap: 14px;
+      margin-bottom: 28px;
+      font-family: var(--font-ui);
+    }
+
+    @media (max-width: 980px) {
+      .kpi-strip,
+      .kpi-grid {
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+      }
+      .paper-container {
+        padding: 28px 22px;
+        margin: 16px 12px 60px;
+      }
+    }
+
+    .kpi-card {
+      background: var(--bg);
+      border: 1px solid var(--surface-border);
+      border-radius: 8px;
+      padding: 14px 16px;
+    }
+
+    .kpi-label {
+      font-size: 11px;
+      text-transform: uppercase;
+      letter-spacing: 0.05em;
+      color: var(--text-muted);
+      margin-bottom: 4px;
+    }
+
+    .kpi-value {
+      font-size: 20px;
+      font-weight: 700;
+      color: var(--accent);
+      font-family: var(--font-mono);
+    }
+
+    .kpi-sub {
+      font-size: 12px;
+      color: var(--green);
+      margin-top: 3px;
+    }
+
+    /* Unified Abstract Box */
+    .abstract-box {
+      background: var(--bg);
+      border: 1px solid var(--surface-border);
+      border-left: 4px solid var(--accent);
+      padding: 18px 22px;
+      border-radius: 8px;
+      margin-bottom: 30px;
+      text-align: left;
+      font-size: 15px;
+      line-height: 1.68;
+    }
+
+    .abstract-title,
+    .abstract-box > strong:first-child {
+      font-family: var(--font-ui);
+      font-size: 12.5px;
+      text-transform: uppercase;
+      letter-spacing: 0.08em;
+      color: var(--accent);
+      font-weight: 700;
+      display: block;
+      margin-bottom: 6px;
+    }
+
+    .keywords {
+      margin-top: 10px;
+      font-family: var(--font-ui);
+      font-size: 12.5px;
+      color: var(--text-muted);
+    }
+
+    .keywords strong {
+      display: inline;
+      text-transform: none;
+      color: var(--text);
+    }
+
+    /* Unified 2-Column Academic Body */
+    .paper-body.two-col,
+    .two-col,
+    .two-column-layout {
+      column-count: 2;
+      column-gap: 38px;
+      column-rule: 1px solid var(--surface-border);
+      text-align: justify;
+    }
+
+    .paper-body.one-col,
+    .one-col {
+      column-count: 1;
+      text-align: justify;
+    }
+
+    @media (max-width: 980px) {
+      .paper-body.two-col,
+      .two-col,
+      .two-column-layout {
+        column-count: 1;
+      }
+    }
+
+    .span-all,
+    .full-width {
+      column-span: all;
+      margin: 24px 0;
+    }
+
+    /* Headings & Text */
+    h2,
+    h2.sec-title {
+      font-family: var(--font-ui);
+      font-size: 18px;
+      font-weight: 700;
+      color: var(--text-bright);
+      margin: 26px 0 12px 0;
+      padding-bottom: 6px;
+      border-bottom: 1px solid var(--surface-border);
+      break-after: avoid;
+    }
+
+    h2:first-child,
+    h2.sec-title:first-child {
+      margin-top: 0;
+    }
+
+    h3,
+    h3.subsec-title {
+      font-family: var(--font-ui);
+      font-size: 15px;
+      font-weight: 600;
+      color: var(--accent);
+      margin: 18px 0 8px 0;
+      break-after: avoid;
+    }
+
+    p {
+      margin-bottom: 13px;
+    }
+
+    .no-indent {
+      text-indent: 0;
+    }
+
+    ul,
+    ol {
+      margin: 0 0 15px 22px;
+    }
+
+    li {
+      margin-bottom: 6px;
+    }
+
+    .equation {
+      margin: 12px 0;
+      padding: 8px 0;
+      text-align: center;
+      overflow-x: auto;
+      break-inside: avoid;
+    }
+
+    /* Figures & Tables */
+    figure,
+    .fig-card,
+    .figure-card,
+    .table-card {
+      background: var(--bg);
+      border: 1px solid var(--surface-border);
+      border-radius: 10px;
+      padding: 16px;
+      margin: 20px 0;
+      text-align: center;
+      break-inside: avoid;
+    }
+
+    figure img,
+    .fig-card img,
+    .figure-card img {
+      max-width: 100%;
+      height: auto;
+      border-radius: 6px;
+      border: 1px solid var(--surface-border);
+      background: #000000;
+      display: block;
+      margin: 0 auto 10px;
+    }
+
+    figcaption,
+    .caption,
+    .figure-caption {
+      font-family: var(--font-ui);
+      font-size: 12.5px;
+      color: var(--text-muted);
+      text-align: justify;
+      margin-top: 8px;
+      line-height: 1.5;
+    }
+
+    .table-container {
+      margin: 18px 0;
+      overflow-x: auto;
+      break-inside: avoid;
+    }
+
+    table,
+    table.academic-table {
+      width: 100%;
+      border-collapse: collapse;
+      font-family: var(--font-ui);
+      font-size: 12.5px;
+      line-height: 1.45;
+      margin: 10px 0;
+      background: var(--bg);
+      border: 1px solid var(--surface-border);
+      border-radius: 8px;
+      overflow: hidden;
+    }
+
+    th,
+    td,
+    table.academic-table th,
+    table.academic-table td {
+      padding: 8px 11px;
+      border-bottom: 1px solid var(--surface-border);
+      text-align: left;
+    }
+
+    th,
+    table.academic-table th {
+      background: rgba(88, 166, 255, 0.10);
+      color: var(--text-bright);
+      font-weight: 600;
+    }
+
+    tr.highlight-row td,
+    table.academic-table tr.highlight-row td {
+      background: var(--green-bg);
+      font-weight: 600;
+    }
+
+    tr.section-row td {
+      background: rgba(188, 140, 255, 0.10);
+      color: var(--purple);
+      font-weight: 700;
+      text-align: left;
+    }
+
+    .highlight-val {
+      color: var(--green);
+      font-weight: 700;
+    }
+
+    .metric-pill {
+      display: inline-block;
+      padding: 1px 6px;
+      border-radius: 4px;
+      font-size: 10.5px;
+      font-weight: 600;
+      font-family: var(--font-mono);
+    }
+
+    .pill-green {
+      background: rgba(63, 185, 80, 0.18);
+      color: var(--green);
+    }
+
+    .pill-orange {
+      background: rgba(240, 136, 62, 0.18);
+      color: var(--orange);
+    }
+
+    .pill-purple {
+      background: rgba(188, 140, 255, 0.18);
+      color: var(--purple);
+    }
+
+    code {
+      font-family: var(--font-mono);
+      font-size: 0.88em;
+      background: var(--bg);
+      padding: 2px 6px;
+      border-radius: 4px;
+      border: 1px solid var(--surface-border);
+    }
+
+    .reference-list {
+      font-family: var(--font-ui);
+      font-size: 12.5px;
+      line-height: 1.55;
+      padding-left: 20px;
+    }
+
+    .reference-list li {
+      margin-bottom: 6px;
+    }
+
+    @media print {
+      body {
+        background: #ffffff;
+        color: #000000;
+        font-size: 10pt;
+      }
+      .top-bar {
+        display: none !important;
+      }
+      .paper-container {
+        box-shadow: none;
+        border: none;
+        padding: 0;
+        margin: 0;
+        width: 100%;
+        max-width: 100%;
+      }
+      .paper-body.two-col {
+        column-count: 2;
+        column-gap: 20px;
+      }
+    }
+
+  </style>
+</head>
+
+<body>
+  <!-- Unified Sticky Top Navigation & Controls -->
+  <div class="top-bar">
+    <div class="top-bar-left">
+      <a class="nav-pill" href="index.html">📚 Papers Hub</a>
+      <span class="nav-sep"></span>
+      <a class="nav-pill active" href="lsp.html">Paper I · LSP</a>
+      <a class="nav-pill" href="universal_cfa.html">Paper II · Universal CFA</a>
+      <a class="nav-pill" href="comp_lsp.html">Paper III · White-Box Comp-LSP</a>
+      <span class="nav-sep"></span>
+      <a class="nav-pill" href="../aicamera/index.html">📘 Guidebook</a>
+    </div>
+    <div class="top-bar-right">
+      <button class="btn active" id="btn-2col" type="button" onclick="setPaperCols(2)">2-Col</button>
+      <button class="btn" id="btn-1col" type="button" onclick="setPaperCols(1)">1-Col</button>
+      <button class="btn" id="btn-theme" type="button" onclick="togglePaperTheme()">🌙 Dark</button>
+      <button class="btn" type="button" onclick="window.print()">🖨️ Print / PDF</button>
+    </div>
+  </div>
+
+  <div class="paper-container">
+    <header class="paper-header">
+      <div class="header-badges">
+        <span class="badge">Paper I · Core LSP Architecture</span>
+        <span class="badge">IEEE ICASSP 2027 & Sensors</span>
+        <span class="badge-green">Hardware Verified (RPi 5 + IMX500 + Hailo-8)</span>
+      </div>
+      <h1 class="paper-title">From Image Signal Processing to Latent Signal Processing: Sensor-AP Collaborative Inference for Real-Time Generative Imaging</h1>
+      <div class="paper-authors">Yongjoon Song, Wonju Seo, Chanwoo Ahn, Changheon Lee, Han-sol Lee, Yeolmin Seong</div>
+      <div class="paper-affil">Samsung Electronics, Republic of Korea &bull; Target Venue: IEEE ICASSP 2027 & Sensors (MDPI)</div>
+    </header>
+
+    <div class="kpi-strip">
+      <div class="kpi-card">
+        <div class="kpi-label">MIPI Bus Contraction</div>
+        <div class="kpi-value">48.0× (64 KB)</div>
+        <div class="kpi-sub">2.90 ms DMA (vs. 52.91 ms Raw)</div>
+      </div>
+      <div class="kpi-card">
+        <div class="kpi-label">Live Viewfinder Sync</div>
+        <div class="kpi-value">30.0 FPS</div>
+        <div class="kpi-sub">43.7 FPS Compute (22.90 ms Serial)</div>
+      </div>
+      <div class="kpi-card">
+        <div class="kpi-label">In-Sensor Stage A</div>
+        <div class="kpi-value">9.59K Params</div>
+        <div class="kpi-sub">0.12G MACs · 2.59 ms on IMX500</div>
+      </div>
+      <div class="kpi-card">
+        <div class="kpi-label">Reconstruction Fidelity</div>
+        <div class="kpi-value">27.31 dB PSNR</div>
+        <div class="kpi-sub">Within 0.6 dB of SD 2.1 VAE Ceiling</div>
+      </div>
+    </div>
+
+    <div class="abstract-box">
+      <div class="abstract-title">Abstract</div>
+      <p style="margin-bottom:0;">
+        Physical inter-chip communication presents a fundamental bottleneck in deploying neural Image Signal Processing (ISP) and generative vision models on edge devices. Transmitting uncompressed sensor frames across camera serial buses incurs severe driver serialization and memory contention, bottlenecking throughput regardless of AP compute capacity. We propose transitioning edge cameras <strong>from classical Image Signal Processing (ISP) to Latent Signal Processing (LSP)</strong> via a <strong>Sensor-AP collaborative inference</strong> framework powered by asymmetric split-encoder latent distillation. We bifurcate the neural encoder across the sensor-AP boundary: an ultra-lightweight <em>in-sensor Compressor</em> (Stage A) collapses raw frames into a compact intermediate feature tensor ($48\times$ bus payload reduction), which an on-AP <em>Latent Translator</em> (Stage B) maps directly onto the canonical $64\times 64\times 4$ latent manifold. Standardizing sensing on this public latent representation allows a single hardware-mapped pipeline to concurrently power two disparate downstream applications from the same resident latent: continuous real-time viewfinder preview ($30.0\text{ FPS}$) via a compact fine-tuned decoder, and zero-shutter-lag (ZSL) generative capture via off-the-shelf foundation diffusion models without secondary raw acquisition or encoder re-execution. Physical edge experiments coupling the Raspberry Pi AI Camera and a Hailo-8 NPU with Raspberry Pi 5 confirm that our LSP architecture enables real-time generative imaging.
+      </p>
+      <div class="keywords">
+        <strong>Index Terms —</strong> Latent Signal Processing (LSP), Image Signal Processor (ISP), Sensor-AP collaborative inference, split computing, latent diffusion, Hailo-8 NPU, Raspberry Pi 5.
+      </div>
+    </div>
+
+    <div id="paper-body" class="paper-body two-col">
+<!-- Section 1 -->
+      <section>
+        <h2>1. Introduction</h2>
+        <p>Computational imaging is rapidly shifting from hand-crafted ISPs to end-to-end neural models [1], [2] and latent diffusion models (LDMs) [3]–[5]. Concurrently, edge cameras are evolving into heterogeneous multi-processor systems, combining tightly constrained in-sensor NPUs [6] with AP accelerators via physical serial buses (e.g., MIPI CSI-2). While collaborative split inference [7], [8], learned neural compression [9], [10], and on-device diffusion [11], [12] partition workloads across compute boundaries, deploying neural imaging on edge devices is severely bottlenecked by <strong>inter-chip communication and data ingestion</strong>: transmitting uncompressed camera frames across physical chip boundaries imposes heavy driver serialization and bus contention ($52.91\text{ ms}$ for $3,072\text{ KB}$ FP32 frames on our prototype), throttling throughput to $14.9\text{ FPS}$ and starving AP accelerators.</p>
+
+        <p>We resolve this bottleneck by introducing <strong>Latent Signal Processing (LSP)</strong>, an asymmetric split-encoder latent distillation framework that transitions edge sensing from monolithic pixel-domain ISPs to Sensor-AP collaborative inference. Our contributions are:</p>
+        <ul>
+          <li><strong>From ISP to LSP Paradigm:</strong> We propose Latent Signal Processing (LSP) across the sensor-AP boundary, factoring the neural encoder into an ultra-lightweight in-sensor Compressor ($E_A$) and an on-AP Latent Translator ($E_B$).</li>
+          <li><strong>Standardized Latent Interface:</strong> Distilling intermediate features onto the canonical SD 2.1 latent manifold ($64\times 64\times 4$) establishes cross-decoder interchangeability, simultaneously powering real-time preview ($30.0\text{ FPS}$) and zero-shutter-lag (ZSL) generative capture from a single resident latent.</li>
+          <li><strong>Physical Dual-NPU Implementation:</strong> On physical hardware coupling the Raspberry Pi AI Camera (in-sensor NPU) with a Hailo-8 NPU (on Raspberry Pi 5), SA8 ($s_A=8$) reduces bus payload by $48.0\times$ ($64\text{ KB}$, $2.90\text{ ms}$ bus latency), achieving $22.90\text{ ms}$ serial latency and saturating the physical $30.0\text{ FPS}$ camera sensor ceiling ($2.01\times$ speedup over uncompressed camera at $14.9\text{ FPS}$).</li>
+        </ul>
+      </section>
+
+      <!-- Figure 1 (Full Width Network Architecture & Hardware Demarcation) -->
+      <figure class="full-width">
+        <img src="figures/lsp_fig1_network_topology.webp" alt="Deep learning network topology and hardware-demarcated dual-mode pipeline"
+          style="width: 100%; display: block; margin: 0 auto; border-radius: 8px; border: 1px solid var(--surface-border);">
+        <figcaption><strong>Fig. 1.</strong> Network topology and hardware-demarcated collaborative imaging pipeline. <strong>(Top)</strong> Server GPU domain: offline teacher distillation via $E_{\text{SD}}$ (left) and online foundation generative capture ($X_{\text{gen}}$) conditioned on student latent $z_{\text{pred}}$ and preview Canny prior $C$ (right). <strong>(Bottom)</strong> Edge hardware domain: in-sensor Compressor ($E_A$) on Raspberry Pi AI Camera routes compressed tensor $r$ across MIPI CSI-2 to Hailo-8 NPU, where Latent Translator ($E_B$) reconstructs $z_{\text{pred}}$ to power real-time viewfinder preview ($\hat{X}_H$, $30.0\text{ FPS}$) and zero-shutter-lag capture.</figcaption>
+      </figure>
+
+      <!-- Section 2 -->
+      <section>
+        <h2>2. Proposed LSP Architecture and Split Distillation</h2>
+
+        <h3>2.1 System Model and Problem Formulation</h3>
+        <p>In heterogeneous edge cameras, sensor observations traverse a physical serial bus (e.g., MIPI CSI-2) to reach the host AP, making end-to-end turnaround a function of in-sensor acquisition, serial bus transmission, and AP inference. In smart image sensors such as the Sony IMX500 (Raspberry Pi AI Camera), on-sensor NPU inference results route to the AP via the camera's embedded metadata path during frame blanking intervals. In our experimental setup, we leverage this metadata path as the inter-chip communication channel for transmitting intermediate feature tensors. When transferring uncompressed raw frames, driver serialization, DMA buffer allocation, and memory contention impose severe bus latency ($52.91\text{ ms}$ out of a total $57.21\text{ ms}$ turnaround for $3,072\text{ KB}$ FP32 frames on our physical testbed). Accounting for more than $92\%$ of end-to-end pipeline latency, bus serialization caps throughput to $14.9\text{ frames per second}$ and starves AP accelerators. Expanding AP compute capacity cannot resolve bus starvation; real-time generative imaging fundamentally requires in-sensor compression before traversing the serial interface.</p>
+
+        <h3>2.2 Asymmetric Split Encoder Formulation</h3>
+        <p>As illustrated in the deep learning network topology in Fig. 1, to eliminate bus saturation, the encoder $E(X)$ is factored into $E = E_B \circ E_A$:</p>
+        <div class="equation">
+          $$r = E_A(X) \in \mathbb{R}^{\frac{H}{s_A} \times \frac{W}{s_A} \times 4}, \quad z_{\text{pred}} = E_B(r) \in \mathbb{R}^{\frac{H}{8} \times \frac{W}{8} \times 4}$$
+        </div>
+        <p>where $X \in \mathbb{R}^{H \times W \times 3}$ is the raw RGB image and $s_A \in \{2, 4, 8\}$ is the sensor spatial stride (hereafter denoted SA2, SA4, and SA8 for brevity).</p>
+        <ul>
+          <li><strong>Stage A (in-sensor Compressor, $E_A$):</strong> Operating under tight SRAM budgets ($<2\text{ MB}$), $E_A$ applies $\log_2(s_A)$ strided convolutions with LeakyReLU (no BatchNorm). Off-the-shelf lightweight SD encoders (e.g., TAESD encoder, $1.13\text{M}$ params, $>8\text{ MB}$ activation memory) physically exceed in-sensor SRAM limits, while running them entirely on the AP fails to alleviate raw bus serialization. By contrast, our $E_A$ requires only $9.59\text{K}$ parameters ($0.12\text{G}$ MACs). Routing intermediate tensor $r$ via the embedded metadata path in FP32 reduces bus payload to <strong>$64\text{ KB}$</strong> (<strong>$48.0\times$</strong> contraction at $s_A=8$) and cuts bus latency from <strong>$52.91\text{ ms}$</strong> to <strong>$2.90\text{ ms}$</strong>.</li>
+          <li><strong>Stage B (Latent Translator, $E_B$):</strong> On the host AP, $E_B$ translates $r$ into canonical SD 2.1 latent space ($\frac{H}{8}\times \frac{W}{8}\times 4$) via residual blocks and strided convolutions in <strong>$0.97\text{ ms}$</strong> on the AP accelerator ($2.43\text{G}$ MACs).</li>
+        </ul>
+
+        <h3>2.3 Distillation onto the Public SD Latent Manifold</h3>
+        <p>We distill $E_A$ and $E_B$ against the frozen Stable Diffusion 2.1 VAE encoder ($E_{\text{SD}}$) [3] scaled by $\alpha = 0.18215$ to enforce unit variance: $z_{\text{teacher}} = \alpha \cdot E_{\text{SD}}(X) \in \mathbb{R}^{64 \times 64 \times 4}$.</p>
+        <p>The sub-encoders $E_A$ and $E_B$ are optimized jointly end-to-end via the latent distillation objective:</p>
+        <div class="equation">
+          $$\mathcal{L}_{\text{distill}} = \|z_{\text{pred}} - z_{\text{teacher}}\|_1$$
+        </div>
+        <p>Backpropagation updates the Latent Translator and propagates gradients through intermediate tensor $r$ during offline training to update the in-sensor Compressor. Concurrently, preview decoder $\mathcal{D}_{\text{ft}}$ is fine-tuned independently on real images via:</p>
+        <div class="equation">
+          $$\mathcal{L}_{\text{preview}} = \|\hat{X}_H - X\|_1 + \lambda_{\text{perc}} \mathcal{L}_{\text{perc}}(\hat{X}_H, X)$$
+        </div>
+        <p>where $\mathcal{L}_{\text{perc}}$ is LPIPS loss ($\lambda_{\text{perc}}=0.5$). When reconstructing from ground-truth teacher latents $z_{\text{teacher}}$, standalone preview decoder $\mathcal{D}_{\text{ft}}$ achieves high fidelity ($24.2\text{ dB}$ PSNR, within $0.6\text{ dB}$ of the $49.5\text{M}$ SD-VAE ceiling), establishing the upper-bound fidelity of the preview path while preserving latent compatibility with frozen downstream diffusion models.</p>
+      </section>
+
+      <!-- Section 2.4 -->
+      <section>
+        <h3>2.4 Dual-NPU Serial Execution and Real-Time Deadlines</h3>
+        <p>To avoid driver buffering jitter and memory contention, edge camera systems execute deterministically in sequential (serial) photon-to-display loops across in-sensor compression, MIPI bus transmission, AP latent translation, and preview decoding ($\mathcal{D}_{\text{ft}}$). Sustaining non-blocking preview display at $30.0\text{ frames per second}$ without frame drops or driver FIFO queue overflows requires completing this entire serial sequence within the strict $33.33\text{ ms}$ per-frame deadline. As demonstrated in our physical experiments (Section 4), contracting the intermediate bus payload satisfies this real-time budget by eliminating DMA serialization overhead.</p>
+      </section>
+
+      <!-- Table 1 (Full Width) -->
+      <div class="table-container full-width">
+        <div
+          style="font-family: var(--font-ui); font-size: 13px; font-weight: 700; color: var(--text-bright); margin-bottom: 6px;">
+          Table 1: Dual-NPU serial edge pipeline performance across processor stages on Raspberry Pi 5 ($512\times 512$ generative camera resolution, steady-state mean over 50 iterations).
+        </div>
+        <table>
+          <thead>
+            <tr>
+              <th>Config</th>
+              <th>Stage A (Sensor)</th>
+              <th>Bus Payload</th>
+              <th>Bus Latency</th>
+              <th>Stage B (Hailo)</th>
+              <th>Decoder (Hailo)</th>
+              <th>Serial Latency</th>
+              <th>System FPS</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr>
+              <td><strong>Uncompressed baseline</strong></td>
+              <td>—</td>
+              <td>3,072 KB</td>
+              <td>52.91 ms</td>
+              <td>—</td>
+              <td>—</td>
+              <td>52.91 ms</td>
+              <td><strong>14.9 FPS</strong></td>
+            </tr>
+            <tr>
+              <td><strong>SA2</strong> ($s_A=2$)</td>
+              <td>0.61 ms</td>
+              <td>1,024 KB</td>
+              <td>17.63 ms</td>
+              <td>15.20 ms</td>
+              <td>16.44 ms</td>
+              <td>49.88 ms</td>
+              <td><strong>15.2 FPS</strong></td>
+            </tr>
+            <tr>
+              <td><strong>SA4</strong> ($s_A=4$)</td>
+              <td>1.75 ms</td>
+              <td>256 KB</td>
+              <td>4.41 ms</td>
+              <td>3.72 ms</td>
+              <td>16.44 ms</td>
+              <td>26.32 ms</td>
+              <td><strong>28.5 FPS</strong></td>
+            </tr>
+            <tr class="highlight-row">
+              <td><strong>SA8</strong> ($s_A=8$)</td>
+              <td>2.59 ms</td>
+              <td><span class="metric-pill pill-purple">64 KB</span></td>
+              <td><span class="metric-pill pill-purple">2.90 ms</span></td>
+              <td>0.97 ms</td>
+              <td>16.44 ms</td>
+              <td><strong>22.90 ms</strong></td>
+              <td><span class="metric-pill pill-green">30.0 FPS</span></td>
+            </tr>
+          </tbody>
+        </table>
+        <div style="font-size: 11px; color: var(--text-muted); margin-top: 6px;">
+          * Stage B and TAESD execute sequentially on Hailo-8. SA8 reduces bus payload by <strong>$48.0\times$</strong> (<strong>$64\text{ KB}$</strong>, <strong>$2.90\text{ ms}$</strong> bus latency), sustaining the physical <strong>$30.0\text{ FPS}$</strong> camera ceiling.
+        </div>
+      </div>
+
+      <!-- Section 3 -->
+      <section>
+        <h2>3. Standardized Latent Interchangeability</h2>
+        <p>Distilling sensor observations onto a canonical latent manifold ($z \in \mathbb{R}^{64 \times 64 \times 4}$) <strong>decouples edge sensing from downstream consumer decoders</strong>. Rather than binding the physical sensor to a proprietary neural ISP, our proposed LSP architecture maps raw observations directly onto the public Stable Diffusion 2.1 latent space ($\alpha = 0.18215$). This standardization establishes <strong>cross-decoder interchangeability</strong>: the identical predicted latent stream $z_{\text{pred}}$ concurrently drives heterogeneous decoders tailored for radically disparate compute, latency, and fidelity regimes without sensor re-reading or bus re-transmission.</p>
+
+        <p><strong>Edge Preview Viewfinder ($30.0\text{ FPS}$ via $\mathcal{D}_{\text{ft}}$):</strong> Off-the-shelf tiny decoders such as TAESD [13] were originally trained primarily on synthetic diffusion samples rather than real photographic captures. By fine-tuning the compact $1.22\text{M}$-parameter decoder ($\mathcal{D}_{\text{ft}}$) directly on real photograph latents aligned with the canonical SD 2.1 manifold, standalone decoder fidelity reaches <strong>$24.2\text{ dB}$</strong> PSNR—closely approaching the full $49.5\text{M}$ SD-VAE decoder ceiling ($24.8\text{ dB}$) within a narrow $0.6\text{ dB}$ margin. Deployed on the AP accelerator ($16.44\text{ ms}$ latency), $\mathcal{D}_{\text{ft}}$ delivers continuous live preview at <strong>$30.0\text{ FPS}$</strong>, saturating the physical camera sensor ceiling.</p>
+
+        <p><strong>Foundation Generative Capture (Zero Shutter Lag via SD 2.1):</strong> When high-fidelity capture is triggered, resident latent $z_{\text{pred}}$ is consumed directly by a frozen SD 2.1 U-Net and full VAE decoder (conditioned on structural priors such as Canny edges extracted from preview $\mathcal{D}_{\text{ft}}(z_{\text{pred}})$) [14]. Because generative capture does not require continuous frame rates, $z_{\text{pred}}$ and edge prior $C$ are dispatched downstream to a server/workstation GPU with zero secondary exposure, raw re-transmission, or encoder re-execution. This guarantees true <strong>Zero Shutter Lag (ZSL)</strong> generative capture without inter-chip serial overhead.</p>
+      </section>
+
+      <!-- Figure 2 (Full Width Preview vs SR Floor) -->
+      <figure class="full-width">
+        <img src="figures/lsp_fig2_sr_floor.webp" alt="Visual reconstruction comparison across super-resolution baselines on DIV2K"
+          style="width: 100%; display: block; margin: 0 auto; border-radius: 8px; border: 1px solid var(--surface-border);">
+        <figcaption><strong>Fig. 2.</strong> Qualitative super-resolution comparison under $8\times$ raw decimation ($s_A=8$) on representative crops across 3 diverse DIV2K validation scenes (Scene 205 typography, Scene 799 mechanical edges, Scene 694 ceramic textures) alongside uncompressed autoencoders (TAESD [13], SD 2.1 VAE). Conventional AP super-resolution baselines blur alphanumeric typography and smudge mechanical panel boundaries due to severe raw pixel decimation ($98.4\%$ pixel loss). While monolithic autoencoders (TAESD, SD 2.1 VAE) achieve high fidelity, their substantial memory footprints physically prohibit in-sensor deployment ($>8\text{ MB}$ vs. $<2\text{ MB}$ SRAM), requiring uncompressed raw bus transmission ($3,072\text{ KB}$). In contrast, proposed LSP fits within in-sensor SRAM, closely approaching uncompressed autoencoder fidelity under $64\text{ KB}$ bus payload using only $2.43\text{G}$ MACs Stage B compute on the AP.</figcaption>
+      </figure>
+
+      <!-- Section 4 -->
+      <section>
+        <h2>4. Experimental Evaluation</h2>
+
+        <h3>4.1 Edge Prototype Implementation</h3>
+        <p>The physical prototype comprises a commercial in-sensor NPU camera module (Raspberry Pi AI Camera with $3.1\text{ TOPS}$ in-sensor NPU executing compiled <code>.rpk</code> firmware) interfaced via 2-lane MIPI CSI-2 to a Raspberry Pi 5 ($2.4\text{ GHz}$ Cortex-A76). The AP is equipped with a Hailo-8 AI accelerator ($26\text{ TOPS}$ INT8 NPU running compiled <code>.hef</code> binaries via HailoRT 4.18) via PCIe Gen2/3 HAT+. Intermediate feature tensor $r = E_A(X)$ is routed through the camera's embedded metadata path. For the uncompressed baseline, transferring FP32 raw frames requires $3,072\text{ KB}$ ($52.91\text{ ms}$ bus latency). Under SA8 ($s_A=8$), bus payload contracts to $64\text{ KB}$ ($T_{\text{bus}} = 2.90\text{ ms}$), an exact $48.0\times$ reduction.</p>
+
+        <h3>4.2 Benchmark Dataset and Evaluation Protocol</h3>
+        <p>We evaluate on the canonical <strong>DIV2K</strong> benchmark dataset [15] ($800$ train, $100$ held-out val images). Reconstruction fidelity is measured using PSNR [dB] and LPIPS (AlexNet backbone) across full-scene frames.</p>
+
+        <h3>4.3 Throughput, Serial Latency, and Bandwidth Liberation</h3>
+        <p>Table 1 details component latencies, bus serialization overhead, and frame rates under serial photon-to-display execution on Raspberry Pi 5. Under SA8 ($s_A=8$), Stage A ($2.59\text{ ms}$), bus transfer ($2.90\text{ ms}$), Stage B ($0.97\text{ ms}$), and preview decoding ($16.44\text{ ms}$) yield a total serial latency of $\mathbf{22.90\text{ ms}}$, comfortably within the $33.33\text{ ms}$ frame budget to sustain $\mathbf{30.0\text{ FPS}}$ on live camera hardware (saturating the physical sensor ceiling). In contrast, moderate compression (SA4) incurs a $256\text{ KB}$ payload ($4.41\text{ ms}$ bus latency, $26.32\text{ ms}$ serial latency), sustaining $\mathbf{28.5\text{ FPS}}$. The uncompressed baseline drops to $\mathbf{14.9\text{ FPS}}$ due to severe bus serialization ($52.91\text{ ms}$).</p>
+
+        <h3>4.4 Comparison with Low-Resolution Input and Systems Analysis</h3>
+        <p>Table 2 presents quantitative evaluation across partition configurations on DIV2K ($100$ held-out val images, mean $\pm$ std), while Fig. 2 evaluates the physical limits of reconstructing decimated raw pixels against conventional Low-Resolution Input + Super-Resolution (Low-Res + SR) baselines across models (columns) and scenes (rows):</p>
+        <ul>
+          <li><strong>Physical Limit of Raw Decimation over Serial Buses:</strong> To evaluate whether escalating AP-side compute can compensate for bus decimation, Table 2 benchmarks AP super-resolution across diverse neural architectures up to $73.43\text{G}$ MACs: naive interpolation (Bicubic), compact plain CNN (SRVGGCompact [17]), dense GAN-SR (Real-ESRGAN [17]), vision transformer (Swin2SR [18]), and state-of-the-art efficient feature modulation (SAFMN [16]). While spatial binning preserves sufficient samples under mild downsampling ($s_A=2$), aggressively downsampling raw pixels ($s_A=8$) decimates $98.44\%$ of spatial samples. Crucially, as demonstrated in Fig. 2, existing SR models (Swin2SR, SAFMN) and heavy GANs still severely blur alphanumeric typography and smudge mechanical panel boundaries. Similarly, while monolithic TAESD [13] achieves favorable perceptual fidelity ($0.1395$ LPIPS, Table 2), its $1.13\text{M}$-parameter encoder requires $>8\text{ MB}$ activation memory, physically exceeding in-sensor SRAM ($<2\text{ MB}$) and forcing uncompressed raw bus transmission ($3,072\text{ KB}$, $52.91\text{ ms}$ latency). In contrast, our in-sensor Compressor ($E_A$) extracts learned generative subbands on-sensor prior to bus serialization. For real-time edge preview, our pipeline budgets $70.7\text{G}$ MACs for compact decoder $\mathcal{D}_{\text{ft}}$ ($16.44\text{ ms}$ on Hailo-8), which operates in a comparable compute envelope to heavy SR baselines ($51.12\text{G}$–$73.43\text{G}$) but achieves $0.2926$ LPIPS ($31.3\%$ lower distortion than Real-ESRGAN and $34.6\%$ lower than Swin2SR) by avoiding raw decimation. Moreover, for ZSL latent capture, Stage B translation requires only $2.43\text{G}$ MACs on the AP.</li>
+          <li><strong>Hyperparameter Exploration &amp; System Trade-offs:</strong> Exploring partition scales ($s_A$) reveals clear operating trade-offs:
+            (i) <strong>SA8 ($s_A=8$)</strong> contracts bus payload to <strong>$64\text{ KB}$</strong> (<strong>$2.90\text{ ms}$</strong> bus latency) and serial latency to <strong>$22.90\text{ ms}$</strong>, saturating the physical <strong>$30.0\text{ FPS}$</strong> sensor ceiling ($2.01\times$ speedup over uncompressed camera);
+            (ii) <strong>SA4 ($s_A=4$)</strong> serves as an optimal knee point for platforms with moderate bus headroom ($256\text{ KB}$), achieving peak reconstruction fidelity (<strong>$23.34\text{ dB}$</strong> PSNR, $+0.44\text{ dB}$ over SA8) at <strong>$28.5\text{ FPS}$</strong>; and
+            (iii) <strong>SA2 ($s_A=2$)</strong> minimizes in-sensor compute to <strong>$13\text{M}$</strong> MACs ($2.4\text{K}$ params) with sharpest perceptual fidelity (<strong>$0.1599$</strong> LPIPS) when bus bandwidth is abundant.</li>
+          <li><strong>Compute Reduction vs. Monolithic VAE:</strong> Compared to the monolithic SD 2.1 VAE encoder ($541.1\text{ G MACs}$, $34.16\text{M}$ params), our split encoder requires only <strong>$2.5\text{ G MACs}$</strong> (<strong>$216\times$</strong> reduction), with sensor compute capped at <strong>$122\text{M}$</strong> MACs ($9.59\text{K}$ params).</li>
+        </ul>
+      </section>
+
+      <!-- Table 2 (Full Width) -->
+      <div class="table-container full-width">
+        <div
+          style="font-family: var(--font-ui); font-size: 13px; font-weight: 700; color: var(--text-bright); margin-bottom: 6px;">
+          Table 2: Reconstruction fidelity across partition configurations on DIV2K validation dataset ($100$ held-out val images, $512\times 512$, mean $\pm$ std). To directly verify universal manifold compatibility, quality metrics for split configurations evaluate predicted latents $z_{\text{pred}}$ directly through the frozen, unmodified SD 2.1 VAE decoder. Bold indicates best among proposed split configs.
+        </div>
+        <table>
+          <thead>
+            <tr>
+              <th>Configuration</th>
+              <th>Stage A (Sensor)</th>
+              <th>Bus Payload</th>
+              <th>Stage B (AP)</th>
+              <th>Decoder</th>
+              <th>LPIPS ↓ (mean±std)</th>
+              <th>PSNR ↑ (mean±std)</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr style="color: var(--text-muted); background: rgba(255, 255, 255, 0.03);">
+              <td>Monolithic SD 2.1 VAE</td>
+              <td>—</td>
+              <td>3,072 KB</td>
+              <td>541.1 G <span style="font-size: 11px; opacity: 0.8;">(34.16M)</span></td>
+              <td>1,240.1 G <span style="font-size: 11px; opacity: 0.8;">(49.49M)</span></td>
+              <td>0.0759 ± 0.0360</td>
+              <td>25.12 ± 3.25 dB</td>
+            </tr>
+            <tr style="color: var(--text-muted); background: rgba(255, 255, 255, 0.03);">
+              <td>Monolithic TAESD [13]</td>
+              <td>—</td>
+              <td>3,072 KB</td>
+              <td>2.64 G <span style="font-size: 11px; opacity: 0.8;">(1.13M)</span></td>
+              <td>70.7 G <span style="font-size: 11px; opacity: 0.8;">(1.22M)</span></td>
+              <td>0.1395 ± 0.0690</td>
+              <td>22.42 ± 2.43 dB</td>
+            </tr>
+            <tr style="color: var(--text-muted); background: rgba(255, 255, 255, 0.02);">
+              <td><em>Low-Res Bicubic ($s_A=8$)</em></td>
+              <td>—</td>
+              <td>48 KB</td>
+              <td>—</td>
+              <td>0 G <span style="font-size: 11px; opacity: 0.8;">(0M)</span></td>
+              <td>0.6396 ± 0.1371</td>
+              <td>21.97 ± 2.70 dB</td>
+            </tr>
+            <tr style="color: var(--text-muted); background: rgba(255, 255, 255, 0.02);">
+              <td><em>Low-Res + SRVGGCompact ($s_A=8$)</em> [17]</td>
+              <td>—</td>
+              <td>48 KB</td>
+              <td>—</td>
+              <td>4.95 G <span style="font-size: 11px; opacity: 0.8;">(1.21M)</span></td>
+              <td>0.5036 ± 0.1171</td>
+              <td>20.98 ± 2.52 dB</td>
+            </tr>
+            <tr style="color: var(--text-muted); background: rgba(255, 255, 255, 0.02);">
+              <td><em>Low-Res + Real-ESRGAN ($s_A=8$)</em> [17]</td>
+              <td>—</td>
+              <td>48 KB</td>
+              <td>—</td>
+              <td>73.43 G <span style="font-size: 11px; opacity: 0.8;">(16.70M)</span></td>
+              <td>0.4257 ± 0.1056</td>
+              <td>20.69 ± 2.66 dB</td>
+            </tr>
+            <tr style="color: var(--text-muted); background: rgba(255, 255, 255, 0.02);">
+              <td><em>Low-Res + Swin2SR ($s_A=8$)</em> [18]</td>
+              <td>—</td>
+              <td>48 KB</td>
+              <td>—</td>
+              <td>51.12 G <span style="font-size: 11px; opacity: 0.8;">(12.24M)</span></td>
+              <td>0.4473 ± 0.1272</td>
+              <td>23.53 ± 3.08 dB</td>
+            </tr>
+            <tr style="color: var(--text-muted); background: rgba(255, 255, 255, 0.02);">
+              <td><em>Low-Res + SAFMN ($s_A=8$)</em> [16]</td>
+              <td>—</td>
+              <td>48 KB</td>
+              <td>—</td>
+              <td>0.96 G <span style="font-size: 11px; opacity: 0.8;">(0.24M)</span></td>
+              <td>0.4966 ± 0.1325</td>
+              <td>23.17 ± 3.00 dB</td>
+            </tr>
+            <tr>
+              <td>SA8 ($s_A=8$, Ours)</td>
+              <td>122 M <span style="font-size: 11px; opacity: 0.8;">(9.59K)</span></td>
+              <td><strong>64 KB</strong></td>
+              <td><strong>2.43 G <span style="font-size: 11px; opacity: 0.8;">(0.60M)</span></strong></td>
+              <td>70.7 G <span style="font-size: 11px; opacity: 0.8;">(1.22M)</span></td>
+              <td>0.2926 ± 0.0777</td>
+              <td>22.90 ± 2.58 dB</td>
+            </tr>
+            <tr class="highlight-row">
+              <td><strong>SA4 ($s_A=4$, Ours)</strong></td>
+              <td>67 M <span style="font-size: 11px; opacity: 0.8;">(9.1K)</span></td>
+              <td>256 KB</td>
+              <td>12.4 G <span style="font-size: 11px; opacity: 0.8;">(1.25M)</span></td>
+              <td>70.7 G <span style="font-size: 11px; opacity: 0.8;">(1.22M)</span></td>
+              <td>0.2134 ± 0.0676</td>
+              <td><strong>23.34 ± 2.76 dB</strong></td>
+            </tr>
+            <tr>
+              <td>SA2 ($s_A=2$, Ours)</td>
+              <td><strong>13 M <span style="font-size: 11px; opacity: 0.8;">(2.4K)</span></strong></td>
+              <td>1,024 KB</td>
+              <td>52.2 G <span style="font-size: 11px; opacity: 0.8;">(1.91M)</span></td>
+              <td>70.7 G <span style="font-size: 11px; opacity: 0.8;">(1.22M)</span></td>
+              <td><strong>0.1599 ± 0.0523</strong></td>
+              <td>23.14 ± 2.78 dB</td>
+            </tr>
+          </tbody>
+        </table>
+        <div style="font-size: 11px; color: var(--text-muted); margin-top: 6px;">
+          * Stage A, Stage B, and Decoder metrics are reported as MACs (Params). Quality metrics denote sample mean ± standard deviation across the 100 held-out scenes.
+        </div>
+      </div>
+
+      <!-- Section 4.5 -->
+      <section>
+        <h3>4.5 Downstream Generative Refinement &amp; Structural Fidelity</h3>
+        <p>Because predicted latent $z_{\text{pred}}$ strictly populates the canonical SD 2.1 manifold, foundation models attach seamlessly without retraining. Since generative capture does not require continuous frame rates, resident latent $z_{\text{pred}}$ directly initializes downstream diffusion models conditioned on preview Canny edges ($C$, Fig. 3) dispatched downstream to the workstation GPU with zero raw-frame bus transmission.</p>
+
+        <p>Transmitting decimated pixels under the strongest efficient SR model (SAFMN [16]) yields fragmented Canny contours (Fig. 3(c), top) where track rails are severed and shoreline boundaries vanish, causing ControlNet diffusion to completely erase the alpine lake into a grassy meadow and synthesize a floating train carriage (Fig. 3(d), top). In contrast, our LSP architecture preserves critical generative subbands via teacher distillation ($E_{\text{SD}}$), reconstructing continuous structural contours and enabling faithful generative synthesis with intact alpine scenery and grounded railway tracks with zero raw re-transmission.</p>
+      </section>
+
+      <!-- Figure 3 (Full Width Generative Capture) -->
+      <figure class="full-width">
+        <img src="figures/lsp_fig3_capture_controlnet.webp" alt="Downstream generative capture comparison between Edge SR Baseline and Proposed LSP"
+          style="width: 100%; display: block; margin: 0 auto; border-radius: 8px; border: 1px solid var(--surface-border);">
+        <figcaption><strong>Fig. 3.</strong> Downstream generative capture comparison on an exemplary DIV2K validation scene (Scene 160, $s_A=8$): Best efficient SR baseline (SAFMN [16]) vs. Proposed LSP. Aggressive raw pixel decimation ($8\times8$) under SAFMN erases the shoreline boundary and severs track rails in the Canny prior, causing ControlNet diffusion to completely erase the alpine lake into a grassy slope and synthesize a floating train carriage. In contrast, LSP preserves essential structural subbands on-sensor, retaining crisp continuous contour guidance for faithful generative synthesis with intact lake, harbor, and grounded rail geometry with zero raw re-transmission.</figcaption>
+      </figure>
+
+      <!-- Section 5 -->
+      <section>
+        <h2>5. Conclusion</h2>
+        <p>We established the paradigm shift from Image Signal Processing (ISP) to Latent Signal Processing (LSP) via sensor-AP collaborative inference. Distilling raw sensor observations directly onto the canonical Stable Diffusion latent manifold contracts MIPI bus payload by up to $48\times$ ($64\text{ KB}$), achieving $22.90\text{ ms}$ serial latency and saturating the physical $30.0\text{ FPS}$ camera ceiling while eliminating perceptual distortion and hallucinations inherent to aggressive raw decimation. By decoupling edge sensing from downstream decoders, the unified latent representation enables simultaneous real-time viewfinder streaming and zero-shutter-lag foundation generative capture without raw re-transmission. Future work includes extending latent signal processing to synchronized multi-camera arrays and exploring temporal latent compression for continuous edge video generation.</p>
+      </section>
+
+      <!-- References Section -->
+      <section>
+        <h2>References</h2>
+        <ol class="reference-list">
+          <li>A. Ignatov, L. Van Gool, and R. Timofte, "Replacing mobile camera ISP with a single deep learning model," in <em>IEEE/CVF Conference on Computer Vision and Pattern Recognition Workshops (CVPRW), NTIRE</em>, 2020.</li>
+          <li>A. Ignatov and R. Timofte, "MicroISP: Processing RAW camera data on edge NPUs in real-time," <em>IEEE Transactions on Pattern Analysis and Machine Intelligence (TPAMI)</em>, 2024.</li>
+          <li>R. Rombach, A. Blattmann, D. Lorenz, P. Esser, and B. Ommer, "High-resolution image synthesis with latent diffusion models," in <em>Proceedings of the IEEE/CVF Conference on Computer Vision and Pattern Recognition (CVPR)</em>, pp. 10684–10695, 2022.</li>
+          <li>J. Wang, Z. Yue, S. Zhou, K. C. K. Chan, and C. C. Loy, "Exploiting diffusion prior for real-world image super-resolution," <em>International Journal of Computer Vision (IJCV)</em>, 2024.</li>
+          <li>Y. Wang, W. Yang, X. Chen, Y. Zhang, L. Hong, and S. Yan, "SinSR: Diffusion-based image super-resolution in a single step," in <em>Proceedings of the IEEE/CVF Conference on Computer Vision and Pattern Recognition (CVPR)</em>, pp. 2598–2607, 2024.</li>
+          <li>Raspberry Pi Ltd., "Raspberry Pi AI Camera Documentation," <em>Hardware Specification and Developer Guide</em>, 2024.</li>
+          <li>Y. Matsubara, M. Levorato, and F. Restuccia, "Split computing for complex deep learning applications: A comprehensive survey," <em>IEEE Internet of Things Journal</em>, vol. 9, no. 23, pp. 23530–23548, 2022.</li>
+          <li>C. Yan, S. Liu, H. Liu, X. Peng, X. Wang, F. Chen, L. Fu, and X. Mei, "Hybrid SD: Edge-cloud collaborative inference for stable diffusion models," <em>arXiv preprint arXiv:2408.06646</em>, 2024.</li>
+          <li>R. Zou, C. Song, and Z. Zhang, "The devil is in the details: Window-based learned image compression," in <em>Proceedings of the IEEE/CVF Conference on Computer Vision and Pattern Recognition (CVPR)</em>, pp. 17492–17501, 2022.</li>
+          <li>J. Liu, H. Sun, and J. Katto, "Learned image compression with mixed transformer-CNN architectures," in <em>Proceedings of the IEEE/CVF Conference on Computer Vision and Pattern Recognition (CVPR)</em>, pp. 14388–14397, 2023.</li>
+          <li>Y. Li, H. Wang, Q. Jin, J. Hu, P. Chemerys, Y. Fu, Y. Wang, S. Tulyakov, and J. Ren, "SnapFusion: Text-to-image diffusion model on mobile devices within two seconds," in <em>Advances in Neural Information Processing Systems (NeurIPS)</em>, 2023.</li>
+          <li>Y. Zhao, Y. Xu, Z. Xiao, H. Jia, and T. Hou, "MobileDiffusion: Instant text-to-image generation on mobile devices," <em>arXiv preprint arXiv:2311.16567</em>, 2023.</li>
+          <li>O. B. Bohan, "Tiny autoencoder for Stable Diffusion (TAESD)," <em>GitHub repository: https://github.com/madebyollin/taesd</em>, 2023.</li>
+          <li>L. Zhang, A. Rao, and M. Agrawala, "Adding conditional control to text-to-image diffusion models," in <em>Proceedings of the IEEE/CVF International Conference on Computer Vision (ICCV)</em>, pp. 3836–3847, 2023.</li>
+          <li>E. Agustsson and R. Timofte, "NTIRE 2017 challenge on single image super-resolution: Dataset and study," in <em>IEEE/CVF Conference on Computer Vision and Pattern Recognition Workshops (CVPRW)</em>, pp. 126–135, 2017.</li>
+          <li>L. Sun, J. Dong, J. Tang, and J. Pan, "Spatially-adaptive feature modulation for efficient image super-resolution," in <em>IEEE/CVF International Conference on Computer Vision (ICCV)</em>, pp. 1315–1324, 2023.</li>
+          <li>X. Wang, L. Xie, C. Dong, and Y. Shan, "Real-ESRGAN: Training real-world blind super-resolution with pure synthetic data," in <em>IEEE/CVF International Conference on Computer Vision Workshops (ICCVW)</em>, pp. 1905–1914, 2021.</li>
+          <li>M. V. Conde, U.-J. Choi, M. Burchi, and R. Timofte, "Swin2SR: SwinV2 transformer for compressed image super-resolution and restoration," in <em>European Conference on Computer Vision Workshops (ECCVW)</em>, pp. 669–687, 2022.</li>
+        </ol>
+      </section>
+    </div>
+  </div>
+
+  <script>
+    function setPaperCols(n) {
+      const body = document.getElementById('paper-body') || document.getElementById('main-paper-body');
+      const b1 = document.getElementById('btn-1col');
+      const b2 = document.getElementById('btn-2col');
+      if (!body) return;
+      if (n === 2) {
+        body.classList.add('two-col');
+        body.classList.remove('one-col');
+        if (b2) b2.classList.add('active');
+        if (b1) b1.classList.remove('active');
+      } else {
+        body.classList.remove('two-col');
+        body.classList.remove('two-column-layout');
+        body.classList.add('one-col');
+        if (b1) b1.classList.add('active');
+        if (b2) b2.classList.remove('active');
+      }
+    }
+
+    function togglePaperTheme() {
+      const root = document.documentElement;
+      const btn = document.getElementById('btn-theme');
+      if (root.getAttribute('data-theme') === 'light') {
+        root.removeAttribute('data-theme');
+        if (btn) btn.textContent = '🌙 Dark';
+      } else {
+        root.setAttribute('data-theme', 'light');
+        if (btn) btn.textContent = '☀️ Light';
+      }
+    }
+
+    // Legacy aliases for backward compatibility
+    window.setCols = setPaperCols;
+    window.toggleCols = function() {
+      const body = document.getElementById('paper-body') || document.getElementById('main-paper-body');
+      setPaperCols(body && body.classList.contains('one-col') ? 2 : 1);
+    };
+    window.toggleLayout = window.toggleCols;
+    window.toggleTheme = togglePaperTheme;
+  </script>
+</body>
+
+</html>

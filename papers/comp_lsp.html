@@ -790,54 +790,52 @@
         boosting mean sRGB PSNR across all 10 hardware cameras to <strong>$27.18\text{ dB}$</strong> ($+2.14\text{ dB}$ over 0-Net, up to $32.55\text{ dB}$ on Google Pixel and $30.52\text{ dB}$ on OpenISP, <strong>Fig. 3B&ndash;D</strong>).
       </p>
 
-      <div class="span-all" style="background:var(--surface); border:1px solid var(--surface-border); border-left:4px solid var(--purple); border-radius:8px; padding:16px 20px; margin:18px 0; text-align:left !important;">
-        <div style="font-size:14.5px; font-weight:700; color:var(--text-bright); margin-bottom:8px;">
-          Algorithm 1: End-to-End Code Flow &amp; Tensor Execution Chain (How $J_{3\times 3}$ &amp; 144-D Kronecker AC Transport Execute in Code)
+      <div class="span-all" style="background:var(--bg); border-top:2.5px solid var(--text-bright); border-bottom:2.5px solid var(--text-bright); padding:14px 18px; margin:20px 0; font-family:var(--font-body); text-align:left !important;">
+        <div style="font-family:var(--font-ui); font-size:14px; font-weight:700; color:var(--text-bright); padding-bottom:8px; border-bottom:1px solid var(--surface-border); margin-bottom:10px;">
+          Algorithm 1: White-Box 16-Channel Computational Latent ISP ($J_{3\times 3}$ Secant Jacobian &amp; 4-Step Iterative Refinement)
         </div>
-        <div style="font-size:12.5px; color:var(--text-muted); margin-bottom:10px; line-height:1.55;">
-          입력 잠재 텐서 <code>z_0: (B, 16, h, w)</code> ($h=H/8, w=W/8$, 픽셀 대비 $1/64$ 크기)에서 <strong>Step 3의 $3\times 3$ 할선 야코비안 행렬 <code>J_3x3</code></strong>가 계산되고, 크기가 다른 16차원 고주파 잠재 벡터 <code>z_ac: (N, 16)</code>와 <strong>크로네커 외적($16 \times 9 = 144\text{D}$)</strong>으로 결합되는 실제 PyTorch 실행 체인(<code>latent_isp_ops.py</code> &rarr; <code>jet_basis.py</code> &rarr; <code>one_step_refiner.py</code>)입니다:
+        <div style="font-size:13.2px; line-height:1.78; color:var(--text);">
+          <div><strong>Input:</strong> Sensor RAW latent $\mathbf{z}_0 \in \mathbb{R}^{B\times 16\times h\times w}$ ($h=H/8, w=W/8$); Native camera ISP parameters $\Theta_{\text{ISP}} = (b,\, g,\, \mathbf{w}_{\text{WB}},\, \operatorname{CCM}_{3\times 3},\, \gamma)$; Calibrated matrices $(\Psi,\, W_{\text{z2c,nb}},\, W_{\text{trans}})$; Steps $N = 4$.</div>
+          <div style="margin-bottom:6px;"><strong>Output:</strong> Refined sRGB latent $\hat{\mathbf{z}}_{\text{sRGB}} = \mathbf{z}^{(N)} \in \mathbb{R}^{B\times 16\times h\times w}$.</div>
+          <div style="border-top:1px solid var(--surface-border); padding-top:8px; font-family:var(--font-body);">
+            <div><span style="font-family:var(--font-mono); font-size:11.5px; color:var(--text-muted); display:inline-block; width:28px;">1:</span><span style="color:var(--accent); font-weight:600;">&#9655; Step 1: Subspace Readout of Patch Mean Color $\bar{\mathbf{c}}_0$ &amp; Intra-Patch Spread $\boldsymbol{\delta}$</span></div>
+            <div><span style="font-family:var(--font-mono); font-size:11.5px; color:var(--text-muted); display:inline-block; width:28px;">2:</span>$\bar{\mathbf{c}}_0 \leftarrow \operatorname{ clip }\!\big(\boldsymbol{\phi}_{\text{nb}}(\mathbf{z}_0)\, W_{\text{z2c,nb}},\; 0,\; 1\big) \in \mathbb{R}^{B\times 3\times h\times w}$</div>
+            <div><span style="font-family:var(--font-mono); font-size:11.5px; color:var(--text-muted); display:inline-block; width:28px;">3:</span>$\mathbf{u}_{\text{jet}} \leftarrow \Psi(\mathbf{z}_0 - \mathbf{z}_{\text{black}}) + \mathbf{b}_{\text{jet}}$, $\quad \boldsymbol{\sigma}_{\text{AC}} \leftarrow \sqrt{\tfrac{1}{64}(\mathbf{u}_{\partial x}^2 + \mathbf{u}_{\partial y}^2 + \mathbf{u}_{\partial xx}^2 + \mathbf{u}_{\partial yy}^2)}$, $\quad \boldsymbol{\delta} \leftarrow \sqrt{1.5}\,\boldsymbol{\sigma}_{\text{AC}}$</div>
+            <div style="margin-top:4px;"><span style="font-family:var(--font-mono); font-size:11.5px; color:var(--text-muted); display:inline-block; width:28px;">4:</span><span style="color:var(--green); font-weight:600;">&#9655; Step 2: 3-Point Gauss-Legendre Quadrature on $1/64$ Grid for Non-Linear DC Color $\bar{\mathbf{c}}_{\text{new}}$</span></div>
+            <div><span style="font-family:var(--font-mono); font-size:11.5px; color:var(--text-muted); display:inline-block; width:28px;">5:</span>$\mathbf{c}_- \leftarrow \operatorname{clip}(\bar{\mathbf{c}}_0 - \boldsymbol{\delta}, 0, 1)$, $\quad \mathbf{c}_0 \leftarrow \bar{\mathbf{c}}_0$, $\quad \mathbf{c}_+ \leftarrow \operatorname{clip}(\bar{\mathbf{c}}_0 + \boldsymbol{\delta}, 0, 1)$</div>
+            <div><span style="font-family:var(--font-mono); font-size:11.5px; color:var(--text-muted); display:inline-block; width:28px;">6:</span>$\bar{\mathbf{c}}_{\text{new}} \leftarrow \tfrac{1}{6}\,f_{\text{ISP}}(\mathbf{c}_-, \Theta_{\text{ISP}}) + \tfrac{4}{6}\,f_{\text{ISP}}(\mathbf{c}_0, \Theta_{\text{ISP}}) + \tfrac{1}{6}\,f_{\text{ISP}}(\mathbf{c}_+, \Theta_{\text{ISP}}) \in \mathbb{R}^{B\times 3\times h\times w}$</div>
+            <div style="margin-top:4px;"><span style="font-family:var(--font-mono); font-size:11.5px; color:var(--text-muted); display:inline-block; width:28px;">7:</span><span style="color:var(--purple); font-weight:600;">&#9655; Step 3: $3\times 3$ Secant Jacobian Matrix $J_{3\times 3}$ via Column-by-Column Axis Perturbations</span></div>
+            <div><span style="font-family:var(--font-mono); font-size:11.5px; color:var(--text-muted); display:inline-block; width:28px;">8:</span><strong>for</strong> each input color axis $b \in \{1\text{ (R)},\, 2\text{ (G)},\, 3\text{ (B)}\}$ <strong>do</strong></div>
+            <div style="padding-left:24px;"><span style="font-family:var(--font-mono); font-size:11.5px; color:var(--text-muted); display:inline-block; width:28px;">9:</span>$\mathbf{c}_b^{+} \leftarrow \operatorname{clip}(\bar{\mathbf{c}}_0 + \delta_b\mathbf{e}_b, 0, 1)$, $\quad \mathbf{c}_b^{-} \leftarrow \operatorname{clip}(\bar{\mathbf{c}}_0 - \delta_b\mathbf{e}_b, 0, 1)$ <span style="color:var(--text-muted); font-size:12px;">&#9655; Perturb only channel $b$</span></div>
+            <div style="padding-left:24px;"><span style="font-family:var(--font-mono); font-size:11.5px; color:var(--text-muted); display:inline-block; width:28px;">10:</span>$J_{\text{raw}}[:, b] \leftarrow \big(f_{\text{ISP}}(\mathbf{c}_b^{+}, \Theta_{\text{ISP}}) - f_{\text{ISP}}(\mathbf{c}_b^{-}, \Theta_{\text{ISP}})\big) \,/\, \max(\mathbf{c}_{b,b}^{+} - \mathbf{c}_{b,b}^{-},\, \epsilon) \in \mathbb{R}^{B\times 3\times h\times w}$</div>
+            <div><span style="font-family:var(--font-mono); font-size:11.5px; color:var(--text-muted); display:inline-block; width:28px;">11:</span><strong>end for</strong></div>
+            <div><span style="font-family:var(--font-mono); font-size:11.5px; color:var(--text-muted); display:inline-block; width:28px;">12:</span>$J_{3\times 3} \leftarrow 0.85\, J_{\text{raw}} + 0.15\, \operatorname{AvgPool}_{3\times 3}(J_{\text{raw}}) \in \mathbb{R}^{B\times 3\times 3\times h\times w}$</div>
+            <div style="margin-top:4px;"><span style="font-family:var(--font-mono); font-size:11.5px; color:var(--text-muted); display:inline-block; width:28px;">13:</span><span style="color:var(--orange); font-weight:600;">&#9655; Step 4A: 144-D Kronecker AC Transport &amp; Zero-Network Projection (<code>Stage 4: 0-Net</code>)</span></div>
+            <div><span style="font-family:var(--font-mono); font-size:11.5px; color:var(--text-muted); display:inline-block; width:28px;">14:</span>$\mathbf{z}_{\text{AC}} \leftarrow \tau_z\tanh\!\big((\mathbf{z}_0 - \operatorname{AvgPool}_{3\times 3}(\mathbf{z}_0))/\tau_z\big) \in \mathbb{R}^{N\times 16}$, $\quad \mathbf{dJ}_9 \leftarrow \tau_J\tanh\!\big(\operatorname{vec}(J_{3\times 3} - I_3)/\tau_J\big) \in \mathbb{R}^{N\times 9}$</div>
+            <div><span style="font-family:var(--font-mono); font-size:11.5px; color:var(--text-muted); display:inline-block; width:28px;">15:</span>$\boldsymbol{\phi} \leftarrow \big[\,\Delta\operatorname{poly}_3(\bar{\mathbf{c}})\; (38\text{D})\;\,\|\,\; \mathbf{z}_{\text{AC}} \otimes \mathbf{dJ}_9\; (144\text{D})\;\,\|\,\; \mathbf{z}_0 \otimes \Delta\bar{\mathbf{c}}\; (48\text{D})\,\big] \in \mathbb{R}^{N\times 230}$</div>
+            <div><span style="font-family:var(--font-mono); font-size:11.5px; color:var(--text-muted); display:inline-block; width:28px;">16:</span>$\mathbf{z}_{\text{comp}} \leftarrow \mathbf{z}_0 + \operatorname{Reshape}(\boldsymbol{\phi}\, W_{\text{trans}}) \in \mathbb{R}^{B\times 16\times h\times w}$ <span style="color:var(--text-muted); font-size:12px;">&#9655; 0-Net Output ($25.04\text{ dB}$ mean)</span></div>
+            <div style="margin-top:4px;"><span style="font-family:var(--font-mono); font-size:11.5px; color:var(--text-muted); display:inline-block; width:28px;">17:</span><span style="color:var(--green); font-weight:600;">&#9655; Step 4B: 4-Step Damped Iterative Manifold Refiner with $3\times 3$ Cross-Patch Convolutions (<code>Stage 6: +4-Step</code>)</span></div>
+            <div><span style="font-family:var(--font-mono); font-size:11.5px; color:var(--text-muted); display:inline-block; width:28px;">18:</span>Initialize $\mathbf{z}^{(0)} \leftarrow \mathbf{z}_{\text{comp}}$</div>
+            <div><span style="font-family:var(--font-mono); font-size:11.5px; color:var(--text-muted); display:inline-block; width:28px;">19:</span><strong>for</strong> $k = 0$ <strong>to</strong> $N - 1$ <strong>do</strong></div>
+            <div style="padding-left:24px;"><span style="font-family:var(--font-mono); font-size:11.5px; color:var(--text-muted); display:inline-block; width:28px;">20:</span>$\tau_k \leftarrow (k + 0.5) / N$, $\quad \mathbf{v}_k \leftarrow \mathcal{F}_\theta\!\big(\mathbf{z}^{(k)},\, \mathbf{z}_{\text{comp}},\, \mathbf{z}_0,\, \bar{\mathbf{c}}_0,\, \bar{\mathbf{c}}_{\text{new}},\, \nabla_{3\times 3}\mathbf{z}^{(k)},\, \Theta_{\text{ISP}},\, \tau_k\big)$</div>
+            <div style="padding-left:24px;"><span style="font-family:var(--font-mono); font-size:11.5px; color:var(--text-muted); display:inline-block; width:28px;">21:</span>$\mathbf{z}^{(k+1)} \leftarrow \mathbf{z}^{(k)} + \tfrac{g(\Theta_{\text{ISP}})}{N}\,\mathbf{v}_k$</div>
+            <div><span style="font-family:var(--font-mono); font-size:11.5px; color:var(--text-muted); display:inline-block; width:28px;">22:</span><strong>end for</strong></div>
+            <div><span style="font-family:var(--font-mono); font-size:11.5px; color:var(--text-muted); display:inline-block; width:28px;">23:</span><strong>return</strong> $\hat{\mathbf{z}}_{\text{sRGB}} = \mathbf{z}^{(N)}$ <span style="color:var(--text-muted); font-size:12px;">&#9655; Final Refined Latent ($27.18\text{ dB}$ mean across 10 cameras)</span></div>
+          </div>
         </div>
-        <pre style="background:var(--bg); border:1px solid var(--surface-border); border-radius:6px; padding:12px 14px; font-family:var(--font-mono); font-size:11.8px; line-height:1.5; overflow-x:auto; color:var(--text); margin:0;"><code># [Node 1] Subspace Readout: Extract 8x8 Patch Mean RGB c_in &amp; Intra-Patch Spread delta (latent_isp_ops.py)
-c_in = (extract_z_local_nb_features(z_0) @ W_z2c_nb).reshape(B, h, w, 3).permute(0, 3, 1, 2)  # (B, 3, h, w)
-u_jet = torch.einsum("cd,bdhw->bchw", Psi, z_0 - z_black) + b_jet                             # (B, 16, h, w)
-sigma_ac = ((u_jet[:,3:6]**2 + u_jet[:,6:9]**2 + u_jet[:,9:12]**2 + u_jet[:,12:15]**2) / 64.0).sqrt()
-delta = (1.22474487 * sigma_ac).clamp(0.015, 0.35)                                            # sqrt(1.5)*sigma_ac: (B, 3, h, w)
+      </div>
 
-# [Node 2] Step 2 — 3-Point Gauss-Legendre Quadrature on 1/64 Grid (latent_isp_ops.py)
-c_neg = PixelISPReference.run_pipeline((c_in - delta).clamp(0.0, 1.0), cfg_dc)                # Dark node  f_ISP(c_0 - delta)
-c_mid = PixelISPReference.run_pipeline(c_in, cfg_dc)                                          # Mean node  f_ISP(c_0)
-c_pos = PixelISPReference.run_pipeline((c_in + delta).clamp(0.0, 1.0), cfg_dc)                # Bright node f_ISP(c_0 + delta)
-c_out = (1/6) * c_neg + (4/6) * c_mid + (1/6) * c_pos                                         # New patch DC: (B, 3, h, w)
-
-# [Node 3] Step 3 — 3x3 Secant Jacobian J_3x3 via Axis-Aligned Perturbations b in {0:R, 1:G, 2:B} (latent_isp_ops.py)
-cols = []
-for b in range(3):                                                                            # Loop over input R, G, B axes
-    e_b = torch.zeros_like(c_in);  e_b[:, b:b+1] = delta[:, b:b+1]                            # Perturb ONLY channel b by +-delta_b
-    fp = PixelISPReference.run_pipeline((c_in + e_b).clamp(0.0, 1.0), cfg_dc)                 # [R_out^+, G_out^+, B_out^+]
-    fm = PixelISPReference.run_pipeline((c_in - e_b).clamp(0.0, 1.0), cfg_dc)                 # [R_out^-, G_out^-, B_out^-]
-    denom = ((c_in + e_b).clamp(0,1)[:, b:b+1] - (c_in - e_b).clamp(0,1)[:, b:b+1]).clamp(min=1.5e-2)
-    cols.append((fp - fm) / denom)                                                            # Column b of J_3x3: (B, 3, h, w)
-J_raw = torch.stack(cols, dim=2).clamp(-2.5, 5.5)                                             # (B, 3, 3, h, w)
-J_3x3 = 0.85 * J_raw + 0.15 * AvgPool3x3(J_raw)                                               # 3x3 Neighbor-Smoothed Jacobian
-
-# [Node 4] Step 4A — 144-D Kronecker Product z_ac (x) vec(J_3x3 - I_3) &amp; 0-Net Projection (jet_basis.py)
-z_ac = 1.25 * torch.tanh((z_0 - AvgPool3x3(z_0)).reshape(N, 16) / 1.25)                       # High-pass AC latent: (N, 16)
-dJ9  = 1.15 * torch.tanh((J_3x3 - I_3).reshape(N, 9) / 1.15)                                  # 9 entries of (J_3x3 - I_3): (N, 9)
-ac_kronecker = torch.cat([z_ac * dJ9[:, k:k+1] for k in range(9)], dim=1)                     # 16 * 9 = 144-D Kronecker AC transport
-tx_feat = torch.cat([dp3_local, dp3_nb, ac_kronecker, tangent_cross], dim=1)                  # Full transition feature: (N, 230)
-z_comp = z_0 + (tx_feat @ W_trans).reshape(B, h, w, 16).permute(0, 3, 1, 2)                   # Stage 4 (0-Net: 25.04 dB mean)
-
-# [Node 5] Step 4B — 4-Step Damped Iterative Manifold Refiner with 3x3 Spatial Convs (one_step_refiner.py)
-z_k = z_comp
-for k in range(4):                                                                            # 4 damped Euler steps (dt = 0.25)
-    v_k = F_theta(z_k, z_comp, z_0, c_in, c_out, Nabla_3x3(z_k), theta_ISP, tau=(k+0.5)/4)
-    z_k = z_k + (gate / 4.0) * v_k                                                            # Stage 6 (+4-Step: 27.18 dB mean)</code></pre>
+      <div class="span-all figure-card">
+        <img src="figures/comp_fig10_algorithm_chain_dataflow.webp" alt="Algorithm 1 Dataflow Chain and Tensor Execution Diagram">
+        <div class="figure-caption">
+          <strong>Fig. 3. Algorithm 1 Dataflow Chain &amp; Tensor Execution Diagram Inside the 16-Channel Latent Space ($h=H/8, w=W/8$).</strong> <strong>(Top)</strong> The 5-node computational chain from input RAW latent $\mathbf{z}_0$ to refined sRGB latent $\hat{\mathbf{z}}_{\text{sRGB}}$; <strong>(Zoom-In A, Bottom-Left)</strong> Column-by-column construction of the $3\times 3$ Secant Jacobian matrix $J_{3\times 3}$ via axis-aligned perturbations $\pm\delta_b\mathbf{e}_b$ across $b \in \{R, G, B\}$; <strong>(Zoom-In B, Bottom-Right)</strong> Bridging the $3\times 3$ matrix $J_{3\times 3}$ and the $16$-D high-pass vector $\mathbf{z}_{\text{AC}}$ via the $144$-D Kronecker outer product $\mathbf{z}_{\text{AC}} \otimes \operatorname{vec}(J_{3\times 3} - I_3)$ and linear homomorphism projection $W_{\text{trans}} \in \mathbb{R}^{230\times 16}$.
+        </div>
       </div>
 
       <div class="span-all figure-card">
         <img src="figures/comp_fig9_step_by_step_math_and_consistency.webp" alt="Patch-Level Latent ISP Verification: 3x3 Jacobian Heatmap, 16-Ch Match and 10-Camera PSNR">
         <div class="figure-caption">
-          <strong>Fig. 3. Patch-Level Latent ISP Verification ($\mathbf{z} \in \mathbb{R}^{16}$): $3\times 3$ Secant Jacobian, 16-Channel Vector Match &amp; 10-Camera PSNR.</strong> <strong>(A)</strong> Visual heatmap of the $3\times 3$ Secant Jacobian matrix $J_{3\times 3}$ at patch $(y=7, x=8)$ of <code>Nikon D700</code>, showing diagonal WB/Gamma slope amplification ($+2.697$ on Red, $+2.219$ on Blue) and off-diagonal $3\times 3$ CCM edge mixing; <strong>(B)</strong> 16-channel latent vector match ($c_0 \dots c_{15}$) comparing 0-Net math, +1-Step Refiner, +4-Step Iterative Refiner, and true VAE-encoded ground truth $\mathcal{E}(\mathbf{x}_{\text{gt}})$; <strong>(C)</strong> 10-camera mean RGB consistency ($R^2 = 0.9978$, MAE $= 0.0055$); <strong>(D)</strong> Full-pipeline sRGB PSNR comparing 0-Net ($25.04\text{ dB}$), +1-Step ($25.29\text{ dB}$), and +4-Step Refiner ($27.18\text{ dB}$) across all 10 cameras.
+          <strong>Fig. 4. Patch-Level Latent ISP Verification ($\mathbf{z} \in \mathbb{R}^{16}$): $3\times 3$ Secant Jacobian, 16-Channel Vector Match &amp; 10-Camera PSNR.</strong> <strong>(A)</strong> Visual heatmap of the $3\times 3$ Secant Jacobian matrix $J_{3\times 3}$ at patch $(y=7, x=8)$ of <code>Nikon D700</code>, showing diagonal WB/Gamma slope amplification ($+2.697$ on Red, $+2.219$ on Blue) and off-diagonal $3\times 3$ CCM edge mixing; <strong>(B)</strong> 16-channel latent vector match ($c_0 \dots c_{15}$) comparing 0-Net math, +1-Step Refiner, +4-Step Iterative Refiner, and true VAE-encoded ground truth $\mathcal{E}(\mathbf{x}_{\text{gt}})$; <strong>(C)</strong> 10-camera mean RGB consistency ($R^2 = 0.9978$, MAE $= 0.0055$); <strong>(D)</strong> Full-pipeline sRGB PSNR comparing 0-Net ($25.04\text{ dB}$), +1-Step ($25.29\text{ dB}$), and +4-Step Refiner ($27.18\text{ dB}$) across all 10 cameras.
         </div>
       </div>
 

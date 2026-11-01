@@ -1,5 +1,5 @@
 /* ==========================================================================
-   AICAMERA Guidebook — SensorBook 기반 인터랙티브 아키텍처 교과서 공통 스타일
+   AICAMERA Guidebook — SensorBook Interactive Architecture Textbook Stylesheet
    ========================================================================== */
 @import url("https://cdn.jsdelivr.net/gh/orioncactus/pretendard@v1.3.9/dist/web/variable/pretendardvariable-dynamic-subset.min.css");
 @import url("https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;600&display=swap");
@@ -191,7 +191,7 @@ strong { font-weight: 700; }
 .chapter-hero h1 { font-size: clamp(30px, 5vw, 44px); line-height: 1.22; letter-spacing: -0.03em; margin: 10px 0 16px; }
 .lead { font-size: 18px; color: var(--text-dim); line-height: 1.7; }
 .objectives { list-style: none; padding: 18px 20px !important; margin: 24px 0 0 !important; background: var(--bg-elev); border: 1px solid var(--border); border-radius: var(--radius); display: grid; gap: 6px; box-shadow: var(--shadow); }
-.objectives::before { content: "이 장에서 다루는 핵심 주제"; display: block; font-size: 12px; letter-spacing: .1em; color: var(--text-faint); font-weight: 700; margin-bottom: 4px; }
+.objectives::before { content: "\00C774 \00C7A5\00C5D0\00C11C \00B2E4\00B8E8\00B294 \00D575\00C2EC \00C8FC\00C81C"; display: block; font-size: 12px; letter-spacing: .1em; color: var(--text-faint); font-weight: 700; margin-bottom: 4px; }
 html[lang="en"] .objectives::before { content: "KEY TOPICS IN THIS CHAPTER"; }
 .objectives li { padding-left: 24px; position: relative; margin: 0 !important; font-size: 15.5px; }
 .objectives li::before { content: ""; position: absolute; left: 4px; top: 0.62em; width: 9px; height: 9px; border-radius: 3px; background: var(--accent); opacity: .85; }
@@ -328,7 +328,7 @@ input[type="range"]::-moz-range-thumb { width: 14px; height: 14px; border-radius
 .isp-chip.off .sw::after { left: 2px; }
 .isp-chip.sel { border-color: var(--accent); box-shadow: 0 0 0 2px var(--accent-soft); }
 .isp-chip.viewing { background: var(--accent-soft); }
-.isp-chip.viewing::before { content: "보는 중"; position: absolute; top: -9px; right: 4px; font-size: 9.5px; padding: 0 4px; border-radius: 4px; background: var(--accent); color: #fff; line-height: 1.4; }
+.isp-chip.viewing::before { content: "\00BCF4\00B294 \00C911"; position: absolute; top: -9px; right: 4px; font-size: 9.5px; padding: 0 4px; border-radius: 4px; background: var(--accent); color: #fff; line-height: 1.4; }
 html[lang="en"] .isp-chip.viewing::before { content: "Viewing"; }
 .isp-ph { font-size: 14px; color: var(--text); padding-bottom: 6px; border-bottom: 1px dashed var(--border); }
 
@@ -339,7 +339,7 @@ html[lang="en"] .isp-chip.viewing::before { content: "Viewing"; }
 .callout.tip, .callout.c-info { background: color-mix(in srgb, var(--ok) 12%, transparent); border-left-color: var(--ok); }
 .callout.warn, .callout.c-warn { background: color-mix(in srgb, var(--warn) 14%, transparent); border-left-color: var(--warn); }
 .callout.deep { background: var(--accent-2-soft); border-left-color: var(--accent-2); }
-.callout.deep > strong:first-child::before { content: "심화 · "; color: var(--accent-2); }
+.callout.deep > strong:first-child::before { content: "\00C2EC\00D654 \0000B7 "; color: var(--accent-2); }
 html[lang="en"] .callout.deep > strong:first-child::before { content: "Deep Dive · "; }
 
 .formula, .eq { margin: 20px 0; padding: 14px 18px; background: var(--bg-elev); border: 1px solid var(--border); border-radius: var(--radius-sm); overflow-x: auto; position: relative; box-shadow: var(--shadow); }

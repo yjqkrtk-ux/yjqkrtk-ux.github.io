@@ -1,0 +1,721 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Ch.06 KAIST Academic &amp; Career Archive (Documents) &amp; Media Storage Architecture · KAIST Grad Works &amp; Workspace Guidebook</title>
+<meta name="description" content="KAIST graduate coursework, lab seminars, PhD defense records, and web resume (Documents/) alongside the 20 TB media archive&#x27;s Zero-ZIP &amp; EXIF integrity architecture.">
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/katex@0.16.11/dist/katex.min.css">
+<script defer src="https://cdn.jsdelivr.net/npm/katex@0.16.11/dist/katex.min.js"></script>
+<script defer src="https://cdn.jsdelivr.net/npm/katex@0.16.11/dist/contrib/auto-render.min.js"></script>
+<link rel="stylesheet" href="../css/style.css?v=1950d4d">
+<link rel="stylesheet" href="../css/glossary-tooltips.css?v=1950d4d">
+<script src="../js/glossary-data.js?v=1950d4d"></script>
+<script src="../js/common.js?v=1950d4d"></script>
+<script defer src="../js/glossary-tooltips.js?v=1950d4d"></script>
+</head>
+<body data-chapter="archive" data-root="../">
+<main class="chapter">
+
+  <header class="chapter-hero">
+    <div class="eyebrow">CHAPTER 06 · ACADEMIC ARCHIVES &amp; MEDIA STORAGE ARCHITECTURE</div>
+    <h1>KAIST Academic &amp; Career Archive (<code>Documents</code>) &amp; Media Storage Architecture (<code>Photos</code>)</h1>
+    <p class="lead">
+      Alongside the R&amp;D code monorepo (<code>Development/</code>), the master workspace (<code>GoogleDrive</code>) comprises
+      over a decade of <strong>KAIST MS/PhD academic and research records (1,200+ documents) and the web resume deployment pipeline (<code>Documents/</code>)</strong>,
+      together with a <strong>7-category master media storage architecture (<code>Photos/</code>)</strong> synchronized at lossless Original Quality to 20 TB of cloud storage.
+    </p>
+    <ul class="objectives">
+      <li>Understand the four academic pillars under <code>Documents/Documents/</code> (449 graduate coursework files, 430 UMLS lab seminars, 129 PhD defense records, and 220+ lab administration documents) alongside the CIS presentation archive.</li>
+      <li>Master the <strong>100% Deploy Parity</strong> rule between the responsive/print-ready master web resume (<code>resume_yongjoon_song.html</code>) and its GitHub Pages deployment copy (<code>deploy/index.html</code>), as well as the <code>Personal/</code> privacy isolation gate.</li>
+      <li>Examine the <strong>7 top-level category isolation architecture</strong> of <code>Photos/</code> and its four immutable operating charters: <strong>Zero-ZIP, Zero Non-Media, Daily Feed Purity, and EXIF Integrity</strong>.</li>
+      <li>Experiment with the <strong>AI Photo Memory Studio (YuNet + SFace 128-D + YOLO11n + RAG)</strong>—which mounts the media archive in Read-Only mode—and its Dual-Viewer Split-Wipe engine.</li>
+    </ul>
+  
+    <div class="ch-pubs" role="region" aria-label="Related Papers and Patents">
+      <span class="ch-pubs-label">PAPERS &amp; PATENTS</span>
+      <a class="pub-tag paper" href="https://doi.org/10.1109/OJEMB.2021.3076156" target="_blank" rel="noopener" title="KAIST Ph.D. Dissertation Core [1] — Local Alignment of DNA Sequence Based on Deep Reinforcement Learning">📄 Ph.D. Core Paper 1 (IEEE OJEMB &#x27;21) ↗</a> <a class="pub-tag paper" href="https://doi.org/10.1109/OJEMB.2021.3055424" target="_blank" rel="noopener" title="KAIST Ph.D. Dissertation Core [2] — Pairwise Heuristic Sequence Alignment Algorithm Based on Deep Reinforcement Learning">📄 Ph.D. Core Paper 2 (IEEE OJEMB &#x27;21) ↗</a> <a class="pub-tag code" href="https://scholar.google.com/citations?user=H3AQNpAAAAAJ" target="_blank" rel="noopener" title="Google Scholar — Yongjoon Song (All Publications &amp; Patent Families)">🎓 Google Scholar Profile ↗</a>
+    </div>
+  </header>
+
+  <!-- ============================================================ 01 -->
+  <section id="sec-documents-arch">
+    <h2><code>Documents/</code> Master Repository — 10-Year KAIST Graduate Academic &amp; Research Archive (1,200+ Documents)</h2>
+    <p>
+      The <a class="src" href="../../../Documents/README.md" target="_blank" rel="noopener" title="Documents/README.md">Documents/README.md</a> repository is a dedicated master document store that separates academic literature, degree examination records, and career resumes from the R&amp;D source code monorepo (<code>Development/</code>) to maximize long-term archival integrity.
+      The public academic division <a class="src" href="../../../Documents/Documents/README.md" target="_blank" rel="noopener" title="Documents/Documents/README.md">Documents/Documents/README.md</a> systematically preserves <strong>over 1,200 academic and research documents</strong> accumulated between 2010 and 2021 in the Wireless &amp; Mobile Communication Systems Lab (UMLS, advised by Prof. Dong-Ho Cho) in the KAIST School of Electrical Engineering.
+    </p>
+
+    <figure class="diagram" id="fig-documents-tree">
+      <svg viewBox="0 0 880 300" role="img" aria-label="Documents Master Repository 3-Pillar Architecture Diagram (Documents, Resume, Personal)">
+        <defs>
+          <marker id="da1" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="6" markerHeight="6" orient="auto"><path d="M0 0L10 5L0 10z" fill="var(--accent)"/></marker>
+          <marker id="da2" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="6" markerHeight="6" orient="auto"><path d="M0 0L10 5L0 10z" fill="var(--bad)"/></marker>
+        </defs>
+        <!-- Root node -->
+        <rect x="300" y="12" width="280" height="48" rx="10" class="f-acc-soft"/>
+        <text x="440" y="34" text-anchor="middle" class="t-acc">GoogleDrive / Documents</text>
+        <text x="440" y="50" text-anchor="middle" class="t-mono">kaist-academic-documents (Master Repo)</text>
+
+        <!-- Branches -->
+        <line x1="360" y1="60" x2="155" y2="96" class="s-acc" stroke-width="2" marker-end="url(#da1)"/>
+        <line x1="440" y1="60" x2="440" y2="96" class="s-acc" stroke-width="2" marker-end="url(#da1)"/>
+        <line x1="520" y1="60" x2="725" y2="96" stroke="var(--bad)" stroke-width="2" stroke-dasharray="5 4" marker-end="url(#da2)"/>
+
+        <!-- Col 1: Documents/Documents -->
+        <rect x="16" y="100" width="278" height="184" rx="12" class="f-elev"/>
+        <text x="155" y="124" text-anchor="middle" class="t" style="font-weight:700">1. Documents/ (Git · 1,200+ Files)</text>
+        <text x="32" y="148" class="t-mono">• Academic_Coursework/ (449)</text>
+        <text x="42" y="165" class="t-dim">EE405·EE528·EE686·EE827 (15+ Courses)</text>
+        <text x="32" y="186" class="t-mono">• Lab_Meetings/ (430)</text>
+        <text x="42" y="203" class="t-dim">2010–2020 UMLS Weekly Seminar &amp; Club</text>
+        <text x="32" y="224" class="t-mono">• PhD_Administration/ (129)</text>
+        <text x="42" y="241" class="t-dim">QE, Proposal, Defense &amp; Dissertation</text>
+        <text x="32" y="262" class="t-mono">• Lab_Admin (220+) &amp; Samsung_CIS</text>
+
+        <!-- Col 2: Documents/Resume -->
+        <rect x="306" y="100" width="268" height="184" rx="12" class="f-acc-soft"/>
+        <text x="440" y="124" text-anchor="middle" class="t-acc">2. Resume/ (Git · Web Portfolio)</text>
+        <text x="322" y="148" class="t-mono">• resume_yongjoon_song.html</text>
+        <text x="332" y="165" class="t-dim">Master 2-Col Web &amp; A4 Print CV</text>
+        <text x="322" y="186" class="t-mono">• deploy/index.html</text>
+        <text x="332" y="203" class="t-dim">yjqkrtk-ux.github.io 100% Parity</text>
+        <text x="322" y="224" class="t-mono">• Yongjoon Song — Resume.pdf</text>
+        <text x="332" y="241" class="t-dim">Browser-Rendered PDF &amp; CONTEXT.md</text>
+        <text x="322" y="262" class="t-mono">• Linkedin/ &amp; Template/ Assets</text>
+
+        <!-- Col 3: Documents/Personal -->
+        <rect x="586" y="100" width="278" height="184" rx="12" class="f-surface" style="stroke:var(--bad);stroke-dasharray:6 4"/>
+        <text x="725" y="124" text-anchor="middle" class="t" style="fill:var(--bad);font-weight:700">3. Personal/ (.gitignore Isolated)</text>
+        <text x="602" y="156" class="t-mono">• Private Administrative Vault</text>
+        <text x="612" y="176" class="t-dim">Encrypted Local/Cloud Storage Only</text>
+        <text x="602" y="206" class="t-mono">• Archives/</text>
+        <text x="612" y="226" class="t-dim">Isolated Legacy Backup Archives</text>
+        <text x="602" y="260" class="t-mono" style="fill:var(--bad)">Rule 5: Zero Git Tracking / Exposure</text>
+      </svg>
+      <figcaption><b>Figure 6-1.</b> Three-pillar architecture of the <code>Documents/</code> master repository (Public Academic Archive · Web Resume Deployment Pipeline · Private Security-Isolated Vault). Sources: <a class="src" href="../../../Documents/README.md" target="_blank" rel="noopener" title="Documents/README.md">Documents/README.md</a> · <a class="src" href="../../../Documents/Documents/README.md" target="_blank" rel="noopener" title="Documents/Documents/README.md">Documents/Documents/README.md</a>.</figcaption>
+    </figure>
+
+    <div class="tbl-wrap">
+      <table class="tbl">
+        <thead>
+          <tr>
+            <th>Subdirectory</th>
+            <th>Scale</th>
+            <th>Core Contents &amp; Representative Records</th>
+            <th>Verified Source Links</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr>
+            <td><strong><code>Academic_Coursework/</code></strong></td>
+            <td><code>449 files</code></td>
+            <td>Lecture slides, problem-set solutions, and term project code across 15+ graduate courses in KAIST EE &amp; Physics (Electronic Design Lab EE405, Wireless Networks EE686, Information Theory EE528, Convex Optimization EE827, Modern Control Theory, NMR Physics Lab, etc.)</td>
+            <td><a class="src" href="../../../Documents/Documents/Academic_Coursework/README.md" target="_blank" rel="noopener" title="Documents/Documents/Academic_Coursework/README.md">Academic_Coursework/README.md</a></td>
+          </tr>
+          <tr>
+            <td><strong><code>Lab_Meetings/</code></strong></td>
+            <td><code>430 files</code></td>
+            <td>Weekly research progress reports and journal-club slide decks (2010–2020) from the UMLS Lab (Averaged-DQN, Double DQN, Minimap2, MoleculeNet, rawMSA, 85 kHz OLEV power control, SWIPT beamforming)</td>
+            <td><a class="src" href="../../../Documents/Documents/Lab_Meetings/README.md" target="_blank" rel="noopener" title="Documents/Documents/Lab_Meetings/README.md">Lab_Meetings/README.md</a></td>
+          </tr>
+          <tr>
+            <td><strong><code>PhD_Administration/</code></strong></td>
+            <td><code>129 files</code></td>
+            <td>PhD Qualifying Exam (QE) past papers &amp; solutions, dissertation proposal evaluation reports, committee defense resolutions, full PhD dissertation PDF, and BK21 Plus research achievement records</td>
+            <td><a class="src" href="../../../Documents/Documents/PhD_Administration/README.md" target="_blank" rel="noopener" title="Documents/Documents/PhD_Administration/README.md">PhD_Administration/README.md</a> · <a class="src" href="../../../Documents/Documents/PhD_Administration/%EC%86%A1%EC%9A%A9%EC%A4%80%EB%B0%95%EC%82%AC%EB%85%BC%EB%AC%B8.pdf" target="_blank" rel="noopener" title="Documents/Documents/PhD_Administration/%EC%86%A1%EC%9A%A9%EC%A4%80%EB%B0%95%EC%82%AC%EB%85%BC%EB%AC%B8.pdf">PhD_Dissertation_Song.pdf</a></td>
+          </tr>
+          <tr>
+            <td><strong><code>Lab_Administration/</code></strong></td>
+            <td><code>220+ files</code></td>
+            <td>Procurement quotes for deep-learning GPU servers, oscilloscopes, and vector network analyzers, KAIST lab asset registries, periodic safety inspection certificates, and invention disclosure forms</td>
+            <td><a class="src" href="../../../Documents/Documents/Lab_Administration/README.md" target="_blank" rel="noopener" title="Documents/Documents/Lab_Administration/README.md">Lab_Administration/README.md</a></td>
+          </tr>
+          <tr>
+            <td><strong><code>Samsung_CIS_Presentations/</code> &amp; <code>Research_Ideas/</code></strong></td>
+            <td><code>6+ files</code></td>
+            <td>S.LSI Sensor Business Team S/W Co-optimization presentation decks (<code>ISOCELL_UniSoC.pptx</code>, dual-camera concepts, <code>SSCR CIS SW AP Solution</code>) and cloud shortcuts for distributed sensor-SoC learning (<code>.lnk</code> preservation rule)</td>
+            <td><a class="src" href="../../../Documents/Documents/Samsung_CIS_Presentations/ISOCELL_UniSoC.pptx" target="_blank" rel="noopener" title="Documents/Documents/Samsung_CIS_Presentations/ISOCELL_UniSoC.pptx">ISOCELL_UniSoC.pptx</a></td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+  </section>
+
+  <!-- ============================================================ 02 -->
+  <section id="sec-resume-parity">
+    <h2>Professional Web Resume System (<code>Documents/Resume/</code>) &amp; Deploy Parity Protocol</h2>
+    <p>
+      The <a class="src" href="../../../Documents/Resume/README.md" target="_blank" rel="noopener" title="Documents/Resume/README.md">Resume/README.md</a> directory manages a <strong>single-file responsive/print-optimized HTML5 resume</strong> and static web deployment pipeline tailored for global technology and advanced R&amp;D roles.
+      The master source <a class="src" href="../../../Documents/Resume/resume_yongjoon_song.html" target="_blank" rel="noopener" title="Documents/Resume/resume_yongjoon_song.html">resume_yongjoon_song.html</a> is self-contained with zero external dependencies, combining a 2-column dark-navy sidebar layout with <code>@media print</code> CSS rules so that interactive browser viewing and high-resolution A4 PDF printing are served from a single source of truth.
+    </p>
+
+    <div class="grid-2">
+      <article class="card">
+        <span class="badge b-on">Rule · Deploy Parity</span>
+        <h3>100% Master ↔ Deployment Copy Parity Rule</h3>
+        <p>
+          Whenever <code>Resume/resume_yongjoon_song.html</code> is updated, an identical byte-for-byte copy must be synced to the GitHub Pages (<code>https://yjqkrtk-ux.github.io</code>) deployment target <a class="src" href="../../../Documents/Resume/deploy/index.html" target="_blank" rel="noopener" title="Documents/Resume/deploy/index.html">deploy/index.html</a>.
+          Furthermore, every technical specification (ISOCELL HP5 0.5 µm 200 MP E2E AI Remosaic, LSP AI Camera 48× bus compression at 30.0 FPS, DQNAlign in <i>IEEE OJEMB</i>, and US Patent 12,496,917 B2) is cross-verified against primary evidence in <a class="src" href="../../../Documents/Resume/CONTEXT.md" target="_blank" rel="noopener" title="Documents/Resume/CONTEXT.md">Resume/CONTEXT.md</a>.
+        </p>
+      </article>
+      <article class="card">
+        <span class="badge b-off">Rule 5 · Privacy Gate</span>
+        <h3><code>Documents/Personal/</code> Privacy Isolation Gate</h3>
+        <p>
+          The private administrative directory (<code>Personal/</code>) and local financial ledger files are strictly excluded from Git tracking and public documentation exposure by both <code>.gitignore</code> and the guidebook's build-time <strong>Privacy Gate</strong>.
+        </p>
+      </article>
+    </div>
+  </section>
+
+  <!-- ============================================================ 03 -->
+  <section id="sec-photos-master">
+    <h2><code>Photos/</code> Large-Scale Media Storage Architecture — 7 Categories &amp; 4 Integrity Charters</h2>
+    <p>
+      The <a class="src" href="../../../Photos/README.md" target="_blank" rel="noopener" title="Photos/README.md">Photos/README.md</a> directory serves as the <strong>master media repository</strong>, systematically isolating high-volume RAW/4K assets and chronological camera captures.
+      All media files synchronize losslessly at <strong>Original Quality</strong> with the cloud backup client, while the local desktop cache is isolated on <code>D:\GoogleDriveCache</code> to prevent OS partition (C: drive) exhaustion.
+    </p>
+
+    <figure class="diagram" id="fig-photos-7cat">
+      <svg viewBox="0 0 1080 320" role="img" aria-label="Photos 7 Top-Level Master Categories, Lossless Cloud Backup, and AI Studio Integration">
+        <defs>
+          <marker id="pa1" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="6" markerHeight="6" orient="auto"><path d="M0 0L10 5L0 10z" fill="var(--accent)"/></marker>
+          <marker id="pa2" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="6" markerHeight="6" orient="auto"><path d="M0 0L10 5L0 10z" fill="var(--ok)"/></marker>
+        </defs>
+
+        <!-- Top Charter Banner -->
+        <rect x="19" y="12" width="1042" height="44" rx="10" class="f-surface"/>
+        <text x="540" y="32" text-anchor="middle" class="t-acc">Photos/ Four Immutable Operating Charters (Photos/GEMINI.md)</text>
+        <text x="540" y="48" text-anchor="middle" class="t-mono">1. Zero-ZIP (No Archives) · 2. Zero Non-Media · 3. Daily Feed Purity · 4. EXIF DateTimeOriginal Integrity</text>
+
+        <!-- 7 Category Boxes -->
+        <g transform="translate(19, 70)">
+          <rect x="0" y="0" width="142" height="118" rx="10" class="f-acc-soft"/>
+          <text x="71" y="24" text-anchor="middle" class="t-acc">1. Events/</text>
+          <text x="71" y="46" text-anchor="middle" class="t-mono">RAW &amp; 4K Master</text>
+          <text x="71" y="66" text-anchor="middle" class="t-dim">Milestone Originals</text>
+          <text x="71" y="84" text-anchor="middle" class="t-dim">High-Res Studio</text>
+          <text x="71" y="102" text-anchor="middle" class="t-dim">Uncompressed Store</text>
+
+          <rect x="150" y="0" width="142" height="118" rx="10" class="f-acc-soft"/>
+          <text x="221" y="24" text-anchor="middle" class="t-acc">2. Travel/</text>
+          <text x="221" y="46" text-anchor="middle" class="t-mono">Milestones</text>
+          <text x="221" y="66" text-anchor="middle" class="t-dim">Overseas Archives</text>
+          <text x="221" y="84" text-anchor="middle" class="t-dim">By Region &amp; Year</text>
+          <text x="221" y="102" text-anchor="middle" class="t-dim">Isolated from Daily</text>
+
+          <rect x="300" y="0" width="142" height="118" rx="10" class="f-acc-soft"/>
+          <text x="371" y="24" text-anchor="middle" class="t-acc">3. Business_Trips/</text>
+          <text x="371" y="46" text-anchor="middle" class="t-mono">Global Tech</text>
+          <text x="371" y="66" text-anchor="middle" class="t-dim">Conferences &amp; Trips</text>
+          <text x="371" y="84" text-anchor="middle" class="t-dim">Field Tech Media</text>
+          <text x="371" y="102" text-anchor="middle" class="t-dim">Per-Trip Folders</text>
+
+          <rect x="450" y="0" width="142" height="118" rx="10" class="f-acc-soft"/>
+          <text x="521" y="24" text-anchor="middle" class="t-acc">4. Family_Archive/</text>
+          <text x="521" y="46" text-anchor="middle" class="t-mono">Legacy Media</text>
+          <text x="521" y="66" text-anchor="middle" class="t-dim">Digitized Camcorder</text>
+          <text x="521" y="84" text-anchor="middle" class="t-dim">Long-Term Archive</text>
+          <text x="521" y="102" text-anchor="middle" class="t-dim">AI Vision Indexed</text>
+
+          <rect x="600" y="0" width="142" height="118" rx="10" class="f-elev"/>
+          <text x="671" y="24" text-anchor="middle" class="t" style="font-weight:700">5. Daily/</text>
+          <text x="671" y="46" text-anchor="middle" class="t-mono">YYYY Feed</text>
+          <text x="671" y="66" text-anchor="middle" class="t-dim">Pure Camera Shots</text>
+          <text x="671" y="84" text-anchor="middle" class="t-dim">YYYYMMDD_HHMMSS</text>
+          <text x="671" y="102" text-anchor="middle" class="t-dim">No Captures/Web</text>
+
+          <rect x="750" y="0" width="142" height="118" rx="10" class="f-surface"/>
+          <text x="821" y="24" text-anchor="middle" class="t">6. Screenshots/</text>
+          <text x="821" y="46" text-anchor="middle" class="t-mono">UI Isolator</text>
+          <text x="821" y="66" text-anchor="middle" class="t-dim">Screen Captures</text>
+          <text x="821" y="84" text-anchor="middle" class="t-dim">Mobile &amp; PC UI</text>
+          <text x="821" y="102" text-anchor="middle" class="t-dim">Isolated from Daily</text>
+
+          <rect x="900" y="0" width="142" height="118" rx="10" class="f-surface"/>
+          <text x="971" y="24" text-anchor="middle" class="t">7. Downloads/</text>
+          <text x="971" y="46" text-anchor="middle" class="t-mono">External Media</text>
+          <text x="971" y="66" text-anchor="middle" class="t-dim">Saved Web Images</text>
+          <text x="971" y="84" text-anchor="middle" class="t-dim">Messenger Media</text>
+          <text x="971" y="102" text-anchor="middle" class="t-dim">Isolated from Daily</text>
+        </g>
+
+        <!-- Downward arrows to Cloud Sync & AI Memory Studio -->
+        <line x1="280" y1="194" x2="280" y2="228" class="s-acc" stroke-width="2.2" marker-end="url(#pa1)"/>
+        <line x1="800" y1="194" x2="800" y2="228" stroke="var(--ok)" stroke-width="2.2" marker-end="url(#pa2)"/>
+
+        <rect x="19" y="232" width="510" height="72" rx="12" class="f-elev"/>
+        <text x="274" y="258" text-anchor="middle" class="t" style="font-weight:700">Google One (20TB) · Lossless Original Quality Sync</text>
+        <text x="274" y="280" text-anchor="middle" class="t-mono">Local Cache: D:\GoogleDriveCache · EXIF DateTimeOriginal Index</text>
+
+        <rect x="551" y="232" width="510" height="72" rx="12" class="f-acc-soft"/>
+        <text x="806" y="258" text-anchor="middle" class="t-acc">AI Photo Memory Studio (Read-Only Mount · server.py)</text>
+        <text x="806" y="280" text-anchor="middle" class="t-mono">YuNet + SFace 128-D · YOLO11n · Graph RAG</text>
+      </svg>
+      <figcaption><b>Figure 6-2.</b> The 7 master categories of <code>Photos/</code> and their integration with lossless cloud synchronization and the Read-Only AI Vision Studio. Defined in: <a class="src" href="../../../Photos/README.md" target="_blank" rel="noopener" title="Photos/README.md">Photos/README.md</a> · <a class="src" href="../../../Photos/GEMINI.md" target="_blank" rel="noopener" title="Photos/GEMINI.md">Photos/GEMINI.md</a>.</figcaption>
+    </figure>
+
+    <div class="tbl-wrap">
+      <table class="tbl">
+        <thead>
+          <tr>
+            <th>#</th>
+            <th>Master Category</th>
+            <th>Role Classification</th>
+            <th>Architectural Isolation Principle</th>
+            <th>Subdirectory Scale</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr><td><code>01</code></td><td><strong><code>Photos/Events/</code></strong></td><td><span class='badge b-area'>Milestone & Event Originals</span></td><td>Isolated preservation of high-resolution RAW photos and 4K master video originals</td><td style='white-space:nowrap;'><code>3</code> subfolders</td></tr>
+          <tr><td><code>02</code></td><td><strong><code>Photos/Travel/</code></strong></td><td><span class='badge b-area'>Overseas Travel Archive</span></td><td>Dedicated storage of travel media organized by region and year</td><td style='white-space:nowrap;'><code>5</code> subfolders</td></tr>
+          <tr><td><code>03</code></td><td><strong><code>Photos/Business_Trips/</code></strong></td><td><span class='badge b-area'>Global Tech Business Trips</span></td><td>On-site engineering records from international conferences and tech business trips</td><td style='white-space:nowrap;'><code>6</code> subfolders</td></tr>
+          <tr><td><code>04</code></td><td><strong><code>Photos/Family_Archive/</code></strong></td><td><span class='badge b-area'>Family Media Archive</span></td><td>Long-term preservation of digitized legacy camcorder videos and family photographs</td><td style='white-space:nowrap;'><code>2</code> subfolders</td></tr>
+          <tr><td><code>05</code></td><td><strong><code>Photos/Daily/</code></strong></td><td><span class='badge b-area'>Chronological Daily Feed</span></td><td>Pure camera-captured photos and videos (standardized naming: YYYYMMDD_HHMMSS)</td><td style='white-space:nowrap;'><code>16</code> subfolders</td></tr>
+          <tr><td><code>06</code></td><td><strong><code>Photos/Screenshots/</code></strong></td><td><span class='badge b-area'>UI Screenshot Quarantine</span></td><td>Isolated mobile/PC screen captures (prevents contamination of the Daily feed)</td><td style='white-space:nowrap;'><code>7</code> subfolders</td></tr>
+          <tr><td><code>07</code></td><td><strong><code>Photos/Downloads/</code></strong></td><td><span class='badge b-area'>External Download Quarantine</span></td><td>Isolated storage for web-saved and messenger-received media files</td><td style='white-space:nowrap;'><code>14</code> subfolders</td></tr>
+        </tbody>
+      </table>
+    </div>
+
+    <div class="callout warn">
+      <b class="title">Why Are Zero-ZIP and Purity of the Daily Feed Critical?</b>
+      Cloud photo backup clients cannot inspect the contents of <code>.zip</code>, <code>.7z</code>, or <code>.tar</code> archives, meaning any media left inside compressed bundles is omitted from timeline indexing (<strong>Rule 2: Zero-ZIP Policy</strong>).
+      Furthermore, mixing screen captures or downloaded web images into <code>Daily/</code> pollutes chronological timelines and degrades AI face/scene clustering quality, so they are strictly segregated into <code>Screenshots/</code> and <code>Downloads/</code> (<strong>Rule 4: Purity of Daily Feed</strong>).
+    </div>
+
+    <!-- Interactive Simulator 1: Workspace & Media Archive Governance Auditor -->
+    <section class="sim" id="sim-photos-auditor">
+      <div class="sim-head">
+        <span class="sim-tag">SIMULATOR 01 · ARCHIVE GOVERNANCE</span>
+        <h3><code>Photos/</code> · <code>Documents/</code> Master Archive Auto-Routing &amp; Integrity Audit Simulator</h3>
+      </div>
+      <div class="sim-body side">
+        <div class="sim-view">
+          <canvas id="cv-archive-audit"></canvas>
+        </div>
+        <div class="sim-controls">
+          <div class="ctrl">
+            <span>Incoming File Scenario</span>
+            <div class="seg" id="aud-scenario" style="display:grid;grid-template-columns:1fr 1fr;gap:5px;">
+              <button type="button" data-value="wedding">High-Volume Media</button>
+              <button type="button" data-value="academic">Academic / CV / Vault</button>
+              <button type="button" data-value="mixed" class="on" style="grid-column:1 / -1;">ALL · Mixed Stream (11 Types)</button>
+            </div>
+          </div>
+          <div class="ctrl">
+            <span>Zero-ZIP Policy (Rule 2)</span>
+            <div class="seg" id="aud-zip">
+              <button type="button" data-value="enforce" class="on">Auto-Extract (ON)</button>
+              <button type="button" data-value="ignore">Leave Zipped (Violation)</button>
+            </div>
+          </div>
+          <div class="ctrl">
+            <span>Non-Media &amp; Capture Isolation (Rules 3 &amp; 4)</span>
+            <div class="seg" id="aud-purity">
+              <button type="button" data-value="enforce" class="on">Strict Routing (ON)</button>
+              <button type="button" data-value="mix">Mix into Daily/ (Violation)</button>
+            </div>
+          </div>
+          <label class="ctrl">
+            <span>EXIF Integrity &amp; Deploy Parity Audit Strictness <output id="aud-strict-out">100%</output></span>
+            <input type="range" id="aud-strict" min="50" max="100" step="10" value="100">
+          </label>
+        </div>
+      </div>
+      <div class="sim-readout">
+        <div class="stat"><span class="k">Cloud Backup Index Rate</span><span class="v" id="aud-kpi-sync">—</span></div>
+        <div class="stat"><span class="k">Daily/ Feed Purity</span><span class="v" id="aud-kpi-purity">—</span></div>
+        <div class="stat"><span class="k">Misplaced Non-Media</span><span class="v" id="aud-kpi-nonmedia">—</span></div>
+        <div class="stat"><span class="k">Isolation &amp; Parity Gate</span><span class="v" id="aud-kpi-gate">—</span></div>
+      </div>
+      <div class="sim-note">
+        Try this: ① Switch the <b>Zero-ZIP Policy</b> to <b>Leave Zipped (Violation)</b> to observe how media inside large RAW archives drops out of cloud timeline indexing. ② Switch <b>Non-Media &amp; Capture Isolation</b> to <b>Mix into Daily/ (Violation)</b> to see how documents and UI screenshots contaminate <code>Photos/Daily/</code>.
+      </div>
+    </section>
+  </section>
+
+  <!-- ============================================================ 04 -->
+  <section id="sec-memory-studio">
+    <h2>AI Photo Memory Studio (<code>4_Photo_Memory_Studio</code>) — Read-Only Indexing &amp; Dual Viewer</h2>
+    <p>
+      <code>Development/5_Household_and_Life_Automation/4_Photo_Memory_Studio/</code> (<a class="src" href="../../5_Household_and_Life_Automation/4_Photo_Memory_Studio/server.py#L30" target="_blank" rel="noopener" title="5_Household_and_Life_Automation/4_Photo_Memory_Studio/server.py:30">4_Photo_Memory_Studio/server.py</a>) mounts the <code>Photos/</code> storage in strict <strong>Read-Only mode</strong> to preserve original file and EXIF integrity (Rule 6), combining a local SQLite index database with a multimodal vision pipeline for searching and comparing large photo and video collections.
+    </p>
+
+    <div class="formula">
+      $$d_{\cos}(\mathbf{e}_i, \mathbf{e}_j) = 1 - \frac{\mathbf{e}_i \cdot \mathbf{e}_j}{\|\mathbf{e}_i\|_2 \, \|\mathbf{e}_j\|_2} \le \tau_{\text{face}} \quad (\mathbf{e} \in \mathbb{R}^{128}, \; \tau_{\text{face}} = 0.55)$$
+      <div class="where">
+        where \(\mathbf{e}_i \in \mathbb{R}^{128}\) is the 128-dimensional L2-normalized embedding vector extracted by the <strong>SFace</strong> network from facial regions detected by OpenCV <strong>YuNet</strong> (confidence \(\ge 0.60\)).
+        Hierarchical clustering under cosine distance \(d_{\cos} \le 0.55\) is fused with <strong>YOLO11n</strong> object tags and Graph RAG to answer natural-language queries.
+      </div>
+    </div>
+
+    <!-- Interactive Simulator 2: SFace 128-D Clustering & Dual-Viewer Split-Wipe -->
+    <section class="sim" id="sim-memory-studio">
+      <div class="sim-head">
+        <span class="sim-tag">SIMULATOR 02 · AI PHOTO MEMORY STUDIO</span>
+        <h3>YuNet + SFace 128-D Identity Clustering &amp; Dual-Viewer Split-Wipe Comparator</h3>
+      </div>
+      <div class="sim-body side">
+        <div class="sim-view">
+          <canvas id="cv-studio-sim"></canvas>
+        </div>
+        <div class="sim-controls">
+          <div class="ctrl">
+            <span>Studio Simulation Mode</span>
+            <div class="seg" id="st-mode">
+              <button type="button" data-value="wipe" class="on">Dual-Viewer Split-Wipe</button>
+              <button type="button" data-value="cluster">SFace 128-D Clustering</button>
+            </div>
+          </div>
+          <label class="ctrl">
+            <span>Split-Wipe Position / Loupe X-Coord <output id="st-wipe-out">52%</output></span>
+            <input type="range" id="st-wipe" min="10" max="90" step="1" value="52">
+          </label>
+          <label class="ctrl">
+            <span>SFace Cosine Distance Threshold (\(\tau_{\text{face}}\)) <output id="st-tau-out">0.55</output></span>
+            <input type="range" id="st-tau" min="0.25" max="0.85" step="0.05" value="0.55">
+          </label>
+          <label class="ctrl">
+            <span>AI Remastering Gain (Legacy Video Restoration) <output id="st-enh-out">1.35×</output></span>
+            <input type="range" id="st-enh" min="1.0" max="1.8" step="0.05" value="1.35">
+          </label>
+        </div>
+      </div>
+      <div class="sim-readout">
+        <div class="stat"><span class="k">Mount Mode</span><span class="v" id="st-kpi-mount">Read-Only (EXIF Safe)</span></div>
+        <div class="stat"><span class="k">Indexing Engine</span><span class="v" id="st-kpi-total">SQLite + 128-D Vector</span></div>
+        <div class="stat"><span class="k">Identity Clusters</span><span class="v" id="st-kpi-clusters">—</span></div>
+        <div class="stat"><span class="k">Cluster Purity / PSNR Gain</span><span class="v" id="st-kpi-quality">—</span></div>
+      </div>
+      <div class="sim-note">
+        Try this: ① In <b>Dual-Viewer Split-Wipe</b> mode, drag the slider to compare low-light legacy camcorder footage (left) against AI color-graded/denoised restoration (right) and the synchronized zoom loupe (bottom-right). ② Switch to <b>SFace 128-D Clustering</b> mode and adjust \(\tau_{\text{face}}\) to observe the trade-off between over-splitting and false-merging around the optimal threshold (\(\tau=0.55\)).
+      </div>
+    </section>
+  </section>
+
+  <section class="keypoints" id="summary">
+    <h2>Key Takeaways · Chapter 06</h2>
+    <ol>
+      <li><strong><code>Documents/</code> Master Archive</strong>: Preserves 10 years of KAIST graduate coursework (449 files), UMLS lab seminars (430 files), PhD defense records and dissertation PDF (129 files), and lab administration records (220+ files), while isolating <code>Personal/</code> behind <code>.gitignore</code> and the Privacy Gate.</li>
+      <li><strong>Web Resume Deploy Parity</strong>: <code>Resume/resume_yongjoon_song.html</code> and <code>Resume/deploy/index.html</code> maintain 100% parity at all times, serving both the interactive web portfolio and A4 print PDF from a single source.</li>
+      <li><strong><code>Photos/</code> 7 Categories &amp; 4 Charters</strong>: Enforces a 7-folder top-level taxonomy governed by Zero-ZIP, Zero Non-Media, Daily Feed Purity, and EXIF preservation rules to guarantee lossless cloud backup integrity.</li>
+      <li><strong>AI Photo Memory Studio</strong>: Mounts <code>Photos/</code> in Read-Only mode to perform YuNet+SFace 128-D clustering, YOLO11n object tagging, Graph RAG search, and Dual-Viewer Split-Wipe comparison without altering source files.</li>
+    </ol>
+  </section>
+
+<script>
+document.addEventListener("DOMContentLoaded", () => {
+  // =========================================================================
+  // Simulator 1: Photos & Documents Archive Governance Auditor
+  // =========================================================================
+  let audScenario = "mixed";
+  let audZip = "enforce";
+  let audPurity = "enforce";
+  let audStrict = 100;
+
+  const SCENARIOS = {
+    mixed: [
+      { name: "Studio_Master_RAW.zip (130GB)", kind: "zip_media", target: "Photos/Events/", sizeGB: 130 },
+      { name: "Event_Main_4K_60fps.mp4", kind: "media_milestone", target: "Photos/Events/", sizeGB: 18 },
+      { name: "Travel_Sequence_01.jpg", kind: "media_milestone", target: "Photos/Travel/", sizeGB: 4.2 },
+      { name: "Tech_Conference_Demo.jpg", kind: "media_milestone", target: "Photos/Business_Trips/", sizeGB: 1.8 },
+      { name: "Legacy_Camcorder_Clip.mp4", kind: "media_family", target: "Photos/Family_Archive/", sizeGB: 45 },
+      { name: "20260501_142010_Daily.jpg", kind: "media_daily", target: "Photos/Daily/2026/", sizeGB: 8.5 },
+      { name: "Screenshot_Mobile_UI.png", kind: "screenshot", target: "Photos/Screenshots/", sizeGB: 1.1 },
+      { name: "Messenger_Saved_Img.webp", kind: "download", target: "Photos/Downloads/", sizeGB: 0.9 },
+      { name: "EE827_Convex_Opt_Notes.pdf", kind: "doc_academic", target: "Documents/Documents/", sizeGB: 0.4 },
+      { name: "resume_yongjoon_song.html", kind: "doc_resume", target: "Documents/Resume/", sizeGB: 0.1 },
+      { name: "Private_Admin_Record.pdf", kind: "doc_personal", target: "Personal/ (.gitignore)", sizeGB: 0.2 }
+    ],
+    wedding: [
+      { name: "Event_Highlight_4K.mp4", kind: "media_milestone", target: "Photos/Events/", sizeGB: 6.5 },
+      { name: "Studio_Full_RAW_Set.zip", kind: "zip_media", target: "Photos/Events/", sizeGB: 130 },
+      { name: "Snap_Archive_Bundle.zip", kind: "zip_media", target: "Photos/Events/", sizeGB: 24 },
+      { name: "Overseas_Travel_RAW_A.jpg", kind: "media_milestone", target: "Photos/Travel/", sizeGB: 32 },
+      { name: "Overseas_Travel_RAW_B.jpg", kind: "media_milestone", target: "Photos/Travel/", sizeGB: 19 },
+      { name: "Screenshot_Itinerary.png", kind: "screenshot", target: "Photos/Screenshots/", sizeGB: 0.5 }
+    ],
+    academic: [
+      { name: "KAIST_PhD_Dissertation.pdf", kind: "doc_academic", target: "Documents/PhD_Admin/", sizeGB: 0.8 },
+      { name: "UMLS_Weekly_Seminar_DQN.pptx", kind: "doc_academic", target: "Documents/Lab_Meetings/", sizeGB: 1.2 },
+      { name: "ISOCELL_UniSoC_CoOpt.pptx", kind: "doc_academic", target: "Documents/Samsung_CIS/", sizeGB: 0.6 },
+      { name: "resume_yongjoon_song.html", kind: "doc_resume", target: "Resume/ + deploy/", sizeGB: 0.1 },
+      { name: "Restricted_Personal_Doc.pdf", kind: "doc_personal", target: "Personal/ (.gitignore)", sizeGB: 0.1 },
+      { name: "Global_R&D_Forum_Photo.jpg", kind: "media_milestone", target: "Photos/Business_Trips/", sizeGB: 3.4 }
+    ]
+  };
+
+  const audCanvas = SB.canvas("cv-archive-audit", 315, (ctx, W, H, P) => {
+    const items = SCENARIOS[audScenario] || SCENARIOS.mixed;
+    const zipOk = audZip === "enforce";
+    const purityOk = audPurity === "enforce";
+
+    let totalMediaGB = 0;
+    let indexedMediaGB = 0;
+    let dailyTotal = 0;
+    let dailyPure = 0;
+    let nonMediaMisplaced = 0;
+
+    items.forEach(it => {
+      if (it.kind.startsWith("media") || it.kind === "zip_media" || it.kind === "screenshot" || it.kind === "download") {
+        totalMediaGB += it.sizeGB;
+        if (it.kind === "zip_media" && !zipOk) {
+          // Cannot index inside ZIP
+        } else {
+          indexedMediaGB += it.sizeGB;
+        }
+      }
+      if (it.kind === "media_daily") {
+        dailyTotal += 1;
+        dailyPure += 1;
+      }
+      if (!purityOk && (it.kind === "screenshot" || it.kind === "download" || it.kind === "media_milestone")) {
+        dailyTotal += 1;
+      }
+      if (!purityOk && it.kind.startsWith("doc_")) {
+        nonMediaMisplaced += 1;
+      }
+    });
+
+    const syncRate = totalMediaGB > 0 ? (indexedMediaGB / totalMediaGB) * 100 : 100;
+    const purityRate = dailyTotal > 0 ? (dailyPure / dailyTotal) * 100 : 100;
+    const gateStatus = (audStrict >= 90 && purityOk) ? "100% PASS (Isolated)" : (purityOk ? "WARN (Check EXIF)" : "FAIL (Mixed Media)");
+
+    SB.stat("aud-kpi-sync", `<span style="color:${syncRate > 95 ? P.ok : P.bad}">${syncRate.toFixed(1)}%</span>`);
+    SB.stat("aud-kpi-purity", `<span style="color:${purityRate > 95 ? P.ok : P.warn}">${purityRate.toFixed(0)}%</span>`);
+    SB.stat("aud-kpi-nonmedia", `<span style="color:${nonMediaMisplaced === 0 ? P.ok : P.bad}">${nonMediaMisplaced} files</span>`);
+    SB.stat("aud-kpi-gate", `<span style="color:${audStrict >= 90 && purityOk ? P.ok : P.warn};font-size:13px">${gateStatus}</span>`);
+
+    // Draw pipeline diagram on canvas
+    ctx.font = "600 12px Inter, sans-serif";
+    ctx.fillStyle = P.text;
+    ctx.fillText("Master Archive Auto-Routing & Lossless Backup Audit Pipeline", 14, 22);
+
+    const rowH = Math.min(24, Math.floor((H - 44) / items.length));
+    const leftW = Math.min(220, Math.floor(W * 0.43));
+    items.forEach((it, i) => {
+      const y = 38 + i * rowH;
+      const isZipViolation = it.kind === "zip_media" && !zipOk;
+      const isPurityViolation = !purityOk && (it.kind === "screenshot" || it.kind === "download" || it.kind.startsWith("doc_"));
+      const ok = !isZipViolation && !isPurityViolation;
+
+      // Left box: incoming file
+      ctx.fillStyle = P.surface;
+      ctx.strokeStyle = P.border;
+      ctx.lineWidth = 1;
+      ctx.fillRect(14, y, leftW, rowH - 4);
+      ctx.strokeRect(14, y, leftW, rowH - 4);
+
+      ctx.fillStyle = P.text;
+      ctx.font = "10.5px 'JetBrains Mono', monospace";
+      ctx.textBaseline = "middle";
+      ctx.textAlign = "left";
+      ctx.fillText(it.name.slice(0, 27), 20, y + (rowH - 4) / 2);
+
+      // Arrow
+      const x1 = 14 + leftW + 6;
+      const x2 = x1 + 26;
+      const ym = y + (rowH - 4) / 2;
+      ctx.strokeStyle = ok ? P.accent : P.bad;
+      ctx.lineWidth = 1.6;
+      ctx.beginPath(); ctx.moveTo(x1, ym); ctx.lineTo(x2, ym); ctx.stroke();
+
+      // Right box: destination & status
+      const rx = x2 + 6;
+      const rw = W - rx - 14;
+      ctx.fillStyle = ok ? P.bg : "rgba(224, 68, 62, 0.14)";
+      ctx.strokeStyle = ok ? P.ok : P.bad;
+      ctx.fillRect(rx, y, rw, rowH - 4);
+      ctx.strokeRect(rx, y, rw, rowH - 4);
+
+      let destText = "✓ " + it.target;
+      if (isZipViolation) destText = "✗ Unextracted ZIP (Skipped by Cloud)";
+      else if (isPurityViolation) destText = "⚠ Misplaced in Daily/ (Rule Violation)";
+      else if (it.kind === "zip_media" && zipOk) destText = "✓ Extracted → " + it.target;
+
+      ctx.fillStyle = ok ? P.ok : P.bad;
+      ctx.font = "600 10.5px 'JetBrains Mono', monospace";
+      ctx.fillText(destText, rx + 7, ym);
+    });
+  });
+
+  SB.seg("aud-scenario", v => { audScenario = v; audCanvas.redraw(); });
+  SB.seg("aud-zip", v => { audZip = v; audCanvas.redraw(); });
+  SB.seg("aud-purity", v => { audPurity = v; audCanvas.redraw(); });
+  SB.range("aud-strict", "aud-strict-out", v => v + "%", v => { audStrict = v; audCanvas.redraw(); });
+
+  // =========================================================================
+  // Simulator 2: AI Photo Memory Studio (Split-Wipe & SFace 128-D Clustering)
+  // =========================================================================
+  let stMode = "wipe";
+  let stWipe = 52;
+  let stTau = 0.55;
+  let stEnh = 1.35;
+
+  const studioCanvas = SB.canvas("cv-studio-sim", 300, (ctx, W, H, P) => {
+    const optDiff = Math.abs(stTau - 0.55);
+    const estClusters = Math.round(8 + (0.55 - stTau) * 18);
+    const clusterPurity = Math.max(68, 98.4 - optDiff * 55);
+    const psnrGain = ((stEnh - 1.0) * 8.2 + 2.4).toFixed(2);
+
+    SB.stat("st-kpi-clusters", `${Math.max(3, estClusters)} Identity Clusters`);
+    if (stMode === "wipe") {
+      SB.stat("st-kpi-quality", `<span style="color:${P.ok}">+${psnrGain} dB (Split ${stWipe}%)</span>`);
+    } else {
+      SB.stat("st-kpi-quality", `<span style="color:${clusterPurity > 92 ? P.ok : P.warn}">Purity ${clusterPurity.toFixed(1)}% (τ=${stTau.toFixed(2)})</span>`);
+    }
+
+    if (stMode === "wipe") {
+      const wipeX = Math.round((stWipe / 100) * W);
+      const p1x = W * 0.27, p1y = H * 0.47;
+      const p2x = W * 0.71, p2y = H * 0.52;
+
+      // Left side: Legacy Camcorder Original
+      ctx.save();
+      ctx.beginPath(); ctx.rect(0, 0, wipeX, H); ctx.clip();
+      const gLeft = ctx.createLinearGradient(0, 0, 0, H);
+      gLeft.addColorStop(0, "#473c35");
+      gLeft.addColorStop(0.55, "#6b5b4f");
+      gLeft.addColorStop(1, "#362f29");
+      ctx.fillStyle = gLeft;
+      ctx.fillRect(0, 0, W, H);
+
+      ctx.fillStyle = "rgba(220, 195, 165, 0.55)";
+      ctx.beginPath(); ctx.arc(p1x, p1y, 32, 0, Math.PI * 2); ctx.fill();
+      ctx.fillRect(p1x - 36, p1y + 34, 72, 82);
+      ctx.beginPath(); ctx.arc(p2x, p2y, 25, 0, Math.PI * 2); ctx.fill();
+      ctx.fillRect(p2x - 28, p2y + 27, 56, 70);
+
+      // Scanlines
+      ctx.fillStyle = "rgba(0,0,0,0.18)";
+      for (let y = 0; y < H; y += 4) ctx.fillRect(0, y, W, 1.5);
+      ctx.fillStyle = "#f4b740";
+      ctx.font = "600 11px 'JetBrains Mono', monospace";
+      ctx.textAlign = "left";
+      ctx.fillText("BEFORE · LEGACY CAMCORDER RAW", 12, 22);
+      ctx.restore();
+
+      // Right side: AI Restored + YuNet/YOLO11n Bounding Boxes
+      ctx.save();
+      ctx.beginPath(); ctx.rect(wipeX, 0, W - wipeX, H); ctx.clip();
+      const gRight = ctx.createLinearGradient(0, 0, 0, H);
+      gRight.addColorStop(0, "#1c4e80");
+      gRight.addColorStop(0.55, "#2e77ae");
+      gRight.addColorStop(1, "#1e5631");
+      ctx.fillStyle = gRight;
+      ctx.fillRect(0, 0, W, H);
+
+      const boost = Math.min(1, 0.65 + (stEnh - 1.0) * 0.45);
+      ctx.fillStyle = `rgba(255, 235, 215, ${boost})`;
+      ctx.beginPath(); ctx.arc(p1x, p1y, 32, 0, Math.PI * 2); ctx.fill();
+      ctx.fillStyle = `rgba(76, 217, 123, ${boost})`;
+      ctx.fillRect(p1x - 36, p1y + 34, 72, 82);
+
+      ctx.fillStyle = `rgba(255, 235, 215, ${boost})`;
+      ctx.beginPath(); ctx.arc(p2x, p2y, 25, 0, Math.PI * 2); ctx.fill();
+      ctx.fillStyle = `rgba(56, 182, 245, ${boost})`;
+      ctx.fillRect(p2x - 28, p2y + 27, 56, 70);
+
+      // YuNet Face Detection Boxes
+      ctx.strokeStyle = "#3fcf7f";
+      ctx.lineWidth = 2;
+      ctx.strokeRect(p1x - 36, p1y - 36, 72, 72);
+      ctx.strokeRect(p2x - 28, p2y - 28, 56, 56);
+      ctx.fillStyle = "#3fcf7f";
+      ctx.font = "600 10.5px 'JetBrains Mono', monospace";
+      ctx.textAlign = "center";
+      ctx.fillText("YuNet 0.96 · ID#01", p1x, p1y - 42);
+      ctx.fillText("YuNet 0.94 · ID#02", p2x, p2y - 34);
+
+      ctx.fillStyle = "#ffffff";
+      ctx.font = "600 11px 'JetBrains Mono', monospace";
+      ctx.textAlign = "right";
+      ctx.fillText(`AFTER · AI Restored (${stEnh.toFixed(2)}x)`, W - 12, 22);
+      ctx.restore();
+
+      // Split-Wipe vertical divider bar + handle
+      ctx.strokeStyle = "#ffffff";
+      ctx.lineWidth = 2.5;
+      ctx.beginPath(); ctx.moveTo(wipeX, 0); ctx.lineTo(wipeX, H); ctx.stroke();
+      ctx.fillStyle = P.accent;
+      ctx.beginPath(); ctx.arc(wipeX, H / 2, 13, 0, Math.PI * 2); ctx.fill();
+      ctx.fillStyle = "#ffffff";
+      ctx.font = "700 11px 'JetBrains Mono', monospace";
+      ctx.textAlign = "center"; ctx.textBaseline = "middle";
+      ctx.fillText("⇄", wipeX, H / 2);
+
+      // Synchronized Zoom Loupe in bottom-right corner
+      const lr = 42, lx = W - 62, ly = H - 58;
+      ctx.save();
+      ctx.beginPath(); ctx.arc(lx, ly, lr, 0, Math.PI * 2); ctx.clip();
+      ctx.fillStyle = "#162238";
+      ctx.fillRect(lx - lr, ly - lr, lr * 2, lr * 2);
+      ctx.strokeStyle = "rgba(56, 182, 245, 0.35)";
+      for (let g = -lr; g <= lr; g += 8) {
+        ctx.beginPath(); ctx.moveTo(lx + g, ly - lr); ctx.lineTo(lx + g, ly + lr); ctx.stroke();
+        ctx.beginPath(); ctx.moveTo(lx - lr, ly + g); ctx.lineTo(lx + lr, ly + g); ctx.stroke();
+      }
+      ctx.fillStyle = "#ffffff";
+      ctx.font = "600 10px 'JetBrains Mono', monospace";
+      ctx.fillText("2.5x LOUPE", lx, ly - 18);
+      ctx.fillStyle = "#3fcf7f";
+      ctx.fillText("EXIF: OK", lx, ly + 18);
+      ctx.restore();
+      ctx.strokeStyle = P.accent;
+      ctx.lineWidth = 2.5;
+      ctx.beginPath(); ctx.arc(lx, ly, lr, 0, Math.PI * 2); ctx.stroke();
+    } else {
+      // Mode 2: SFace 128-D Cosine Embedding Space Projection
+      ctx.fillStyle = P.text;
+      ctx.font = "600 12px Inter, sans-serif";
+      ctx.fillText(`SFace 128-D Embedding Projection (Cosine Distance Threshold τ_face = ${stTau.toFixed(2)})`, 16, 22);
+
+      const centers = [
+        { x: W * 0.24, y: H * 0.42, color: P.accent, name: "Cluster #01 (Primary A)" },
+        { x: W * 0.52, y: H * 0.36, color: P.ok, name: "Cluster #02 (Primary B)" },
+        { x: W * 0.76, y: H * 0.48, color: P.accent2, name: "Cluster #03 (Group C)" },
+        { x: W * 0.40, y: H * 0.74, color: P.warn, name: "Cluster #04 (Group D)" }
+      ];
+      const radiusPx = stTau * 115;
+
+      centers.forEach((c, idx) => {
+        ctx.save();
+        ctx.fillStyle = c.color;
+        ctx.globalAlpha = 0.12;
+        ctx.beginPath(); ctx.arc(c.x, c.y, radiusPx, 0, Math.PI * 2); ctx.fill();
+        ctx.globalAlpha = 0.75;
+        ctx.strokeStyle = c.color;
+        ctx.setLineDash([4, 4]);
+        ctx.lineWidth = 1.5;
+        ctx.stroke();
+        ctx.restore();
+
+        for (let k = 0; k < 14; k++) {
+          const ang = (k / 14) * Math.PI * 2 + idx * 0.7;
+          const dist = 10 + ((k * 17 + idx * 9) % 42);
+          const px = c.x + Math.cos(ang) * dist;
+          const py = c.y + Math.sin(ang) * dist;
+          ctx.fillStyle = dist <= radiusPx ? c.color : P.faint;
+          ctx.beginPath(); ctx.arc(px, py, 3.8, 0, Math.PI * 2); ctx.fill();
+        }
+
+        ctx.fillStyle = P.text;
+        ctx.font = "600 11.5px Inter, sans-serif";
+        ctx.textAlign = "center";
+        ctx.fillText(c.name, c.x, c.y - radiusPx - 6);
+      });
+    }
+  });
+
+  SB.seg("st-mode", v => { stMode = v; studioCanvas.redraw(); });
+  SB.range("st-wipe", "st-wipe-out", v => v + "%", v => { stWipe = v; studioCanvas.redraw(); });
+  SB.range("st-tau", "st-tau-out", v => v.toFixed(2), v => { stTau = v; studioCanvas.redraw(); });
+  SB.range("st-enh", "st-enh-out", v => v.toFixed(2) + "×", v => { stEnh = v; studioCanvas.redraw(); });
+});
+</script>
+
+</main>
+</body>
+</html>

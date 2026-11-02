@@ -1,35 +1,35 @@
 <!doctype html>
-<html lang="en">
+<html lang="ko">
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>Ch.02 — E2E AI Remosaic (Gen 1–4): Heterogeneous Parallelization &amp; Feature History · Samsung S.LSI 200MP ISOCELL &amp; E2E AI Remosaic Guidebook</title>
-<meta name="description" content="Ch.02 — E2E AI Remosaic (Gen 1–4): Heterogeneous Parallelization &amp; Feature History — Samsung S.LSI 200MP ISOCELL &amp; E2E AI Remosaic Project Guidebook">
+<title>Ch.02 — E2E AI Remosaic (Gen 1–4): 이기종 병렬화 &amp; 세대별 기능 연대기 · 삼성전자 S.LSI 200MP ISOCELL &amp; E2E AI Remosaic 가이드북</title>
+<meta name="description" content="Ch.02 — E2E AI Remosaic (Gen 1–4): 이기종 병렬화 &amp; 세대별 기능 연대기 — 삼성전자 S.LSI 200MP ISOCELL &amp; E2E AI Remosaic 프로젝트 가이드북">
 <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/katex@0.16.11/dist/katex.min.css">
 <script defer src="https://cdn.jsdelivr.net/npm/katex@0.16.11/dist/katex.min.js"></script>
 <script defer src="https://cdn.jsdelivr.net/npm/katex@0.16.11/dist/contrib/auto-render.min.js"></script>
-<link rel="stylesheet" href="../css/style.css?v=80b6792">
-<link rel="stylesheet" href="../css/glossary-tooltips.css?v=80b6792">
-<script src="../js/glossary-data.js?v=80b6792"></script>
-<script src="../js/common.js?v=80b6792"></script>
-<script defer src="../js/glossary-tooltips.js?v=80b6792"></script>
+<link rel="stylesheet" href="../css/style.css?v=1950d4d">
+<link rel="stylesheet" href="../css/glossary-tooltips.css?v=1950d4d">
+<script src="../js/glossary-data.js?v=1950d4d"></script>
+<script src="../js/common.js?v=1950d4d"></script>
+<script defer src="../js/glossary-tooltips.js?v=1950d4d"></script>
 </head>
 <body data-chapter="e2e_remosaic" data-root="../">
 <main class="chapter">
 
   <header class="chapter-hero">
-    <div class="eyebrow">CHAPTER 02 · PILLAR 2 — E2E AI REMOSAIC TURN-KEY PLATFORM (SEP 2022 – PRESENT)</div>
-    <h1>E2E AI Remosaic (Gen 1–4) — Heterogeneous SoC Parallelization on the ISP Pipeline</h1>
+    <div class="eyebrow">CHAPTER 02 · PILLAR 2 — E2E AI REMOSAIC TURN-KEY PLATFORM (2022.09 – 현재)</div>
+    <h1>E2E AI Remosaic (Gen 1–4) — Camera ISP 파이프라인 이기종 병렬화</h1>
     <p class="lead">
-      Delivering a 200MP image sensor to global smartphone OEMs requires more than a standalone Remosaic model: if Deep Learning Remosaic and the Camera ISP run sequentially, a single 200MP capture (<code>cfa2yuv</code>) takes ~3 seconds.
-      <strong>E2E AI Remosaic</strong> distributes <strong>DL Remosaic</strong> and <strong>Camera ISP</strong> workloads across mobile heterogeneous compute units (<code>CPU / GPU / NPU / ISP</code>) and mounts them directly on top of the <strong>Camera ISP pipeline</strong>—accelerating 200MP capture latency <strong>up to 3× faster (<code>3s → 1s @ SM8550</code>)</strong> across <strong>30+ commercial OEM smartphones</strong> and earning the <strong>SEC Annual Awards 2023 (Silver Award)</strong>.
+      글로벌 스마트폰 OEM에 200MP 이미지 센서를 공급하기 위해서는 단독 Remosaic 모델만으로는 충분하지 않습니다. 만약 딥러닝 Remosaic과 Camera ISP가 직렬로 순차 실행되면 단일 200MP 촬영(<code>cfa2yuv</code>)에 약 3초가 소요됩니다.
+      <strong>E2E AI Remosaic</strong>은 <strong>DL Remosaic</strong>과 <strong>Camera ISP</strong> 연산을 모바일 이기종 연산 장치(<code>CPU / GPU / NPU / ISP</code>)에 적절히 분배하고 이를 <strong>Camera ISP 파이프라인 상단</strong>에 직접 탑재함으로써, 200MP 캡처 지연시간을 <strong>최대 3배 가속(<code>3s → 1s @ SM8550</code>)</strong>하여 <strong>30개 이상 상용 스마트폰 모델</strong>에 탑재되었으며 <strong>SEC Annual Awards 2023 (Silver Award)</strong>을 수상했습니다.
     </p>
     <ul class="objectives">
-      <li><strong>Heterogeneous Parallelization on the ISP Pipeline:</strong> How E2E AI Remosaic partitions Camera ISP and DL Remosaic workloads across <code>CPU</code>, <code>NPU</code>, <code>GPU</code>, and <code>ISP</code> and mounts them onto the Camera ISP pipeline so stages execute in parallel rather than serially.</li>
-      <li><strong>Chronological Feature Evolution (Gen 1 → Gen 4):</strong> Track the feature roadmap from <strong>Gen 1</strong> (foundational turn-key ISP) and <strong>Gen 2</strong> (Heterogeneous SoC parallelization, 3× faster latency) to <strong>Gen 3</strong> (In-Sensor Zoom &amp; Multi-frame expansion) and <strong>Gen 4</strong> (DL-based Multi-frame Remosaic on flagship AP NPUs).</li>
-      <li><strong>Commercial OEM Product Lineup:</strong> Review the complete table and list of commercial smartphones equipped with E2E AI Remosaic.</li>
+      <li><strong>Camera ISP 파이프라인 상단 이기종 병렬화 원리:</strong> Camera ISP와 DL Remosaic 연산을 <code>CPU</code>, <code>NPU</code>, <code>GPU</code>, <code>ISP</code>에 잘 분배하고 이를 Camera ISP 파이프라인 위에 올려놓아 스테이지들이 직렬 대기 없이 병렬로 실행되는 구조를 이해한다.</li>
+      <li><strong>세대별 기능 추가 연대기 (Gen 1 → Gen 4):</strong> <strong>Gen 1</strong>(초기 턴키 ISP 구축)과 <strong>Gen 2</strong>(이기종 SoC 병렬화, 3배 가속)에서 <strong>Gen 3</strong>(인센서 줌 및 멀티프레임 확장), <strong>Gen 4</strong>(플래그십 AP NPU 기반 DL Multi-frame Remosaic)로 이어진 진화 이력을 확인한다.</li>
+      <li><strong>상용화 스마트폰 라인업 (Table &amp; List):</strong> E2E AI Remosaic이 탑재된 실제 상용 제품들의 종합 테이블과 모델 리스트를 확인한다.</li>
     </ul>
-    <div class="ch-pubs" role="region" aria-label="Official Samsung E2E AI Remosaic References">
+    <div class="ch-pubs" role="region" aria-label="삼성전자 E2E AI Remosaic 공식 보도자료 및 수상">
       <span class="ch-pubs-label">OFFICIAL SAMSUNG PRESS &amp; RECOGNITION</span>
       <a class="pub-tag paper" href="https://semiconductor.samsung.com/news-events/news/samsung-electronics-introduces-isocell-zoom-anyplace-and-e2e-ai-remosaic-solutions-for-the-200-megapixel-image-sensor/" target="_blank" rel="noopener">📰 Samsung Newsroom: E2E AI Remosaic Solution ↗</a>
       <a class="pub-tag paper" href="https://semiconductor.samsung.com/technologies/sensor/remosaic/" target="_blank" rel="noopener">🔬 Samsung Remosaic Technology ↗</a>
@@ -38,15 +38,15 @@
   </header>
 
   <section id="sec-isp-parallelization">
-    <h2>How Heterogeneous Parallelization Works on the Camera ISP Pipeline</h2>
+    <h2>Camera ISP 파이프라인 상단에서의 이기종(CPU / GPU / NPU / ISP) 병렬화 원리</h2>
     <p>
-      In a mobile camera system, the sensor transmits the captured 200MP non-Bayer RAW frame into SoC memory over MIPI. Once the RAW frame is in memory, the system must perform both <strong>DL Remosaic</strong> (converting the $4\times 4$ non-Bayer mosaic into Bayer) and <strong>Camera ISP processing</strong> (Demosaic, Denoising, Sharpening, Tone Mapping, and Color Conversion to YUV—collectively <code>cfa2yuv</code>).
+      모바일 카메라 시스템에서 센서가 촬영한 200MP Non-Bayer RAW 프레임이 MIPI를 통해 SoC 메모리에 적재되면, 시스템은 <strong>DL Remosaic</strong>($4\times 4$ Non-Bayer 모자이크를 표준 Bayer로 변환)과 <strong>Camera ISP 처리</strong>(Demosaic, Denoising, Sharpening, Tone Mapping, YUV 색공간 변환 — 통칭 <code>cfa2yuv</code>)를 모두 수행해야 합니다.
     </p>
     <ul>
-      <li><strong>Conventional Serial Pipeline (~3.0s Latency):</strong> In a conventional setup, the system runs full-frame DL Remosaic first, writes the entire 200MP Bayer frame back to DRAM, and only then starts the sequential Camera ISP pipeline. Because 200 million pixels must pass through Remosaic and ISP stages one after another, end-to-end <code>cfa2yuv</code> latency reaches ~3 seconds.</li>
-      <li><strong>E2E AI Remosaic — Mounting Distributed CPU/GPU/NPU/ISP Execution on the ISP Pipeline (~1.0s Latency, up to 3× Faster):</strong>
-        Instead of running Remosaic as an isolated pre-processing step before the ISP, <strong>E2E AI Remosaic</strong> jointly optimizes <strong>DL Remosaic</strong> and <strong>S/W ISP</strong>, distributes their sub-tasks across the mobile SoC's heterogeneous compute engines (<strong>CPU, NPU, GPU, and H/W ISP</strong>), and <strong>mounts them directly onto the Camera ISP pipeline</strong>.
-        While the NPU executes deep learning Remosaic inference on active frame regions, the GPU, CPU, and ISP concurrently execute downstream Camera ISP stages (<code>cfa2yuv</code>) in a pipelined manner across Qualcomm Snapdragon and MediaTek Dimensity platforms.
+      <li><strong>기존 직렬 파이프라인의 한계 (~3.0초 지연):</strong> 기존 구조에서는 200MP 전체 프레임에 대해 DL Remosaic이 완전히 끝난 뒤 DRAM에 200MP Bayer 프레임을 기록하고, 그제서야 후단 Camera ISP 파이프라인이 순차 실행됩니다. 2억 화소 전체가 Remosaic과 ISP를 직렬로 통과해야 하므로 <code>cfa2yuv</code> 캡처에 약 3초가 소요됩니다.</li>
+      <li><strong>E2E AI Remosaic — CPU/GPU/NPU/ISP 분배 및 Camera ISP 파이프라인 탑재 (~1.0초, 최대 3배 가속):</strong>
+        Remosaic을 ISP 앞단의 분리된 전처리 단계로 두는 대신, <strong>E2E AI Remosaic</strong>은 <strong>DL Remosaic</strong>과 <strong>S/W ISP</strong>를 공동 최적화(Joint Optimization)하여 모바일 SoC 내 이기종 연산 장치(<strong>CPU, NPU, GPU, H/W ISP</strong>)에 연산을 분배하고, 이를 <strong>Camera ISP 파이프라인 위에 직접 올려놓아</strong> 병렬 실행합니다.
+        NPU가 딥러닝 Remosaic 추론을 수행하는 동안 GPU, CPU, ISP가 후속 Camera ISP 단계(<code>cfa2yuv</code>)를 동시에 파이프라인 병렬 처리함으로써, Qualcomm Snapdragon 및 MediaTek Dimensity 플랫폼에서 200MP 촬영 지연시간을 최대 3배 단축했습니다.
       </li>
     </ul>
 
@@ -129,14 +129,14 @@
         <text x="872" y="238" class="t-dim">3s → 1s (@ SM8550)</text>
         <text x="872" y="258" class="t-mono">Qualcomm &amp; MediaTek</text>
       </svg>
-      <figcaption><b>Figure 2-1.</b> Conventional serial 200MP processing vs. <strong>E2E AI Remosaic</strong>, which distributes DL Remosaic and S/W ISP workloads across <code>NPU</code>, <code>GPU</code>, <code>H/W ISP</code>, and <code>CPU</code> mounted directly on the Camera ISP pipeline.</figcaption>
+      <figcaption><b>그림 2-1.</b> 기존 직렬 200MP 처리 방식(상단)과, DL Remosaic 및 S/W ISP 연산을 <code>NPU</code>, <code>GPU</code>, <code>H/W ISP</code>, <code>CPU</code>에 분배하여 Camera ISP 파이프라인 상단에 탑재한 <strong>E2E AI Remosaic</strong> 병렬 아키텍처(하단) 비교.</figcaption>
     </figure>
   </section>
 
   <section id="sec-e2e-history">
-    <h2>Chronological Feature Evolution History (Gen 1 – Gen 4)</h2>
+    <h2>세대별 E2E AI Remosaic 기능 추가 연대기 (Gen 1 – Gen 4)</h2>
     <p>
-      From September 2022 to the present, Dr. Yongjoon Song has architected and expanded <strong>E2E AI Remosaic</strong> across four commercial generations—transforming it into Samsung S.LSI's standard 200MP S/W ISP turn-key platform deployed across <strong>30+ OEM smartphone models</strong>:
+      2022년 9월부터 현재까지 송용준 박사는 4세대에 걸쳐 <strong>E2E AI Remosaic</strong>에 핵심 기능들을 추가·고도화하며 삼성전자 S.LSI의 표준 200MP S/W ISP 턴키 플랫폼(<strong>30개 이상 OEM 단말 상용화</strong>)으로 발전시켰습니다:
     </p>
 
     <figure class="diagram">
@@ -199,137 +199,137 @@
         <text x="836" y="190" class="t-dim">• Commercial 200MP MF capture</text>
         <text x="836" y="210" class="t-mono">HONOR Magic 9 &amp; 9 Pro Max</text>
       </svg>
-      <figcaption><b>Figure 2-2.</b> Four-generation feature evolution of E2E AI Remosaic from foundational turn-key S/W ISP (Gen 1) to DL-based Multi-Frame Remosaic on flagship AP NPUs (Gen 4).</figcaption>
+      <figcaption><b>그림 2-2.</b> 초기 턴키 S/W ISP(Gen 1)부터 플래그십 AP NPU 기반 DL Multi-Frame Remosaic(Gen 4)까지 E2E AI Remosaic의 4세대 기능 진화 과정.</figcaption>
     </figure>
 
     <div class="grid-2">
       <article class="card">
         <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:8px">
-          <span class="eyebrow" style="font-size:11px">GEN 1 · SEP 2022</span><span class="badge b-area">Turn-Key Foundation</span>
+          <span class="eyebrow" style="font-size:11px">GEN 1 · 2022.09</span><span class="badge b-area">Turn-Key Foundation</span>
         </div>
-        <h3>Foundational E2E Remosaic + S/W ISP</h3>
-        <p>Built the foundational End-to-End Remosaic + S/W ISP (<code>cfa2yuv</code>) architecture for 200MP ISOCELL sensors, establishing the production-ready turn-key platform for global smartphone OEMs.</p>
+        <h3>초기 E2E Remosaic + S/W ISP 턴키 아키텍처</h3>
+        <p>200MP ISOCELL 센서를 위한 최초의 End-to-End Remosaic + S/W ISP(<code>cfa2yuv</code>) 통합 아키텍처를 구축하여 글로벌 스마트폰 OEM 공급용 상용 턴키 플랫폼의 기반을 마련했습니다.</p>
       </article>
       <article class="card">
         <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:8px">
-          <span class="eyebrow" style="font-size:11px">GEN 2 · JAN 2023 – DEC 2024</span><span class="badge b-measured">SEC 2023 Silver Award</span>
+          <span class="eyebrow" style="font-size:11px">GEN 2 · 2023.01 – 2024.12</span><span class="badge b-measured">SEC 2023 Silver Award</span>
         </div>
-        <h3>Heterogeneous SoC Parallelization (3× Faster)</h3>
-        <p>Accelerated 200MP <code>cfa2yuv</code> capture latency <strong>up to 3× faster (<code>3s → 1s @ SM8550</code>)</strong> via joint optimization &amp; parallelization of DL Remosaic &amp; S/W ISP across <code>CPU/GPU/NPU/ISP</code> on Qualcomm &amp; MediaTek SoCs (<strong>HONOR Magic7 Pro</strong>, <strong>vivo X200 Pro ZEISS</strong>, <strong>Redmi Note 13 Pro+ 5G</strong>).</p>
+        <h3>이기종 SoC 병렬화 (최대 3× 속도 향상)</h3>
+        <p>Qualcomm 및 MediaTek SoC의 <code>CPU/GPU/NPU/ISP</code>에 DL Remosaic과 S/W ISP를 공동 최적화·병렬 분배하여 200MP <code>cfa2yuv</code> 캡처 속도를 <strong>최대 3배 가속(<code>3s → 1s @ SM8550</code>)</strong>했습니다 (<strong>HONOR Magic7 Pro</strong>, <strong>vivo X200 Pro ZEISS</strong>, <strong>Redmi Note 13 Pro+ 5G</strong> 탑재).</p>
       </article>
       <article class="card">
         <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:8px">
-          <span class="eyebrow" style="font-size:11px">GEN 3 · JAN 2025 – DEC 2025</span><span class="badge b-sim">In-Sensor Zoom &amp; MF</span>
+          <span class="eyebrow" style="font-size:11px">GEN 3 · 2025.01 – 2025.12</span><span class="badge b-sim">In-Sensor Zoom &amp; MF</span>
         </div>
-        <h3>In-Sensor Zoom &amp; Multi-Frame Expansion</h3>
-        <p>Feature upgrade for In-Sensor Zoom: expanded Multi-frame and Zoom ($2\times / 4\times$) processing capability into E2E AI Remosaic for broader OEM device coverage (<strong>Xiaomi REDMI Note 15 Pro+ 5G</strong> with HPE sensor).</p>
+        <h3>인센서 줌(In-Sensor Zoom) 및 멀티프레임 확장</h3>
+        <p>폭넓은 센서 및 OEM 단말 커버리지를 위해 E2E AI Remosaic 내부에 멀티프레임(Multi-frame) 및 $2\times / 4\times$ 인센서 줌 처리 기능을 확장했습니다 (HPE 센서 기반 <strong>Xiaomi REDMI Note 15 Pro+ 5G</strong> 탑재).</p>
       </article>
       <article class="card">
         <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:8px">
-          <span class="eyebrow" style="font-size:11px">GEN 4 · JAN 2026 – PRESENT</span><span class="badge b-measured">Flagship AP NPU</span>
+          <span class="eyebrow" style="font-size:11px">GEN 4 · 2026.01 – 현재</span><span class="badge b-measured">Flagship AP NPU</span>
         </div>
-        <h3>DL-Based Multi-Frame Remosaic</h3>
-        <p>Joint multi-frame reconstruction in the neural remosaic stage to recover missing spatial details and maximize noise reduction, optimized for cutting-edge flagship AP NPU architectures (<strong>HONOR Magic 9 &amp; Magic 9 Pro Max</strong>).</p>
+        <h3>DL 기반 Multi-Frame Remosaic</h3>
+        <p>뉴럴 리모자이크 단계에서 다중 프레임을 결합 복원하여 미세 디테일 복원력과 노이즈 저감 성능을 극대화하고 최신 플래그십 AP NPU 아키텍처에 최적화했습니다 (<strong>HONOR Magic 9 &amp; Magic 9 Pro Max</strong> 탑재).</p>
       </article>
     </div>
   </section>
 
   <section id="sec-commercial-products">
-    <h2>Commercial Products &amp; Deployment Lineup (Table &amp; List)</h2>
+    <h2>상용화 스마트폰 제품 라인업 (종합 테이블 &amp; 리스트)</h2>
     <p>
-      Below is the consolidated table and itemized list of commercial smartphones and camera configurations powered by Dr. Yongjoon Song's <strong>E2E AI Remosaic (Gen 1–4)</strong> and <strong>200MP ISOCELL Remosaic</strong> work, as documented in the Resume and LinkedIn profile:
+      아래는 이력서(Resume) 및 LinkedIn 프로필에 기재된 송용준 박사의 <strong>E2E AI Remosaic (Gen 1–4)</strong> 및 <strong>200MP ISOCELL Remosaic</strong> 기술이 실제 탑재된 상용 스마트폰 테이블과 세부 리스트입니다:
     </p>
 
     <div class="tbl-wrap">
       <table class="tbl">
         <thead>
           <tr>
-            <th>OEM Brand</th>
-            <th>Commercial Smartphone Model</th>
-            <th>Platform / Generation</th>
-            <th>Sensor &amp; Camera Mode</th>
-            <th>Key Technical Highlight</th>
+            <th>OEM 브랜드</th>
+            <th>상용 스마트폰 모델명</th>
+            <th>적용 플랫폼 / 세대</th>
+            <th>탑재 센서 및 카메라 모드</th>
+            <th>핵심 기술 하이라이트</th>
           </tr>
         </thead>
         <tbody>
           <tr>
             <td><strong>Samsung</strong></td>
             <td><strong>Galaxy S23 Ultra</strong></td>
-            <td>In-Sensor QMSC</td>
-            <td><strong>ISOCELL HP2</strong> (<code>0.6µm</code>, 200MP Main Camera)</td>
-            <td>AI-based 4×4 Q-cell Remosaic (<code>QMSC</code>) deployed in-sensor for 200MP capture &amp; <strong>12MP 4× In-Sensor Zoom</strong> mode.</td>
+            <td>인센서 QMSC</td>
+            <td><strong>ISOCELL HP2</strong> (<code>0.6µm</code>, 200MP 메인 카메라)</td>
+            <td>센서 내부에 탑재된 AI 기반 4×4 Q-cell Remosaic(<code>QMSC</code>)으로 200MP 촬영 및 <strong>12MP 4× 인센서 줌</strong> 구현.</td>
           </tr>
           <tr>
             <td><strong>HONOR</strong></td>
             <td><strong>HONOR Magic 9 &amp; Magic 9 Pro Max</strong></td>
             <td>E2E AI Remosaic · <strong>Gen 4</strong></td>
-            <td>200MP Flagship Camera</td>
-            <td><strong>DL-based Multi-frame Remosaic</strong> optimized for cutting-edge flagship AP NPU architectures (joint detail recovery &amp; noise reduction).</td>
+            <td>200MP 플래그십 카메라</td>
+            <td>최신 플래그십 AP NPU 아키텍처에 최적화된 <strong>DL 기반 Multi-frame Remosaic</strong> (다중 프레임 디테일 복원 및 노이즈 저감).</td>
           </tr>
           <tr>
             <td><strong>Xiaomi</strong></td>
             <td><strong>REDMI Note 15 Pro+ 5G</strong></td>
             <td>E2E AI Remosaic · <strong>Gen 3</strong></td>
-            <td>200MP Main Camera Mode (<strong>ISOCELL HPE</strong> sensor)</td>
-            <td>Feature upgrade for <strong>In-Sensor Zoom</strong>: expanded Multi-frame &amp; Zoom processing capability in E2E AI Remosaic.</td>
+            <td>200MP 메인 카메라 모드 (<strong>ISOCELL HPE</strong> 센서)</td>
+            <td><strong>In-Sensor Zoom</strong> 기능 고도화: E2E AI Remosaic 내 멀티프레임 및 줌 처리 기능 확장.</td>
           </tr>
           <tr>
             <td><strong>HONOR</strong></td>
             <td><strong>HONOR Magic7 Pro</strong></td>
             <td>E2E AI Remosaic · <strong>Gen 2</strong> + <strong>HP9</strong></td>
-            <td>200MP Periscope Telephoto Camera</td>
-            <td>Joint DL Remosaic &amp; S/W ISP parallelization across <code>CPU/GPU/NPU/ISP</code> (~3× faster 200MP capture latency).</td>
+            <td>200MP 잠망경 망원 카메라</td>
+            <td><code>CPU/GPU/NPU/ISP</code> 이기종 병렬화를 통한 DL Remosaic &amp; S/W ISP 동시 실행 (200MP 캡처 속도 약 3배 향상).</td>
           </tr>
           <tr>
             <td><strong>vivo</strong></td>
             <td><strong>vivo X200 Pro</strong></td>
             <td>E2E AI Remosaic · <strong>Gen 2</strong> + <strong>HP9</strong></td>
-            <td><strong>200MP ZEISS APO Telephoto Camera</strong> (<code>ISOCELL HP9</code>, <code>0.56µm</code>)</td>
-            <td>World's 1st DL Hexadeca (16-cell) Remosaic S/W + Gen 2 Heterogeneous SoC E2E AI Remosaic for flagship telephoto zoom.</td>
+            <td><strong>200MP ZEISS APO 망원 카메라</strong> (<code>ISOCELL HP9</code>, <code>0.56µm</code>)</td>
+            <td>세계 최초 DL Hexadeca (16-cell) Remosaic S/W + Gen 2 이기종 SoC E2E AI Remosaic을 결합한 플래그십 망원 줌.</td>
           </tr>
           <tr>
             <td><strong>Xiaomi</strong></td>
             <td><strong>Redmi Note 13 Pro+ 5G</strong></td>
             <td>E2E AI Remosaic · <strong>Gen 2</strong> + <strong>HP3</strong></td>
-            <td>200MP Main Camera (<code>ISOCELL HP3</code>, <code>0.56µm</code>)</td>
-            <td>High-throughput 200MP full-resolution capture &amp; 2×/4× lossless in-sensor zoom on heterogeneous mobile SoC.</td>
+            <td>200MP 메인 카메라 (<code>ISOCELL HP3</code>, <code>0.56µm</code>)</td>
+            <td>이기종 모바일 SoC 상에서 고속 200MP 풀해상도 캡처 및 2×/4× 무손실 인센서 줌 구현.</td>
           </tr>
           <tr>
             <td><strong>HONOR</strong></td>
             <td><strong>HONOR 80 Pro</strong></td>
             <td>DL Hexadeca Remosaic + <strong>HP3</strong></td>
-            <td>160MP Mode for Main Camera (<code>ISOCELL HP3</code>)</td>
-            <td>Early commercial deployment of the World's 1st DL-based Hexadeca (16-cell) Remosaic S/W algorithm.</td>
+            <td>메인 카메라 160MP 모드 (<code>ISOCELL HP3</code>)</td>
+            <td>세계 최초 딥러닝 기반 Hexadeca (16-cell) Remosaic S/W 알고리즘의 초기 상용화 모델.</td>
           </tr>
           <tr>
             <td><strong>Global / CN OEMs</strong></td>
-            <td><strong>30+ Commercial OEM Smartphone Models</strong></td>
+            <td><strong>30개 이상 상용 OEM 스마트폰 모델</strong></td>
             <td>E2E AI Remosaic · <strong>Gen 1–4</strong></td>
-            <td>200MP Main &amp; Telephoto Cameras (<code>HP3 / HP9 / HPE / HP5</code>)</td>
-            <td>Standard commercial 200MP S/W ISP turn-key platform across HONOR, vivo, and Xiaomi (<strong>SEC Annual Award 2023 Silver</strong>).</td>
+            <td>200MP 메인 및 망원 카메라 (<code>HP3 / HP9 / HPE / HP5</code>)</td>
+            <td>HONOR, vivo, Xiaomi 등 글로벌 OEM 전반에 배포된 표준 200MP S/W ISP 턴키 플랫폼 (<strong>SEC Annual Award 2023 Silver</strong>).</td>
           </tr>
         </tbody>
       </table>
     </div>
 
-    <h3>Itemized List of Highlighted Commercial Deployments &amp; Official Links</h3>
+    <h3>주요 상용 탑재 단말 리스트 및 공식 링크</h3>
     <ul>
-      <li><strong>Samsung Galaxy S23 Ultra</strong> — <code>ISOCELL HP2 (0.6µm, 200MP, 1/1.3")</code>: In-sensor AI $4\times 4$ Q-cell Remosaic (<code>QMSC</code>) enabling 12MP $4\times$ In-Sensor Zoom and 200MP main camera capture (<a href="https://semiconductor.samsung.com/image-sensor/mobile-image-sensor/isocell-hp2/" target="_blank" rel="noopener">ISOCELL HP2 Official Page ↗</a>).</li>
-      <li><strong>HONOR Magic 9 &amp; HONOR Magic 9 Pro Max</strong> — <code>E2E AI Remosaic (Gen 4)</code>: Commercial 200MP DL-based Multi-frame Remosaic optimized for flagship AP NPU architectures.</li>
-      <li><strong>Xiaomi REDMI Note 15 Pro+ 5G</strong> — <code>E2E AI Remosaic (Gen 3)</code>: Equipped for Main camera mode with HPE sensor, featuring expanded Multi-frame &amp; In-Sensor Zoom processing (<a href="https://www.mi.com/global/" target="_blank" rel="noopener">Xiaomi Global ↗</a>).</li>
-      <li><strong>vivo X200 Pro (200MP ZEISS Camera)</strong> — <code>ISOCELL HP9 (0.56µm, 200MP, 1/1.4")</code> &amp; <code>E2E AI Remosaic (Gen 2)</code>: World's 1st DL Hexadeca Remosaic S/W + Heterogeneous SoC E2E AI Remosaic powering the 200MP ZEISS periscope telephoto camera (<a href="https://www.vivo.com/en/products/x200-pro" target="_blank" rel="noopener">vivo X200 Pro Official Page ↗</a>).</li>
-      <li><strong>HONOR Magic7 Pro</strong> — <code>E2E AI Remosaic (Gen 2)</code> &amp; <code>ISOCELL HP9</code>: 200MP telephoto camera with joint DL Remosaic &amp; S/W ISP heterogeneous SoC parallelization (<a href="https://www.honor.com/global/phones/honor-magic7-pro/" target="_blank" rel="noopener">HONOR Magic7 Pro Official Page ↗</a>).</li>
-      <li><strong>Xiaomi Redmi Note 13 Pro+ 5G</strong> — <code>E2E AI Remosaic (Gen 2)</code> &amp; <code>ISOCELL HP3 (0.56µm, 200MP)</code>: 200MP main camera with accelerated <code>cfa2yuv</code> capture latency and 2×/4× in-sensor zoom.</li>
-      <li><strong>HONOR 80 Pro</strong> — <code>ISOCELL HP3 (0.56µm)</code>: 160MP mode for Main camera powered by Deep Learning Hexadeca Remosaic S/W.</li>
+      <li><strong>Samsung Galaxy S23 Ultra</strong> — <code>ISOCELL HP2 (0.6µm, 200MP, 1/1.3")</code>: 인센서 AI $4\times 4$ Q-cell Remosaic(<code>QMSC</code>)을 통해 12MP $4\times$ 인센서 줌 및 200MP 메인 카메라 촬영 구현 (<a href="https://semiconductor.samsung.com/image-sensor/mobile-image-sensor/isocell-hp2/" target="_blank" rel="noopener">ISOCELL HP2 공식 페이지 ↗</a>).</li>
+      <li><strong>HONOR Magic 9 &amp; HONOR Magic 9 Pro Max</strong> — <code>E2E AI Remosaic (Gen 4)</code>: 플래그십 AP NPU 아키텍처에 최적화된 상용 200MP DL 기반 Multi-frame Remosaic 탑재.</li>
+      <li><strong>Xiaomi REDMI Note 15 Pro+ 5G</strong> — <code>E2E AI Remosaic (Gen 3)</code>: HPE 센서 기반 메인 카메라 모드에 탑재되어 확장된 멀티프레임 및 인센서 줌 처리 수행 (<a href="https://www.mi.com/global/" target="_blank" rel="noopener">Xiaomi Global ↗</a>).</li>
+      <li><strong>vivo X200 Pro (200MP ZEISS 카메라)</strong> — <code>ISOCELL HP9 (0.56µm, 200MP, 1/1.4")</code> &amp; <code>E2E AI Remosaic (Gen 2)</code>: 세계 최초 DL Hexadeca Remosaic S/W와 이기종 SoC E2E AI Remosaic으로 200MP ZEISS 잠망경 망원 카메라 구동 (<a href="https://www.vivo.com/en/products/x200-pro" target="_blank" rel="noopener">vivo X200 Pro 공식 페이지 ↗</a>).</li>
+      <li><strong>HONOR Magic7 Pro</strong> — <code>E2E AI Remosaic (Gen 2)</code> &amp; <code>ISOCELL HP9</code>: DL Remosaic과 S/W ISP 이기종 SoC 병렬화가 적용된 200MP 망원 카메라 (<a href="https://www.honor.com/global/phones/honor-magic7-pro/" target="_blank" rel="noopener">HONOR Magic7 Pro 공식 페이지 ↗</a>).</li>
+      <li><strong>Xiaomi Redmi Note 13 Pro+ 5G</strong> — <code>E2E AI Remosaic (Gen 2)</code> &amp; <code>ISOCELL HP3 (0.56µm, 200MP)</code>: 가속화된 <code>cfa2yuv</code> 캡처 지연시간 및 2×/4× 인센서 줌을 지원하는 200MP 메인 카메라.</li>
+      <li><strong>HONOR 80 Pro</strong> — <code>ISOCELL HP3 (0.56µm)</code>: 딥러닝 Hexadeca Remosaic S/W 기반의 메인 카메라 160MP 모드 탑재.</li>
     </ul>
   </section>
 
   <section class="keypoints" id="summary">
-    <h2>Chapter 02 Summary</h2>
+    <h2>Chapter 02 핵심 요약</h2>
     <ol>
-      <li><strong>Heterogeneous Parallelization on the ISP Pipeline:</strong> Rather than running Remosaic and Camera ISP serially (~3.0s), <strong>E2E AI Remosaic</strong> distributes DL Remosaic and S/W ISP stages across <code>CPU</code>, <code>GPU</code>, <code>NPU</code>, and <code>ISP</code> and mounts them directly on top of the <strong>Camera ISP pipeline</strong>—accelerating 200MP <code>cfa2yuv</code> latency <strong>up to 3× faster (<code>3s → 1s @ SM8550</code>)</strong>.</li>
-      <li><strong>Four-Generation Feature Evolution (Sep 2022 – Present):</strong> Progressed from <strong>Gen 1</strong> (foundational 200MP turn-key ISP) and <strong>Gen 2</strong> (Heterogeneous SoC parallelization, <strong>SEC Annual Awards 2023 Silver Award</strong>) to <strong>Gen 3</strong> (In-Sensor Zoom &amp; Multi-frame expansion) and <strong>Gen 4</strong> (DL-based Multi-frame Remosaic on flagship AP NPUs).</li>
-      <li><strong>Commercial Scale (30+ OEM Smartphones):</strong> Deployed across flagship and high-volume smartphones including <strong>HONOR Magic 9 / 9 Pro Max</strong>, <strong>vivo X200 Pro ZEISS 200MP</strong>, <strong>HONOR Magic7 Pro</strong>, <strong>REDMI Note 15 Pro+ 5G</strong>, and <strong>Redmi Note 13 Pro+ 5G</strong>.</li>
+      <li><strong>Camera ISP 파이프라인 상단 이기종 병렬화:</strong> Remosaic과 Camera ISP를 직렬로 실행(~3.0초)하는 대신, <strong>E2E AI Remosaic</strong>은 DL Remosaic과 S/W ISP 스테이지를 <code>CPU</code>, <code>GPU</code>, <code>NPU</code>, <code>ISP</code>에 분배하고 이를 <strong>Camera ISP 파이프라인 상단</strong>에 직접 탑재하여 200MP <code>cfa2yuv</code> 캡처 속도를 <strong>최대 3배 가속(<code>3s → 1s @ SM8550</code>)</strong>했다.</li>
+      <li><strong>4세대에 걸친 기능 진화 (2022.09 – 현재):</strong> <strong>Gen 1</strong>(초기 200MP 턴키 ISP)과 <strong>Gen 2</strong>(이기종 SoC 병렬화, <strong>SEC Annual Awards 2023 Silver Award</strong>)에서 <strong>Gen 3</strong>(인센서 줌 및 멀티프레임 확장), <strong>Gen 4</strong>(플래그십 AP NPU 기반 DL Multi-frame Remosaic)로 고도화되었다.</li>
+      <li><strong>글로벌 30+ 상용 스마트폰 적용:</strong> <strong>HONOR Magic 9 / 9 Pro Max</strong>, <strong>vivo X200 Pro ZEISS 200MP</strong>, <strong>HONOR Magic7 Pro</strong>, <strong>REDMI Note 15 Pro+ 5G</strong>, <strong>Redmi Note 13 Pro+ 5G</strong> 등 30개 이상의 상용 스마트폰에 탑재되었다.</li>
     </ol>
   </section>
 

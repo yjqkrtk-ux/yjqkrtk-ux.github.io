@@ -1,0 +1,272 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>KAIST Grad Works &amp; Master Workspace Interactive Guidebook · KAIST Grad Works &amp; Workspace Guidebook</title>
+<meta name="description" content="Integrated interactive architecture guidebook for Development (40 submodules · 5 themes), Documents (KAIST academic · Web Resume), and Photos (20TB media archive · AI Photo Memory Studio)">
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/katex@0.16.11/dist/katex.min.css">
+<script defer src="https://cdn.jsdelivr.net/npm/katex@0.16.11/dist/katex.min.js"></script>
+<script defer src="https://cdn.jsdelivr.net/npm/katex@0.16.11/dist/contrib/auto-render.min.js"></script>
+<link rel="stylesheet" href="css/style.css?v=1950d4d">
+<link rel="stylesheet" href="css/glossary-tooltips.css?v=1950d4d">
+<script src="js/glossary-data.js?v=1950d4d"></script>
+<script src="js/common.js?v=1950d4d"></script>
+<script defer src="js/glossary-tooltips.js?v=1950d4d"></script>
+</head>
+<body data-root="">
+
+<style>
+.paths { display: grid; grid-template-columns: repeat(3, 1fr); gap: 14px; margin-top: 18px; align-items: stretch; }
+.path { background: var(--bg-elev); border: 1px solid var(--border); border-radius: var(--radius); padding: 18px 20px; display: flex; flex-direction: column; }
+.path h4 { margin: 0 0 6px; font-size: 16px; color: var(--accent); }
+.path p { margin: 0 0 12px; font-size: 13.5px; color: var(--text-dim); flex: 1; }
+.path .steps { display: grid; grid-template-columns: 1fr 1fr; gap: 6px; font-family: var(--mono); font-size: 12px; }
+.path .steps a { text-decoration: none; padding: 5px 8px; border-radius: 6px; background: var(--surface); color: var(--text); text-align: center; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.path .steps a:hover { background: var(--accent-soft); color: var(--accent); }
+.chain { margin: 20px 0 8px; }
+.numbers { display: grid; grid-template-columns: repeat(3, 1fr); gap: 12px; margin-top: 22px; }
+.numbers div { background: var(--bg-elev); border: 1px solid var(--border); border-radius: var(--radius-sm); padding: 14px 16px; }
+.numbers b { font-family: var(--mono); font-size: 20px; color: var(--accent); display: block; white-space: nowrap; margin-bottom: 2px; }
+.numbers span { font-size: 13px; color: var(--text-dim); display: block; line-height: 1.45; }
+.flow { display: grid; grid-template-columns: repeat(4, 1fr); gap: 12px; margin-top: 18px; }
+.flow div { background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius-sm); padding: 14px 16px; font-size: 13.8px; }
+.flow b { display: block; margin-bottom: 4px; color: var(--text); }
+.home-hero .cta a { white-space: nowrap; padding: 10px 14px; font-size: 13.5px; }
+@media (max-width: 900px) {
+  .paths { grid-template-columns: 1fr; }
+  .numbers { grid-template-columns: repeat(2, 1fr); }
+  .flow { grid-template-columns: repeat(2, 1fr); }
+}
+</style>
+
+<section class="home-hero">
+  <div class="inner">
+    <div>
+      <div style="font-family:var(--mono);font-size:12.5px;color:var(--accent);font-weight:600;letter-spacing:.05em">INTERACTIVE ARCHITECTURE &amp; MASTER WORKSPACE GUIDEBOOK</div>
+      <h1>From Ph.D. &amp; Patented Engineering<br><span class="grad">to Academic &amp; 20TB Media Archives</span></h1>
+      <p class="lead">
+        This interactive guidebook explores the 3 pillars of the master workspace (<code>GoogleDrive</code>):
+        <strong>Development/</strong> (5 KAIST M.S./Ph.D. research &amp; engineering themes across 40 Git submodules),
+        <strong>Documents/</strong> (1,200+ graduate coursework notes, lab seminars, dissertation records &amp; bilingual Web Resume deployment pipeline), and
+        <strong>Photos/</strong> (Google One 20 TB Original Quality 7-category master media archive &amp; AI Photo Memory Studio)—brought to life as an executable technical textbook with
+        <strong>exact mathematical derivations and 14 interactive simulators</strong>.
+      </p>
+      <div class="cta">
+        <a class="primary" href="chapters/overview.html">Read Ch.01 Architecture →</a>
+        <a class="ghost" href="https://scholar.google.com/citations?user=H3AQNpAAAAAJ" target="_blank" rel="noopener">🎓 Google Scholar ↗</a>
+        <a class="ghost" href="https://yjqkrtk-ux.github.io/" target="_blank" rel="noopener">📄 Web Resume ↗</a>
+        <a class="ghost" href="#curriculum">All 7 Chapters</a>
+      </div>
+    </div>
+    <div class="hero-3d" id="hero3d">
+      <span class="hint">Drag: 3D Rotate · Scroll: Zoom</span>
+    </div>
+  </div>
+</section>
+
+<section class="home-section">
+  <h2>At a Glance · The 3 Master Workspace Pillars (Development · Documents · Photos)</h2>
+  <p class="sub">The three repositories operate in concert under six strict operating mandates: Separation of Concerns (Rule 1), Zero-ZIP (Rule 2), Zero Non-Media (Rule 3), Purity of Daily Feed (Rule 4), Privacy Isolation (Rule 5), and EXIF/Cloud Integrity (Rule 6).</p>
+  <figure class="diagram chain">
+    <svg viewBox="0 0 980 210" role="img" aria-label="GoogleDrive 3 Master Repositories and 7-Chapter Linked Architecture">
+      <defs>
+        <marker id="arr" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="6" markerHeight="6" orient="auto-start-reverse">
+          <path d="M0 0L10 5L0 10z" fill="var(--accent)"/>
+        </marker>
+      </defs>
+      <g transform="translate(10,14)">
+        <rect x="0" y="16" width="295" height="148" rx="12" class="f-acc-soft"/>
+        <text x="147" y="42" text-anchor="middle" class="t-acc">① Development/ (R&amp;D Monorepo)</text>
+        <text x="147" y="64" text-anchor="middle" class="t-mono">kaist-grad-works · 40 Git Submodules</text>
+        <text x="147" y="88" text-anchor="middle" class="t-dim">Ch.02 DQNAlign · REminerII · REDNN</text>
+        <text x="147" y="108" text-anchor="middle" class="t-dim">Ch.03 3D WPT (US 12,496,917 B2) · OLEV</text>
+        <text x="147" y="128" text-anchor="middle" class="t-dim">Ch.04 PyMaple FSM · StarForce · Casio SDK</text>
+        <text x="147" y="148" text-anchor="middle" class="t-dim">Ch.05 Ledger · Web Planner · PPTX Builder</text>
+
+        <line x1="297" y1="90" x2="333" y2="90" class="s-acc" stroke-width="2" marker-end="url(#arr)"/>
+
+        <rect x="335" y="16" width="295" height="148" rx="12" class="f-elev"/>
+        <text x="482" y="42" text-anchor="middle" class="t" style="font-weight:700">② Documents/ (Academic &amp; Career Docs)</text>
+        <text x="482" y="64" text-anchor="middle" class="t-mono">kaist-academic-documents · Ch.06</text>
+        <text x="482" y="88" text-anchor="middle" class="t-dim">Academic_Coursework (15+ Courses · 449)</text>
+        <text x="482" y="108" text-anchor="middle" class="t-dim">Lab_Meetings (430) · PhD_Admin (129)</text>
+        <text x="482" y="128" text-anchor="middle" class="t-dim">Resume/ (Web CV · Deploy Parity)</text>
+        <text x="482" y="148" text-anchor="middle" class="t-dim">Personal/ (.gitignore Isolated Zone)</text>
+
+        <line x1="632" y1="90" x2="668" y2="90" class="s-acc" stroke-width="2" marker-end="url(#arr)"/>
+
+        <rect x="670" y="16" width="290" height="148" rx="12" class="f-acc-soft"/>
+        <text x="815" y="42" text-anchor="middle" class="t-acc">③ Photos/ (20TB Media Archive)</text>
+        <text x="815" y="64" text-anchor="middle" class="t-mono">Google Photos Original Quality · Ch.06</text>
+        <text x="815" y="88" text-anchor="middle" class="t-dim">7 Master Category Isolation Architecture</text>
+        <text x="815" y="108" text-anchor="middle" class="t-dim">Zero-ZIP · Zero Non-Media Charter</text>
+        <text x="815" y="128" text-anchor="middle" class="t-dim">Daily · Screenshots · Downloads Split</text>
+        <text x="815" y="148" text-anchor="middle" class="t-dim">Read-Only Mount → AI Photo Studio</text>
+      </g>
+    </svg>
+    <figcaption><b>Figure 0-1.</b> Role boundaries and cross-reference pipeline of the 3 master workspace pillars (<code>Development/</code> · <code>Documents/</code> · <code>Photos/</code>). Charter definitions: <a class="src" href="../../GEMINI.md" target="_blank" rel="noopener" title="GEMINI.md">GoogleDrive/GEMINI.md</a> · <a class="src" href="../GEMINI.md" target="_blank" rel="noopener" title="GEMINI.md">Development/GEMINI.md</a> · <a class="src" href="../../Photos/GEMINI.md" target="_blank" rel="noopener" title="Photos/GEMINI.md">Photos/GEMINI.md</a>.</figcaption>
+  </figure>
+
+  <div class="numbers">
+    <div><b>3 Pillars</b><span><code>Development/</code> · <code>Documents/</code> · <code>Photos/</code> master isolation</span></div>
+    <div><b>40 + 4</b><span>Git submodules (Themes 1–4) + automation suites (Theme 5)</span></div>
+    <div><b>US 12,496,917</b><span>5 US/KR patent families (incl. US B2 grant) &amp; <i>IEEE OJEMB</i> papers</span></div>
+    <div><b>1,200+ Docs</b><span>KAIST coursework notes · UMLS lab seminars · Ph.D. defense · Web CV</span></div>
+    <div><b>20 TB Media</b><span>Google Photos lossless 7-category · Zero-ZIP master archive</span></div>
+    <div><b>14 Simulators</b><span>In-browser Canvas/WebGL interactive math, physics &amp; archive labs</span></div>
+  </div>
+</section>
+
+<section class="home-section" id="curriculum">
+  <h2>Full Curriculum · 7 Chapters</h2>
+  <p class="sub">Read sequentially from Chapter 01 or jump directly into any repository or engineering theme via the recommended reading paths below.</p>
+  <div class="ch-grid" id="chgrid"></div>
+</section>
+
+<section class="home-section">
+  <h2>Recommended Reading Paths</h2>
+  <div class="paths">
+    <div class="path">
+      <h4>Path A · AI, Bioinformatics &amp; Stochastic Modeling</h4>
+      <p>Focuses on deep reinforcement learning sequence alignment (DQNAlign), high-speed genomic mining (REminerII), and absorbing Markov chains (StarForce).</p>
+      <div class="steps">
+        <a href="chapters/overview.html">Ch.01 Master Overview</a>
+        <a href="chapters/bio.html">Ch.02 DQNAlign</a>
+        <a href="chapters/automation.html">Ch.04 Markov &amp; Vision</a>
+        <a href="chapters/notes.html">Ch.07 Audit &amp; Glossary</a>
+      </div>
+    </div>
+    <div class="path">
+      <h4>Path B · 3D Vision, Wireless Power &amp; Embedded Systems</h4>
+      <p>Covers Tsai 11-DoF binocular 3D localization, FLIR thermal safety interlock (US 12,496,917 B2), OLEV telematics, and Casio bare-metal SDK engines.</p>
+      <div class="steps">
+        <a href="chapters/overview.html">Ch.01 Master Overview</a>
+        <a href="chapters/wpt.html">Ch.03 3D WPT &amp; OLEV</a>
+        <a href="chapters/automation.html">Ch.04 Casio &amp; MIMO</a>
+        <a href="chapters/notes.html">Ch.07 Audit &amp; Glossary</a>
+      </div>
+    </div>
+    <div class="path">
+      <h4>Path C · Academic/Resume (Documents), 20TB Media (Photos) &amp; Life AI</h4>
+      <p>Explores the KAIST academic &amp; career archive, 20 TB lifetime photo/video governance, AI Photo Memory Studio, and financial ledger/trip automation.</p>
+      <div class="steps">
+        <a href="chapters/overview.html">Ch.01 3-Pillar Charter</a>
+        <a href="chapters/life.html">Ch.05 Life Automation</a>
+        <a href="chapters/archive.html">Ch.06 Academic &amp; Media</a>
+        <a href="chapters/notes.html">Ch.07 Audit &amp; Glossary</a>
+      </div>
+    </div>
+  </div>
+</section>
+
+<section class="home-section">
+  <h2>How This Guidebook Works · Single Source of Truth</h2>
+  <div class="flow">
+    <div><b>1. Build-Time Source Parsing</b>Directly parses <code>.gitmodules</code>, Python/C++/MATLAB parameters, the 7 <code>Photos/</code> categories, and <code>Documents/</code> archives at build time.</div>
+    <div><b>2. Equations &amp; Derivations</b>Presents core mathematical formulations (MDP Bellman optimality, Tsai calibration, Absorbing Markov fundamental matrices) alongside expandable deep dives (<code>.detail</code>).</div>
+    <div><b>3. 14 Interactive Simulators</b>Adjust sliders and toggles to experiment live with DQN sliding windows, 3D ray triangulation, StarForce Markov chains, and the media archive auditor.</div>
+    <div><b>4. Click-to-Source Links</b>Every file and function badge (<code>a.src</code>) is a build-verified link checked for file existence and exact line numbers.</div>
+  </div>
+</section>
+
+<script>
+document.addEventListener("DOMContentLoaded", () => {
+  const grid = document.getElementById("chgrid");
+  const tagMap = { "3d": '<span class="tag t3d">3D</span>', "sim": '<span class="tag sim">Interactive</span>' };
+  SB.CHAPTERS.forEach(c => {
+    const a = document.createElement("a");
+    a.className = "ch-card";
+    a.href = "chapters/" + c.slug + ".html";
+    const tags = (c.tags || []).map(t => tagMap[t] || `<span class="tag">${t}</span>`).join("");
+    a.innerHTML = `
+      <div class="num">CHAPTER ${c.num}</div>
+      <h3>${c.title}</h3>
+      <p>${c.desc}</p>
+      <div class="tags">${tags}</div>
+    `;
+    grid.appendChild(a);
+  });
+
+  // Hero 3D: 3 Master Pillars (Development / Documents / Photos) + 5 Engineering Satellites
+  const el = document.getElementById("hero3d");
+  if (el && window.SB && SB.three) {
+    SB.three(el, { height: 360, radius: 10.2, phi: 1.1, theta: 0.52 }, T => {
+      const { THREE, scene } = T;
+      const root = new THREE.Group();
+      scene.add(root);
+
+      const pillars = [
+        { x: -3.2, color: 0x0a84c6, emissive: 0x063858, label: "Development/ (40 Submodules)", h: 2.3 },
+        { x:  0.0, color: 0x7a4ce0, emissive: 0x2d1863, label: "Documents/ (KAIST · Resume)", h: 1.9 },
+        { x:  3.2, color: 0x1f9d55, emissive: 0x0b4223, label: "Photos/ (20TB Media · Studio)", h: 2.1 }
+      ];
+
+      const meshes = [];
+      pillars.forEach((p, idx) => {
+        const baseGeo = new THREE.CylinderGeometry(1.05, 1.18, 0.28, 32);
+        const base = new THREE.Mesh(baseGeo, T.material({ color: p.color, roughness: 0.35, metalness: 0.25 }));
+        base.position.set(p.x, -1.35, 0);
+        root.add(base);
+
+        const boxGeo = new THREE.BoxGeometry(1.55, p.h, 1.55);
+        const box = new THREE.Mesh(boxGeo, T.material({ color: p.color, emissive: p.emissive, roughness: 0.28, metalness: 0.3 }));
+        box.position.set(p.x, -1.2 + p.h / 2, 0);
+        root.add(box);
+        meshes.push(box);
+
+        const edges = new THREE.LineSegments(
+          new THREE.EdgesGeometry(boxGeo),
+          new THREE.LineBasicMaterial({ color: 0xffffff, transparent: true, opacity: 0.38 })
+        );
+        box.add(edges);
+      });
+
+      // Connecting bridges between the 3 pillars
+      const bridgeMat = new THREE.LineBasicMaterial({ color: 0x38b6f5, transparent: true, opacity: 0.55 });
+      [[-3.2, 0.0], [0.0, 3.2]].forEach(([x1, x2]) => {
+        const pts = [new THREE.Vector3(x1, -0.2, 0), new THREE.Vector3((x1 + x2) / 2, 0.55, 0), new THREE.Vector3(x2, -0.2, 0)];
+        const curve = new THREE.QuadraticBezierCurve3(pts[0], pts[1], pts[2]);
+        const geo = new THREE.BufferGeometry().setFromPoints(curve.getPoints(32));
+        root.add(new THREE.Line(geo, bridgeMat));
+      });
+
+      // Orbiting data packets across the workspace
+      const packets = [];
+      const pGeo = new THREE.SphereGeometry(0.11, 14, 14);
+      const colors = [0x38b6f5, 0xa585ff, 0x3fcf7f, 0xf4b740, 0xff6b6b];
+      for (let i = 0; i < 18; i++) {
+        const m = new THREE.Mesh(pGeo, new THREE.MeshBasicMaterial({ color: colors[i % colors.length] }));
+        root.add(m);
+        packets.push({ mesh: m, phase: i / 18, radius: 4.1 + (i % 3) * 0.45, tilt: (i % 2 === 0 ? 1 : -1) * 0.28 });
+      }
+
+      T.label("Development/ (5 Themes)", [-3.2, 1.55, 0], "#38b6f5");
+      T.label("Documents/ (1,200+ Docs)", [0.0, 1.25, 0], "#a585ff");
+      T.label("Photos/ (20TB Original)", [3.2, 1.45, 0], "#3fcf7f");
+      T.label("6 Master Operating Rules · Single Source of Truth", [0, -2.05, 0], "#f4b740");
+
+      T.onFrame((dt, t) => {
+        root.rotation.y = Math.sin(t * 0.35) * 0.32;
+        meshes.forEach((m, i) => {
+          m.position.y = -1.2 + pillars[i].h / 2 + Math.sin(t * 1.6 + i * 1.4) * 0.08;
+        });
+        packets.forEach(p => {
+          const ang = (t * 0.55 + p.phase) * Math.PI * 2;
+          p.mesh.position.set(
+            Math.cos(ang) * p.radius,
+            Math.sin(ang * 2) * 0.65 + p.tilt,
+            Math.sin(ang) * (p.radius * 0.48)
+          );
+        });
+      });
+    });
+  }
+});
+</script>
+
+<footer class="sb-foot">
+  GoogleDrive Master Workspace (<code>Development/</code> · <code>Documents/</code> · <code>Photos/</code>) · Interactive Architecture Guidebook · Build 2026-11-01 (<code>1950d4d</code>) · Auto-generated by <code>docs/build_spec_portal.py</code>
+</footer>
+</body>
+</html>

@@ -1,0 +1,277 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Ch.01 — 200MP ISOCELL Sensor Development (HP2 · HP3/HP9 · HP5) · Samsung S.LSI 200MP ISOCELL &amp; E2E AI Remosaic Guidebook</title>
+<meta name="description" content="Ch.01 — 200MP ISOCELL Sensor Development (HP2 · HP3/HP9 · HP5) — Samsung S.LSI 200MP ISOCELL &amp; E2E AI Remosaic Project Guidebook">
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/katex@0.16.11/dist/katex.min.css">
+<script defer src="https://cdn.jsdelivr.net/npm/katex@0.16.11/dist/katex.min.js"></script>
+<script defer src="https://cdn.jsdelivr.net/npm/katex@0.16.11/dist/contrib/auto-render.min.js"></script>
+<link rel="stylesheet" href="../css/style.css?v=1950d4d">
+<link rel="stylesheet" href="../css/glossary-tooltips.css?v=1950d4d">
+<script src="../js/glossary-data.js?v=1950d4d"></script>
+<script src="../js/common.js?v=1950d4d"></script>
+<script defer src="../js/glossary-tooltips.js?v=1950d4d"></script>
+</head>
+<body data-chapter="isocell_sensors" data-root="../">
+<main class="chapter">
+
+  <header class="chapter-hero">
+    <div class="eyebrow">CHAPTER 01 · PILLAR 1 — 200MP ISOCELL SENSOR DEVELOPMENT (APR 2021 – PRESENT)</div>
+    <h1>200MP ISOCELL Sensor Development — Remosaic Principle &amp; Sensor History</h1>
+    <p class="lead">
+      This chapter explains the core principle of <strong>Remosaic</strong> on ultra-high-resolution (200MP) non-Bayer image sensors and documents Dr. Yongjoon Song's chronological sensor algorithm development track record at Samsung Electronics S.LSI across
+      <strong>ISOCELL HP2 (<code>0.6µm</code>)</strong>, <strong>ISOCELL HP3 / HP9 (<code>0.56µm</code>)</strong>, and <strong>ISOCELL HP5 (<code>0.5µm</code>)</strong>.
+    </p>
+    <ul class="objectives">
+      <li><strong>Core Principle of Remosaic:</strong> Why 200MP sensors adopt non-Bayer Color Filter Arrays (<code>2×2 Q-cell</code> / <code>4×4 Hexadeca</code>) and how Remosaic converts them into the standard <code>2×2 Bayer (RGGB)</code> pattern required by the Camera ISP for 200MP capture and 2×/4× In-Sensor Zoom.</li>
+      <li><strong>Chronological Sensor Development History (2021 – Present):</strong> From in-sensor AI 4×4 Q-cell Remosaic (<code>QMSC</code> on <strong>HP2</strong>) and the <strong>World's 1st Deep Learning-based Hexadeca (16-cell) Remosaic S/W</strong> (<strong>HP3 / HP9</strong>) to leading Neural ISP algorithm development as Technical Leader for the <strong>World's smallest 200MP sensor</strong> (<strong>HP5, 0.5µm</strong>).</li>
+      <li><strong>Commercialized Smartphones &amp; Specifications:</strong> Complete table and list of commercial smartphones powered by each 200MP sensor generation.</li>
+    </ul>
+    <div class="ch-pubs" role="region" aria-label="Official Samsung ISOCELL Product Pages">
+      <span class="ch-pubs-label">OFFICIAL PRODUCT PAGES</span>
+      <a class="pub-tag paper" href="https://semiconductor.samsung.com/image-sensor/mobile-image-sensor/isocell-hp5/" target="_blank" rel="noopener">📷 ISOCELL HP5 (0.5µm, 1/1.56") ↗</a>
+      <a class="pub-tag paper" href="https://semiconductor.samsung.com/image-sensor/mobile-image-sensor/isocell-hp9/" target="_blank" rel="noopener">📷 ISOCELL HP9 (0.56µm, Tele) ↗</a>
+      <a class="pub-tag paper" href="https://semiconductor.samsung.com/image-sensor/mobile-image-sensor/isocell-hp3/" target="_blank" rel="noopener">📷 ISOCELL HP3 (0.56µm, Main) ↗</a>
+      <a class="pub-tag paper" href="https://semiconductor.samsung.com/image-sensor/mobile-image-sensor/isocell-hp2/" target="_blank" rel="noopener">📷 ISOCELL HP2 (0.6µm, 1/1.3") ↗</a>
+      <a class="pub-tag paper" href="https://semiconductor.samsung.com/technologies/sensor/remosaic/" target="_blank" rel="noopener">🔬 Samsung Remosaic Technology ↗</a>
+    </div>
+  </header>
+
+  <section id="sec-remosaic-principle">
+    <h2>What Is Remosaic? (CFA Structure &amp; Multi-Mode Operating Principle)</h2>
+    <p>
+      To integrate <strong>200 million pixels</strong> ($16{,}320 \times 12{,}288$) into a mobile camera module, individual pixel pitch is scaled down to the sub-micron regime (<code>0.60µm</code> on HP2, <code>0.56µm</code> on HP3/HP9, and <code>0.50µm</code> on HP5).
+      Instead of using a fixed $2\times 2$ Bayer Color Filter Array (CFA), 200MP ISOCELL sensors adopt a <strong>Non-Bayer Multi-Cell CFA — Tetra²pixel ($4\times 4$ Hexadeca / Q-cell, 16-cell)</strong>, where $4\times 4 = 16$ neighboring photodiodes share the same color filter (R, G, or B).
+    </p>
+    <ul>
+      <li><strong>Why Non-Bayer CFA Is Used (Low/Mid-Light Pixel Binning):</strong> In dark indoor or night environments, the sensor merges (bins) $4\times 4 = 16$ neighboring same-color pixels into a single large super-pixel (<code>12.5MP</code> output) or $2\times 2 = 4$ pixels (<code>50MP</code> output). Because the binned super-pixel array already forms a standard Bayer pattern, it is sent directly to the Camera ISP with high sensitivity.</li>
+      <li><strong>Why Remosaic Is Required (Full 200MP Capture &amp; 2×/4× In-Sensor Zoom):</strong> Standard mobile Camera ISPs can only process (Demosaic) a conventional <strong>$2\times 2$ Bayer (RGGB) pattern</strong>. When capturing a <strong>full 200MP ultra-high-resolution photo</strong> in bright light or cropping the center of the sensor for <strong>lossless $2\times / 4\times$ In-Sensor Zoom</strong>, <strong>Remosaic ($\mathcal{R}_\theta$)</strong> is the core algorithm that rearranges and reconstructs the sensor's $4\times 4$ non-Bayer mosaic RAW data into a sharp, artifact-free <strong>$1\times 1$ standard Bayer (RGGB) pattern</strong>.</li>
+    </ul>
+
+    <figure class="diagram">
+      <svg viewBox="0 0 1080 420" xmlns="http://www.w3.org/2000/svg" role="img" aria-label="Non-Bayer 4x4 Hexadeca CFA Grid, Pixel Binning Modes, and 1x1 Standard Bayer Remosaic Grid">
+        <defs>
+          <marker id="rem-arr" viewBox="0 0 10 10" refX="8" refY="5" markerWidth="6" markerHeight="6" orient="auto-start-reverse">
+            <path d="M 0 1 L 9 5 L 0 9 z" fill="var(--accent)" />
+          </marker>
+          <marker id="rem-arr-ok" viewBox="0 0 10 10" refX="8" refY="5" markerWidth="6" markerHeight="6" orient="auto-start-reverse">
+            <path d="M 0 1 L 9 5 L 0 9 z" fill="var(--ok)" />
+          </marker>
+        </defs>
+        <rect x="4" y="4" width="1072" height="412" rx="12" class="f-surface" />
+        <text x="24" y="28" class="t-acc">CFA ARCHITECTURE &amp; REMOSAIC PRINCIPLE · NON-BAYER 4×4 HEXADECA (16-CELL) TO 1×1 STANDARD BAYER (RGGB)</text>
+
+        <!-- Column 1: Non-Bayer 4x4 Hexadeca CFA Grid -->
+        <rect x="24" y="42" width="320" height="360" rx="10" class="f-elev" />
+        <text x="40" y="64" class="t-acc">1. SENSOR RAW CFA (NON-BAYER)</text>
+        <text x="40" y="84" class="t" font-weight="700">4×4 Hexadeca (16-Cell) / 2×2 Q-Cell</text>
+        <rect x="73" y="101" width="26" height="26" rx="3" fill="#e0443e" /><text x="86" y="118" text-anchor="middle" fill="#ffffff" font-family="var(--mono)" font-size="11px" font-weight="700">R</text><rect x="101" y="101" width="26" height="26" rx="3" fill="#e0443e" /><text x="114" y="118" text-anchor="middle" fill="#ffffff" font-family="var(--mono)" font-size="11px" font-weight="700">R</text><rect x="129" y="101" width="26" height="26" rx="3" fill="#e0443e" /><text x="142" y="118" text-anchor="middle" fill="#ffffff" font-family="var(--mono)" font-size="11px" font-weight="700">R</text><rect x="157" y="101" width="26" height="26" rx="3" fill="#e0443e" /><text x="170" y="118" text-anchor="middle" fill="#ffffff" font-family="var(--mono)" font-size="11px" font-weight="700">R</text><rect x="185" y="101" width="26" height="26" rx="3" fill="#2da44e" /><text x="198" y="118" text-anchor="middle" fill="#ffffff" font-family="var(--mono)" font-size="11px" font-weight="700">G</text><rect x="213" y="101" width="26" height="26" rx="3" fill="#2da44e" /><text x="226" y="118" text-anchor="middle" fill="#ffffff" font-family="var(--mono)" font-size="11px" font-weight="700">G</text><rect x="241" y="101" width="26" height="26" rx="3" fill="#2da44e" /><text x="254" y="118" text-anchor="middle" fill="#ffffff" font-family="var(--mono)" font-size="11px" font-weight="700">G</text><rect x="269" y="101" width="26" height="26" rx="3" fill="#2da44e" /><text x="282" y="118" text-anchor="middle" fill="#ffffff" font-family="var(--mono)" font-size="11px" font-weight="700">G</text><rect x="73" y="129" width="26" height="26" rx="3" fill="#e0443e" /><text x="86" y="146" text-anchor="middle" fill="#ffffff" font-family="var(--mono)" font-size="11px" font-weight="700">R</text><rect x="101" y="129" width="26" height="26" rx="3" fill="#e0443e" /><text x="114" y="146" text-anchor="middle" fill="#ffffff" font-family="var(--mono)" font-size="11px" font-weight="700">R</text><rect x="129" y="129" width="26" height="26" rx="3" fill="#e0443e" /><text x="142" y="146" text-anchor="middle" fill="#ffffff" font-family="var(--mono)" font-size="11px" font-weight="700">R</text><rect x="157" y="129" width="26" height="26" rx="3" fill="#e0443e" /><text x="170" y="146" text-anchor="middle" fill="#ffffff" font-family="var(--mono)" font-size="11px" font-weight="700">R</text><rect x="185" y="129" width="26" height="26" rx="3" fill="#2da44e" /><text x="198" y="146" text-anchor="middle" fill="#ffffff" font-family="var(--mono)" font-size="11px" font-weight="700">G</text><rect x="213" y="129" width="26" height="26" rx="3" fill="#2da44e" /><text x="226" y="146" text-anchor="middle" fill="#ffffff" font-family="var(--mono)" font-size="11px" font-weight="700">G</text><rect x="241" y="129" width="26" height="26" rx="3" fill="#2da44e" /><text x="254" y="146" text-anchor="middle" fill="#ffffff" font-family="var(--mono)" font-size="11px" font-weight="700">G</text><rect x="269" y="129" width="26" height="26" rx="3" fill="#2da44e" /><text x="282" y="146" text-anchor="middle" fill="#ffffff" font-family="var(--mono)" font-size="11px" font-weight="700">G</text><rect x="73" y="157" width="26" height="26" rx="3" fill="#e0443e" /><text x="86" y="174" text-anchor="middle" fill="#ffffff" font-family="var(--mono)" font-size="11px" font-weight="700">R</text><rect x="101" y="157" width="26" height="26" rx="3" fill="#e0443e" /><text x="114" y="174" text-anchor="middle" fill="#ffffff" font-family="var(--mono)" font-size="11px" font-weight="700">R</text><rect x="129" y="157" width="26" height="26" rx="3" fill="#e0443e" /><text x="142" y="174" text-anchor="middle" fill="#ffffff" font-family="var(--mono)" font-size="11px" font-weight="700">R</text><rect x="157" y="157" width="26" height="26" rx="3" fill="#e0443e" /><text x="170" y="174" text-anchor="middle" fill="#ffffff" font-family="var(--mono)" font-size="11px" font-weight="700">R</text><rect x="185" y="157" width="26" height="26" rx="3" fill="#2da44e" /><text x="198" y="174" text-anchor="middle" fill="#ffffff" font-family="var(--mono)" font-size="11px" font-weight="700">G</text><rect x="213" y="157" width="26" height="26" rx="3" fill="#2da44e" /><text x="226" y="174" text-anchor="middle" fill="#ffffff" font-family="var(--mono)" font-size="11px" font-weight="700">G</text><rect x="241" y="157" width="26" height="26" rx="3" fill="#2da44e" /><text x="254" y="174" text-anchor="middle" fill="#ffffff" font-family="var(--mono)" font-size="11px" font-weight="700">G</text><rect x="269" y="157" width="26" height="26" rx="3" fill="#2da44e" /><text x="282" y="174" text-anchor="middle" fill="#ffffff" font-family="var(--mono)" font-size="11px" font-weight="700">G</text><rect x="73" y="185" width="26" height="26" rx="3" fill="#e0443e" /><text x="86" y="202" text-anchor="middle" fill="#ffffff" font-family="var(--mono)" font-size="11px" font-weight="700">R</text><rect x="101" y="185" width="26" height="26" rx="3" fill="#e0443e" /><text x="114" y="202" text-anchor="middle" fill="#ffffff" font-family="var(--mono)" font-size="11px" font-weight="700">R</text><rect x="129" y="185" width="26" height="26" rx="3" fill="#e0443e" /><text x="142" y="202" text-anchor="middle" fill="#ffffff" font-family="var(--mono)" font-size="11px" font-weight="700">R</text><rect x="157" y="185" width="26" height="26" rx="3" fill="#e0443e" /><text x="170" y="202" text-anchor="middle" fill="#ffffff" font-family="var(--mono)" font-size="11px" font-weight="700">R</text><rect x="185" y="185" width="26" height="26" rx="3" fill="#2da44e" /><text x="198" y="202" text-anchor="middle" fill="#ffffff" font-family="var(--mono)" font-size="11px" font-weight="700">G</text><rect x="213" y="185" width="26" height="26" rx="3" fill="#2da44e" /><text x="226" y="202" text-anchor="middle" fill="#ffffff" font-family="var(--mono)" font-size="11px" font-weight="700">G</text><rect x="241" y="185" width="26" height="26" rx="3" fill="#2da44e" /><text x="254" y="202" text-anchor="middle" fill="#ffffff" font-family="var(--mono)" font-size="11px" font-weight="700">G</text><rect x="269" y="185" width="26" height="26" rx="3" fill="#2da44e" /><text x="282" y="202" text-anchor="middle" fill="#ffffff" font-family="var(--mono)" font-size="11px" font-weight="700">G</text><rect x="73" y="213" width="26" height="26" rx="3" fill="#2da44e" /><text x="86" y="230" text-anchor="middle" fill="#ffffff" font-family="var(--mono)" font-size="11px" font-weight="700">G</text><rect x="101" y="213" width="26" height="26" rx="3" fill="#2da44e" /><text x="114" y="230" text-anchor="middle" fill="#ffffff" font-family="var(--mono)" font-size="11px" font-weight="700">G</text><rect x="129" y="213" width="26" height="26" rx="3" fill="#2da44e" /><text x="142" y="230" text-anchor="middle" fill="#ffffff" font-family="var(--mono)" font-size="11px" font-weight="700">G</text><rect x="157" y="213" width="26" height="26" rx="3" fill="#2da44e" /><text x="170" y="230" text-anchor="middle" fill="#ffffff" font-family="var(--mono)" font-size="11px" font-weight="700">G</text><rect x="185" y="213" width="26" height="26" rx="3" fill="#2f6fe0" /><text x="198" y="230" text-anchor="middle" fill="#ffffff" font-family="var(--mono)" font-size="11px" font-weight="700">B</text><rect x="213" y="213" width="26" height="26" rx="3" fill="#2f6fe0" /><text x="226" y="230" text-anchor="middle" fill="#ffffff" font-family="var(--mono)" font-size="11px" font-weight="700">B</text><rect x="241" y="213" width="26" height="26" rx="3" fill="#2f6fe0" /><text x="254" y="230" text-anchor="middle" fill="#ffffff" font-family="var(--mono)" font-size="11px" font-weight="700">B</text><rect x="269" y="213" width="26" height="26" rx="3" fill="#2f6fe0" /><text x="282" y="230" text-anchor="middle" fill="#ffffff" font-family="var(--mono)" font-size="11px" font-weight="700">B</text><rect x="73" y="241" width="26" height="26" rx="3" fill="#2da44e" /><text x="86" y="258" text-anchor="middle" fill="#ffffff" font-family="var(--mono)" font-size="11px" font-weight="700">G</text><rect x="101" y="241" width="26" height="26" rx="3" fill="#2da44e" /><text x="114" y="258" text-anchor="middle" fill="#ffffff" font-family="var(--mono)" font-size="11px" font-weight="700">G</text><rect x="129" y="241" width="26" height="26" rx="3" fill="#2da44e" /><text x="142" y="258" text-anchor="middle" fill="#ffffff" font-family="var(--mono)" font-size="11px" font-weight="700">G</text><rect x="157" y="241" width="26" height="26" rx="3" fill="#2da44e" /><text x="170" y="258" text-anchor="middle" fill="#ffffff" font-family="var(--mono)" font-size="11px" font-weight="700">G</text><rect x="185" y="241" width="26" height="26" rx="3" fill="#2f6fe0" /><text x="198" y="258" text-anchor="middle" fill="#ffffff" font-family="var(--mono)" font-size="11px" font-weight="700">B</text><rect x="213" y="241" width="26" height="26" rx="3" fill="#2f6fe0" /><text x="226" y="258" text-anchor="middle" fill="#ffffff" font-family="var(--mono)" font-size="11px" font-weight="700">B</text><rect x="241" y="241" width="26" height="26" rx="3" fill="#2f6fe0" /><text x="254" y="258" text-anchor="middle" fill="#ffffff" font-family="var(--mono)" font-size="11px" font-weight="700">B</text><rect x="269" y="241" width="26" height="26" rx="3" fill="#2f6fe0" /><text x="282" y="258" text-anchor="middle" fill="#ffffff" font-family="var(--mono)" font-size="11px" font-weight="700">B</text><rect x="73" y="269" width="26" height="26" rx="3" fill="#2da44e" /><text x="86" y="286" text-anchor="middle" fill="#ffffff" font-family="var(--mono)" font-size="11px" font-weight="700">G</text><rect x="101" y="269" width="26" height="26" rx="3" fill="#2da44e" /><text x="114" y="286" text-anchor="middle" fill="#ffffff" font-family="var(--mono)" font-size="11px" font-weight="700">G</text><rect x="129" y="269" width="26" height="26" rx="3" fill="#2da44e" /><text x="142" y="286" text-anchor="middle" fill="#ffffff" font-family="var(--mono)" font-size="11px" font-weight="700">G</text><rect x="157" y="269" width="26" height="26" rx="3" fill="#2da44e" /><text x="170" y="286" text-anchor="middle" fill="#ffffff" font-family="var(--mono)" font-size="11px" font-weight="700">G</text><rect x="185" y="269" width="26" height="26" rx="3" fill="#2f6fe0" /><text x="198" y="286" text-anchor="middle" fill="#ffffff" font-family="var(--mono)" font-size="11px" font-weight="700">B</text><rect x="213" y="269" width="26" height="26" rx="3" fill="#2f6fe0" /><text x="226" y="286" text-anchor="middle" fill="#ffffff" font-family="var(--mono)" font-size="11px" font-weight="700">B</text><rect x="241" y="269" width="26" height="26" rx="3" fill="#2f6fe0" /><text x="254" y="286" text-anchor="middle" fill="#ffffff" font-family="var(--mono)" font-size="11px" font-weight="700">B</text><rect x="269" y="269" width="26" height="26" rx="3" fill="#2f6fe0" /><text x="282" y="286" text-anchor="middle" fill="#ffffff" font-family="var(--mono)" font-size="11px" font-weight="700">B</text><rect x="73" y="297" width="26" height="26" rx="3" fill="#2da44e" /><text x="86" y="314" text-anchor="middle" fill="#ffffff" font-family="var(--mono)" font-size="11px" font-weight="700">G</text><rect x="101" y="297" width="26" height="26" rx="3" fill="#2da44e" /><text x="114" y="314" text-anchor="middle" fill="#ffffff" font-family="var(--mono)" font-size="11px" font-weight="700">G</text><rect x="129" y="297" width="26" height="26" rx="3" fill="#2da44e" /><text x="142" y="314" text-anchor="middle" fill="#ffffff" font-family="var(--mono)" font-size="11px" font-weight="700">G</text><rect x="157" y="297" width="26" height="26" rx="3" fill="#2da44e" /><text x="170" y="314" text-anchor="middle" fill="#ffffff" font-family="var(--mono)" font-size="11px" font-weight="700">G</text><rect x="185" y="297" width="26" height="26" rx="3" fill="#2f6fe0" /><text x="198" y="314" text-anchor="middle" fill="#ffffff" font-family="var(--mono)" font-size="11px" font-weight="700">B</text><rect x="213" y="297" width="26" height="26" rx="3" fill="#2f6fe0" /><text x="226" y="314" text-anchor="middle" fill="#ffffff" font-family="var(--mono)" font-size="11px" font-weight="700">B</text><rect x="241" y="297" width="26" height="26" rx="3" fill="#2f6fe0" /><text x="254" y="314" text-anchor="middle" fill="#ffffff" font-family="var(--mono)" font-size="11px" font-weight="700">B</text><rect x="269" y="297" width="26" height="26" rx="3" fill="#2f6fe0" /><text x="282" y="314" text-anchor="middle" fill="#ffffff" font-family="var(--mono)" font-size="11px" font-weight="700">B</text>
+        <line x1="128" y1="100" x2="128" y2="324" stroke="#ffffff" stroke-width="1.3" stroke-dasharray="3,2" /><line x1="240" y1="100" x2="240" y2="324" stroke="#ffffff" stroke-width="1.3" stroke-dasharray="3,2" /><line x1="72" y1="156" x2="296" y2="156" stroke="#ffffff" stroke-width="1.3" stroke-dasharray="3,2" /><line x1="72" y1="268" x2="296" y2="268" stroke="#ffffff" stroke-width="1.3" stroke-dasharray="3,2" /><line x1="184" y1="100" x2="184" y2="324" stroke="var(--text)" stroke-width="2.4" /><line x1="72" y1="212" x2="296" y2="212" stroke="var(--text)" stroke-width="2.4" /><rect x="72" y="100" width="224" height="224" rx="4" fill="none" stroke="var(--text)" stroke-width="2.2" />
+        <text x="40" y="346" class="t-dim">• Solid 4×4 block = 16-cell shared R/G/B filter</text>
+        <text x="40" y="366" class="t-dim">• Dashed 2×2 sub-block = 4-cell Q-cell group</text>
+        <text x="40" y="386" class="t-mono">0.60µm (HP2) · 0.56µm (HP3/9) · 0.50µm (HP5)</text>
+
+        <!-- Arrows from Left Panel to Center Modes -->
+        <path d="M 344 150 L 368 130" class="s-acc" stroke-width="2" marker-end="url(#rem-arr)" />
+        <path d="M 344 295 L 368 295" class="s-acc" stroke-width="2.4" marker-end="url(#rem-arr)" />
+
+        <!-- Column 2 Top: Low/Mid-Light Pixel Binning -->
+        <rect x="372" y="42" width="336" height="168" rx="10" class="f-elev" />
+        <text x="388" y="64" class="t-acc">MODE A · LOW / MID-LIGHT PIXEL BINNING</text>
+        <rect x="394" y="78" width="44" height="44" rx="5" fill="#e0443e" /><text x="416" y="104" text-anchor="middle" fill="#ffffff" font-family="var(--mono)" font-size="11px" font-weight="700">16×R</text><rect x="440" y="78" width="44" height="44" rx="5" fill="#2da44e" /><text x="462" y="104" text-anchor="middle" fill="#ffffff" font-family="var(--mono)" font-size="11px" font-weight="700">16×G</text><rect x="394" y="124" width="44" height="44" rx="5" fill="#2da44e" /><text x="416" y="150" text-anchor="middle" fill="#ffffff" font-family="var(--mono)" font-size="11px" font-weight="700">16×G</text><rect x="440" y="124" width="44" height="44" rx="5" fill="#2f6fe0" /><text x="462" y="150" text-anchor="middle" fill="#ffffff" font-family="var(--mono)" font-size="11px" font-weight="700">16×B</text><rect x="393" y="77" width="92" height="92" rx="6" fill="none" stroke="var(--text)" stroke-width="1.8" />
+        <text x="439" y="185" text-anchor="middle" class="t" font-weight="700">4×4 Bin (12.5MP)</text>
+        <text x="439" y="201" text-anchor="middle" class="t-dim">16-in-1 Bayer Sum</text>
+        <rect x="569" y="79" width="21" height="21" rx="3" fill="#e0443e" /><text x="579.5" y="93" text-anchor="middle" fill="#ffffff" font-family="var(--mono)" font-size="9.5px" font-weight="700">4R</text><rect x="592" y="79" width="21" height="21" rx="3" fill="#e0443e" /><text x="602.5" y="93" text-anchor="middle" fill="#ffffff" font-family="var(--mono)" font-size="9.5px" font-weight="700">4R</text><rect x="615" y="79" width="21" height="21" rx="3" fill="#2da44e" /><text x="625.5" y="93" text-anchor="middle" fill="#ffffff" font-family="var(--mono)" font-size="9.5px" font-weight="700">4G</text><rect x="638" y="79" width="21" height="21" rx="3" fill="#2da44e" /><text x="648.5" y="93" text-anchor="middle" fill="#ffffff" font-family="var(--mono)" font-size="9.5px" font-weight="700">4G</text><rect x="569" y="102" width="21" height="21" rx="3" fill="#e0443e" /><text x="579.5" y="116" text-anchor="middle" fill="#ffffff" font-family="var(--mono)" font-size="9.5px" font-weight="700">4R</text><rect x="592" y="102" width="21" height="21" rx="3" fill="#e0443e" /><text x="602.5" y="116" text-anchor="middle" fill="#ffffff" font-family="var(--mono)" font-size="9.5px" font-weight="700">4R</text><rect x="615" y="102" width="21" height="21" rx="3" fill="#2da44e" /><text x="625.5" y="116" text-anchor="middle" fill="#ffffff" font-family="var(--mono)" font-size="9.5px" font-weight="700">4G</text><rect x="638" y="102" width="21" height="21" rx="3" fill="#2da44e" /><text x="648.5" y="116" text-anchor="middle" fill="#ffffff" font-family="var(--mono)" font-size="9.5px" font-weight="700">4G</text><rect x="569" y="125" width="21" height="21" rx="3" fill="#2da44e" /><text x="579.5" y="139" text-anchor="middle" fill="#ffffff" font-family="var(--mono)" font-size="9.5px" font-weight="700">4G</text><rect x="592" y="125" width="21" height="21" rx="3" fill="#2da44e" /><text x="602.5" y="139" text-anchor="middle" fill="#ffffff" font-family="var(--mono)" font-size="9.5px" font-weight="700">4G</text><rect x="615" y="125" width="21" height="21" rx="3" fill="#2f6fe0" /><text x="625.5" y="139" text-anchor="middle" fill="#ffffff" font-family="var(--mono)" font-size="9.5px" font-weight="700">4B</text><rect x="638" y="125" width="21" height="21" rx="3" fill="#2f6fe0" /><text x="648.5" y="139" text-anchor="middle" fill="#ffffff" font-family="var(--mono)" font-size="9.5px" font-weight="700">4B</text><rect x="569" y="148" width="21" height="21" rx="3" fill="#2da44e" /><text x="579.5" y="162" text-anchor="middle" fill="#ffffff" font-family="var(--mono)" font-size="9.5px" font-weight="700">4G</text><rect x="592" y="148" width="21" height="21" rx="3" fill="#2da44e" /><text x="602.5" y="162" text-anchor="middle" fill="#ffffff" font-family="var(--mono)" font-size="9.5px" font-weight="700">4G</text><rect x="615" y="148" width="21" height="21" rx="3" fill="#2f6fe0" /><text x="625.5" y="162" text-anchor="middle" fill="#ffffff" font-family="var(--mono)" font-size="9.5px" font-weight="700">4B</text><rect x="638" y="148" width="21" height="21" rx="3" fill="#2f6fe0" /><text x="648.5" y="162" text-anchor="middle" fill="#ffffff" font-family="var(--mono)" font-size="9.5px" font-weight="700">4B</text><line x1="614" y1="78" x2="614" y2="170" stroke="var(--text)" stroke-width="1.8" /><line x1="568" y1="124" x2="660" y2="124" stroke="var(--text)" stroke-width="1.8" /><rect x="568" y="78" width="92" height="92" rx="5" fill="none" stroke="var(--text)" stroke-width="1.8" />
+        <text x="614" y="185" text-anchor="middle" class="t" font-weight="700">2×2 Bin (50MP)</text>
+        <text x="614" y="201" text-anchor="middle" class="t-dim">4-in-1 Q-Cell Sum</text>
+
+        <!-- Column 2 Bottom: AI / DL Remosaic Engine -->
+        <rect x="372" y="222" width="336" height="180" rx="10" class="f-acc2-soft" />
+        <text x="388" y="246" class="t-acc2">MODE B · FULL 200MP &amp; 2×/4× ZOOM: REMOSAIC</text>
+        <text x="388" y="268" class="t" font-weight="700">AI / Deep Learning Remosaic Engine (R_θ)</text>
+        <text x="388" y="290" class="t-dim">• Re-interpolates 4×4 / 2×2 mosaic to 1×1 RGGB</text>
+        <text x="388" y="310" class="t-dim">• Suppresses zippering, false color &amp; moiré</text>
+        <text x="388" y="330" class="t-dim">• HP2: In-Sensor 4×4 QMSC H/W IP (4× Zoom)</text>
+        <text x="388" y="350" class="t-dim">• HP3 / HP9 / HP5: On-SoC DL 16-Cell S/W</text>
+        <rect x="388" y="362" width="304" height="28" rx="6" class="f-elev" />
+        <text x="540" y="380" text-anchor="middle" class="t-mono">I_CFA (4×4) ──R_θ──► Î_Bayer (1×1)</text>
+
+        <!-- Arrow from Remosaic Engine to Right Panel -->
+        <path d="M 708 295 L 732 295" stroke="var(--ok)" stroke-width="2.4" fill="none" marker-end="url(#rem-arr-ok)" />
+
+        <!-- Column 3: Reconstructed 1x1 Standard Bayer CFA Grid -->
+        <rect x="736" y="42" width="320" height="360" rx="10" class="f-ok-soft" />
+        <text x="752" y="64" class="t-ok">2. REMOSAIC OUTPUT (1×1 STANDARD BAYER)</text>
+        <text x="752" y="84" class="t" font-weight="700">Reconstructed 2×2 RGGB Quads (200MP)</text>
+        <rect x="785" y="101" width="26" height="26" rx="3" fill="#e0443e" /><text x="798" y="118" text-anchor="middle" fill="#ffffff" font-family="var(--mono)" font-size="11px" font-weight="700">R</text><rect x="813" y="101" width="26" height="26" rx="3" fill="#2da44e" /><text x="826" y="118" text-anchor="middle" fill="#ffffff" font-family="var(--mono)" font-size="11px" font-weight="700">G</text><rect x="841" y="101" width="26" height="26" rx="3" fill="#e0443e" /><text x="854" y="118" text-anchor="middle" fill="#ffffff" font-family="var(--mono)" font-size="11px" font-weight="700">R</text><rect x="869" y="101" width="26" height="26" rx="3" fill="#2da44e" /><text x="882" y="118" text-anchor="middle" fill="#ffffff" font-family="var(--mono)" font-size="11px" font-weight="700">G</text><rect x="897" y="101" width="26" height="26" rx="3" fill="#e0443e" /><text x="910" y="118" text-anchor="middle" fill="#ffffff" font-family="var(--mono)" font-size="11px" font-weight="700">R</text><rect x="925" y="101" width="26" height="26" rx="3" fill="#2da44e" /><text x="938" y="118" text-anchor="middle" fill="#ffffff" font-family="var(--mono)" font-size="11px" font-weight="700">G</text><rect x="953" y="101" width="26" height="26" rx="3" fill="#e0443e" /><text x="966" y="118" text-anchor="middle" fill="#ffffff" font-family="var(--mono)" font-size="11px" font-weight="700">R</text><rect x="981" y="101" width="26" height="26" rx="3" fill="#2da44e" /><text x="994" y="118" text-anchor="middle" fill="#ffffff" font-family="var(--mono)" font-size="11px" font-weight="700">G</text><rect x="785" y="129" width="26" height="26" rx="3" fill="#2da44e" /><text x="798" y="146" text-anchor="middle" fill="#ffffff" font-family="var(--mono)" font-size="11px" font-weight="700">G</text><rect x="813" y="129" width="26" height="26" rx="3" fill="#2f6fe0" /><text x="826" y="146" text-anchor="middle" fill="#ffffff" font-family="var(--mono)" font-size="11px" font-weight="700">B</text><rect x="841" y="129" width="26" height="26" rx="3" fill="#2da44e" /><text x="854" y="146" text-anchor="middle" fill="#ffffff" font-family="var(--mono)" font-size="11px" font-weight="700">G</text><rect x="869" y="129" width="26" height="26" rx="3" fill="#2f6fe0" /><text x="882" y="146" text-anchor="middle" fill="#ffffff" font-family="var(--mono)" font-size="11px" font-weight="700">B</text><rect x="897" y="129" width="26" height="26" rx="3" fill="#2da44e" /><text x="910" y="146" text-anchor="middle" fill="#ffffff" font-family="var(--mono)" font-size="11px" font-weight="700">G</text><rect x="925" y="129" width="26" height="26" rx="3" fill="#2f6fe0" /><text x="938" y="146" text-anchor="middle" fill="#ffffff" font-family="var(--mono)" font-size="11px" font-weight="700">B</text><rect x="953" y="129" width="26" height="26" rx="3" fill="#2da44e" /><text x="966" y="146" text-anchor="middle" fill="#ffffff" font-family="var(--mono)" font-size="11px" font-weight="700">G</text><rect x="981" y="129" width="26" height="26" rx="3" fill="#2f6fe0" /><text x="994" y="146" text-anchor="middle" fill="#ffffff" font-family="var(--mono)" font-size="11px" font-weight="700">B</text><rect x="785" y="157" width="26" height="26" rx="3" fill="#e0443e" /><text x="798" y="174" text-anchor="middle" fill="#ffffff" font-family="var(--mono)" font-size="11px" font-weight="700">R</text><rect x="813" y="157" width="26" height="26" rx="3" fill="#2da44e" /><text x="826" y="174" text-anchor="middle" fill="#ffffff" font-family="var(--mono)" font-size="11px" font-weight="700">G</text><rect x="841" y="157" width="26" height="26" rx="3" fill="#e0443e" /><text x="854" y="174" text-anchor="middle" fill="#ffffff" font-family="var(--mono)" font-size="11px" font-weight="700">R</text><rect x="869" y="157" width="26" height="26" rx="3" fill="#2da44e" /><text x="882" y="174" text-anchor="middle" fill="#ffffff" font-family="var(--mono)" font-size="11px" font-weight="700">G</text><rect x="897" y="157" width="26" height="26" rx="3" fill="#e0443e" /><text x="910" y="174" text-anchor="middle" fill="#ffffff" font-family="var(--mono)" font-size="11px" font-weight="700">R</text><rect x="925" y="157" width="26" height="26" rx="3" fill="#2da44e" /><text x="938" y="174" text-anchor="middle" fill="#ffffff" font-family="var(--mono)" font-size="11px" font-weight="700">G</text><rect x="953" y="157" width="26" height="26" rx="3" fill="#e0443e" /><text x="966" y="174" text-anchor="middle" fill="#ffffff" font-family="var(--mono)" font-size="11px" font-weight="700">R</text><rect x="981" y="157" width="26" height="26" rx="3" fill="#2da44e" /><text x="994" y="174" text-anchor="middle" fill="#ffffff" font-family="var(--mono)" font-size="11px" font-weight="700">G</text><rect x="785" y="185" width="26" height="26" rx="3" fill="#2da44e" /><text x="798" y="202" text-anchor="middle" fill="#ffffff" font-family="var(--mono)" font-size="11px" font-weight="700">G</text><rect x="813" y="185" width="26" height="26" rx="3" fill="#2f6fe0" /><text x="826" y="202" text-anchor="middle" fill="#ffffff" font-family="var(--mono)" font-size="11px" font-weight="700">B</text><rect x="841" y="185" width="26" height="26" rx="3" fill="#2da44e" /><text x="854" y="202" text-anchor="middle" fill="#ffffff" font-family="var(--mono)" font-size="11px" font-weight="700">G</text><rect x="869" y="185" width="26" height="26" rx="3" fill="#2f6fe0" /><text x="882" y="202" text-anchor="middle" fill="#ffffff" font-family="var(--mono)" font-size="11px" font-weight="700">B</text><rect x="897" y="185" width="26" height="26" rx="3" fill="#2da44e" /><text x="910" y="202" text-anchor="middle" fill="#ffffff" font-family="var(--mono)" font-size="11px" font-weight="700">G</text><rect x="925" y="185" width="26" height="26" rx="3" fill="#2f6fe0" /><text x="938" y="202" text-anchor="middle" fill="#ffffff" font-family="var(--mono)" font-size="11px" font-weight="700">B</text><rect x="953" y="185" width="26" height="26" rx="3" fill="#2da44e" /><text x="966" y="202" text-anchor="middle" fill="#ffffff" font-family="var(--mono)" font-size="11px" font-weight="700">G</text><rect x="981" y="185" width="26" height="26" rx="3" fill="#2f6fe0" /><text x="994" y="202" text-anchor="middle" fill="#ffffff" font-family="var(--mono)" font-size="11px" font-weight="700">B</text><rect x="785" y="213" width="26" height="26" rx="3" fill="#e0443e" /><text x="798" y="230" text-anchor="middle" fill="#ffffff" font-family="var(--mono)" font-size="11px" font-weight="700">R</text><rect x="813" y="213" width="26" height="26" rx="3" fill="#2da44e" /><text x="826" y="230" text-anchor="middle" fill="#ffffff" font-family="var(--mono)" font-size="11px" font-weight="700">G</text><rect x="841" y="213" width="26" height="26" rx="3" fill="#e0443e" /><text x="854" y="230" text-anchor="middle" fill="#ffffff" font-family="var(--mono)" font-size="11px" font-weight="700">R</text><rect x="869" y="213" width="26" height="26" rx="3" fill="#2da44e" /><text x="882" y="230" text-anchor="middle" fill="#ffffff" font-family="var(--mono)" font-size="11px" font-weight="700">G</text><rect x="897" y="213" width="26" height="26" rx="3" fill="#e0443e" /><text x="910" y="230" text-anchor="middle" fill="#ffffff" font-family="var(--mono)" font-size="11px" font-weight="700">R</text><rect x="925" y="213" width="26" height="26" rx="3" fill="#2da44e" /><text x="938" y="230" text-anchor="middle" fill="#ffffff" font-family="var(--mono)" font-size="11px" font-weight="700">G</text><rect x="953" y="213" width="26" height="26" rx="3" fill="#e0443e" /><text x="966" y="230" text-anchor="middle" fill="#ffffff" font-family="var(--mono)" font-size="11px" font-weight="700">R</text><rect x="981" y="213" width="26" height="26" rx="3" fill="#2da44e" /><text x="994" y="230" text-anchor="middle" fill="#ffffff" font-family="var(--mono)" font-size="11px" font-weight="700">G</text><rect x="785" y="241" width="26" height="26" rx="3" fill="#2da44e" /><text x="798" y="258" text-anchor="middle" fill="#ffffff" font-family="var(--mono)" font-size="11px" font-weight="700">G</text><rect x="813" y="241" width="26" height="26" rx="3" fill="#2f6fe0" /><text x="826" y="258" text-anchor="middle" fill="#ffffff" font-family="var(--mono)" font-size="11px" font-weight="700">B</text><rect x="841" y="241" width="26" height="26" rx="3" fill="#2da44e" /><text x="854" y="258" text-anchor="middle" fill="#ffffff" font-family="var(--mono)" font-size="11px" font-weight="700">G</text><rect x="869" y="241" width="26" height="26" rx="3" fill="#2f6fe0" /><text x="882" y="258" text-anchor="middle" fill="#ffffff" font-family="var(--mono)" font-size="11px" font-weight="700">B</text><rect x="897" y="241" width="26" height="26" rx="3" fill="#2da44e" /><text x="910" y="258" text-anchor="middle" fill="#ffffff" font-family="var(--mono)" font-size="11px" font-weight="700">G</text><rect x="925" y="241" width="26" height="26" rx="3" fill="#2f6fe0" /><text x="938" y="258" text-anchor="middle" fill="#ffffff" font-family="var(--mono)" font-size="11px" font-weight="700">B</text><rect x="953" y="241" width="26" height="26" rx="3" fill="#2da44e" /><text x="966" y="258" text-anchor="middle" fill="#ffffff" font-family="var(--mono)" font-size="11px" font-weight="700">G</text><rect x="981" y="241" width="26" height="26" rx="3" fill="#2f6fe0" /><text x="994" y="258" text-anchor="middle" fill="#ffffff" font-family="var(--mono)" font-size="11px" font-weight="700">B</text><rect x="785" y="269" width="26" height="26" rx="3" fill="#e0443e" /><text x="798" y="286" text-anchor="middle" fill="#ffffff" font-family="var(--mono)" font-size="11px" font-weight="700">R</text><rect x="813" y="269" width="26" height="26" rx="3" fill="#2da44e" /><text x="826" y="286" text-anchor="middle" fill="#ffffff" font-family="var(--mono)" font-size="11px" font-weight="700">G</text><rect x="841" y="269" width="26" height="26" rx="3" fill="#e0443e" /><text x="854" y="286" text-anchor="middle" fill="#ffffff" font-family="var(--mono)" font-size="11px" font-weight="700">R</text><rect x="869" y="269" width="26" height="26" rx="3" fill="#2da44e" /><text x="882" y="286" text-anchor="middle" fill="#ffffff" font-family="var(--mono)" font-size="11px" font-weight="700">G</text><rect x="897" y="269" width="26" height="26" rx="3" fill="#e0443e" /><text x="910" y="286" text-anchor="middle" fill="#ffffff" font-family="var(--mono)" font-size="11px" font-weight="700">R</text><rect x="925" y="269" width="26" height="26" rx="3" fill="#2da44e" /><text x="938" y="286" text-anchor="middle" fill="#ffffff" font-family="var(--mono)" font-size="11px" font-weight="700">G</text><rect x="953" y="269" width="26" height="26" rx="3" fill="#e0443e" /><text x="966" y="286" text-anchor="middle" fill="#ffffff" font-family="var(--mono)" font-size="11px" font-weight="700">R</text><rect x="981" y="269" width="26" height="26" rx="3" fill="#2da44e" /><text x="994" y="286" text-anchor="middle" fill="#ffffff" font-family="var(--mono)" font-size="11px" font-weight="700">G</text><rect x="785" y="297" width="26" height="26" rx="3" fill="#2da44e" /><text x="798" y="314" text-anchor="middle" fill="#ffffff" font-family="var(--mono)" font-size="11px" font-weight="700">G</text><rect x="813" y="297" width="26" height="26" rx="3" fill="#2f6fe0" /><text x="826" y="314" text-anchor="middle" fill="#ffffff" font-family="var(--mono)" font-size="11px" font-weight="700">B</text><rect x="841" y="297" width="26" height="26" rx="3" fill="#2da44e" /><text x="854" y="314" text-anchor="middle" fill="#ffffff" font-family="var(--mono)" font-size="11px" font-weight="700">G</text><rect x="869" y="297" width="26" height="26" rx="3" fill="#2f6fe0" /><text x="882" y="314" text-anchor="middle" fill="#ffffff" font-family="var(--mono)" font-size="11px" font-weight="700">B</text><rect x="897" y="297" width="26" height="26" rx="3" fill="#2da44e" /><text x="910" y="314" text-anchor="middle" fill="#ffffff" font-family="var(--mono)" font-size="11px" font-weight="700">G</text><rect x="925" y="297" width="26" height="26" rx="3" fill="#2f6fe0" /><text x="938" y="314" text-anchor="middle" fill="#ffffff" font-family="var(--mono)" font-size="11px" font-weight="700">B</text><rect x="953" y="297" width="26" height="26" rx="3" fill="#2da44e" /><text x="966" y="314" text-anchor="middle" fill="#ffffff" font-family="var(--mono)" font-size="11px" font-weight="700">G</text><rect x="981" y="297" width="26" height="26" rx="3" fill="#2f6fe0" /><text x="994" y="314" text-anchor="middle" fill="#ffffff" font-family="var(--mono)" font-size="11px" font-weight="700">B</text>
+        <line x1="840" y1="100" x2="840" y2="324" stroke="var(--text)" stroke-width="1.8" /><line x1="784" y1="156" x2="1008" y2="156" stroke="var(--text)" stroke-width="1.8" /><line x1="896" y1="100" x2="896" y2="324" stroke="var(--text)" stroke-width="1.8" /><line x1="784" y1="212" x2="1008" y2="212" stroke="var(--text)" stroke-width="1.8" /><line x1="952" y1="100" x2="952" y2="324" stroke="var(--text)" stroke-width="1.8" /><line x1="784" y1="268" x2="1008" y2="268" stroke="var(--text)" stroke-width="1.8" /><rect x="784" y="100" width="224" height="224" rx="4" fill="none" stroke="var(--text)" stroke-width="2.2" />
+        <text x="752" y="346" class="t-dim">• Every 2×2 unit is now standard [R, G; G, B]</text>
+        <text x="752" y="366" class="t-dim">• Full 200MP or Lossless 2×/4× In-Sensor Zoom</text>
+        <text x="752" y="386" class="t-mono">Directly feeds Camera ISP (Demosaic → YUV)</text>
+      </svg>
+      <figcaption><b>Figure 1-1.</b> Non-Bayer $4\times 4$ Hexadeca (16-cell) / $2\times 2$ Q-cell Color Filter Array (left), low/mid-light pixel binning modes ($16\text{-in-}1$ <code>12.5MP</code> &amp; $4\text{-in-}1$ <code>50MP</code>, center top), and AI/DL <strong>Remosaic</strong> ($\mathcal{R}_\theta$, center bottom) reconstructing the full-resolution $1\times 1$ standard Bayer (<code>RGGB</code>) pattern (right) required by the Camera ISP.</figcaption>
+    </figure>
+
+  </section>
+
+  <section id="sec-sensor-history">
+    <h2>Chronological 200MP ISOCELL Sensor Development History (2021 – Present)</h2>
+    <p>
+      Since joining Samsung Electronics S.LSI Sensor Business Team in April 2021, Dr. Yongjoon Song has developed and led Remosaic and Neural ISP algorithms across three successive generations of Samsung's flagship 200MP ISOCELL sensor lineup:
+    </p>
+
+    <figure class="diagram">
+      <svg viewBox="0 0 1080 245" xmlns="http://www.w3.org/2000/svg" role="img" aria-label="Chronological 200MP ISOCELL Sensor Development History HP2 HP3 HP9 HP5">
+        <defs>
+          <marker id="hist-arr" viewBox="0 0 10 10" refX="8" refY="5" markerWidth="6" markerHeight="6" orient="auto-start-reverse">
+            <path d="M 0 1 L 9 5 L 0 9 z" fill="var(--accent)" />
+          </marker>
+        </defs>
+        <rect x="4" y="4" width="1072" height="237" rx="12" class="f-surface" />
+        <text x="24" y="28" class="t-acc">SENSOR ALGORITHM DEVELOPMENT TIMELINE · SAMSUNG ELECTRONICS S.LSI (APR 2021 – PRESENT)</text>
+
+        <!-- HP2 -->
+        <rect x="24" y="44" width="326" height="178" rx="9" class="f-acc-soft" />
+        <text x="40" y="68" class="t-acc">STAGE 1 · APR 2021 – APR 2023</text>
+        <text x="40" y="92" class="t" font-weight="700">ISOCELL HP2 (0.6µm, 200MP, 1/1.3&quot;)</text>
+        <text x="40" y="114" class="t-dim">• Role: Staff Engineer (Algorithm Developer)</text>
+        <text x="40" y="134" class="t-dim">• Developed AI-based 4×4 Q-cell Remosaic</text>
+        <text x="40" y="152" class="t-dim">  (QMSC) algorithm deployed in-sensor</text>
+        <text x="40" y="172" class="t-dim">• Enabled 12MP 4× In-Sensor Zoom mode</text>
+        <text x="40" y="192" class="t-dim">• Product: Samsung Galaxy S23 Ultra (Main)</text>
+        <text x="40" y="212" class="t-mono">In-Sensor AI 4×4 Q-Cell Remosaic (QMSC)</text>
+
+        <line x1="352" y1="133" x2="374" y2="133" class="s-acc" stroke-width="2" marker-end="url(#hist-arr)" />
+
+        <!-- HP3 / HP9 -->
+        <rect x="376" y="44" width="336" height="178" rx="9" class="f-acc2-soft" />
+        <text x="392" y="68" class="t-acc2">STAGE 2 · SEP 2022 – PRESENT</text>
+        <text x="392" y="92" class="t" font-weight="700">ISOCELL HP3 / HP9 (0.56µm, 200MP, 1/1.4&quot;)</text>
+        <text x="392" y="114" class="t-dim">• Role: Staff Engineer (Lead Inventor)</text>
+        <text x="392" y="134" class="t-dim">• Invented World's 1st Deep Learning-based</text>
+        <text x="392" y="152" class="t-dim">  Hexadeca (16-cell) Remosaic S/W algorithm</text>
+        <text x="392" y="172" class="t-dim">• Flagship Main (HP3) &amp; Telephoto (HP9)</text>
+        <text x="392" y="192" class="t-dim">• Products: vivo X200 Pro ZEISS, Magic7 Pro</text>
+        <text x="392" y="212" class="t-mono">World-1st DL Hexadeca (16-Cell) Remosaic S/W</text>
+
+        <line x1="714" y1="133" x2="736" y2="133" class="s-acc" stroke-width="2" marker-end="url(#hist-arr)" />
+
+        <!-- HP5 -->
+        <rect x="738" y="44" width="318" height="178" rx="9" class="f-ok-soft" />
+        <text x="754" y="68" class="t-ok">STAGE 3 · JAN 2025 – PRESENT</text>
+        <text x="754" y="92" class="t" font-weight="700">ISOCELL HP5 (0.5µm, 200MP, 1/1.56&quot;)</text>
+        <text x="754" y="114" class="t-dim">• Role: Staff Engineer / Technical Leader</text>
+        <text x="754" y="134" class="t-dim">• Leading Neural ISP &amp; DL S/W algorithm</text>
+        <text x="754" y="152" class="t-dim">  development for World's smallest 200MP</text>
+        <text x="754" y="172" class="t-dim">• Defining mass-production DL S/W roadmap</text>
+        <text x="754" y="192" class="t-dim">• Cross-functional silicon-ISP co-design</text>
+        <text x="754" y="212" class="t-mono">World's Smallest 200MP (0.5µm) · Tech Lead</text>
+      </svg>
+      <figcaption><b>Figure 1-2.</b> Chronological progression of 200MP ISOCELL sensor development from <code>HP2 (0.6µm)</code> and <code>HP3/HP9 (0.56µm)</code> to <code>HP5 (0.5µm)</code>.</figcaption>
+    </figure>
+
+    <div class="grid-3">
+      <article class="card">
+        <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:8px">
+          <span class="eyebrow" style="font-size:11px">APR 2021 – APR 2023</span><span class="badge b-measured">In-Sensor IP</span>
+        </div>
+        <h3>ISOCELL HP2 (0.6µm, 1/1.3")</h3>
+        <p>Developed the <strong>AI-based 4×4 Q-cell Remosaic (<code>QMSC</code>)</strong> algorithm deployed directly in-sensor, commercializing 200MP full-res capture and <strong>12MP 4× In-Sensor Zoom</strong> on the <strong>Samsung Galaxy S23 Ultra</strong> main camera.</p>
+      </article>
+      <article class="card">
+        <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:8px">
+          <span class="eyebrow" style="font-size:11px">SEP 2022 – PRESENT</span><span class="badge b-sim">World-1st DL</span>
+        </div>
+        <h3>ISOCELL HP3 / HP9 (0.56µm, 1/1.4")</h3>
+        <p>Invented the <strong>World's 1st DL-based Hexadeca (16-cell) Remosaic S/W algorithm</strong>, commercialized for flagship main cameras (<strong>HP3</strong>: Redmi Note 13 Pro+, HONOR 80 Pro) and periscope telephoto cameras (<strong>HP9</strong>: <strong>vivo X200 Pro 200MP ZEISS Camera</strong>, <strong>HONOR Magic7 Pro</strong>).</p>
+      </article>
+      <article class="card">
+        <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:8px">
+          <span class="eyebrow" style="font-size:11px">JAN 2025 – PRESENT</span><span class="badge b-area">Tech Lead</span>
+        </div>
+        <h3>ISOCELL HP5 (0.5µm, 1/1.56")</h3>
+        <p>Serving as <strong>Technical Leader</strong> driving Neural ISP algorithm development and defining the mass-production DL S/W algorithm roadmap for the <strong>world's smallest 200MP mobile image sensor</strong>.</p>
+      </article>
+    </div>
+  </section>
+
+  <section id="sec-sensor-products">
+    <h2>200MP ISOCELL Sensor Lineup &amp; Commercial Smartphone Table</h2>
+    <p>
+      The table below consolidates the detailed specifications, Remosaic architectures, development periods, and commercial smartphone deployments across the 200MP ISOCELL sensor family:
+    </p>
+
+    <div class="tbl-wrap">
+      <table class="tbl">
+        <thead>
+          <tr>
+            <th>Sensor Model</th>
+            <th>Development Period</th>
+            <th>Sensor Spec (Pitch · Resolution · Format)</th>
+            <th>Core Remosaic &amp; Neural ISP Contribution</th>
+            <th>Commercial Smartphones &amp; Camera Role</th>
+            <th>Official Reference</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr>
+            <td><strong>ISOCELL HP5</strong></td>
+            <td>Jan 2025 – Present</td>
+            <td><code>0.5µm</code> · 200MP · <code>1/1.56"</code><br><em>(World's Smallest 200MP)</em></td>
+            <td><strong>Technical Leader</strong>: Deep learning-based S/W Remosaic &amp; Neural ISP algorithm roadmap for ultra-fine 0.5µm sub-micron pixels.</td>
+            <td>Next-generation slim &amp; compact flagship 200MP Main &amp; Periscope Telephoto smartphones</td>
+            <td><a href="https://semiconductor.samsung.com/image-sensor/mobile-image-sensor/isocell-hp5/" target="_blank" rel="noopener">Samsung HP5 Page ↗</a></td>
+          </tr>
+          <tr>
+            <td><strong>ISOCELL HP9</strong></td>
+            <td>Sep 2022 – Present</td>
+            <td><code>0.56µm</code> · 200MP · <code>1/1.4"</code><br><em>(Tetra²pixel 16-Cell)</em></td>
+            <td><strong>World's 1st DL-based Hexadeca (16-cell) Remosaic S/W algorithm</strong> tailored for flagship telephoto optics &amp; in-sensor zoom.</td>
+            <td>
+              • <strong>vivo X200 Pro</strong> (200MP ZEISS APO Telephoto Camera)<br>
+              • <strong>HONOR Magic7 Pro</strong> (200MP Periscope Telephoto)
+            </td>
+            <td><a href="https://semiconductor.samsung.com/image-sensor/mobile-image-sensor/isocell-hp9/" target="_blank" rel="noopener">Samsung HP9 Page ↗</a></td>
+          </tr>
+          <tr>
+            <td><strong>ISOCELL HP3</strong></td>
+            <td>Sep 2022 – Present</td>
+            <td><code>0.56µm</code> · 200MP · <code>1/1.4"</code><br><em>(Tetra²pixel 16-Cell)</em></td>
+            <td><strong>World's 1st DL-based Hexadeca (16-cell) Remosaic S/W algorithm</strong> invented for 200MP main cameras (paired with E2E AI Remosaic).</td>
+            <td>
+              • <strong>Xiaomi Redmi Note 13 Pro+ 5G</strong> (200MP Main)<br>
+              • <strong>HONOR 80 Pro</strong> (160MP mode for Main camera)<br>
+              • <strong>30+ China OEM smartphone models</strong>
+            </td>
+            <td><a href="https://semiconductor.samsung.com/image-sensor/mobile-image-sensor/isocell-hp3/" target="_blank" rel="noopener">Samsung HP3 Page ↗</a></td>
+          </tr>
+          <tr>
+            <td><strong>ISOCELL HP2</strong></td>
+            <td>Apr 2021 – Apr 2023</td>
+            <td><code>0.6µm</code> · 200MP · <code>1/1.3"</code><br><em>(Tetra²pixel 16-Cell)</em></td>
+            <td>In-sensor <strong>AI-based 4×4 Q-cell Remosaic (<code>QMSC</code>)</strong> algorithm developed for 200MP full-res and <strong>12MP 4× In-Sensor Zoom</strong> mode.</td>
+            <td>
+              • <strong>Samsung Galaxy S23 Ultra</strong> (200MP Main Camera &amp; 12MP 4× In-Sensor Zoom)
+            </td>
+            <td><a href="https://semiconductor.samsung.com/image-sensor/mobile-image-sensor/isocell-hp2/" target="_blank" rel="noopener">Samsung HP2 Page ↗</a></td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+  </section>
+
+  <section class="keypoints" id="summary">
+    <h2>Chapter 01 Key Takeaways</h2>
+    <ol>
+      <li><strong>Remosaic Principle:</strong> 200MP ISOCELL sensors use a $4\times 4$ non-Bayer CFA (<code>Tetra²pixel</code>) to enable low-light pixel binning; <strong>Remosaic</strong> converts this non-Bayer mosaic into a standard $2\times 2$ Bayer pattern so the Camera ISP can produce full 200MP images and lossless $2\times / 4\times$ In-Sensor Zoom.</li>
+      <li><strong>ISOCELL HP2 (<code>0.6µm</code>, Apr 2021 – Apr 2023):</strong> Developed in-sensor AI $4\times 4$ Q-cell Remosaic (<code>QMSC</code>), powering the <strong>Samsung Galaxy S23 Ultra</strong> 200MP main camera and 12MP $4\times$ In-Sensor Zoom.</li>
+      <li><strong>ISOCELL HP3 / HP9 (<code>0.56µm</code>, Sep 2022 – Present):</strong> Invented the <strong>World's 1st DL-based Hexadeca (16-cell) Remosaic S/W algorithm</strong>, commercialized across flagship main (HP3) and periscope telephoto (HP9, e.g., <strong>vivo X200 Pro 200MP ZEISS Camera</strong>) smartphones.</li>
+      <li><strong>ISOCELL HP5 (<code>0.5µm</code>, Jan 2025 – Present):</strong> Serving as <strong>Technical Leader</strong> driving Neural ISP and DL S/W algorithm development for the <strong>world's smallest 200MP image sensor</strong>.</li>
+    </ol>
+  </section>
+
+</main>
+</body>
+</html>

@@ -1,0 +1,605 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Ch.05 Life Automation, Household Finance Engine &amp; AI Photo Memory Studio · KAIST Grad Works &amp; Workspace Guidebook</title>
+<meta name="description" content="Ch.05 Life Automation, Household Finance Engine &amp; AI Photo Memory Studio — KAIST Grad Works &amp; GoogleDrive Master Workspace Interactive Guidebook">
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/katex@0.16.11/dist/katex.min.css">
+<script defer src="https://cdn.jsdelivr.net/npm/katex@0.16.11/dist/katex.min.js"></script>
+<script defer src="https://cdn.jsdelivr.net/npm/katex@0.16.11/dist/contrib/auto-render.min.js"></script>
+<link rel="stylesheet" href="../css/style.css?v=1950d4d">
+<link rel="stylesheet" href="../css/glossary-tooltips.css?v=1950d4d">
+<script src="../js/glossary-data.js?v=1950d4d"></script>
+<script src="../js/common.js?v=1950d4d"></script>
+<script defer src="../js/glossary-tooltips.js?v=1950d4d"></script>
+</head>
+<body data-chapter="life" data-root="../">
+<main class="chapter">
+  <header class="chapter-hero">
+    <div class="eyebrow">CHAPTER 05 · THEME 5 — DATA PIPELINES &amp; MULTIMODAL VISION AI</div>
+    <h1>Data Pipeline Automation, Zero-Dependency OOXML Engine &amp; Multimodal Vision Studio</h1>
+    <p class="lead">
+      This chapter dissects <strong>Theme 5 (<code>5_Household_and_Life_Automation</code>)</strong> (<a class="src" href="../../5_Household_and_Life_Automation/README.md" target="_blank" rel="noopener" title="5_Household_and_Life_Automation/README.md">Theme 5 README.md</a>), which brings lab-proven data pipelines, computer vision, and multimodal AI to real-world financial data processing and large-scale media indexing.
+      We examine the <strong>Ledger Analytics Engine &amp; Zero-Dependency OOXML Builder</strong> (<a class="src" href="../../5_Household_and_Life_Automation/1_Household_Finance/analyzer.py#L14" target="_blank" rel="noopener" title="5_Household_and_Life_Automation/1_Household_Finance/analyzer.py:14">analyzer.py:14</a>, <a class="src" href="../../5_Household_and_Life_Automation/1_Household_Finance/xlsx_writer.py#L10" target="_blank" rel="noopener" title="5_Household_and_Life_Automation/1_Household_Finance/xlsx_writer.py:10">xlsx_writer.py:10</a>) that eliminates statistical distortion through refund sign preservation and 2-Track aggregation,
+      the <strong>Multimodal Vision Studio</strong> (<a class="src" href="../../5_Household_and_Life_Automation/4_Photo_Memory_Studio/server.py#L30" target="_blank" rel="noopener" title="5_Household_and_Life_Automation/4_Photo_Memory_Studio/server.py:30">server.py:30</a>, <a class="src" href="../../5_Household_and_Life_Automation/4_Photo_Memory_Studio/face_engine.py#L31" target="_blank" rel="noopener" title="5_Household_and_Life_Automation/4_Photo_Memory_Studio/face_engine.py:31">face_engine.py:31</a>) powered by <strong>YuNet · SFace 128-D · YOLO11n · RAG</strong>,
+      and the <strong>Offline Map Web Planner &amp; Automated PPTX Deck Engine</strong> (<a class="src" href="../../5_Household_and_Life_Automation/2_Travel_and_Trip_Planners/2026_Osaka/data/destinations.json#L2" target="_blank" rel="noopener" title="5_Household_and_Life_Automation/2_Travel_and_Trip_Planners/2026_Osaka/data/destinations.json:2">destinations.json:2</a>, <a class="src" href="../../5_Household_and_Life_Automation/3_Automated_Trip_Reporter/make_ppt_v3.py" target="_blank" rel="noopener" title="5_Household_and_Life_Automation/3_Automated_Trip_Reporter/make_ppt_v3.py">make_ppt_v3.py</a>).
+    </p>
+    <ul class="objectives">
+      <li>Verify the accounting invariants of authorization/billing deduplication, <strong>refund sign preservation (<code>spend(tx) = -tx['amount']</code>)</strong>, and <strong>Pure Expense vs. Fixed Financial Burden 2-Track separation</strong>.</li>
+      <li>Understand the <strong>zero-dependency OOXML engine</strong> (<code>xlsx_writer.py</code>) that builds multi-sheet Excel workbooks using only Python's standard <code>zipfile</code> and XML templates.</li>
+      <li>Explore the <strong>AI Photo Memory Studio</strong> (YuNet · SFace 128-D · YOLO11n · Split-Wipe viewer), which mounts the master media archive in strict Read-Only mode.</li>
+    </ul>
+  </header>
+
+  <section id="sec-finance">
+    <h2>Ledger Analytics Engine (<code>1_Household_Finance</code>) &amp; Zero-Dependency OOXML Builder</h2>
+    <p>
+      Naively summing authorization logs, billing statements, and bank transfer ledgers exported from heterogeneous financial institutions introduces four major accounting distortions:
+      (1) <strong>authorization-vs-billing duplicate entries</strong>, (2) <strong>expense inflation caused by taking absolute values (<code>abs</code>) of cancellations and refunds</strong>,
+      (3) <strong>double-counting of internal transfers between own/family accounts</strong>, and (4) <strong>mixing rigid fixed obligations (<code>financial_burden</code>) with variable operating expenses (pure consumption)</strong>.
+      <code>1_Household_Finance</code> resolves all four via the three-stage pipeline <a class="src" href="../../5_Household_and_Life_Automation/1_Household_Finance/parser.py#L664" target="_blank" rel="noopener" title="5_Household_and_Life_Automation/1_Household_Finance/parser.py:664">parser.py:664</a> → <a class="src" href="../../5_Household_and_Life_Automation/1_Household_Finance/analyzer.py#L14" target="_blank" rel="noopener" title="5_Household_and_Life_Automation/1_Household_Finance/analyzer.py:14">analyzer.py:14</a> → <a class="src" href="../../5_Household_and_Life_Automation/1_Household_Finance/xlsx_writer.py#L10" target="_blank" rel="noopener" title="5_Household_and_Life_Automation/1_Household_Finance/xlsx_writer.py:10">xlsx_writer.py:10</a>.
+    </p>
+
+    <figure class="diagram">
+      <svg id="life-svg" viewBox="0 0 1080 320" xmlns="http://www.w3.org/2000/svg" role="img" aria-label="Theme 5 Automation Suite Pipeline">
+        <defs>
+          <marker id="life-arr" viewBox="0 0 10 10" refX="8" refY="5" markerWidth="6" markerHeight="6" orient="auto-start-reverse">
+            <path d="M 0 1 L 9 5 L 0 9 z" fill="var(--bad)" />
+          </marker>
+        </defs>
+        <rect x="4" y="4" width="1072" height="312" rx="12" class="f-surface" />
+        <text x="24" y="28" class="t-bad">CLICKABLE ARCHITECTURE · THEME 5 LEDGER ENGINE, WEB PLANNER, PPTX &amp; AI VISION STUDIO</text>
+
+        <!-- Suite 1: Household Finance -->
+        <g class="svg-node is-selected" data-node="life-fin">
+          <rect x="24" y="48" width="244" height="184" rx="9" class="f-bad-soft" />
+          <text x="38" y="74" class="t-bad">SUITE 1 · LEDGER ENGINE</text>
+          <text x="38" y="98" class="t" font-weight="700">Parser · Analyzer · OOXML</text>
+          <text x="38" y="120" class="t-dim">reconcile_duplicates() Dedup</text>
+          <text x="38" y="140" class="t-dim">spend(tx) = -tx['amount']</text>
+          <text x="38" y="160" class="t-dim">Pure Spend vs Fixed Burden</text>
+          <text x="38" y="180" class="t-dim">Zero-Dep ZIP/XML .xlsx Writer</text>
+          <text x="38" y="212" class="t-mono">analyzer.py · xlsx_writer.py</text>
+        </g>
+
+        <!-- Suite 2: Travel & Trip Planners -->
+        <g class="svg-node" data-node="life-travel">
+          <rect x="292" y="48" width="240" height="184" rx="9" class="f-acc-soft" />
+          <text x="306" y="74" class="t-acc">SUITE 2 · WEB PLANNERS</text>
+          <text x="306" y="98" class="t" font-weight="700">Offline JSON &amp; Leaflet SPA</text>
+          <text x="306" y="120" class="t-dim">6 Curated POI Database</text>
+          <text x="306" y="140" class="t-dim">Leaflet Map + Route Optimizer</text>
+          <text x="306" y="160" class="t-dim">Offline-First JSON Data Store</text>
+          <text x="306" y="180" class="t-dim">Day-by-Day Timeline Builder</text>
+          <text x="306" y="212" class="t-mono">destinations.json · SPA</text>
+        </g>
+
+        <!-- Suite 3: Automated Trip Reporter -->
+        <g class="svg-node" data-node="life-ppt">
+          <rect x="556" y="48" width="240" height="184" rx="9" class="f-warn-soft" />
+          <text x="570" y="74" class="t-warn">SUITE 3 · PPTX BUILDER</text>
+          <text x="570" y="98" class="t" font-weight="700">Automated PPTX Deck Engine</text>
+          <text x="570" y="120" class="t-dim">16:9 Widescreen Layout Grid</text>
+          <text x="570" y="140" class="t-dim">Programmatic Slide Generation</text>
+          <text x="570" y="160" class="t-dim">Auto Card/Table/Badge Styling</text>
+          <text x="570" y="180" class="t-dim">Deterministic Deck Rebuild</text>
+          <text x="570" y="212" class="t-mono">make_ppt_v3.py</text>
+        </g>
+
+        <!-- Suite 4: AI Photo Memory Studio -->
+        <g class="svg-node" data-node="life-photo">
+          <rect x="820" y="48" width="236" height="184" rx="9" class="f-acc2-soft" />
+          <text x="834" y="74" class="t-acc2">SUITE 4 · AI PHOTO STUDIO</text>
+          <text x="834" y="98" class="t" font-weight="700">YuNet · SFace · YOLO11n · RAG</text>
+          <text x="834" y="120" class="t-dim">Read-Only Photos/ Archive Mount</text>
+          <text x="834" y="140" class="t-dim">SFace 128-D (cos &gt;= 0.360)</text>
+          <text x="834" y="160" class="t-dim">YOLO11n Semantic Concept Tags</text>
+          <text x="834" y="180" class="t-dim">Dual-Viewer Split-Wipe &amp; RAG</text>
+          <text x="834" y="212" class="t-mono">server.py · face_engine.py</text>
+        </g>
+
+        <line x1="268" y1="140" x2="289" y2="140" class="s-bad" stroke-width="2" marker-end="url(#life-arr)" />
+        <line x1="532" y1="140" x2="553" y2="140" class="s-bad" stroke-width="2" marker-end="url(#life-arr)" />
+        <line x1="796" y1="140" x2="817" y2="140" class="s-bad" stroke-width="2" marker-end="url(#life-arr)" />
+
+        <!-- Bottom Privacy & Read-Only Guarantee Strip -->
+        <rect x="24" y="248" width="1032" height="48" rx="8" class="f-elev" />
+        <text x="40" y="277" class="t-ok">PRIVACY &amp; ARCHIVE SAFETY:</text>
+        <text x="245" y="277" class="t" font-weight="600">Local Ledger Data Git-Excluded (Rule 5) · Photos/ Mounted Read-Only with Zero-ZIP &amp; EXIF Integrity</text>
+      </svg>
+      <div class="inspector-box" id="life-insp">
+        <div class="insp-title" id="life-insp-title">📌 SUITE 1 · 1_Household_Finance (Dual-Track Ledger &amp; Zero-Dep OOXML)</div>
+        <div id="life-insp-body">Generates distortion-free financial summaries using the <code>spend(tx) = -tx['amount']</code> sign-preservation rule and 2-Track split aggregation. Click any suite block to inspect its architecture.</div>
+      </div>
+      <figcaption><b>Figure 5-1.</b> Architecture of the 4 Theme 5 automation suites (Ledger Analytics Engine · Offline Map Web Planner · Automated PPTX Builder · AI Vision Studio).</figcaption>
+    </figure>
+
+    <h3 id="sec-finance-math">Core Accounting Invariants in <code>analyzer.py</code></h3>
+    <ol>
+      <li>
+        <strong>Refund Sign-Preservation Rule (<a class="src" href="../../5_Household_and_Life_Automation/1_Household_Finance/analyzer.py#L14" target="_blank" rel="noopener" title="5_Household_and_Life_Automation/1_Household_Finance/analyzer.py:14">analyzer.py:14</a>)</strong>:
+        In normalized ledger records, standard outflows carry negative amounts ($\text{amount} \lt 0$) while cancellations and refunds carry positive amounts ($\text{amount} \gt 0$).
+        Applying <code>abs(tx['amount'])</code> during expense summation would miscalculate a $100$-unit payment followed by a $100$-unit refund as $200$ of net spending instead of $0$.
+        Therefore, <code>spend(tx)</code> strictly applies the unary negation operator <code>-tx['amount']</code>:
+        $$\text{spend}(\text{tx}) = -\text{tx}[\text{'amount'}], \qquad \sum_{i} \text{spend}(\text{tx}_i) = \sum_{\text{pay}} |\text{amount}| - \sum_{\text{refund}} |\text{amount}|$$
+      </li>
+      <li>
+        <strong>Dual-Track Aggregation: Pure Expense vs. Fixed Financial Burden (<a class="src" href="../../5_Household_and_Life_Automation/1_Household_Finance/analyzer.py#L60" target="_blank" rel="noopener" title="5_Household_and_Life_Automation/1_Household_Finance/analyzer.py:60">analyzer.py:60</a>, <a class="src" href="../../5_Household_and_Life_Automation/1_Household_Finance/analyzer.py#L77" target="_blank" rel="noopener" title="5_Household_and_Life_Automation/1_Household_Finance/analyzer.py:77">analyzer.py:77</a>)</strong>:
+        Rigid obligations such as fixed financing costs and taxes (<code>tx['financial_burden'] == True</code>) are separated from variable operating expenses (Pure Expense), producing independent worksheet tabs for real monthly consumption versus total cash outflow.
+      </li>
+      <li>
+        <strong>Internal Transfer Netting (<a class="src" href="../../5_Household_and_Life_Automation/1_Household_Finance/analyzer.py#L22" target="_blank" rel="noopener" title="5_Household_and_Life_Automation/1_Household_Finance/analyzer.py:22">analyzer.py:22</a>) &amp; Complete-Month Coverage Filtering (<a class="src" href="../../5_Household_and_Life_Automation/1_Household_Finance/analyzer.py#L120" target="_blank" rel="noopener" title="5_Household_and_Life_Automation/1_Household_Finance/analyzer.py:120">analyzer.py:120</a>)</strong>:
+        Transfers between accounts belonging to the same household entity (<code>is_internal</code>) are reconciled and excluded, while <code>month_coverage()</code> filters out partially collected months so they cannot skew annual monthly average benchmarks.
+      </li>
+      <li>
+        <strong>Zero-Dependency Direct OOXML <code>.xlsx</code> Generator (<a class="src" href="../../5_Household_and_Life_Automation/1_Household_Finance/xlsx_writer.py#L10" target="_blank" rel="noopener" title="5_Household_and_Life_Automation/1_Household_Finance/xlsx_writer.py:10">xlsx_writer.py:10</a>)</strong>:
+        Packages <code>[Content_Types].xml</code>, <code>xl/styles.xml</code>, and <code>xl/worksheets/sheet*.xml</code> directly via Python's built-in <code>zipfile</code> module, running out-of-the-box in any standard Python environment without third-party libraries.
+      </li>
+    </ol>
+  </section>
+
+  <section id="sec-sim-finance">
+    <h2>Interactive Simulator · Refund Sign-Preservation &amp; 2-Track Split Verifier</h2>
+    <p>
+      Using <strong>100% synthetic slider inputs</strong>, the simulator below compares the overstatement error introduced by <strong>naive absolute-value (<code>abs</code>) aggregation</strong> against <strong><code>analyzer.py</code>'s 2-Track split engine</strong> in the presence of cancellations/refunds, fixed financial obligations, and internal transfers.
+    </p>
+
+    <section class="sim" id="sim-finance">
+      <div class="sim-head">
+        <span class="sim-tag">SIMULATOR 08 · 100% SYNTHETIC LEDGER SIM</span>
+        <h3>Refund Sign-Preservation (<code>-tx['amount']</code>) &amp; 2-Track Split</h3>
+      </div>
+      <div class="sim-body side">
+        <div class="sim-view">
+          <canvas id="fin-canvas"></canvas>
+        </div>
+        <div class="sim-controls">
+          <label class="ctrl">
+            <span>Gross Variable Spend <output id="fin-lbl-gross">280 units</output></span>
+            <input type="range" id="fin-rng-gross" min="100" max="600" step="10" value="280" />
+          </label>
+          <label class="ctrl">
+            <span>Cancellations / Refunds (Refund &gt; 0) <output id="fin-lbl-ref">40 units</output></span>
+            <input type="range" id="fin-rng-ref" min="0" max="150" step="5" value="40" />
+          </label>
+          <label class="ctrl">
+            <span>Fixed Financial Burden (<code>financial_burden</code>) <output id="fin-lbl-bur">150 units</output></span>
+            <input type="range" id="fin-rng-bur" min="0" max="400" step="10" value="150" />
+          </label>
+          <label class="ctrl">
+            <span>Internal Account Transfers (<code>is_internal</code>) <output id="fin-lbl-int">60 units</output></span>
+            <input type="range" id="fin-rng-int" min="0" max="300" step="10" value="60" />
+          </label>
+        </div>
+      </div>
+      <div class="sim-readout">
+        <div class="stat"><span class="k">True Pure Spend (Track A)</span><span class="v" id="fin-st-pure">240 units</span></div>
+        <div class="stat"><span class="k">Fixed Burden (Track B)</span><span class="v" id="fin-st-burden">150 units</span></div>
+        <div class="stat"><span class="k">Naive abs() Error</span><span class="v" id="fin-st-err">+290 bias</span></div>
+        <div class="stat"><span class="k">Net Retention Rate</span><span class="v" id="fin-st-save">44.3%</span></div>
+      </div>
+      <div class="sim-note" id="fin-readout"></div>
+    </section>
+  </section>
+
+  <section id="sec-photo-studio">
+    <h2>AI Vision Studio (<code>4_Photo_Memory_Studio</code>) Multimodal Architecture</h2>
+    <p>
+      To browse, compare, and curate a massive local media archive safely without re-uploading to external clouds,
+      <code>4_Photo_Memory_Studio</code> is architected around four core modules:
+    </p>
+    <ul>
+      <li>
+        <strong>Read-Only Indexer &amp; EXIF Normalization (<a class="src" href="../../5_Household_and_Life_Automation/4_Photo_Memory_Studio/indexer.py#L24" target="_blank" rel="noopener" title="5_Household_and_Life_Automation/4_Photo_Memory_Studio/indexer.py:24">indexer.py:24</a>)</strong>:
+        Scans <code>PHOTOS_ROOT</code> in strict Read-Only mode, indexing EXIF capture timestamps (<code>normalize_exif_datetime</code>) and media metadata into a local SQLite database.
+      </li>
+      <li>
+        <strong>YuNet Detection + SFace 128-D Face Recognition (<a class="src" href="../../5_Household_and_Life_Automation/4_Photo_Memory_Studio/face_engine.py#L31" target="_blank" rel="noopener" title="5_Household_and_Life_Automation/4_Photo_Memory_Studio/face_engine.py:31">face_engine.py:31</a>, <a class="src" href="../../5_Household_and_Life_Automation/4_Photo_Memory_Studio/face_engine.py#L29" target="_blank" rel="noopener" title="5_Household_and_Life_Automation/4_Photo_Memory_Studio/face_engine.py:29">face_engine.py:29</a>)</strong>:
+        Aligns 5-point facial landmarks via <code>cv2.FaceDetectorYN</code> (YuNet) and extracts $128$-dimensional feature embeddings $\mathbf{u}, \mathbf{v} \in \mathbb{R}^{128}$ via <code>cv2.FaceRecognizerSF</code> (SFace).
+        Faces whose cosine similarity meets or exceeds <strong><code>MATCH_THRESHOLD = 0.360</code></strong> are clustered as the same identity:
+        $$\text{sim}(\mathbf{u}, \mathbf{v}) = \frac{\mathbf{u} \cdot \mathbf{v}}{\|\mathbf{u}\|_2 \, \|\mathbf{v}\|_2} \ge 0.360$$
+      </li>
+      <li>
+        <strong>YOLO11n Semantic Concept Tag Mapper (<a class="src" href="../../5_Household_and_Life_Automation/4_Photo_Memory_Studio/detector.py#L23" target="_blank" rel="noopener" title="5_Household_and_Life_Automation/4_Photo_Memory_Studio/detector.py:23">detector.py:23</a>)</strong>:
+        Maps natural-language concept queries directly to COCO object detection classes via the <code>CONCEPT_TO_YOLO_CLASSES</code> dictionary.
+      </li>
+      <li>
+        <strong>Knowledge-Graph (<code>FAMILY_GRAPH</code>) Multimodal RAG Agent (<a class="src" href="../../5_Household_and_Life_Automation/4_Photo_Memory_Studio/gemini_agent.py#L23" target="_blank" rel="noopener" title="5_Household_and_Life_Automation/4_Photo_Memory_Studio/gemini_agent.py:23">gemini_agent.py:23</a>, <a class="src" href="../../5_Household_and_Life_Automation/4_Photo_Memory_Studio/server.py#L30" target="_blank" rel="noopener" title="5_Household_and_Life_Automation/4_Photo_Memory_Studio/server.py:30">server.py:30</a>)</strong>:
+        Injects structured metadata graphs into a multimodal agent to power natural-language media retrieval.
+      </li>
+    </ul>
+  </section>
+
+  <section id="sec-sim-photo">
+    <h2>Interactive Simulator · SFace 128-D Matching &amp; Dual-Viewer Split-Wipe</h2>
+    <p>
+      The simulator below reproduces the core UI of <code>4_Photo_Memory_Studio</code> in the browser: the <strong>Dual-Viewer Split-Wipe A/B Comparator</strong>,
+      <strong>non-destructive exposure ($\Delta\text{EV}$) &amp; color-temperature grading with a live RGB histogram</strong>, and <strong>SFace 128-D cosine similarity threshold filtering</strong>.
+    </p>
+
+    <section class="sim" id="sim-photo-studio">
+      <div class="sim-head">
+        <span class="sim-tag">SIMULATOR 09 · SPLIT-WIPE + SFACE 0.360</span>
+        <h3>AI Photo Memory Studio — Split-Wipe A/B Viewer &amp; SFace 128-D Matcher</h3>
+      </div>
+      <div class="sim-body side">
+        <div class="sim-view">
+          <canvas id="photo-canvas"></canvas>
+        </div>
+        <div class="sim-controls">
+          <label class="ctrl">
+            <span>Before / After Split-Wipe Slider <output id="ph-lbl-wipe">50%</output></span>
+            <input type="range" id="ph-rng-wipe" min="5" max="95" step="1" value="50" />
+          </label>
+          <label class="ctrl">
+            <span>After (Right) Exposure Compensation ($\Delta\text{EV}$) <output id="ph-lbl-ev">+0.35 EV</output></span>
+            <input type="range" id="ph-rng-ev" min="-1.0" max="1.2" step="0.05" value="0.35" />
+          </label>
+          <label class="ctrl">
+            <span>After (Right) Color Temp Shift <output id="ph-lbl-temp">+18 K-shift</output></span>
+            <input type="range" id="ph-rng-temp" min="-40" max="40" step="2" value="18" />
+          </label>
+          <label class="ctrl">
+            <span>SFace Cosine Threshold (Default <code>0.360</code>) <output id="ph-lbl-th">0.360</output></span>
+            <input type="range" id="ph-rng-th" min="0.25" max="0.55" step="0.01" value="0.36" />
+          </label>
+        </div>
+      </div>
+      <div class="sim-readout">
+        <div class="stat"><span class="k">Split-Wipe Position</span><span class="v" id="ph-st-wipe">50%</span></div>
+        <div class="stat"><span class="k">Exposure / Color Grade</span><span class="v" id="ph-st-ev">+0.35 EV / Warm</span></div>
+        <div class="stat"><span class="k">SFace Threshold $\tau$</span><span class="v" id="ph-st-th">0.360</span></div>
+        <div class="stat"><span class="k">Matched Identities</span><span class="v" id="ph-st-faces">2 / 3 Matched</span></div>
+      </div>
+      <div class="sim-note" id="ph-readout"></div>
+    </section>
+  </section>
+
+  <section id="sec-travel-ppt">
+    <h2>Offline Map Web Planner (<code>2_Travel_and_Trip_Planners</code>) &amp; Automated PPTX Builder</h2>
+    <ul>
+      <li>
+        <strong>Offline-First Web Planner SPA (<a class="src" href="../../5_Household_and_Life_Automation/2_Travel_and_Trip_Planners/2026_Osaka/data/destinations.json#L2" target="_blank" rel="noopener" title="5_Household_and_Life_Automation/2_Travel_and_Trip_Planners/2026_Osaka/data/destinations.json:2">destinations.json:2</a>)</strong>:
+        Embeds a curated JSON database of <strong>6 POI spots</strong> into a single offline-capable web application featuring category filters, day-by-day route timelines, and synchronized Leaflet map markers.
+      </li>
+      <li>
+        <strong>16:9 Widescreen Report Deck Builder (<a class="src" href="../../5_Household_and_Life_Automation/3_Automated_Trip_Reporter/make_ppt_v3.py" target="_blank" rel="noopener" title="5_Household_and_Life_Automation/3_Automated_Trip_Reporter/make_ppt_v3.py">make_ppt_v3.py</a>)</strong>:
+        Uses <code>python-pptx</code> to programmatically assemble executive summary cards, comparison tables, and architecture diagram slides on a pixel-accurate widescreen grid.
+      </li>
+    </ul>
+  </section>
+
+  <section class="keypoints" id="summary">
+    <h2>Key Takeaways · Chapter 05</h2>
+    <ol>
+      <li><strong>Ledger Invariants &amp; Zero-Dependency OOXML</strong>: Eliminates statistical distortion via <code>spend(tx) = -tx['amount']</code> sign preservation and 2-Track split aggregation, generating multi-sheet <code>.xlsx</code> workbooks with zero external dependencies.</li>
+      <li><strong>Multimodal Vision Indexer &amp; Document Automation</strong>: Protects master media originals in Read-Only mode while performing YuNet + SFace 128-D (<code>0.360</code>) face clustering, YOLO11n semantic tagging, and Split-Wipe A/B comparison.</li>
+    </ol>
+  </section>
+
+  <script>
+  document.addEventListener("DOMContentLoaded", function () {
+    var LIFE_INFO = {
+      "life-fin": {
+        title: "SUITE 1 · 1_Household_Finance (Dual-Track Ledger & Zero-Dep OOXML)",
+        body: "A three-stage data pipeline comprising authorization/billing deduplication in parser.py, refund sign preservation (-tx['amount']) and 2-Track split aggregation in analyzer.py, and a zero-dependency ZIP/XML Excel writer in xlsx_writer.py."
+      },
+      "life-travel": {
+        title: "SUITE 2 · 2_Travel_and_Trip_Planners (Offline JSON & Leaflet Web SPA)",
+        body: "An offline-capable responsive web application for exploring 100 curated POI coordinates and day-by-day itineraries stored in destinations.json with interactive map markers and timelines."
+      },
+      "life-ppt": {
+        title: "SUITE 3 · 3_Automated_Trip_Reporter (make_ppt_v3.py)",
+        body: "A deterministic Python presentation engine that compiles trip logs and technical comparison tables into standardized 16:9 widescreen .pptx slide decks."
+      },
+      "life-photo": {
+        title: "SUITE 4 · 4_Photo_Memory_Studio (YuNet + SFace + YOLO11n + RAG)",
+        body: "Mounts the Photos/ archive in Read-Only mode to provide SFace 128-D face recognition (cos >= 0.360), YOLO11n semantic tagging, dual-viewer Split-Wipe comparison, and Graph RAG retrieval."
+      }
+    };
+    var lifeNodes = document.querySelectorAll("#life-svg .svg-node");
+    lifeNodes.forEach(function (n) {
+      n.addEventListener("click", function () {
+        lifeNodes.forEach(function (x) { x.classList.remove("is-selected"); });
+        n.classList.add("is-selected");
+        var info = LIFE_INFO[n.getAttribute("data-node")];
+        if (info) {
+          document.getElementById("life-insp-title").textContent = "📌 " + info.title;
+          document.getElementById("life-insp-body").textContent = info.body;
+        }
+      });
+    });
+
+    // 2. Sim 08: Refund Sign-Preservation & 2-Track Split
+    var fGross = document.getElementById("fin-rng-gross");
+    var fRef = document.getElementById("fin-rng-ref");
+    var fBur = document.getElementById("fin-rng-bur");
+    var fInt = document.getElementById("fin-rng-int");
+    var finState = { gross: 280, refund: 40, burden: 150, internal: 60, truePure: 240, naiveSpend: 530 };
+
+    var finChart = window.SB && window.SB.canvas("fin-canvas", 290, function (ctx, CW, CH, P) {
+      ctx.fillStyle = P.text;
+      ctx.font = "600 11px 'JetBrains Mono', monospace";
+      ctx.fillText("NAIVE abs() AGGREGATION vs. ANALYZER.PY DUAL-TRACK ENGINE", 20, 22);
+
+      var maxVal = Math.max(750, finState.naiveSpend + 40);
+      var barLeft = 175;
+      var maxBarW = Math.max(110, CW - barLeft - 125);
+      var scale = maxBarW / maxVal;
+
+      var y1 = 46;
+      ctx.fillStyle = P.dim;
+      ctx.font = "11px 'JetBrains Mono', monospace";
+      ctx.fillText("1. Naive abs() Sum", 20, y1 + 18);
+      var wGross = finState.gross * scale, wRefErr = (finState.refund * 2) * scale, wBur = finState.burden * scale, wInt = finState.internal * scale;
+      var sx = barLeft;
+      ctx.fillStyle = P.accent; ctx.fillRect(sx, y1, Math.max(0, wGross - finState.refund * scale), 24);
+      sx += Math.max(0, wGross - finState.refund * scale);
+      ctx.fillStyle = P.bad; ctx.fillRect(sx, y1, wRefErr, 24);
+      sx += wRefErr;
+      ctx.fillStyle = P.warn; ctx.fillRect(sx, y1, wBur, 24);
+      sx += wBur;
+      ctx.fillStyle = P.accent2; ctx.fillRect(sx, y1, wInt, 24);
+      ctx.fillStyle = P.bad;
+      ctx.font = "600 11px 'JetBrains Mono', monospace";
+      ctx.fillText(finState.naiveSpend + " (Biased)", sx + wInt + 8, y1 + 17);
+
+      var y2 = 104;
+      ctx.fillStyle = P.dim;
+      ctx.font = "11px 'JetBrains Mono', monospace";
+      ctx.fillText("2. Pure Spend (Track A)", 20, y2 + 18);
+      var wPure = finState.truePure * scale;
+      ctx.fillStyle = P.ok;
+      ctx.fillRect(barLeft, y2, wPure, 24);
+      ctx.fillStyle = P.ok;
+      ctx.font = "600 11px 'JetBrains Mono', monospace";
+      ctx.fillText(finState.truePure + " (Exact)", barLeft + wPure + 8, y2 + 17);
+
+      var y3 = 162;
+      ctx.fillStyle = P.dim;
+      ctx.font = "11px 'JetBrains Mono', monospace";
+      ctx.fillText("3. Fixed Burden (Track B)", 20, y3 + 18);
+      ctx.fillStyle = P.warn;
+      ctx.fillRect(barLeft, y3, wBur, 24);
+      ctx.fillStyle = P.warn;
+      ctx.font = "600 11px 'JetBrains Mono', monospace";
+      ctx.fillText(finState.burden + " (Separate Tab)", barLeft + wBur + 8, y3 + 17);
+
+      var leg = [
+        { c: P.ok, t: "Pure Spend (-tx['amount'])" },
+        { c: P.bad, t: "2x Refund Bias from abs()" },
+        { c: P.warn, t: "Fixed Burden (Track B)" },
+        { c: P.accent2, t: "Internal Transfer (Excluded)" }
+      ];
+      var colW = Math.floor((CW - 40) / 2);
+      leg.forEach(function (it, idx) {
+        var col = idx % 2;
+        var row = Math.floor(idx / 2);
+        var lx = 20 + col * colW;
+        var ly = 216 + row * 22;
+        ctx.fillStyle = it.c;
+        ctx.fillRect(lx, ly, 12, 10);
+        ctx.fillStyle = P.dim;
+        ctx.font = "11px 'JetBrains Mono', monospace";
+        ctx.fillText(it.t, lx + 18, ly + 9);
+      });
+    });
+
+    function runFinSim() {
+      var gross = parseInt(fGross.value, 10);
+      var refund = parseInt(fRef.value, 10);
+      var burden = parseInt(fBur.value, 10);
+      var internal = parseInt(fInt.value, 10);
+
+      document.getElementById("fin-lbl-gross").textContent = gross + " units";
+      document.getElementById("fin-lbl-ref").textContent = refund + " units";
+      document.getElementById("fin-lbl-bur").textContent = burden + " units";
+      document.getElementById("fin-lbl-int").textContent = internal + " units";
+
+      var income = 700;
+      var truePure = Math.max(0, gross - refund);
+      var trueTotalOut = truePure + burden;
+      var naiveSpend = gross + refund + burden + internal;
+      var overstate = naiveSpend - truePure;
+      var saveRate = Math.max(0, ((income - trueTotalOut) / income) * 100).toFixed(1);
+
+      window.SB.stat("fin-st-pure", truePure + " units");
+      window.SB.stat("fin-st-burden", burden + " units");
+      window.SB.stat("fin-st-err", "+" + overstate + " bias");
+      window.SB.stat("fin-st-save", saveRate + "%");
+
+      document.getElementById("fin-readout").innerHTML =
+        "<code>analyzer.spend(tx) = -tx['amount']</code>: Gross Spend (" + gross + ") - Refund (" + refund + ") = <strong>Pure Spend " + truePure + "</strong> · " +
+        "Under naive <code>abs()</code> summation, refunds are doubled (" + (refund * 2) + ") and mixed with fixed burdens and internal transfers, creating a statistical distortion of <strong style='color:var(--bad)'>+" + overstate + "</strong>.";
+
+      finState = { gross: gross, refund: refund, burden: burden, internal: internal, truePure: truePure, naiveSpend: naiveSpend };
+      if (finChart) finChart.redraw();
+    }
+
+    [fGross, fRef, fBur, fInt].forEach(function (el) {
+      if (el) el.addEventListener("input", runFinSim);
+    });
+    runFinSim();
+
+    // 3. Sim 09: AI Photo Memory Studio Split-Wipe & SFace 128-D Matcher
+    var pWipe = document.getElementById("ph-rng-wipe");
+    var pEv = document.getElementById("ph-rng-ev");
+    var pTemp = document.getElementById("ph-rng-temp");
+    var pTh = document.getElementById("ph-rng-th");
+    var phState = { wipePct: 50, ev: 0.35, temp: 18, th: 0.36, faces: [] };
+
+    var phChart = window.SB && window.SB.canvas("photo-canvas", 295, function (ctx, CW, CH, P) {
+      var ox = 12, oy = 12, viewH = CH - 24;
+      var viewW = Math.max(210, Math.floor(CW * 0.56));
+      var splitX = ox + (phState.wipePct / 100) * viewW;
+      var scaleX = viewW / 440;
+
+      function drawScene(clipX, clipW, evShift, tempShift, tag) {
+        ctx.save();
+        ctx.beginPath();
+        ctx.rect(clipX, oy, clipW, viewH);
+        ctx.clip();
+
+        var gain = Math.pow(2, evShift * 0.45);
+        var rBoost = Math.max(0, tempShift * 0.85);
+        var bBoost = Math.max(0, -tempShift * 0.85);
+
+        var skyR = Math.min(255, Math.round(52 * gain + rBoost));
+        var skyG = Math.min(255, Math.round(86 * gain));
+        var skyB = Math.min(255, Math.round(138 * gain + bBoost));
+        ctx.fillStyle = "rgb(" + skyR + "," + skyG + "," + skyB + ")";
+        ctx.fillRect(ox, oy, viewW, viewH);
+
+        ctx.fillStyle = "rgba(217,138,0," + Math.min(0.85, 0.4 * gain) + ")";
+        ctx.beginPath();
+        ctx.arc(ox + 340 * scaleX, oy + 68, 34, 0, Math.PI * 2);
+        ctx.fill();
+
+        ctx.fillStyle = "rgb(" + Math.min(255, Math.round(38 * gain)) + "," + Math.min(255, Math.round(84 * gain)) + "," + Math.min(255, Math.round(62 * gain)) + ")";
+        ctx.fillRect(ox, oy + viewH - 80, viewW, 80);
+
+        phState.faces.forEach(function (f) {
+          var fx = ox + f.x * scaleX, fy = oy + f.y;
+          ctx.fillStyle = "rgb(" + Math.min(255, Math.round(74 * gain)) + "," + Math.min(255, Math.round(104 * gain)) + "," + Math.min(255, Math.round(148 * gain)) + ")";
+          ctx.beginPath();
+          ctx.arc(fx, fy + 54, f.r * 1.2, Math.PI, 0);
+          ctx.fill();
+
+          var skinR = Math.min(255, Math.round(196 * gain + rBoost * 0.5));
+          var skinG = Math.min(255, Math.round(162 * gain));
+          var skinB = Math.min(255, Math.round(142 * gain + bBoost * 0.4));
+          ctx.fillStyle = "rgb(" + skinR + "," + skinG + "," + skinB + ")";
+          ctx.beginPath();
+          ctx.arc(fx, fy, f.r * 0.92, 0, Math.PI * 2);
+          ctx.fill();
+
+          var isMatch = f.sim >= phState.th;
+          ctx.strokeStyle = isMatch ? P.ok : P.bad;
+          ctx.lineWidth = 2;
+          ctx.strokeRect(fx - f.r, fy - f.r, f.r * 2, f.r * 2);
+
+          ctx.fillStyle = P.surface;
+          ctx.fillRect(fx - f.r, fy - f.r - 20, f.r * 2 + 24, 16);
+          ctx.fillStyle = isMatch ? P.ok : P.bad;
+          ctx.font = "600 9.5px 'JetBrains Mono', monospace";
+          ctx.fillText((isMatch ? "✓" : "✗") + f.name.split(" ")[0] + "(" + f.sim.toFixed(2) + ")", fx - f.r + 3, fy - f.r - 9);
+        });
+
+        ctx.fillStyle = P.surface;
+        ctx.fillRect(clipX + 6, oy + 6, 118, 20);
+        ctx.strokeStyle = P.border;
+        ctx.strokeRect(clipX + 6, oy + 6, 118, 20);
+        ctx.fillStyle = P.text;
+        ctx.font = "600 10px 'JetBrains Mono', monospace";
+        ctx.fillText(tag, clipX + 12, oy + 19);
+        ctx.restore();
+      }
+
+      drawScene(ox, splitX - ox, -0.25, -10, "BEFORE (RAW)");
+      drawScene(splitX, ox + viewW - splitX, phState.ev, phState.temp, "AFTER (Graded)");
+
+      ctx.strokeStyle = P.accent;
+      ctx.lineWidth = 2.5;
+      ctx.beginPath();
+      ctx.moveTo(splitX, oy);
+      ctx.lineTo(splitX, oy + viewH);
+      ctx.stroke();
+
+      ctx.fillStyle = P.accent;
+      ctx.beginPath();
+      ctx.arc(splitX, oy + viewH * 0.5, 11, 0, Math.PI * 2);
+      ctx.fill();
+      ctx.fillStyle = "#ffffff";
+      ctx.font = "600 10px 'JetBrains Mono', monospace";
+      ctx.fillText("↔", splitX - 5, oy + viewH * 0.5 + 3);
+
+      var hx = ox + viewW + 10, hw = CW - hx - 10;
+      ctx.fillStyle = P.surface;
+      ctx.fillRect(hx, oy, hw, viewH);
+      ctx.strokeStyle = P.border;
+      ctx.lineWidth = 1;
+      ctx.strokeRect(hx, oy, hw, viewH);
+
+      ctx.fillStyle = P.text;
+      ctx.font = "600 10.5px 'JetBrains Mono', monospace";
+      ctx.fillText("LIVE RGB HISTOGRAM", hx + 8, oy + 20);
+
+      var histY = oy + 106, histH = 64;
+      var channels = [
+        { c: P.bad, shift: phState.ev * 18 + phState.temp * 0.45 },
+        { c: P.ok, shift: phState.ev * 18 },
+        { c: P.accent, shift: phState.ev * 18 - phState.temp * 0.45 }
+      ];
+      channels.forEach(function (ch) {
+        ctx.strokeStyle = ch.c;
+        ctx.lineWidth = 1.8;
+        ctx.beginPath();
+        for (var b = 0; b <= 32; b++) {
+          var bx = hx + 8 + (b / 32) * Math.max(40, hw - 16);
+          var center = 15 + (ch.shift / 4);
+          var val = Math.exp(-Math.pow(b - center, 2) / 38);
+          var by = histY - val * histH;
+          if (b === 0) ctx.moveTo(bx, by);
+          else ctx.lineTo(bx, by);
+        }
+        ctx.stroke();
+      });
+
+      ctx.fillStyle = P.accent2;
+      ctx.font = "600 10.5px 'JetBrains Mono', monospace";
+      ctx.fillText("EXIF & AI INDEX", hx + 8, oy + 136);
+      ctx.fillStyle = P.dim;
+      ctx.font = "10px 'JetBrains Mono', monospace";
+      ctx.fillText("Body  : Sony A7M4", hx + 8, oy + 155);
+      ctx.fillText("Lens  : FE 35mm F1.4", hx + 8, oy + 172);
+      ctx.fillText("EXIF  : 1/500s ISO100", hx + 8, oy + 189);
+      ctx.fillText("Detect: YuNet ONNX", hx + 8, oy + 206);
+      ctx.fillText("Embed : SFace 128-D", hx + 8, oy + 223);
+      ctx.fillText("Object: YOLO11n", hx + 8, oy + 240);
+      ctx.fillStyle = P.ok;
+      ctx.font = "600 10px 'JetBrains Mono', monospace";
+      ctx.fillText("Mount : Read-Only OK", hx + 8, oy + 258);
+    });
+
+    function runPhotoSim() {
+      var wipePct = parseInt(pWipe.value, 10);
+      var ev = parseFloat(pEv.value);
+      var temp = parseInt(pTemp.value, 10);
+      var th = parseFloat(pTh.value);
+
+      document.getElementById("ph-lbl-wipe").textContent = wipePct + "%";
+      document.getElementById("ph-lbl-ev").textContent = (ev >= 0 ? "+" : "") + ev.toFixed(2) + " EV";
+      document.getElementById("ph-lbl-temp").textContent = (temp >= 0 ? "+" : "") + temp + " K-shift";
+      document.getElementById("ph-lbl-th").textContent = th.toFixed(3);
+
+      var faces = [
+        { name: "ID#01 (Target A)", sim: 0.512, x: 115, y: 140, r: 32 },
+        { name: "ID#02 (Target B)", sim: 0.468, x: 245, y: 146, r: 30 },
+        { name: "ID#03 (Unmatched)", sim: 0.295, x: 372, y: 154, r: 26 }
+      ];
+      var matchedCnt = faces.filter(function (f) { return f.sim >= th; }).length;
+
+      window.SB.stat("ph-st-wipe", wipePct + "%");
+      window.SB.stat("ph-st-ev", (ev >= 0 ? "+" : "") + ev.toFixed(2) + " EV / " + (temp >= 0 ? "Warm" : "Cool"));
+      window.SB.stat("ph-st-th", th.toFixed(3));
+      window.SB.stat("ph-st-faces", matchedCnt + " / " + faces.length + " Matched");
+
+      document.getElementById("ph-readout").innerHTML =
+        "SFace 128-D Cosine Similarity: ID#01 (<code>0.512</code>), ID#02 (<code>0.468</code>), Background (<code>0.295</code>) · " +
+        "At <code>MATCH_THRESHOLD = " + th.toFixed(3) + "</code>, <strong>" + matchedCnt + " identities</strong> are matched to registered clusters.";
+
+      phState = { wipePct: wipePct, ev: ev, temp: temp, th: th, faces: faces };
+      if (phChart) phChart.redraw();
+    }
+
+    [pWipe, pEv, pTemp, pTh].forEach(function (el) {
+      if (el) el.addEventListener("input", runPhotoSim);
+    });
+    runPhotoSim();
+  });
+  </script>
+
+</main>
+</body>
+</html>

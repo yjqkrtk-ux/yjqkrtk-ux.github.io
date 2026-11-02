@@ -1,0 +1,552 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Ch.01 Master Workspace &amp; 5-Theme Engineering Architecture · KAIST Grad Works &amp; Workspace Guidebook</title>
+<meta name="description" content="Ch.01 Master Workspace &amp; 5-Theme Engineering Architecture — KAIST Grad Works &amp; GoogleDrive Master Workspace Interactive Guidebook">
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/katex@0.16.11/dist/katex.min.css">
+<script defer src="https://cdn.jsdelivr.net/npm/katex@0.16.11/dist/katex.min.js"></script>
+<script defer src="https://cdn.jsdelivr.net/npm/katex@0.16.11/dist/contrib/auto-render.min.js"></script>
+<link rel="stylesheet" href="../css/style.css?v=1950d4d">
+<link rel="stylesheet" href="../css/glossary-tooltips.css?v=1950d4d">
+<script src="../js/glossary-data.js?v=1950d4d"></script>
+<script src="../js/common.js?v=1950d4d"></script>
+<script defer src="../js/glossary-tooltips.js?v=1950d4d"></script>
+</head>
+<body data-chapter="overview" data-root="../">
+<main class="chapter">
+  <header class="chapter-hero">
+    <div class="eyebrow">CHAPTER 01 · OVERVIEW &amp; GOVERNANCE</div>
+    <h1>Master Workspace &amp; 5-Theme Engineering Architecture</h1>
+    <p class="lead">
+      Dr. Yongjoon Song's integrated master repository (<a class="src" href="../../../README.md" target="_blank" rel="noopener" title="README.md">GoogleDrive/README.md</a>) is structured around a
+      <strong>3-Pillar Architecture</strong>: the research &amp; engineering code monorepo (<code>Development/</code>),
+      the academic &amp; career document archive (<code>Documents/</code>), and the lifetime media archive (<code>Photos/</code>).
+      This chapter examines the strict cross-repository boundary charter and the overall system design spanning
+      40 Git submodules and 4 life automation suites.
+    </p>
+    <ul class="objectives">
+      <li>Understand the <strong>3 Pillars (Development · Documents · Photos)</strong> and <strong>6 Operating Integrity Rules</strong> of the <code>GoogleDrive</code> master workspace.</li>
+      <li>Trace the mathematical and systems lineage across the <strong>5 Engineering Themes (Themes 1–5)</strong> encompassing 40 Git submodules and 4 life suites.</li>
+      <li>Analyze language and runtime distributions in real time using the <strong>44-Project Architecture Explorer (Simulator 01)</strong> parsed directly from <code>.gitmodules</code>.</li>
+      <li>Verify the 1:1 correspondence between the KAIST Ph.D. dissertation, <strong>5 US/KR patent families</strong>, and their concrete submodule implementations.</li>
+    </ul>
+  </header>
+
+  <section id="sec-pillars">
+    <h2>GoogleDrive 3 Pillars &amp; 6 Operating Charter Rules</h2>
+    <p>
+      The top-level workspace charter (<a class="src" href="../../../GEMINI.md" target="_blank" rel="noopener" title="GEMINI.md">GoogleDrive/GEMINI.md</a>) and the research monorepo charter (<a class="src" href="../../GEMINI.md" target="_blank" rel="noopener" title="GEMINI.md">Development/GEMINI.md</a>) enforce strict
+      <strong>Separation of Concerns</strong> so that decades of research code, patents, papers, personal financial ledgers, and photo archives
+      never contaminate one another or leak externally.
+      Click any node in the architecture diagram below to inspect its detailed specification and verification rules.
+    </p>
+
+    <figure class="diagram">
+      <svg id="ov-svg" viewBox="0 0 1080 340" xmlns="http://www.w3.org/2000/svg" role="img" aria-label="3-Pillar Master Workspace and 5-Theme Topology">
+        <rect x="4" y="4" width="1072" height="332" rx="12" class="f-surface" />
+        <text x="24" y="28" class="t-acc">CLICKABLE TOPOLOGY · MASTER WORKSPACE (3 PILLARS) &amp; DEVELOPMENT MONOREPO (5 THEMES)</text>
+
+        <!-- Top Row: 3 Master Pillars -->
+        <g class="svg-node is-selected" data-node="pillar-dev">
+          <rect x="24" y="44" width="330" height="84" rx="9" class="f-acc-soft" />
+          <text x="40" y="68" class="t-acc">PILLAR 1 · Development/ (kaist-grad-works)</text>
+          <text x="40" y="90" class="t" font-weight="600">40 Submodules (Themes 1–4) + Theme 5</text>
+          <text x="40" y="110" class="t-dim">C/C++ · Python/TF · MATLAB · Java · C#</text>
+        </g>
+
+        <g class="svg-node" data-node="pillar-doc">
+          <rect x="375" y="44" width="330" height="84" rx="9" class="f-acc2-soft" />
+          <text x="391" y="68" class="t-acc2">PILLAR 2 · Documents/ (Academic &amp; Career)</text>
+          <text x="391" y="90" class="t" font-weight="600">KAIST Thesis · Lab Seminars · Web Resume</text>
+          <text x="391" y="110" class="t-dim">Resume Deploy Parity + Personal/ (.gitignore)</text>
+        </g>
+
+        <g class="svg-node" data-node="pillar-photo">
+          <rect x="726" y="44" width="330" height="84" rx="9" class="f-ok-soft" />
+          <text x="742" y="68" class="t-ok">PILLAR 3 · Photos/ (Lifetime Media Archive)</text>
+          <text x="742" y="90" class="t" font-weight="600">Zero-ZIP Policy &amp; Zero Non-Media Policy</text>
+          <text x="742" y="110" class="t-dim">Read-Only Mount for Theme 5 Photo Studio</text>
+        </g>
+
+        <!-- Connector Line from Pillar 1 to 5 Themes -->
+        <line x1="189" y1="128" x2="189" y2="158" class="s-acc" stroke-width="2" />
+        <line x1="115" y1="158" x2="965" y2="158" class="s-acc" stroke-width="1.5" stroke-dasharray="5,4" />
+
+        <!-- Bottom Row: 5 Engineering Themes -->
+        <g class="svg-node" data-node="theme-1">
+          <rect x="24" y="174" width="196" height="142" rx="8" class="f-ok-soft" />
+          <text x="36" y="198" class="t-ok">THEME 1 · WPT &amp; EV</text>
+          <text x="36" y="220" class="t" font-weight="700">3D WPT &amp; OLEV</text>
+          <text x="36" y="240" class="t-dim">Tsai 3D Stereo Vision</text>
+          <text x="36" y="258" class="t-dim">FLIR + Coral EdgeTPU</text>
+          <text x="36" y="276" class="t-dim">85kHz GPS Telematics</text>
+          <text x="36" y="300" class="t-mono">8 Submodules · Ch.03</text>
+        </g>
+
+        <g class="svg-node" data-node="theme-2">
+          <rect x="236" y="174" width="196" height="142" rx="8" class="f-acc2-soft" />
+          <text x="248" y="198" class="t-acc2">THEME 2 · BIO &amp; DRL</text>
+          <text x="248" y="220" class="t" font-weight="700">DQNAlign &amp; Genomics</text>
+          <text x="248" y="240" class="t-dim">Dueling DDQN + Skip</text>
+          <text x="248" y="258" class="t-dim">REminerII · PixelRE</text>
+          <text x="248" y="276" class="t-dim">REDNN · 1092x · QLOBAL</text>
+          <text x="248" y="300" class="t-mono">21 Submodules · Ch.02</text>
+        </g>
+
+        <g class="svg-node" data-node="theme-3">
+          <rect x="448" y="174" width="196" height="142" rx="8" class="f-warn-soft" />
+          <text x="460" y="198" class="t-warn">THEME 3 · AUTOMATION</text>
+          <text x="460" y="220" class="t" font-weight="700">Vision FSM &amp; Markov</text>
+          <text x="460" y="240" class="t-dim">CMaple DirectInput</text>
+          <text x="460" y="258" class="t-dim">PyMaple 13-State FSM</text>
+          <text x="460" y="276" class="t-dim">StarForce · Lophago</text>
+          <text x="460" y="300" class="t-mono">7 Submodules · Ch.04</text>
+        </g>
+
+        <g class="svg-node" data-node="theme-4">
+          <rect x="660" y="174" width="196" height="142" rx="8" class="f-acc-soft" />
+          <text x="672" y="198" class="t-acc">THEME 4 · SPECIALTY</text>
+          <text x="672" y="220" class="t" font-weight="700">3D MIMO &amp; Casio SDK</text>
+          <text x="672" y="240" class="t-dim">WINNER II 11-Step MIMO</text>
+          <text x="672" y="258" class="t-dim">60GHz mmWave Backhaul</text>
+          <text x="672" y="276" class="t-dim">Casio FX-9860G RPG/RTS</text>
+          <text x="672" y="300" class="t-mono">4 Submodules · Ch.04</text>
+        </g>
+
+        <g class="svg-node" data-node="theme-5">
+          <rect x="872" y="174" width="184" height="142" rx="8" class="f-bad-soft" />
+          <text x="884" y="198" class="t-bad">THEME 5 · LIFE AI</text>
+          <text x="884" y="220" class="t" font-weight="700">Finance &amp; Photo AI</text>
+          <text x="884" y="240" class="t-dim">Refund -tx['amount']</text>
+          <text x="884" y="258" class="t-dim">YuNet + SFace 128-D</text>
+          <text x="884" y="276" class="t-dim">Osaka/Paris + PPTX</text>
+          <text x="884" y="300" class="t-mono">4 Local Suites · Ch.05</text>
+        </g>
+      </svg>
+      <div class="inspector-box" id="ov-insp">
+        <div class="insp-title" id="ov-insp-title">📌 PILLAR 1 · Development/ (kaist-grad-works Monorepo)</div>
+        <div id="ov-insp-body">Engineering monorepo managing 40 Git submodules (<a class="src" href="../../.gitmodules" target="_blank" rel="noopener" title=".gitmodules">.gitmodules</a>) and the Theme 5 life automation suites. Click any block above to inspect the detailed architectural specifications of each pillar and theme.</div>
+      </div>
+      <figcaption><b>Figure 1-1.</b> Topology of the GoogleDrive 3 Master Pillars (Development · Documents · Photos) and the 5 Engineering Themes of the Development monorepo.</figcaption>
+    </figure>
+
+    <div class="callout tip">
+      <b class="title">Summary of the 6 Workspace Integrity Rules (<a class="src" href="../../../GEMINI.md" target="_blank" rel="noopener" title="GEMINI.md">GoogleDrive/GEMINI.md</a>)</b>
+      <ul>
+        <li><strong>Rule 1 · Separation of Concerns</strong>: Media files reside strictly in <code>Photos/</code>, research and engineering code in <code>Development/</code>, and academic/administrative documents in <code>Documents/</code>.</li>
+        <li><strong>Rule 2 · Zero-ZIP Policy</strong>: All archive files (<code>.zip</code>, <code>.rar</code>, <code>.7z</code>, etc.) are strictly prohibited inside <code>Photos/</code> to prevent Google Photos backup omissions.</li>
+        <li><strong>Rule 3 · Zero Non-Media Policy</strong>: Non-media documents (<code>.pdf</code>, <code>.hwp</code>, <code>.pptx</code>, <code>.xlsx</code>) are never placed inside <code>Photos/</code>.</li>
+        <li><strong>Rule 4 · Purity of Daily Feed</strong>: <code>Photos/Daily/</code> stores only direct camera-captured photos and videos, while screen captures (<code>Screenshots/</code>) and web-saved images (<code>Downloads/</code>) are quarantined separately.</li>
+        <li><strong>Rule 5 · Privacy Gate</strong>: <code>Documents/Personal/</code> and <code>1_Household_Finance/Data/*.xlsx</code> are strictly excluded from Git tracking and external documentation under all circumstances.</li>
+        <li><strong>Rule 6 · Cloud Shortcut &amp; EXIF Integrity</strong>: Cloud shortcuts (<code>.gsheet</code>/<code>.gdoc</code>) and original photo EXIF <code>DateTimeOriginal</code> metadata are preserved without modification.</li>
+      </ul>
+    </div>
+  </section>
+
+  <section id="sec-themes">
+    <h2>5-Theme Engineering Comparison Matrix</h2>
+    <p>
+      The <code>Development/</code> repository systematically organizes KAIST EE M.S./Ph.D. research assets (Themes 1–4, 40 submodules)
+      alongside post-graduation real-world life automation systems (Theme 5, 4 suites).
+    </p>
+
+    <div class="tbl-wrap">
+      <table class="tbl">
+        <thead>
+          <tr>
+            <th>Theme Code</th>
+            <th>Directory &amp; README</th>
+            <th>Core Domain &amp; Mathematical / Algorithmic Models</th>
+            <th>Representative Source Entry Points</th>
+            <th>Scale</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr>
+            <td><span class="badge b-on">Theme 1</span></td>
+            <td><a class="src" href="../../1_Wireless_Power_Transfer_and_EV/README.md" target="_blank" rel="noopener" title="1_Wireless_Power_Transfer_and_EV/README.md">Theme 1 README.md</a></td>
+            <td>1 kW 3D magnetic resonant WPT, Tsai pinhole calibration, skew-ray closest-midpoint 3D triangulation, FLIR thermal safety interlock, 85 kHz OLEV UTM telematics</td>
+            <td><a class="src" href="../../1_Wireless_Power_Transfer_and_EV/3D_Positioning_and_Vision/ObjectDetection/TsaiCalibration.py#L4" target="_blank" rel="noopener" title="1_Wireless_Power_Transfer_and_EV/3D_Positioning_and_Vision/ObjectDetection/TsaiCalibration.py:4">TsaiCalibration.py:4</a><br /><a class="src" href="../../1_Wireless_Power_Transfer_and_EV/Telematics_and_GPS/GPS/get_lane_distance.m#L1" target="_blank" rel="noopener" title="1_Wireless_Power_Transfer_and_EV/Telematics_and_GPS/GPS/get_lane_distance.m:1">get_lane_distance.m:1</a><br /><a class="src" href="../../1_Wireless_Power_Transfer_and_EV/Telematics_and_GPS/GPS/get_predicted_time.m#L1" target="_blank" rel="noopener" title="1_Wireless_Power_Transfer_and_EV/Telematics_and_GPS/GPS/get_predicted_time.m:1">get_predicted_time.m:1</a></td>
+            <td class="mono" style="white-space:nowrap;">8 Submodules</td>
+          </tr>
+          <tr>
+            <td><span class="badge b-sim">Theme 2</span></td>
+            <td><a class="src" href="../../2_Bioinformatics_and_Genomics/README.md" target="_blank" rel="noopener" title="2_Bioinformatics_and_Genomics/README.md">Theme 2 README.md</a></td>
+            <td>Local-window MDP, Dueling Double DQN, Exact Match Skip, Depthwise Separable Conv, Zipfian ($s=1.6$) indels, REminerII seed-and-extend, REDNN cancer classification</td>
+            <td><a class="src" href="../../2_Bioinformatics_and_Genomics/Deep_Learning_Biomarkers/DQNalign/tool/RL/agent.py#L10" target="_blank" rel="noopener" title="2_Bioinformatics_and_Genomics/Deep_Learning_Biomarkers/DQNalign/tool/RL/agent.py:10">agent.py:10</a><br /><a class="src" href="../../2_Bioinformatics_and_Genomics/Deep_Learning_Biomarkers/DQNalign/tool/RL/Learning.py#L17" target="_blank" rel="noopener" title="2_Bioinformatics_and_Genomics/Deep_Learning_Biomarkers/DQNalign/tool/RL/Learning.py:17">Learning.py:17</a><br /><a class="src" href="../../2_Bioinformatics_and_Genomics/Sequence_Mining_and_Alignment/REminerII/Insilico.py#L74" target="_blank" rel="noopener" title="2_Bioinformatics_and_Genomics/Sequence_Mining_and_Alignment/REminerII/Insilico.py:74">Insilico.py:74</a><br /><a class="src" href="../../2_Bioinformatics_and_Genomics/Deep_Learning_Biomarkers/REDNN/REDNN.py#L74" target="_blank" rel="noopener" title="2_Bioinformatics_and_Genomics/Deep_Learning_Biomarkers/REDNN/REDNN.py:74">REDNN.py:74</a></td>
+            <td class="mono" style="white-space:nowrap;">21 Submodules</td>
+          </tr>
+          <tr>
+            <td><span class="badge b-warn">Theme 3</span></td>
+            <td><a class="src" href="../../3_Intelligent_Automation/README.md" target="_blank" rel="noopener" title="3_Intelligent_Automation/README.md">Theme 3 README.md</a></td>
+            <td>Win32 DirectInput scancode hooking, 13-state priority vision FSM, Faster R-CNN captcha detection, Absorbing Markov Chain (StarForce), constrained combinatorial solver (Lophago)</td>
+            <td><a class="src" href="../../3_Intelligent_Automation/Vision_and_Driver_Automation/PyMaple/PyMaple2/pydetect.py#L40" target="_blank" rel="noopener" title="3_Intelligent_Automation/Vision_and_Driver_Automation/PyMaple/PyMaple2/pydetect.py:40">pydetect.py:40</a><br /><a class="src" href="../../3_Intelligent_Automation/Modeling_and_Intelligence/StarForce/StarForce.m#L1" target="_blank" rel="noopener" title="3_Intelligent_Automation/Modeling_and_Intelligence/StarForce/StarForce.m:1">StarForce.m:1</a><br /><a class="src" href="../../3_Intelligent_Automation/Modeling_and_Intelligence/Lophago/main.py#L119" target="_blank" rel="noopener" title="3_Intelligent_Automation/Modeling_and_Intelligence/Lophago/main.py:119">main.py:119</a></td>
+            <td class="mono" style="white-space:nowrap;">7 Submodules</td>
+          </tr>
+          <tr>
+            <td><span class="badge b-area">Theme 4</span></td>
+            <td><a class="src" href="../../4_Specialty_Systems/README.md" target="_blank" rel="noopener" title="4_Specialty_Systems/README.md">Theme 4 README.md</a></td>
+            <td>3GPP/WINNER II 3D MIMO 11-step geometry-based stochastic channel, 60 GHz unlicensed backhaul beamforming, Casio FX-9860G (SH-3, 128×64 VRAM) native RPG &amp; RTS engines</td>
+            <td><a class="src" href="../../4_Specialty_Systems/Wireless_Communications/WinnerIIChannel/Main.m" target="_blank" rel="noopener" title="4_Specialty_Systems/Wireless_Communications/WinnerIIChannel/Main.m">Main.m</a><br /><a class="src" href="../../4_Specialty_Systems/Embedded_Casio_Engines/RPG/README.md" target="_blank" rel="noopener" title="4_Specialty_Systems/Embedded_Casio_Engines/RPG/README.md">Casio RPG/README.md</a><br /><a class="src" href="../../4_Specialty_Systems/Embedded_Casio_Engines/RTS/README.md" target="_blank" rel="noopener" title="4_Specialty_Systems/Embedded_Casio_Engines/RTS/README.md">Casio RTS/README.md</a></td>
+            <td class="mono" style="white-space:nowrap;">4 Submodules</td>
+          </tr>
+          <tr>
+            <td><span class="badge b-off">Theme 5</span></td>
+            <td><a class="src" href="../../5_Household_and_Life_Automation/README.md" target="_blank" rel="noopener" title="5_Household_and_Life_Automation/README.md">Theme 5 README.md</a></td>
+            <td>Refund sign preservation (<code>-tx['amount']</code>) &amp; dual-track ledger engine, zero-dependency OOXML builder, Osaka/Paris travel SPA, YuNet·SFace·YOLO11n·Gemini Photo Studio</td>
+            <td><a class="src" href="../../5_Household_and_Life_Automation/1_Household_Finance/analyzer.py#L14" target="_blank" rel="noopener" title="5_Household_and_Life_Automation/1_Household_Finance/analyzer.py:14">analyzer.py:14</a><br /><a class="src" href="../../5_Household_and_Life_Automation/1_Household_Finance/xlsx_writer.py#L10" target="_blank" rel="noopener" title="5_Household_and_Life_Automation/1_Household_Finance/xlsx_writer.py:10">xlsx_writer.py:10</a><br /><a class="src" href="../../5_Household_and_Life_Automation/4_Photo_Memory_Studio/server.py#L30" target="_blank" rel="noopener" title="5_Household_and_Life_Automation/4_Photo_Memory_Studio/server.py:30">server.py:30</a><br /><a class="src" href="../../5_Household_and_Life_Automation/4_Photo_Memory_Studio/face_engine.py#L31" target="_blank" rel="noopener" title="5_Household_and_Life_Automation/4_Photo_Memory_Studio/face_engine.py:31">face_engine.py:31</a></td>
+            <td class="mono" style="white-space:nowrap;">4 Local Suites</td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+  </section>
+
+  <section id="sec-sim-submodules">
+    <h2>Interactive Simulator · 40-Submodule &amp; 5-Theme Explorer</h2>
+    <p>
+      The explorer below visualizes and filters all <strong>40 Git submodules</strong> parsed live from <a class="src" href="../../.gitmodules" target="_blank" rel="noopener" title=".gitmodules">.gitmodules</a> plus the
+      <strong>4 Life Automation suites</strong> of Theme 5 (44 projects total) by engineering theme and language/runtime stack.
+    </p>
+
+    <section class="sim" id="sim-submodules">
+      <div class="sim-head">
+        <span class="sim-tag">SIMULATOR 01 · PARSED FROM .gitmodules</span>
+        <h3>44-Project Architecture &amp; Language Stack Explorer</h3>
+      </div>
+      <div class="sim-body side">
+        <div class="sim-view">
+          <canvas id="ov-chart-canvas"></canvas>
+        </div>
+        <div class="sim-controls">
+          <div class="ctrl">
+            <span>Theme Filter</span>
+            <div class="seg" id="ov-theme-btns" style="display:grid;grid-template-columns:repeat(5,1fr);gap:5px;">
+              <button type="button" data-t="Theme 1" style="padding:6px 4px;white-space:nowrap;">T1 (8)</button>
+              <button type="button" data-t="Theme 2" style="padding:6px 4px;white-space:nowrap;">T2 (21)</button>
+              <button type="button" data-t="Theme 3" style="padding:6px 4px;white-space:nowrap;">T3 (7)</button>
+              <button type="button" data-t="Theme 4" style="padding:6px 4px;white-space:nowrap;">T4 (4)</button>
+              <button type="button" data-t="Theme 5" style="padding:6px 4px;white-space:nowrap;">T5 (4)</button>
+              <button type="button" class="on" data-t="ALL" style="grid-column:1 / -1;">ALL (44)</button>
+            </div>
+          </div>
+          <label class="ctrl">
+            <span>Keyword / Tech Stack Search</span>
+            <input type="search" id="ov-filter-input" placeholder="e.g., DQN, REminer, GPS, Markov, SFace..." style="width:100%;background:var(--bg-elev);color:var(--text);border:1px solid var(--border);border-radius:6px;padding:7px 10px;font-size:13px;" />
+          </label>
+          <div id="ov-list-box" style="max-height:175px;overflow-y:auto;overflow-x:hidden;background:var(--bg-elev);border:1px solid var(--border);border-radius:8px;padding:6px 10px;font-size:12.5px;"></div>
+        </div>
+      </div>
+      <div class="sim-readout">
+        <div class="stat"><span class="k">Displayed Projects</span><span class="v" id="ov-stat-cnt">44 / 44</span></div>
+        <div class="stat"><span class="k">Selected Theme</span><span class="v" id="ov-stat-theme">ALL THEMES</span></div>
+        <div class="stat"><span class="k">Top Language Stack</span><span class="v" id="ov-stat-lang">Python / C++</span></div>
+        <div class="stat"><span class="k">Git Submodules</span><span class="v">40 (GitHub Linked)</span></div>
+      </div>
+      <div class="sim-note">
+        <strong>How to Read</strong>: Click the theme filter buttons or type in the search box on the right to immediately re-render the language and runtime distribution on the left canvas.
+      </div>
+    </section>
+  </section>
+
+  <section id="sec-patents-pubs">
+    <h2>Dissertation, International Journals &amp; US/KR Patents Mapping (Academic Lineage &amp; Direct Links)</h2>
+    <p>
+      Each submodule in the monorepo is not an isolated toy project, but the actual experimental and production codebase behind the
+      KAIST Ph.D. dissertation (<a class="src" href="../../../Documents/Documents/PhD_Administration" target="_blank" rel="noopener" title="Documents/Documents/PhD_Administration">Documents/PhD_Administration</a>), <strong>4 first-author IEEE journal and conference papers</strong>, and
+      <strong>5 granted/pending US &amp; Korean patent families</strong>.
+      Click any paper/patent title or public repository link in the table below to jump directly to IEEE Xplore, Google Patents, or public GitHub.
+    </p>
+
+    <div class="tbl-wrap">
+      <table class="tbl">
+        <thead>
+          <tr>
+            <th>Category</th>
+            <th>Publication / Patent Number (Direct Link ↗)</th>
+            <th>Core Invention &amp; Research Contribution</th>
+            <th>Public Code &amp; Module</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr>
+            <td><span class="badge b-sim">IEEE Journal</span></td>
+            <td>
+              <strong><a href="https://doi.org/10.1109/OJEMB.2021.3076156" target="_blank" rel="noopener">IEEE OJEMB (Apr. 2021) ↗</a></strong><br />
+              Local Alignment of DNA Sequence Based on Deep Reinforcement Learning
+            </td>
+            <td>Ph.D. Dissertation Core [1]: Semi-global and local DNA sequence alignment acceleration based on a local sliding-window MDP and Dueling Double DQN</td>
+            <td>
+              <a href="https://github.com/syjqkrtk/DQNalign" target="_blank" rel="noopener"><code>syjqkrtk/DQNalign ↗</code></a><br />
+              <code>Theme 2 / DQNalign</code>
+            </td>
+          </tr>
+          <tr>
+            <td><span class="badge b-sim">IEEE Journal</span></td>
+            <td>
+              <strong><a href="https://doi.org/10.1109/OJEMB.2021.3055424" target="_blank" rel="noopener">IEEE OJEMB (Jan. 2021) ↗</a></strong><br />
+              Pairwise Heuristic Sequence Alignment Algorithm Based on Deep Reinforcement Learning
+            </td>
+            <td>Ph.D. Dissertation Core [2]: Linear-time $O(L)$ pairwise sequence alignment combining the Exact Match Skip heuristic with deep RL policy inference</td>
+            <td>
+              <a href="https://github.com/syjqkrtk/DQNalign" target="_blank" rel="noopener"><code>syjqkrtk/DQNalign ↗</code></a><br />
+              <code>Theme 2 / DQNalign</code>
+            </td>
+          </tr>
+          <tr>
+            <td><span class="badge b-sim">IEEE Conf</span></td>
+            <td>
+              <strong><a href="https://ieeexplore.ieee.org/document/8333425" target="_blank" rel="noopener">IEEE BHI (2018) ↗</a> · <a href="https://ieeexplore.ieee.org/document/8037707" target="_blank" rel="noopener">IEEE EMBC (2017) ↗</a></strong><br />
+              Evolutionary Distance Estimation &amp; Repeated K-Word Genomic Classification
+            </td>
+            <td>Evolutionary distance estimation from K-mer word frequency variation and species classification from repeated K-Word length distributions (PDF)</td>
+            <td>
+              <a href="https://github.com/syjqkrtk/EvolDist" target="_blank" rel="noopener"><code>syjqkrtk/EvolDist ↗</code></a><br />
+              <a href="https://github.com/syjqkrtk/RepeatLengthPdf" target="_blank" rel="noopener"><code>syjqkrtk/RepeatLengthPdf ↗</code></a>
+            </td>
+          </tr>
+          <tr>
+            <td><span class="badge b-on">US Patent B2</span></td>
+            <td>
+              <strong><a href="https://patents.google.com/patent/US12496917B2/en" target="_blank" rel="noopener">US 12,496,917 B2 (Granted) ↗</a></strong><br />
+              <a href="https://patents.google.com/patent/KR102370592B1/en" target="_blank" rel="noopener">KR 10-2370592 B1 ↗</a> · <a href="https://patents.google.com/patent/WO2021101223A1/en" target="_blank" rel="noopener">WO 2021/101223 A1 ↗</a>
+            </td>
+            <td>Method and apparatus for controlling output power of an 85 kHz dynamic wireless charging (OLEV) inverter based on vehicle location, lane deviation, and ETA (KAIST &amp; WiPowerOne)</td>
+            <td>
+              <a href="https://github.com/syjqkrtk/EVGPSforWPT" target="_blank" rel="noopener"><code>syjqkrtk/EVGPSforWPT ↗</code></a><br />
+              <code>Theme 1 / Telematics_and_GPS</code>
+            </td>
+          </tr>
+          <tr>
+            <td><span class="badge b-on">KR Patent</span></td>
+            <td>
+              <strong><a href="https://patents.google.com/patent/KR20210092933A/en" target="_blank" rel="noopener">KR 10-2021-0092933 A ↗</a></strong><br />
+              Wireless Power Transfer Apparatus and Method Based on Image Recognition (KEPCO &amp; KAIST)
+            </td>
+            <td>1 kW multi-coil 3D wireless power transfer beamforming and safety cutoff loop combining Tsai binocular 3D triangulation with FLIR thermal &amp; EdgeTPU human detection</td>
+            <td>
+              <a href="https://github.com/syjqkrtk/ObjectDetectionForWPT" target="_blank" rel="noopener"><code>ObjectDetectionForWPT ↗</code></a><br />
+              <code>Theme 1 / ObjectDetection · FIR</code>
+            </td>
+          </tr>
+          <tr>
+            <td><span class="badge b-area">US Pat App</span></td>
+            <td>
+              <strong><a href="https://patents.google.com/patent/US20190385696A1/en" target="_blank" rel="noopener">US 2019/0385696 A1 ↗</a></strong><br />
+              <a href="https://patents.google.com/patent/KR20190136733A/en" target="_blank" rel="noopener">KR 10-2019-0136733 A ↗</a> (Priority KR 10-2018-0062331)
+            </td>
+            <td>Complex genomic variation (somatic mutation · miRNA) interaction network and CNN/DNN-based cancer disease risk prediction model (KAIST · SNUBH · MediAge)</td>
+            <td>
+              <a href="https://github.com/syjqkrtk/Bio" target="_blank" rel="noopener"><code>syjqkrtk/Bio (REDNN) ↗</code></a><br />
+              <code>Theme 2 / REDNN · RERNN</code>
+            </td>
+          </tr>
+          <tr>
+            <td><span class="badge b-warn">US Patent B2</span></td>
+            <td>
+              <strong><a href="https://patents.google.com/patent/US12574659B2/en" target="_blank" rel="noopener">US 12,574,659 B2 (Granted) ↗</a> · <a href="https://patents.google.com/patent/US12363458B2/en" target="_blank" rel="noopener">US 12,363,458B2 (Granted) ↗</a></strong><br />
+              Image Sensor Neural Bad-Pixel Correction (Samsung Electronics)
+            </td>
+            <td>Hidden-layer positional encoding injection and deep learning restoration of clustered defective pixels in ultra-high-resolution CMOS image sensors</td>
+            <td>
+              <a href="https://yjqkrtk-ux.github.io/isocell/chapters/patents_bpc.html"><code>ISOCELL Guidebook Ch.04 ↗</code></a>
+            </td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+  </section>
+
+  <section class="keypoints" id="summary">
+    <h2>Key Takeaways · Chapter 01</h2>
+    <ol>
+      <li><strong>3 Pillars &amp; 6 Operating Rules</strong>: <code>Development/</code> (code), <code>Documents/</code> (academic, resume, admin), and <code>Photos/</code> (media) preserve workspace integrity through Separation of Concerns, Zero-ZIP, Zero Non-Media, and the Privacy Gate.</li>
+      <li><strong>40 Git Submodules + 4 Life Suites</strong>: Wireless Power Transfer (Theme 1), Bioinformatics &amp; Deep RL (Theme 2), Vision &amp; Markov Automation (Theme 3), 3D MIMO &amp; Embedded SDK (Theme 4), and Life Automation AI (Theme 5) are unified under a Single Source of Truth.</li>
+    </ol>
+  </section>
+
+  <script>
+  document.addEventListener("DOMContentLoaded", function () {
+    var NODE_INFO = {
+      "pillar-dev": {
+        title: "PILLAR 1 · Development/ (kaist-grad-works Monorepo)",
+        body: "Pure engineering code repository housing 40 Git submodules (Themes 1–4) and 4 life automation suites (Theme 5). Binaries over 100 MB and build caches (__pycache__, .gradle, etc.) are strictly excluded via .gitignore."
+      },
+      "pillar-doc": {
+        title: "PILLAR 2 · Documents/ (Academic & Career Document Archive)",
+        body: "Comprises KAIST graduate coursework notes, lab seminars, and Ph.D. defense records (Documents/), the bilingual Web Resume (Resume/), and the private administrative zone (Personal/) completely isolated via .gitignore."
+      },
+      "pillar-photo": {
+        title: "PILLAR 3 · Photos/ (Master Media Archive)",
+        body: "Governs 7 top-level media categories under strict Zero-ZIP and Zero Non-Media policies. Mounted in Read-Only mode by 4_Photo_Memory_Studio (Theme 5) for AI vision indexing."
+      },
+      "theme-1": {
+        title: "THEME 1 · 1_Wireless_Power_Transfer_and_EV (8 Submodules)",
+        body: "Consists of 3D_Positioning_and_Vision (ObjectDetection, FIR, edgetpu_models) and Telematics_and_GPS (EVGPS, GPSlog, GPStracker, InverterGPS, MATLAB GPS). Covered in detail in Ch.03."
+      },
+      "theme-2": {
+        title: "THEME 2 · 2_Bioinformatics_and_Genomics (21 Submodules)",
+        body: "Includes Deep_Learning_Biomarkers (DQNalign, REDNN, RERNN), Sequence_Mining_and_Alignment (REminerII, PixelRE, GlobalAlignment, QLOBAL, 11 MFC RE_ viewers), and Population_Genetics (1092x, clustering205, EvolDist). Covered in Ch.02."
+      },
+      "theme-3": {
+        title: "THEME 3 · 3_Intelligent_Automation (7 Submodules)",
+        body: "Includes Vision_and_Driver_Automation (CMaple, PyMaple, Click, PyMapleFCM, LOSTARK) and Modeling_and_Intelligence (StarForce, Lophago). Covered in Ch.04."
+      },
+      "theme-4": {
+        title: "THEME 4 · 4_Specialty_Systems (4 Submodules)",
+        body: "Consists of Wireless_Communications (WinnerIIChannel), Embedded_Casio_Engines (RPG, RTS), and Algorithm_Sandbox (ETC). Covered in the second half of Ch.04."
+      },
+      "theme-5": {
+        title: "THEME 5 · 5_Household_and_Life_Automation (4 Local Suites)",
+        body: "Consists of 1_Household_Finance (ledger aggregation & OOXML engine), 2_Travel_and_Trip_Planners (offline map web planner), 3_Automated_Trip_Reporter (automated PPTX builder), and 4_Photo_Memory_Studio (AI vision indexer). Covered in Ch.05."
+      }
+    };
+
+    var svgNodes = document.querySelectorAll("#ov-svg .svg-node");
+    var iTitle = document.getElementById("ov-insp-title");
+    var iBody = document.getElementById("ov-insp-body");
+    svgNodes.forEach(function (n) {
+      n.addEventListener("click", function () {
+        svgNodes.forEach(function (x) { x.classList.remove("is-selected"); });
+        n.classList.add("is-selected");
+        var key = n.getAttribute("data-node");
+        var info = NODE_INFO[key];
+        if (info && iTitle && iBody) {
+          iTitle.textContent = "📌 " + info.title;
+          iBody.textContent = info.body;
+        }
+      });
+    });
+
+    var ALL_MODS = [{"idx": "1", "name": "PyMapleFCM", "path": "3_Intelligent_Automation/Vision_and_Driver_Automation/PyMapleFCM", "url": "https://github.com/yjqkrtk-ux/android-pymaplefcm.git", "theme_dir": "3_Intelligent_Automation", "theme_code": "Theme 3", "theme_title": "Intelligent Vision Automation & Stochastic Modeling", "category": "Vision and Driver Automation", "stack": "Python / Firebase Push"}, {"idx": "2", "name": "EVGPS", "path": "1_Wireless_Power_Transfer_and_EV/Telematics_and_GPS/EVGPS", "url": "https://github.com/yjqkrtk-ux/android-evgps.git", "theme_dir": "1_Wireless_Power_Transfer_and_EV", "theme_code": "Theme 1", "theme_title": "Wireless Power Transfer & OLEV Telematics", "category": "Telematics and GPS", "stack": "Java / Android GPS"}, {"idx": "3", "name": "Config_Files", "path": "1_Wireless_Power_Transfer_and_EV/Telematics_and_GPS/Config_Files", "url": "https://github.com/yjqkrtk-ux/android-config-files.git", "theme_dir": "1_Wireless_Power_Transfer_and_EV", "theme_code": "Theme 1", "theme_title": "Wireless Power Transfer & OLEV Telematics", "category": "Telematics and GPS", "stack": "C / C++ / Python / MATLAB"}, {"idx": "4", "name": "GPSlog", "path": "1_Wireless_Power_Transfer_and_EV/Telematics_and_GPS/GPSlog", "url": "https://github.com/yjqkrtk-ux/android-gpslog.git", "theme_dir": "1_Wireless_Power_Transfer_and_EV", "theme_code": "Theme 1", "theme_title": "Wireless Power Transfer & OLEV Telematics", "category": "Telematics and GPS", "stack": "Java / Android Logger"}, {"idx": "5", "name": "GPStracker", "path": "1_Wireless_Power_Transfer_and_EV/Telematics_and_GPS/GPStracker", "url": "https://github.com/yjqkrtk-ux/android-gpstracker.git", "theme_dir": "1_Wireless_Power_Transfer_and_EV", "theme_code": "Theme 1", "theme_title": "Wireless Power Transfer & OLEV Telematics", "category": "Telematics and GPS", "stack": "Java / Google Maps API"}, {"idx": "6", "name": "InverterGPS", "path": "1_Wireless_Power_Transfer_and_EV/Telematics_and_GPS/InverterGPS", "url": "https://github.com/yjqkrtk-ux/android-invertergps.git", "theme_dir": "1_Wireless_Power_Transfer_and_EV", "theme_code": "Theme 1", "theme_title": "Wireless Power Transfer & OLEV Telematics", "category": "Telematics and GPS", "stack": "Java / OLEV Inverter"}, {"idx": "7", "name": "Autohotkey", "path": "3_Intelligent_Automation/Vision_and_Driver_Automation/Autohotkey", "url": "https://github.com/yjqkrtk-ux/autohotkey-scripts.git", "theme_dir": "3_Intelligent_Automation", "theme_code": "Theme 3", "theme_title": "Intelligent Vision Automation & Stochastic Modeling", "category": "Vision and Driver Automation", "stack": "C / C++ / Python / MATLAB"}, {"idx": "8", "name": "InsilicoRE", "path": "2_Bioinformatics_and_Genomics/Sequence_Mining_and_Alignment/InsilicoRE", "url": "https://github.com/yjqkrtk-ux/bio-insilicore.git", "theme_dir": "2_Bioinformatics_and_Genomics", "theme_code": "Theme 2", "theme_title": "Bioinformatics & Genomic AI", "category": "Sequence Mining and Alignment", "stack": "C / C++ / Python / MATLAB"}, {"idx": "9", "name": "PixelRE", "path": "2_Bioinformatics_and_Genomics/Sequence_Mining_and_Alignment/PixelRE", "url": "https://github.com/yjqkrtk-ux/bio-pixelre.git", "theme_dir": "2_Bioinformatics_and_Genomics", "theme_code": "Theme 2", "theme_title": "Bioinformatics & Genomic AI", "category": "Sequence Mining and Alignment", "stack": "MATLAB / 2D Dot-Plot"}, {"idx": "10", "name": "REDNN", "path": "2_Bioinformatics_and_Genomics/Deep_Learning_Biomarkers/REDNN", "url": "https://github.com/yjqkrtk-ux/bio-rednn.git", "theme_dir": "2_Bioinformatics_and_Genomics", "theme_code": "Theme 2", "theme_title": "Bioinformatics & Genomic AI", "category": "Deep Learning Biomarkers", "stack": "Python / TensorFlow DNN"}, {"idx": "11", "name": "RERNN", "path": "2_Bioinformatics_and_Genomics/Deep_Learning_Biomarkers/RERNN", "url": "https://github.com/yjqkrtk-ux/bio-rernn.git", "theme_dir": "2_Bioinformatics_and_Genomics", "theme_code": "Theme 2", "theme_title": "Bioinformatics & Genomic AI", "category": "Deep Learning Biomarkers", "stack": "Python / TensorFlow LSTM"}, {"idx": "12", "name": "AlignmentGenerator", "path": "2_Bioinformatics_and_Genomics/Sequence_Mining_and_Alignment/AlignmentGenerator", "url": "https://github.com/yjqkrtk-ux/c-alignmentgenerator.git", "theme_dir": "2_Bioinformatics_and_Genomics", "theme_code": "Theme 2", "theme_title": "Bioinformatics & Genomic AI", "category": "Sequence Mining and Alignment", "stack": "C / C++ / Python / MATLAB"}, {"idx": "13", "name": "CMaple", "path": "3_Intelligent_Automation/Vision_and_Driver_Automation/CMaple", "url": "https://github.com/yjqkrtk-ux/c-cmaple.git", "theme_dir": "3_Intelligent_Automation", "theme_code": "Theme 3", "theme_title": "Intelligent Vision Automation & Stochastic Modeling", "category": "Vision and Driver Automation", "stack": "C# / Win32 / DirectInput"}, {"idx": "14", "name": "REminerII", "path": "2_Bioinformatics_and_Genomics/Sequence_Mining_and_Alignment/REminerII", "url": "https://github.com/yjqkrtk-ux/c-reminerii.git", "theme_dir": "2_Bioinformatics_and_Genomics", "theme_code": "Theme 2", "theme_title": "Bioinformatics & Genomic AI", "category": "Sequence Mining and Alignment", "stack": "C++ / Python Seed-Extend"}, {"idx": "15", "name": "RPG", "path": "4_Specialty_Systems/Embedded_Casio_Engines/RPG", "url": "https://github.com/yjqkrtk-ux/casio-rpg.git", "theme_dir": "4_Specialty_Systems", "theme_code": "Theme 4", "theme_title": "Next-Gen Wireless Communications & Embedded Engines", "category": "Embedded Casio Engines", "stack": "C / Casio FX-9860G SDK"}, {"idx": "16", "name": "RTS", "path": "4_Specialty_Systems/Embedded_Casio_Engines/RTS", "url": "https://github.com/yjqkrtk-ux/casio-rts.git", "theme_dir": "4_Specialty_Systems", "theme_code": "Theme 4", "theme_title": "Next-Gen Wireless Communications & Embedded Engines", "category": "Embedded Casio Engines", "stack": "C / Casio FX-9860G SDK"}, {"idx": "17", "name": "clustering205", "path": "2_Bioinformatics_and_Genomics/Population_Genetics/clustering205", "url": "https://github.com/yjqkrtk-ux/matlab-clustering205.git", "theme_dir": "2_Bioinformatics_and_Genomics", "theme_code": "Theme 2", "theme_title": "Bioinformatics & Genomic AI", "category": "Population Genetics", "stack": "MATLAB / Phylogenetics"}, {"idx": "18", "name": "ETC", "path": "4_Specialty_Systems/Algorithm_Sandbox/ETC", "url": "https://github.com/yjqkrtk-ux/matlab-etc.git", "theme_dir": "4_Specialty_Systems", "theme_code": "Theme 4", "theme_title": "Next-Gen Wireless Communications & Embedded Engines", "category": "Algorithm Sandbox", "stack": "C / C++ / Python Sandbox"}, {"idx": "19", "name": "EvolDist", "path": "2_Bioinformatics_and_Genomics/Population_Genetics/EvolDist", "url": "https://github.com/yjqkrtk-ux/matlab-evoldist.git", "theme_dir": "2_Bioinformatics_and_Genomics", "theme_code": "Theme 2", "theme_title": "Bioinformatics & Genomic AI", "category": "Population Genetics", "stack": "MATLAB / Evolutionary Dist"}, {"idx": "20", "name": "GPS", "path": "1_Wireless_Power_Transfer_and_EV/Telematics_and_GPS/GPS", "url": "https://github.com/yjqkrtk-ux/matlab-gps.git", "theme_dir": "1_Wireless_Power_Transfer_and_EV", "theme_code": "Theme 1", "theme_title": "Wireless Power Transfer & OLEV Telematics", "category": "Telematics and GPS", "stack": "MATLAB / UTM Kinematics"}, {"idx": "21", "name": "ProteinAnalysis", "path": "2_Bioinformatics_and_Genomics/Population_Genetics/ProteinAnalysis", "url": "https://github.com/yjqkrtk-ux/matlab-proteinanalysis.git", "theme_dir": "2_Bioinformatics_and_Genomics", "theme_code": "Theme 2", "theme_title": "Bioinformatics & Genomic AI", "category": "Population Genetics", "stack": "C / C++ / Python / MATLAB"}, {"idx": "22", "name": "QLOBAL", "path": "2_Bioinformatics_and_Genomics/Sequence_Mining_and_Alignment/QLOBAL", "url": "https://github.com/yjqkrtk-ux/matlab-qlobal.git", "theme_dir": "2_Bioinformatics_and_Genomics", "theme_code": "Theme 2", "theme_title": "Bioinformatics & Genomic AI", "category": "Sequence Mining and Alignment", "stack": "C++ / Qt GUI Alignment"}, {"idx": "23", "name": "REMinerPattern", "path": "2_Bioinformatics_and_Genomics/Sequence_Mining_and_Alignment/REMinerPattern", "url": "https://github.com/yjqkrtk-ux/matlab-reminerpattern.git", "theme_dir": "2_Bioinformatics_and_Genomics", "theme_code": "Theme 2", "theme_title": "Bioinformatics & Genomic AI", "category": "Sequence Mining and Alignment", "stack": "C / C++ / Python / MATLAB"}, {"idx": "24", "name": "RepeatLengthPdf", "path": "2_Bioinformatics_and_Genomics/Sequence_Mining_and_Alignment/RepeatLengthPdf", "url": "https://github.com/yjqkrtk-ux/matlab-repeatlengthpdf.git", "theme_dir": "2_Bioinformatics_and_Genomics", "theme_code": "Theme 2", "theme_title": "Bioinformatics & Genomic AI", "category": "Sequence Mining and Alignment", "stack": "C / C++ / Python / MATLAB"}, {"idx": "25", "name": "StarForce", "path": "3_Intelligent_Automation/Modeling_and_Intelligence/StarForce", "url": "https://github.com/yjqkrtk-ux/matlab-starforce.git", "theme_dir": "3_Intelligent_Automation", "theme_code": "Theme 3", "theme_title": "Intelligent Vision Automation & Stochastic Modeling", "category": "Modeling and Intelligence", "stack": "MATLAB / Markov Chain"}, {"idx": "26", "name": "WinnerIIChannel", "path": "4_Specialty_Systems/Wireless_Communications/WinnerIIChannel", "url": "https://github.com/yjqkrtk-ux/matlab-winneriichannel.git", "theme_dir": "4_Specialty_Systems", "theme_code": "Theme 4", "theme_title": "Next-Gen Wireless Communications & Embedded Engines", "category": "Wireless Communications", "stack": "MATLAB / 3D MIMO Winner II"}, {"idx": "27", "name": "1092x", "path": "2_Bioinformatics_and_Genomics/Population_Genetics/1092x", "url": "https://github.com/yjqkrtk-ux/matlab-1092x.git", "theme_dir": "2_Bioinformatics_and_Genomics", "theme_code": "Theme 2", "theme_title": "Bioinformatics & Genomic AI", "category": "Population Genetics", "stack": "C++ / 1000 Genomes"}, {"idx": "28", "name": "ACGTgray", "path": "2_Bioinformatics_and_Genomics/Population_Genetics/ACGTgray", "url": "https://github.com/yjqkrtk-ux/matlab-acgtgray.git", "theme_dir": "2_Bioinformatics_and_Genomics", "theme_code": "Theme 2", "theme_title": "Bioinformatics & Genomic AI", "category": "Population Genetics", "stack": "C / C++ / Python / MATLAB"}, {"idx": "29", "name": "Click", "path": "3_Intelligent_Automation/Vision_and_Driver_Automation/Click", "url": "https://github.com/yjqkrtk-ux/python-click.git", "theme_dir": "3_Intelligent_Automation", "theme_code": "Theme 3", "theme_title": "Intelligent Vision Automation & Stochastic Modeling", "category": "Vision and Driver Automation", "stack": "Python / Faster R-CNN"}, {"idx": "30", "name": "DQNalign", "path": "2_Bioinformatics_and_Genomics/Deep_Learning_Biomarkers/DQNalign", "url": "https://github.com/yjqkrtk-ux/python-dqnalign.git", "theme_dir": "2_Bioinformatics_and_Genomics", "theme_code": "Theme 2", "theme_title": "Bioinformatics & Genomic AI", "category": "Deep Learning Biomarkers", "stack": "Python / TensorFlow RL"}, {"idx": "31", "name": "Heuristic alignment", "path": "2_Bioinformatics_and_Genomics/Sequence_Mining_and_Alignment/Heuristic alignment", "url": "https://github.com/yjqkrtk-ux/python-heuristic-alignment.git", "theme_dir": "2_Bioinformatics_and_Genomics", "theme_code": "Theme 2", "theme_title": "Bioinformatics & Genomic AI", "category": "Sequence Mining and Alignment", "stack": "C / C++ / Python / MATLAB"}, {"idx": "32", "name": "KREPcrawler", "path": "2_Bioinformatics_and_Genomics/Sequence_Mining_and_Alignment/KREPcrawler", "url": "https://github.com/yjqkrtk-ux/python-krepcrawler.git", "theme_dir": "2_Bioinformatics_and_Genomics", "theme_code": "Theme 2", "theme_title": "Bioinformatics & Genomic AI", "category": "Sequence Mining and Alignment", "stack": "C / C++ / Python / MATLAB"}, {"idx": "33", "name": "Lophago", "path": "3_Intelligent_Automation/Modeling_and_Intelligence/Lophago", "url": "https://github.com/yjqkrtk-ux/python-lophago.git", "theme_dir": "3_Intelligent_Automation", "theme_code": "Theme 3", "theme_title": "Intelligent Vision Automation & Stochastic Modeling", "category": "Modeling and Intelligence", "stack": "Python / Combinatorial Opt"}, {"idx": "34", "name": "LOSTARK", "path": "3_Intelligent_Automation/Vision_and_Driver_Automation/LOSTARK", "url": "https://github.com/yjqkrtk-ux/python-lostark.git", "theme_dir": "3_Intelligent_Automation", "theme_code": "Theme 3", "theme_title": "Intelligent Vision Automation & Stochastic Modeling", "category": "Vision and Driver Automation", "stack": "C# / WinForms Automation"}, {"idx": "35", "name": "ObjectDetection", "path": "1_Wireless_Power_Transfer_and_EV/3D_Positioning_and_Vision/ObjectDetection", "url": "https://github.com/yjqkrtk-ux/python-objectdetection.git", "theme_dir": "1_Wireless_Power_Transfer_and_EV", "theme_code": "Theme 1", "theme_title": "Wireless Power Transfer & OLEV Telematics", "category": "3D Positioning and Vision", "stack": "Python / OpenCV / Tsai 3D"}, {"idx": "36", "name": "ObjectDetectionLearning", "path": "1_Wireless_Power_Transfer_and_EV/3D_Positioning_and_Vision/ObjectDetectionLearning", "url": "https://github.com/yjqkrtk-ux/python-objectdetectionlearning.git", "theme_dir": "1_Wireless_Power_Transfer_and_EV", "theme_code": "Theme 1", "theme_title": "Wireless Power Transfer & OLEV Telematics", "category": "3D Positioning and Vision", "stack": "C / C++ / Python / MATLAB"}, {"idx": "37", "name": "PyMaple", "path": "3_Intelligent_Automation/Vision_and_Driver_Automation/PyMaple", "url": "https://github.com/yjqkrtk-ux/python-pymaple.git", "theme_dir": "3_Intelligent_Automation", "theme_code": "Theme 3", "theme_title": "Intelligent Vision Automation & Stochastic Modeling", "category": "Vision and Driver Automation", "stack": "Python / OpenCV FSM"}, {"idx": "38", "name": "edgetpu_models", "path": "1_Wireless_Power_Transfer_and_EV/3D_Positioning_and_Vision/edgetpu_models", "url": "https://github.com/yjqkrtk-ux/rpi-edgetpu-models.git", "theme_dir": "1_Wireless_Power_Transfer_and_EV", "theme_code": "Theme 1", "theme_title": "Wireless Power Transfer & OLEV Telematics", "category": "3D Positioning and Vision", "stack": "Python / Coral EdgeTPU"}, {"idx": "39", "name": "FIR", "path": "1_Wireless_Power_Transfer_and_EV/3D_Positioning_and_Vision/FIR", "url": "https://github.com/yjqkrtk-ux/rpi-fir.git", "theme_dir": "1_Wireless_Power_Transfer_and_EV", "theme_code": "Theme 1", "theme_title": "Wireless Power Transfer & OLEV Telematics", "category": "3D Positioning and Vision", "stack": "Python / FLIR Lepton"}, {"idx": "40", "name": "python-tflite-source", "path": "1_Wireless_Power_Transfer_and_EV/3D_Positioning_and_Vision/python-tflite-source", "url": "https://github.com/yjqkrtk-ux/rpi-python-tflite-source.git", "theme_dir": "1_Wireless_Power_Transfer_and_EV", "theme_code": "Theme 1", "theme_title": "Wireless Power Transfer & OLEV Telematics", "category": "3D Positioning and Vision", "stack": "C / C++ / Python / MATLAB"}, {"idx": "L1", "name": "1_Household_Finance", "path": "5_Household_and_Life_Automation/1_Household_Finance", "url": "local://5_Household_and_Life_Automation/1_Household_Finance", "theme_dir": "5_Household_and_Life_Automation", "theme_code": "Theme 5", "theme_title": "Life Automation & Personal AI", "category": "Household Finance", "stack": "Python / Zero-Dep OOXML"}, {"idx": "L2", "name": "2_Travel_and_Trip_Planners", "path": "5_Household_and_Life_Automation/2_Travel_and_Trip_Planners", "url": "local://5_Household_and_Life_Automation/2_Travel_and_Trip_Planners", "theme_dir": "5_Household_and_Life_Automation", "theme_code": "Theme 5", "theme_title": "Life Automation & Personal AI", "category": "Travel Planners", "stack": "HTML5 / JS / Leaflet SPA"}, {"idx": "L3", "name": "3_Automated_Trip_Reporter", "path": "5_Household_and_Life_Automation/3_Automated_Trip_Reporter", "url": "local://5_Household_and_Life_Automation/3_Automated_Trip_Reporter", "theme_dir": "5_Household_and_Life_Automation", "theme_code": "Theme 5", "theme_title": "Life Automation & Personal AI", "category": "Trip Reporter", "stack": "Python / python-pptx"}, {"idx": "L4", "name": "4_Photo_Memory_Studio", "path": "5_Household_and_Life_Automation/4_Photo_Memory_Studio", "url": "local://5_Household_and_Life_Automation/4_Photo_Memory_Studio", "theme_dir": "5_Household_and_Life_Automation", "theme_code": "Theme 5", "theme_title": "Life Automation & Personal AI", "category": "Photo Memory Studio", "stack": "Python / YuNet+SFace+YOLO11"}];
+    var curTheme = "ALL";
+    var curQuery = "";
+    var stackCounts = {
+      "Python / TF / AI": 0,
+      "C++ / MFC / Qt": 0,
+      "MATLAB / Num": 0,
+      "Java / Android": 0,
+      "C# / Win32": 0,
+      "C / SDK / Web": 0
+    };
+    var filteredCount = ALL_MODS.length;
+
+    var chart = window.SB && window.SB.canvas("ov-chart-canvas", 285, function (ctx, W, H, P) {
+      ctx.fillStyle = P.dim;
+      ctx.font = "600 12px 'JetBrains Mono', monospace";
+      ctx.textAlign = "left";
+      ctx.textBaseline = "middle";
+      ctx.fillText("LANGUAGE & RUNTIME STACK DISTRIBUTION (FILTERED PROJECTS)", 20, 22);
+
+      var keys = Object.keys(stackCounts);
+      var colors = [P.accent, P.accent2, P.ok, P.warn, P.bad, P.accent];
+      var maxC = Math.max(1, filteredCount);
+      var barLeft = 165;
+      var barMaxW = Math.max(120, W - barLeft - 85);
+
+      keys.forEach(function (k, idx) {
+        var y = 46 + idx * 38;
+        var val = stackCounts[k];
+        var barW = Math.min(barMaxW, Math.round((val / Math.max(10, maxC * 0.55)) * barMaxW));
+
+        ctx.fillStyle = P.text;
+        ctx.font = "500 12px 'JetBrains Mono', monospace";
+        ctx.fillText(k, 20, y + 12);
+
+        ctx.fillStyle = P.surface;
+        ctx.strokeStyle = P.border;
+        ctx.lineWidth = 1;
+        ctx.fillRect(barLeft, y + 2, barMaxW, 20);
+        ctx.strokeRect(barLeft, y + 2, barMaxW, 20);
+
+        if (barW > 0) {
+          ctx.fillStyle = colors[idx % colors.length];
+          ctx.fillRect(barLeft, y + 2, barW, 20);
+        }
+
+        ctx.fillStyle = P.text;
+        ctx.font = "600 12px 'JetBrains Mono', monospace";
+        ctx.fillText(val + " mods", barLeft + barMaxW + 10, y + 12);
+      });
+    });
+
+    function updateExplorer() {
+      var filtered = ALL_MODS.filter(function (m) {
+        var matchT = curTheme === "ALL" || m.theme_code === curTheme;
+        var q = curQuery.trim().toLowerCase();
+        var matchQ = !q ||
+          m.name.toLowerCase().indexOf(q) !== -1 ||
+          m.category.toLowerCase().indexOf(q) !== -1 ||
+          m.stack.toLowerCase().indexOf(q) !== -1 ||
+          m.path.toLowerCase().indexOf(q) !== -1;
+        return matchT && matchQ;
+      });
+      filteredCount = filtered.length;
+
+      window.SB.stat("ov-stat-cnt", filtered.length + " / " + ALL_MODS.length);
+      window.SB.stat("ov-stat-theme", curTheme === "ALL" ? "ALL THEMES" : curTheme);
+
+      Object.keys(stackCounts).forEach(function (k) { stackCounts[k] = 0; });
+      filtered.forEach(function (m) {
+        var s = m.stack;
+        if (s.indexOf("Python") !== -1) stackCounts["Python / TF / AI"]++;
+        else if (s.indexOf("C++") !== -1) stackCounts["C++ / MFC / Qt"]++;
+        else if (s.indexOf("MATLAB") !== -1) stackCounts["MATLAB / Num"]++;
+        else if (s.indexOf("Java") !== -1) stackCounts["Java / Android"]++;
+        else if (s.indexOf("C#") !== -1) stackCounts["C# / Win32"]++;
+        else stackCounts["C / SDK / Web"]++;
+      });
+
+      var topLang = "Python / TF / AI";
+      var topVal = -1;
+      Object.keys(stackCounts).forEach(function (k) {
+        if (stackCounts[k] > topVal) {
+          topVal = stackCounts[k];
+          topLang = k;
+        }
+      });
+      window.SB.stat("ov-stat-lang", topVal > 0 ? topLang + " (" + topVal + ")" : "-");
+
+      var listBox = document.getElementById("ov-list-box");
+      if (listBox) {
+        listBox.innerHTML = filtered.map(function (m) {
+          return '<div style="padding:6px 0;border-bottom:1px solid var(--border);display:flex;flex-direction:column;gap:2px;">' +
+            '<div style="display:flex;justify-content:space-between;align-items:baseline;gap:6px;flex-wrap:wrap;">' +
+              '<span><strong style="color:var(--accent)">[' + m.theme_code + ']</strong> <strong>' + m.name + '</strong></span>' +
+              '<span style="color:var(--accent-2);font-family:var(--mono);font-size:11px;">' + m.stack + '</span>' +
+            '</div>' +
+            '<div style="color:var(--text-dim);font-size:11.5px;">' + m.category + '</div>' +
+          '</div>';
+        }).join("") || '<div style="color:var(--text-dim);padding:6px 0;">No modules match the current filter.</div>';
+      }
+
+      if (chart) chart.redraw();
+    }
+
+    var btns = document.querySelectorAll("#ov-theme-btns button");
+    btns.forEach(function (b) {
+      b.addEventListener("click", function () {
+        btns.forEach(function (x) { x.classList.remove("on"); });
+        b.classList.add("on");
+        curTheme = b.getAttribute("data-t") || "ALL";
+        updateExplorer();
+      });
+    });
+
+    var inp = document.getElementById("ov-filter-input");
+    if (inp) {
+      inp.addEventListener("input", function () {
+        curQuery = inp.value || "";
+        updateExplorer();
+      });
+    }
+
+    updateExplorer();
+  });
+  </script>
+
+</main>
+</body>
+</html>

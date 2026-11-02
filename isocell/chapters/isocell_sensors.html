@@ -1,35 +1,35 @@
 <!doctype html>
-<html lang="en">
+<html lang="ko">
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>Ch.01 — 200MP ISOCELL Sensor Development (HP2 · HP3/HP9 · HP5) · Samsung S.LSI 200MP ISOCELL &amp; E2E AI Remosaic Guidebook</title>
-<meta name="description" content="Ch.01 — 200MP ISOCELL Sensor Development (HP2 · HP3/HP9 · HP5) — Samsung S.LSI 200MP ISOCELL &amp; E2E AI Remosaic Project Guidebook">
+<title>Ch.01 — 200MP ISOCELL 센서 개발 (HP2 · HP3/HP9 · HP5) · 삼성전자 S.LSI 200MP ISOCELL &amp; E2E AI Remosaic 가이드북</title>
+<meta name="description" content="Ch.01 — 200MP ISOCELL 센서 개발 (HP2 · HP3/HP9 · HP5) — 삼성전자 S.LSI 200MP ISOCELL &amp; E2E AI Remosaic 프로젝트 가이드북">
 <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/katex@0.16.11/dist/katex.min.css">
 <script defer src="https://cdn.jsdelivr.net/npm/katex@0.16.11/dist/katex.min.js"></script>
 <script defer src="https://cdn.jsdelivr.net/npm/katex@0.16.11/dist/contrib/auto-render.min.js"></script>
-<link rel="stylesheet" href="../css/style.css?v=80b6792">
-<link rel="stylesheet" href="../css/glossary-tooltips.css?v=80b6792">
-<script src="../js/glossary-data.js?v=80b6792"></script>
-<script src="../js/common.js?v=80b6792"></script>
-<script defer src="../js/glossary-tooltips.js?v=80b6792"></script>
+<link rel="stylesheet" href="../css/style.css?v=1950d4d">
+<link rel="stylesheet" href="../css/glossary-tooltips.css?v=1950d4d">
+<script src="../js/glossary-data.js?v=1950d4d"></script>
+<script src="../js/common.js?v=1950d4d"></script>
+<script defer src="../js/glossary-tooltips.js?v=1950d4d"></script>
 </head>
 <body data-chapter="isocell_sensors" data-root="../">
 <main class="chapter">
 
   <header class="chapter-hero">
-    <div class="eyebrow">CHAPTER 01 · PILLAR 1 — 200MP ISOCELL SENSOR DEVELOPMENT (APR 2021 – PRESENT)</div>
-    <h1>200MP ISOCELL Sensor Development — Remosaic Principle &amp; Sensor History</h1>
+    <div class="eyebrow">CHAPTER 01 · PILLAR 1 — 200MP ISOCELL SENSOR DEVELOPMENT (2021.04 – 현재)</div>
+    <h1>200MP ISOCELL 센서 개발 — Remosaic 원리 &amp; 센서 개발 연대기</h1>
     <p class="lead">
-      This chapter explains the core principle of <strong>Remosaic</strong> on ultra-high-resolution (200MP) non-Bayer image sensors and documents Dr. Yongjoon Song's chronological sensor algorithm development track record at Samsung Electronics S.LSI across
-      <strong>ISOCELL HP2 (<code>0.6µm</code>)</strong>, <strong>ISOCELL HP3 / HP9 (<code>0.56µm</code>)</strong>, and <strong>ISOCELL HP5 (<code>0.5µm</code>)</strong>.
+      본 장에서는 초고해상도(200MP) Non-Bayer 이미지 센서에서 <strong>Remosaic(리모자이크)</strong>이 수행하는 핵심 원리를 설명하고, 삼성전자 S.LSI 센서사업팀에서 송용준 박사가 수행해 온
+      <strong>ISOCELL HP2 (<code>0.6µm</code>)</strong>, <strong>ISOCELL HP3 / HP9 (<code>0.56µm</code>)</strong>, <strong>ISOCELL HP5 (<code>0.5µm</code>)</strong> 센서 알고리즘 개발 이력과 상용 탑재 제품들을 정리합니다.
     </p>
     <ul class="objectives">
-      <li><strong>Core Principle of Remosaic:</strong> Why 200MP sensors adopt non-Bayer Color Filter Arrays (<code>2×2 Q-cell</code> / <code>4×4 Hexadeca</code>) and how Remosaic converts them into the standard <code>2×2 Bayer (RGGB)</code> pattern required by the Camera ISP for 200MP capture and 2×/4× In-Sensor Zoom.</li>
-      <li><strong>Chronological Sensor Development History:</strong> From in-sensor AI 4×4 Q-cell Remosaic (<code>QMSC</code> on <strong>HP2</strong>) and the <strong>World's 1st Deep Learning-based Hexadeca (16-cell) Remosaic S/W</strong> (<strong>HP3 / HP9</strong>) to leading Neural ISP algorithm development for the <strong>World's smallest 200MP sensor</strong> (<strong>HP5, 0.5µm</strong>).</li>
-      <li><strong>Commercialized Products &amp; Specifications:</strong> Complete table and list of commercial smartphone cameras powered by each 200MP sensor generation.</li>
+      <li><strong>Remosaic 핵심 원리:</strong> 200MP 센서가 Non-Bayer 컬러 필터 배열(<code>2×2 Q-cell</code> / <code>4×4 Hexadeca</code>)을 채택하는 이유와, 200MP 풀해상도 촬영 및 2×/4× 인센서 줌 시 이를 표준 Camera ISP 입력 규격인 <code>2×2 Bayer (RGGB)</code> 배열로 변환하는 원리를 이해한다.</li>
+      <li><strong>센서 개발 연대기 (2021 – 현재):</strong> 인센서 AI 4×4 Q-cell Remosaic(<strong>HP2</strong> <code>QMSC</code>)과 <strong>세계 최초 딥러닝 기반 Hexadeca (16-cell) Remosaic S/W</strong>(<strong>HP3 / HP9</strong>) 발명부터, <strong>세계 최소형 200MP 센서</strong>(<strong>HP5, 0.5µm</strong>)의 Neural ISP 알고리즘 개발 리딩(Technical Leader)까지의 이력을 확인한다.</li>
+      <li><strong>상용화 단말 및 제품 스펙 정리:</strong> 각 200MP 센서 세대가 탑재된 실제 상용 스마트폰 목록과 세부 사양표를 확인한다.</li>
     </ul>
-    <div class="ch-pubs" role="region" aria-label="Official Samsung ISOCELL Product Pages">
+    <div class="ch-pubs" role="region" aria-label="삼성전자 ISOCELL 공식 제품 페이지">
       <span class="ch-pubs-label">OFFICIAL PRODUCT PAGES</span>
       <a class="pub-tag paper" href="https://semiconductor.samsung.com/image-sensor/mobile-image-sensor/isocell-hp5/" target="_blank" rel="noopener">📷 ISOCELL HP5 (0.5µm, 1/1.56") ↗</a>
       <a class="pub-tag paper" href="https://semiconductor.samsung.com/image-sensor/mobile-image-sensor/isocell-hp9/" target="_blank" rel="noopener">📷 ISOCELL HP9 (0.56µm, Tele) ↗</a>
@@ -40,14 +40,14 @@
   </header>
 
   <section id="sec-remosaic-principle">
-    <h2>What Is Remosaic? (Core Principle &amp; Multi-Mode Readout)</h2>
+    <h2>Remosaic이란 무엇인가? (CFA 구조와 멀티모드 동작 원리)</h2>
     <p>
-      To fit <strong>200 million pixels</strong> ($16{,}320 \times 12{,}288$) into a mobile camera module, individual pixel pitch is scaled down to the sub-micron regime (<code>0.60µm</code> on HP2, <code>0.56µm</code> on HP3/HP9, and <code>0.50µm</code> on HP5).
-      Instead of using a conventional $2\times 2$ Bayer Color Filter Array (CFA), 200MP ISOCELL sensors adopt a <strong>Non-Bayer Multi-Cell CFA</strong>—specifically <strong>Tetra²pixel ($4\times 4$ Hexadeca / Q-cell, 16-cell)</strong>, where $4\times 4 = 16$ neighboring photodiodes share the same color filter (R, G, or B).
+      모바일 카메라 모듈 안에 <strong>2억 화소(200MP, $16{,}320 \times 12{,}288$)</strong>를 집적하기 위해 개별 픽셀 크기는 서브마이크론 영역(HP2 <code>0.60µm</code>, HP3/HP9 <code>0.56µm</code>, HP5 <code>0.50µm</code>)으로 축소되었습니다.
+      200MP ISOCELL 센서는 고정된 $2\times 2$ Bayer 컬러 필터 배열(CFA) 대신, 인접한 $4\times 4 = 16$개의 포토다이오드가 동일한 컬러 필터(R, G, B)를 공유하는 <strong>Non-Bayer 멀티셀 CFA — Tetra²pixel ($4\times 4$ Hexadeca / Q-cell, 16-cell)</strong> 구조를 채택합니다.
     </p>
     <ul>
-      <li><strong>Why Non-Bayer CFA Is Used (Pixel Binning in Low Light):</strong> In dark or everyday environments, the sensor merges (bins) $4\times 4 = 16$ same-color pixels into a single large super-pixel (<code>12.5MP</code> output) or $2\times 2 = 4$ pixels (<code>50MP</code> output). Because binned pixels already form a regular Bayer pattern, the frame can be sent directly to the standard Camera ISP with high sensitivity.</li>
-      <li><strong>Why Remosaic Is Required (Full 200MP &amp; 2×/4× In-Sensor Zoom):</strong> Standard mobile Camera ISPs can only process a conventional <strong>$2\times 2$ Bayer (RGGB) pattern</strong>. When capturing a <strong>full 200MP ultra-high-resolution photo</strong> or cropping the center of the sensor for <strong>lossless $2\times$ / $4\times$ In-Sensor Zoom</strong>, the raw sensor readout is still arranged in a $4\times 4$ non-Bayer mosaic. <strong>Remosaic</strong> is the core algorithm that reconstructs a sharp, artifact-free <strong>$2\times 2$ Bayer CFA pattern</strong> from the non-Bayer $4\times 4$ RAW data before (or within) the Camera ISP pipeline.</li>
+      <li><strong>Non-Bayer CFA를 사용하는 이유 (저·중조도 픽셀 비닝):</strong> 어두운 실내나 야간 환경에서는 인접한 동일 색상 픽셀 $4\times 4 = 16$개를 하나로 합산(Binning)하여 대구경 픽셀처럼 동작하는 <code>12.5MP</code> 모드로 출력하거나, $2\times 2 = 4$개를 합산하여 <code>50MP</code> 모드로 출력합니다. 합산된 슈퍼픽셀 배열은 이미 표준 Bayer 형태를 띠므로 높은 감도로 즉시 Camera ISP에 전달됩니다.</li>
+      <li><strong>Remosaic이 필요한 이유 (200MP 풀해상도 촬영 및 2×/4× 인센서 줌):</strong> 모바일 기기의 표준 Camera ISP는 오직 전통적인 <strong>$2\times 2$ Bayer (RGGB) 배열</strong>만 입력받아 처리(Demosaic)할 수 있습니다. 따라서 밝은 환경에서 <strong>200MP 초고해상도 사진</strong>을 촬영하거나 센서 중앙부를 크롭하여 <strong>무손실 $2\times / 4\times$ 인센서 줌(In-Sensor Zoom)</strong>을 수행할 때, 센서가 출력한 $4\times 4$ Non-Bayer 모자이크 RAW 데이터를 아티팩트 없이 선명한 <strong>$1\times 1$ 표준 Bayer (RGGB) 패턴</strong>으로 재배열·복원해 주는 핵심 알고리즘이 바로 <strong>Remosaic ($\mathcal{R}_\theta$)</strong>입니다.</li>
     </ul>
 
     <figure class="diagram">
@@ -111,15 +111,15 @@
         <text x="752" y="366" class="t-dim">• Full 200MP or Lossless 2×/4× In-Sensor Zoom</text>
         <text x="752" y="386" class="t-mono">Directly feeds Camera ISP (Demosaic → YUV)</text>
       </svg>
-      <figcaption><b>Figure 1-1.</b> Non-Bayer $4\times 4$ Hexadeca (16-cell) / $2\times 2$ Q-cell Color Filter Array (left), low/mid-light pixel binning modes ($16\text{-in-}1$ <code>12.5MP</code> &amp; $4\text{-in-}1$ <code>50MP</code>, center top), and AI/DL <strong>Remosaic</strong> ($\mathcal{R}_\theta$, center bottom) reconstructing the full-resolution $1\times 1$ standard Bayer (<code>RGGB</code>) pattern (right) required by the Camera ISP.</figcaption>
+      <figcaption><b>그림 1-1.</b> Non-Bayer $4\times 4$ Hexadeca (16-cell) / $2\times 2$ Q-cell 컬러 필터 배열(좌측), 저·중조도 픽셀 비닝 모드($16\text{-in-}1$ <code>12.5MP</code> 및 $4\text{-in-}1$ <code>50MP</code>, 중앙 상단), 그리고 AI/DL <strong>Remosaic</strong>($\mathcal{R}_\theta$, 중앙 하단)을 통해 Camera ISP 입력용 $1\times 1$ 표준 Bayer(<code>RGGB</code>) 풀해상도 배열(우측)을 복원하는 구조.</figcaption>
     </figure>
 
   </section>
 
   <section id="sec-sensor-history">
-    <h2>Chronological Sensor Development History (2021 – Present)</h2>
+    <h2>연대기별 200MP ISOCELL 센서 개발 이력 (2021 – 현재)</h2>
     <p>
-      Since joining Samsung Electronics S.LSI Sensor Business Team in April 2021, Dr. Yongjoon Song has developed and led Remosaic and Neural ISP algorithms across three successive generations of Samsung's flagship 200MP ISOCELL sensor lineup:
+      2021년 4월 삼성전자 S.LSI 센서사업팀 입사 이래, 송용준 박사는 삼성전자의 대표 200MP ISOCELL 센서 3세대 라인업에 걸쳐 Remosaic 및 Neural ISP 알고리즘을 개발하고 리딩해 왔습니다:
     </p>
 
     <figure class="diagram">
@@ -169,93 +169,93 @@
         <text x="754" y="192" class="t-dim">• Cross-functional silicon-ISP co-design</text>
         <text x="754" y="212" class="t-mono">World's Smallest 200MP (0.5µm) · Tech Lead</text>
       </svg>
-      <figcaption><b>Figure 1-2.</b> Chronological progression of 200MP ISOCELL sensor development from <code>HP2 (0.6µm)</code> and <code>HP3/HP9 (0.56µm)</code> to <code>HP5 (0.5µm)</code>.</figcaption>
+      <figcaption><b>그림 1-2.</b> <code>HP2 (0.6µm)</code>, <code>HP3/HP9 (0.56µm)</code>에서 <code>HP5 (0.5µm)</code>로 이어지는 200MP ISOCELL 센서 개발 연대기.</figcaption>
     </figure>
 
     <div class="grid-3">
       <article class="card">
         <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:8px">
-          <span class="eyebrow" style="font-size:11px">APR 2021 – APR 2023</span><span class="badge b-measured">In-Sensor IP</span>
+          <span class="eyebrow" style="font-size:11px">2021.04 – 2023.04</span><span class="badge b-measured">In-Sensor IP</span>
         </div>
         <h3>ISOCELL HP2 (0.6µm, 1/1.3")</h3>
-        <p>Developed the <strong>AI-based 4×4 Q-cell Remosaic (<code>QMSC</code>)</strong> algorithm deployed directly in-sensor, enabling 200MP full-res capture and <strong>12MP 4× In-Sensor Zoom</strong> on the <strong>Samsung Galaxy S23 Ultra</strong> main camera.</p>
+        <p>센서 내부에 직접 탑재되는 <strong>AI 기반 4×4 Q-cell Remosaic (<code>QMSC</code>)</strong> 알고리즘을 개발하여, <strong>Samsung Galaxy S23 Ultra</strong> 메인 카메라의 200MP 풀해상도 촬영 및 <strong>12MP 4× 인센서 줌</strong> 모드를 상용화했습니다.</p>
       </article>
       <article class="card">
         <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:8px">
-          <span class="eyebrow" style="font-size:11px">SEP 2022 – PRESENT</span><span class="badge b-sim">World-1st DL</span>
+          <span class="eyebrow" style="font-size:11px">2022.09 – 현재</span><span class="badge b-sim">World-1st DL</span>
         </div>
         <h3>ISOCELL HP3 / HP9 (0.56µm, 1/1.4")</h3>
-        <p>Invented the <strong>World's 1st DL-based Hexadeca (16-cell) Remosaic S/W algorithm</strong>, commercialized for flagship main (<strong>HP3</strong>: Redmi Note 13 Pro+, HONOR 80 Pro) and periscope telephoto (<strong>HP9</strong>: <strong>vivo X200 Pro 200MP ZEISS Camera</strong>, <strong>HONOR Magic7 Pro</strong>).</p>
+        <p><strong>세계 최초 딥러닝 기반 Hexadeca (16-cell) Remosaic S/W 알고리즘</strong>을 발명하여 플래그십 메인 카메라(<strong>HP3</strong>: Redmi Note 13 Pro+, HONOR 80 Pro) 및 잠망경 망원 카메라(<strong>HP9</strong>: <strong>vivo X200 Pro 200MP ZEISS 카메라</strong>, <strong>HONOR Magic7 Pro</strong>)에 상용화했습니다.</p>
       </article>
       <article class="card">
         <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:8px">
-          <span class="eyebrow" style="font-size:11px">JAN 2025 – PRESENT</span><span class="badge b-area">Tech Lead</span>
+          <span class="eyebrow" style="font-size:11px">2025.01 – 현재</span><span class="badge b-area">Tech Lead</span>
         </div>
         <h3>ISOCELL HP5 (0.5µm, 1/1.56")</h3>
-        <p><strong>Technical Leader</strong> driving Neural ISP algorithm development and defining the mass-production DL S/W algorithm roadmap for the <strong>world's smallest 200MP mobile image sensor</strong>.</p>
+        <p><strong>세계 최소형 200MP 모바일 이미지 센서</strong>를 위한 Neural ISP 알고리즘 개발을 총괄하고 양산형 딥러닝 S/W 알고리즘 로드맵을 정의하는 <strong>Technical Leader (기술 리더)</strong>로 활동 중입니다.</p>
       </article>
     </div>
   </section>
 
   <section id="sec-sensor-products">
-    <h2>200MP ISOCELL Sensor Lineup &amp; Commercial Product Table</h2>
+    <h2>200MP ISOCELL 센서 라인업 &amp; 상용 탑재 스마트폰 표</h2>
     <p>
-      The table below consolidates the specifications, Remosaic architectures, development periods, and commercial smartphone deployments across the 200MP ISOCELL sensor family:
+      아래 표는 200MP ISOCELL 센서 패밀리의 세부 사양, Remosaic 아키텍처, 개발 기간 및 실제 탑재된 상용 스마트폰 내역을 정리한 것입니다:
     </p>
 
     <div class="tbl-wrap">
       <table class="tbl">
         <thead>
           <tr>
-            <th>Sensor Model</th>
-            <th>Development Period</th>
-            <th>Sensor Spec (Pitch · Resolution · Format)</th>
-            <th>Core Remosaic &amp; Neural ISP Contribution</th>
-            <th>Commercial Smartphones &amp; Camera Role</th>
-            <th>Official Reference</th>
+            <th>센서 모델</th>
+            <th>개발 기간</th>
+            <th>센서 사양 (픽셀 피치 · 해상도 · 옵티컬 포맷)</th>
+            <th>핵심 Remosaic &amp; Neural ISP 기여 내용</th>
+            <th>상용 탑재 스마트폰 및 카메라 역할</th>
+            <th>공식 레퍼런스</th>
           </tr>
         </thead>
         <tbody>
           <tr>
             <td><strong>ISOCELL HP5</strong></td>
-            <td>Jan 2025 – Present</td>
-            <td><code>0.5µm</code> · 200MP · <code>1/1.56"</code><br><em>(World's Smallest 200MP)</em></td>
-            <td><strong>Technical Leader</strong>: Deep learning-based S/W Remosaic &amp; Neural ISP algorithm roadmap for extreme 0.5µm sub-micron pixels.</td>
-            <td>Next-generation compact 200MP Main &amp; Periscope Telephoto flagship smartphones</td>
-            <td><a href="https://semiconductor.samsung.com/image-sensor/mobile-image-sensor/isocell-hp5/" target="_blank" rel="noopener">Samsung HP5 Page ↗</a></td>
+            <td>2025.01 – 현재</td>
+            <td><code>0.5µm</code> · 200MP · <code>1/1.56"</code><br><em>(세계 최소형 200MP)</em></td>
+            <td><strong>Technical Leader</strong>: 초미세 0.5µm 픽셀 한계를 극복하기 위한 딥러닝 기반 S/W Remosaic 및 Neural ISP 알고리즘 로드맵 리딩.</td>
+            <td>차세대 슬림·컴팩트 플래그십 200MP 메인 및 잠망경 망원 스마트폰</td>
+            <td><a href="https://semiconductor.samsung.com/image-sensor/mobile-image-sensor/isocell-hp5/" target="_blank" rel="noopener">Samsung HP5 페이지 ↗</a></td>
           </tr>
           <tr>
             <td><strong>ISOCELL HP9</strong></td>
-            <td>Sep 2022 – Present</td>
+            <td>2022.09 – 현재</td>
             <td><code>0.56µm</code> · 200MP · <code>1/1.4"</code><br><em>(Tetra²pixel 16-Cell)</em></td>
-            <td><strong>World's 1st DL-based Hexadeca (16-cell) Remosaic S/W algorithm</strong> tailored for flagship telephoto optics &amp; in-sensor zoom.</td>
+            <td>플래그십 망원 광학계 및 인센서 줌에 특화된 <strong>세계 최초 DL 기반 Hexadeca (16-cell) Remosaic S/W 알고리즘</strong> 개발.</td>
             <td>
-              • <strong>vivo X200 Pro</strong> (200MP ZEISS Telephoto Camera)<br>
-              • <strong>HONOR Magic7 Pro</strong> (200MP Periscope Telephoto)
+              • <strong>vivo X200 Pro</strong> (200MP ZEISS APO 망원 카메라)<br>
+              • <strong>HONOR Magic7 Pro</strong> (200MP 잠망경 망원 카메라)
             </td>
-            <td><a href="https://semiconductor.samsung.com/image-sensor/mobile-image-sensor/isocell-hp9/" target="_blank" rel="noopener">Samsung HP9 Page ↗</a></td>
+            <td><a href="https://semiconductor.samsung.com/image-sensor/mobile-image-sensor/isocell-hp9/" target="_blank" rel="noopener">Samsung HP9 페이지 ↗</a></td>
           </tr>
           <tr>
             <td><strong>ISOCELL HP3</strong></td>
-            <td>Sep 2022 – Present</td>
+            <td>2022.09 – 현재</td>
             <td><code>0.56µm</code> · 200MP · <code>1/1.4"</code><br><em>(Tetra²pixel 16-Cell)</em></td>
-            <td><strong>World's 1st DL-based Hexadeca (16-cell) Remosaic S/W algorithm</strong> for 200MP main cameras (paired with E2E AI Remosaic).</td>
+            <td>200MP 메인 카메라용 <strong>세계 최초 DL 기반 Hexadeca (16-cell) Remosaic S/W 알고리즘</strong> 발명 (E2E AI Remosaic 결합).</td>
             <td>
-              • <strong>Xiaomi Redmi Note 13 Pro+ 5G</strong> (200MP Main)<br>
-              • <strong>HONOR 80 Pro</strong> (160MP mode for Main camera)<br>
-              • <strong>30+ China OEM models</strong>
+              • <strong>Xiaomi Redmi Note 13 Pro+ 5G</strong> (200MP 메인)<br>
+              • <strong>HONOR 80 Pro</strong> (메인 카메라 160MP 모드)<br>
+              • <strong>30+ 중국 OEM 스마트폰 모델</strong>
             </td>
-            <td><a href="https://semiconductor.samsung.com/image-sensor/mobile-image-sensor/isocell-hp3/" target="_blank" rel="noopener">Samsung HP3 Page ↗</a></td>
+            <td><a href="https://semiconductor.samsung.com/image-sensor/mobile-image-sensor/isocell-hp3/" target="_blank" rel="noopener">Samsung HP3 페이지 ↗</a></td>
           </tr>
           <tr>
             <td><strong>ISOCELL HP2</strong></td>
-            <td>Apr 2021 – Apr 2023</td>
+            <td>2021.04 – 2023.04</td>
             <td><code>0.6µm</code> · 200MP · <code>1/1.3"</code><br><em>(Tetra²pixel 16-Cell)</em></td>
-            <td><strong>AI-based 4×4 Q-cell Remosaic (<code>QMSC</code>)</strong> algorithm deployed in-sensor for 200MP full-res and <strong>12MP 4× In-Sensor Zoom</strong> mode.</td>
+            <td>200MP 풀해상도 및 <strong>12MP 4× 인센서 줌</strong> 모드를 위한 인센서 <strong>AI 기반 4×4 Q-cell Remosaic (<code>QMSC</code>)</strong> 알고리즘 개발.</td>
             <td>
-              • <strong>Samsung Galaxy S23 Ultra</strong> (200MP Main Camera &amp; 12MP 4× In-Sensor Zoom)
+              • <strong>Samsung Galaxy S23 Ultra</strong> (200MP 메인 카메라 및 12MP 4× 인센서 줌)
             </td>
-            <td><a href="https://semiconductor.samsung.com/image-sensor/mobile-image-sensor/isocell-hp2/" target="_blank" rel="noopener">Samsung HP2 Page ↗</a></td>
+            <td><a href="https://semiconductor.samsung.com/image-sensor/mobile-image-sensor/isocell-hp2/" target="_blank" rel="noopener">Samsung HP2 페이지 ↗</a></td>
           </tr>
         </tbody>
       </table>
@@ -263,12 +263,12 @@
   </section>
 
   <section class="keypoints" id="summary">
-    <h2>Chapter 01 Summary</h2>
+    <h2>Chapter 01 핵심 요약</h2>
     <ol>
-      <li><strong>Remosaic Principle:</strong> 200MP ISOCELL sensors use a $4\times 4$ non-Bayer CFA (<code>Tetra²pixel</code>) to enable pixel binning in low light; <strong>Remosaic</strong> converts this non-Bayer mosaic into a standard $2\times 2$ Bayer pattern so the Camera ISP can produce full 200MP images and lossless $2\times / 4\times$ In-Sensor Zoom.</li>
-      <li><strong>ISOCELL HP2 (<code>0.6µm</code>, Apr 2021 – Apr 2023):</strong> Developed in-sensor AI $4\times 4$ Q-cell Remosaic (<code>QMSC</code>), powering the <strong>Samsung Galaxy S23 Ultra</strong> 200MP main camera and 12MP $4\times$ In-Sensor Zoom.</li>
-      <li><strong>ISOCELL HP3 / HP9 (<code>0.56µm</code>, Sep 2022 – Present):</strong> Invented the <strong>World's 1st DL-based Hexadeca (16-cell) Remosaic S/W algorithm</strong>, commercialized across flagship main (HP3) and periscope telephoto (HP9, e.g., <strong>vivo X200 Pro 200MP ZEISS Camera</strong>) smartphones.</li>
-      <li><strong>ISOCELL HP5 (<code>0.5µm</code>, Jan 2025 – Present):</strong> Serving as <strong>Technical Leader</strong> driving Neural ISP and DL S/W algorithm development for the <strong>world's smallest 200MP image sensor</strong>.</li>
+      <li><strong>Remosaic 원리:</strong> 200MP ISOCELL 센서는 저조도 픽셀 비닝을 위해 $4\times 4$ Non-Bayer CFA(<code>Tetra²pixel</code>)를 사용하며, <strong>Remosaic</strong>은 이를 표준 $2\times 2$ Bayer 패턴으로 변환하여 Camera ISP가 200MP 풀해상도 영상과 무손실 $2\times / 4\times$ 인센서 줌을 생성할 수 있게 한다.</li>
+      <li><strong>ISOCELL HP2 (<code>0.6µm</code>, 2021.04 – 2023.04):</strong> 인센서 AI $4\times 4$ Q-cell Remosaic(<code>QMSC</code>)을 개발하여 <strong>Samsung Galaxy S23 Ultra</strong>의 200MP 메인 카메라 및 12MP $4\times$ 인센서 줌을 구현했다.</li>
+      <li><strong>ISOCELL HP3 / HP9 (<code>0.56µm</code>, 2022.09 – 현재):</strong> <strong>세계 최초 DL 기반 Hexadeca (16-cell) Remosaic S/W 알고리즘</strong>을 발명하여 플래그십 메인(HP3) 및 잠망경 망원(HP9, <strong>vivo X200 Pro 200MP ZEISS 카메라</strong> 등) 스마트폰에 상용화했다.</li>
+      <li><strong>ISOCELL HP5 (<code>0.5µm</code>, 2025.01 – 현재):</strong> <strong>세계 최소형 200MP 이미지 센서</strong>의 Neural ISP 및 딥러닝 S/W 알고리즘 개발을 총괄하는 <strong>Technical Leader</strong> 역할을 수행하고 있다.</li>
     </ol>
   </section>
 

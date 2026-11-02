@@ -1,0 +1,745 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Ch.02 Deep Reinforcement Learning Sequence Alignment (DQNAlign) &amp; Genomic Mining · KAIST Grad Works &amp; Workspace Guidebook</title>
+<meta name="description" content="Ch.02 Deep Reinforcement Learning Sequence Alignment (DQNAlign) &amp; Genomic Mining — KAIST Grad Works &amp; GoogleDrive Master Workspace Interactive Guidebook">
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/katex@0.16.11/dist/katex.min.css">
+<script defer src="https://cdn.jsdelivr.net/npm/katex@0.16.11/dist/katex.min.js"></script>
+<script defer src="https://cdn.jsdelivr.net/npm/katex@0.16.11/dist/contrib/auto-render.min.js"></script>
+<link rel="stylesheet" href="../css/style.css?v=1950d4d">
+<link rel="stylesheet" href="../css/glossary-tooltips.css?v=1950d4d">
+<script src="../js/glossary-data.js?v=1950d4d"></script>
+<script src="../js/common.js?v=1950d4d"></script>
+<script defer src="../js/glossary-tooltips.js?v=1950d4d"></script>
+</head>
+<body data-chapter="bio" data-root="../">
+<main class="chapter">
+  <header class="chapter-hero">
+    <div class="eyebrow">CHAPTER 02 · THEME 2 — BIOINFORMATICS &amp; DEEP RL</div>
+    <h1>Deep Reinforcement Learning Sequence Alignment (DQNAlign) &amp; High-Speed Genomic Mining</h1>
+    <p class="lead">
+      As Next-Generation Sequencing (NGS) and third-generation long-read technologies (PacBio, Oxford Nanopore) produce single reads spanning tens to hundreds of kilobases (bp),
+      the $O(N_1 N_2)$ spatiotemporal complexity of classical global dynamic programming (Needleman-Wunsch) has become a severe computational bottleneck.
+      This chapter dissects Dr. Yongjoon Song's core Ph.D. dissertation breakthrough, <strong>DQNAlign</strong> (<a class="src" href="../../2_Bioinformatics_and_Genomics/Deep_Learning_Biomarkers/DQNalign/tool/RL/agent.py#L10" target="_blank" rel="noopener" title="2_Bioinformatics_and_Genomics/Deep_Learning_Biomarkers/DQNalign/tool/RL/agent.py:10">agent.py:10</a>, <a class="src" href="../../2_Bioinformatics_and_Genomics/Deep_Learning_Biomarkers/DQNalign/tool/RL/Learning.py#L17" target="_blank" rel="noopener" title="2_Bioinformatics_and_Genomics/Deep_Learning_Biomarkers/DQNalign/tool/RL/Learning.py:17">Learning.py:17</a>, <a class="src" href="https://doi.org/10.1109/OJEMB.2021.3076156" target="_blank" rel="noopener">IEEE OJEMB '21a ↗</a>, <a class="src" href="https://doi.org/10.1109/OJEMB.2021.3055424" target="_blank" rel="noopener">IEEE OJEMB '21b ↗</a>)—including its local sliding-window MDP formulation and
+      <strong>Dueling Double DQN + Exact Match Skip</strong> hybrid accelerator—alongside the chromosome-scale repeat mining and clinical biomarker engines
+      <strong>REminerII · PixelRE · REDNN</strong> (<a class="src" href="../../2_Bioinformatics_and_Genomics/Sequence_Mining_and_Alignment/REminerII/Insilico.py#L74" target="_blank" rel="noopener" title="2_Bioinformatics_and_Genomics/Sequence_Mining_and_Alignment/REminerII/Insilico.py:74">Insilico.py:74</a>, <a class="src" href="../../2_Bioinformatics_and_Genomics/Sequence_Mining_and_Alignment/PixelRE/PixelRE.m#L3" target="_blank" rel="noopener" title="2_Bioinformatics_and_Genomics/Sequence_Mining_and_Alignment/PixelRE/PixelRE.m:3">PixelRE.m:3</a>, <a class="src" href="../../2_Bioinformatics_and_Genomics/Deep_Learning_Biomarkers/REDNN/REDNN.py#L74" target="_blank" rel="noopener" title="2_Bioinformatics_and_Genomics/Deep_Learning_Biomarkers/REDNN/REDNN.py:74">REDNN.py:74</a>, <a class="src" href="https://patents.google.com/patent/US20190385696A1/en" target="_blank" rel="noopener">US 2019/0385696 A1 ↗</a>).
+    </p>
+    <ul class="objectives">
+      <li>Understand the <strong>Local Sliding-Window MDP</strong> and <strong>Exact Match Skip</strong> heuristic that overcome the $O(N_1 N_2)$ barrier of global Needleman-Wunsch dynamic programming.</li>
+      <li>Verify the mathematical formulations of <strong>Dueling Double DQN</strong> ($128+128$ stream split), <strong>Depthwise Separable Conv</strong>, and <strong>Zipfian ($s=1.6$) indel distributions</strong>.</li>
+      <li>Experiment directly with <strong>DQNAlign alignment trajectories</strong> and <strong>REminerII / PixelRE 2D dot-plot seed extension</strong> via Interactive Simulators 02 and 03.</li>
+    </ul>
+  
+    <div class="ch-pubs" role="region" aria-label="Related Papers and Patents">
+      <span class="ch-pubs-label">PAPERS &amp; PATENTS</span>
+      <a class="pub-tag paper" href="https://doi.org/10.1109/OJEMB.2021.3076156" target="_blank" rel="noopener" title="Local Alignment of DNA Sequence Based on Deep Reinforcement Learning (IEEE OJEMB, Apr. 2021)">📄 IEEE OJEMB &#x27;21 (Local DRL) ↗</a> <a class="pub-tag paper" href="https://doi.org/10.1109/OJEMB.2021.3055424" target="_blank" rel="noopener" title="Pairwise Heuristic Sequence Alignment Algorithm Based on Deep Reinforcement Learning (IEEE OJEMB, Jan. 2021)">📄 IEEE OJEMB &#x27;21 (Pairwise DRL) ↗</a> <a class="pub-tag paper" href="https://ieeexplore.ieee.org/document/8333425" target="_blank" rel="noopener" title="A Novel Estimation Algorithm of Evolutionary Distance Based on Word Frequency Variation (IEEE BHI 2018)">📄 IEEE BHI &#x27;18 (EvolDist) ↗</a> <a class="pub-tag paper" href="https://ieeexplore.ieee.org/document/8037707" target="_blank" rel="noopener" title="Classification of Various Genomic Sequences Based on Distribution of Repeated K-Word (IEEE EMBC 2017)">📄 IEEE EMBC &#x27;17 (K-Word) ↗</a> <a class="pub-tag patent" href="https://patents.google.com/patent/US20190385696A1/en" target="_blank" rel="noopener" title="US 2019/0385696 A1 — Method and Apparatus for Predicting Disease Risk Based on Complex Genetic Information">📜 US 2019/0385696 A1 (REDNN) ↗</a>
+    </div>
+  </header>
+
+  <section id="sec-mdp">
+    <h2>Limits of Global Dynamic Programming &amp; Local Sliding-Window MDP Formulation</h2>
+    <p>
+      When aligning two nucleotide sequences $S^{(1)} = (s^{(1)}_1, \dots, s^{(1)}_{N_1})$ and $S^{(2)} = (s^{(2)}_1, \dots, s^{(2)}_{N_2})$ ($s \in \{\text{A, C, G, T}\}$),
+      Needleman-Wunsch global dynamic programming (<a class="src" href="../../2_Bioinformatics_and_Genomics/Sequence_Mining_and_Alignment/AlignmentGenerator" target="_blank" rel="noopener" title="2_Bioinformatics_and_Genomics/Sequence_Mining_and_Alignment/AlignmentGenerator">AlignmentGenerator</a>, <a class="src" href="../../2_Bioinformatics_and_Genomics/Sequence_Mining_and_Alignment/QLOBAL" target="_blank" rel="noopener" title="2_Bioinformatics_and_Genomics/Sequence_Mining_and_Alignment/QLOBAL">QLOBAL</a>) evaluates the following recurrence across every grid cell $(i, j) \in [0, N_1] \times [0, N_2]$:
+    </p>
+    $$F(i, j) = \max \begin{cases} F(i-1, j-1) + \sigma\!\left(s^{(1)}_i, s^{(2)}_j\right) & \text{(Match / Mismatch)} \\[4pt] F(i-1, j) - d_{\text{gap}} & \text{(Deletion in } S^{(2)}\text{)} \\[4pt] F(i, j-1) - d_{\text{gap}} & \text{(Insertion in } S^{(2)}\text{)} \end{cases}$$
+    <p>
+      If $N_1 = N_2 = 10^5\text{ bp}$, the DP grid contains $10^{10}$ cells (requiring roughly $40\text{ GB}$ of RAM at 4 bytes per integer), making single-node execution infeasible.
+      Instead of materializing the full grid in memory, <strong>DQNAlign</strong> (<a class="src" href="../../2_Bioinformatics_and_Genomics/Deep_Learning_Biomarkers/DQNalign/tool/RL/alignment.py#L9" target="_blank" rel="noopener" title="2_Bioinformatics_and_Genomics/Deep_Learning_Biomarkers/DQNalign/tool/RL/alignment.py:9">alignment.py:9</a>) reformulates sequence alignment as a Markov Decision Process (MDP) that observes only a forward-looking
+      <strong>$W \times W$ local subsequence window (Local Sliding Window)</strong> as state $s_t$ at the current alignment head $(x_t, y_t)$ and sequentially selects the optimal action $a_t$.
+    </p>
+
+    <figure class="diagram">
+      <svg id="bio-svg" viewBox="0 0 1080 320" xmlns="http://www.w3.org/2000/svg" role="img" aria-label="Theme 2 Bioinformatics and Deep RL Pipeline">
+        <defs>
+          <marker id="bio-arr" viewBox="0 0 10 10" refX="8" refY="5" markerWidth="6" markerHeight="6" orient="auto-start-reverse">
+            <path d="M 0 1 L 9 5 L 0 9 z" fill="var(--accent-2)" />
+          </marker>
+        </defs>
+        <rect x="4" y="4" width="1072" height="312" rx="12" class="f-surface" />
+        <text x="24" y="28" class="t-acc2">CLICKABLE PIPELINE · THEME 2 BIOINFORMATICS, DQNALIGN DRL &amp; GENOMIC MINING (21 SUBMODULES)</text>
+
+        <!-- Stage 1: Exact Skip & Local Window -->
+        <g class="svg-node is-selected" data-node="bio-window">
+          <rect x="24" y="48" width="240" height="184" rx="9" class="f-ok-soft" />
+          <text x="38" y="74" class="t-ok">STAGE 1 · MDP &amp; EXACT SKIP</text>
+          <text x="38" y="98" class="t" font-weight="700">Pairwise Environment</text>
+          <text x="38" y="120" class="t-dim">State: W x W One-Hot Window</text>
+          <text x="38" y="140" class="t-dim">Exact Match Skip (agent.skip)</text>
+          <text x="38" y="160" class="t-dim">Zipfian Indel (s = 1.6)</text>
+          <text x="38" y="180" class="t-dim">Forward &amp; RC Strand Modes</text>
+          <text x="38" y="212" class="t-mono">alignment.py · agent.py</text>
+        </g>
+
+        <!-- Stage 2: Dueling DDQN & SSDnetwork -->
+        <g class="svg-node" data-node="bio-ddqn">
+          <rect x="290" y="48" width="248" height="184" rx="9" class="f-acc2-soft" />
+          <text x="304" y="74" class="t-acc2">STAGE 2 · DUELING DOUBLE DQN</text>
+          <text x="304" y="98" class="t" font-weight="700">Qnetwork &amp; SSDnetwork</text>
+          <text x="304" y="120" class="t-dim">Separable Conv2D Backbone</text>
+          <text x="304" y="140" class="t-dim">Split h=256 -&gt; V(s) + A(s,a)</text>
+          <text x="304" y="160" class="t-dim">Replay Buffer (N = 50,000)</text>
+          <text x="304" y="180" class="t-dim">Polyak Target (tau = 0.001)</text>
+          <text x="304" y="212" class="t-mono">Learning.py · param/SSD.py</text>
+        </g>
+
+        <!-- Stage 3: REminerII & PixelRE -->
+        <g class="svg-node" data-node="bio-reminer">
+          <rect x="564" y="48" width="240" height="184" rx="9" class="f-acc-soft" />
+          <text x="578" y="74" class="t-acc">STAGE 3 · REPEAT MINING</text>
+          <text x="578" y="98" class="t" font-weight="700">REminerII &amp; PixelRE</text>
+          <text x="578" y="120" class="t-dim">Seed W=14 · Space=2 · Allow=1</text>
+          <text x="578" y="140" class="t-dim">Greedy X-Drop = 30, L &gt;= 28</text>
+          <text x="578" y="160" class="t-dim">PixelRE w=[7,8,10,12,14]</text>
+          <text x="578" y="180" class="t-dim">11 Win32 MFC RE_* Viewers</text>
+          <text x="578" y="212" class="t-mono">Insilico.py · PixelRE.m</text>
+        </g>
+
+        <!-- Stage 4: REDNN, RERNN & Population Genetics -->
+        <g class="svg-node" data-node="bio-rednn">
+          <rect x="830" y="48" width="226" height="184" rx="9" class="f-bad-soft" />
+          <text x="844" y="74" class="t-bad">STAGE 4 · CLINICAL &amp; POP</text>
+          <text x="844" y="98" class="t" font-weight="700">REDNN · RERNN · EvolDist</text>
+          <text x="844" y="120" class="t-dim">12,288-D · 6-Layer FC DNN</text>
+          <text x="844" y="140" class="t-dim">RERNN Sequential LSTM</text>
+          <text x="844" y="160" class="t-dim">1092x (1000 Genomes C++)</text>
+          <text x="844" y="180" class="t-dim">clustering205 · EvolDist</text>
+          <text x="844" y="212" class="t-mono">REDNN.py · EvolDist</text>
+        </g>
+
+        <line x1="264" y1="140" x2="287" y2="140" class="s-acc2" stroke-width="2" marker-end="url(#bio-arr)" />
+        <line x1="538" y1="140" x2="561" y2="140" class="s-acc2" stroke-width="2" marker-end="url(#bio-arr)" />
+        <line x1="804" y1="140" x2="827" y2="140" class="s-acc2" stroke-width="2" marker-end="url(#bio-arr)" />
+
+        <!-- Bottom Complexity Comparison Banner -->
+        <rect x="24" y="248" width="1032" height="48" rx="8" class="f-elev" />
+        <text x="40" y="277" class="t-ok">COMPLEXITY BREAKTHROUGH:</text>
+        <text x="242" y="277" class="t" font-weight="600">Needleman-Wunsch DP: O(N1 * N2) Time &amp; Memory  ---&gt;  DQNAlign + Exact Skip: O(N) Linear Time &amp; O(W^2) Window Memory</text>
+      </svg>
+      <div class="inspector-box" id="bio-insp">
+        <div class="insp-title" id="bio-insp-title">📌 STAGE 1 · Pairwise MDP Environment &amp; Exact Match Skip</div>
+        <div id="bio-insp-body">When the current nucleotide pair matches (<code>seq1[x] == seq2[y]</code>), DQNAlign bypasses deep neural network inference and advances diagonally at hardware speed, drastically reducing computation. Click any stage in the pipeline above to inspect its tensor specifications.</div>
+      </div>
+      <figcaption><b>Figure 2-1.</b> Theme 2 Bioinformatics &amp; Deep RL 4-stage pipeline (DQNAlign · Dueling DDQN · REminerII/PixelRE · REDNN).</figcaption>
+    </figure>
+
+    <h3 id="sec-mdp-detail">MDP State, Action, Reward &amp; Exact Match Skip Formulation</h3>
+    <ul>
+      <li>
+        <strong>State Space ($\mathcal{S}$)</strong>: <a class="src" href="../../2_Bioinformatics_and_Genomics/Deep_Learning_Biomarkers/DQNalign/tool/RL/alignment.py#L110" target="_blank" rel="noopener" title="2_Bioinformatics_and_Genomics/Deep_Learning_Biomarkers/DQNalign/tool/RL/alignment.py:110">alignment.py:110</a> and <a class="src" href="../../2_Bioinformatics_and_Genomics/Deep_Learning_Biomarkers/DQNalign/tool/RL/alignment.py#L158" target="_blank" rel="noopener" title="2_Bioinformatics_and_Genomics/Deep_Learning_Biomarkers/DQNalign/tool/RL/alignment.py:158">alignment.py:158</a> encode the local subsequence window starting from the current alignment coordinate $(x_t, y_t)$ as a one-hot tensor or 2D match map for neural network input.
+      </li>
+      <li>
+        <strong>Action Space ($\mathcal{A}$, <code>n_action = 3</code>)</strong>:
+        $$a_t \in \{0:\text{Forward } (x_t+1, y_t+1),\;\; 1:\text{Insertion } (x_t, y_t+1),\;\; 2:\text{Deletion } (x_t+1, y_t)\}$$
+      </li>
+      <li>
+        <strong>Reward Function ($\mathcal{R}$)</strong>:
+        $$r_t = \begin{cases} +r_{\text{match}} & \text{if } a_t = 0 \text{ and } s^{(1)}_{x_t} = s^{(2)}_{y_t} \\ -p_{\text{mismatch}} & \text{if } a_t = 0 \text{ and } s^{(1)}_{x_t} \neq s^{(2)}_{y_t} \\ -p_{\text{indel}} & \text{if } a_t \in \{1, 2\} \end{cases}$$
+      </li>
+      <li>
+        <strong>Exact Match Skip Accelerator (<a class="src" href="../../2_Bioinformatics_and_Genomics/Deep_Learning_Biomarkers/DQNalign/tool/RL/agent.py#L82" target="_blank" rel="noopener" title="2_Bioinformatics_and_Genomics/Deep_Learning_Biomarkers/DQNalign/tool/RL/agent.py:82">agent.py:82</a>, <a class="src" href="../../2_Bioinformatics_and_Genomics/Deep_Learning_Biomarkers/DQNalign/tool/RL/agent.py#L96" target="_blank" rel="noopener" title="2_Bioinformatics_and_Genomics/Deep_Learning_Biomarkers/DQNalign/tool/RL/agent.py:96">agent.py:96</a>, <a class="src" href="../../2_Bioinformatics_and_Genomics/Deep_Learning_Biomarkers/DQNalign/tool/RL/agent.py#L110" target="_blank" rel="noopener" title="2_Bioinformatics_and_Genomics/Deep_Learning_Biomarkers/DQNalign/tool/RL/agent.py:110">agent.py:110</a>)</strong>:
+        In homologous genomic regions, consecutive exact nucleotide matches (Exact Match Runs) occur frequently.
+        <code>Agent.skip()</code> advances diagonally in a tight loop without invoking the neural network as long as $s^{(1)}_{x_t} = s^{(2)}_{y_t}$,
+        calling the Dueling Double DQN agent only at mismatch or indel boundaries.
+      </li>
+    </ul>
+  </section>
+
+  <section id="sec-ddqn">
+    <h2>Dueling Double DQN &amp; Depthwise Separable Conv Architecture</h2>
+    <p>
+      <a class="src" href="../../2_Bioinformatics_and_Genomics/Deep_Learning_Biomarkers/DQNalign/tool/RL/Learning.py#L17" target="_blank" rel="noopener" title="2_Bioinformatics_and_Genomics/Deep_Learning_Biomarkers/DQNalign/tool/RL/Learning.py:17">Learning.py:17</a> implements the standard convolutional <code>Qnetwork</code> alongside the lightweight Depthwise Separable Convolution (<a class="src" href="../../2_Bioinformatics_and_Genomics/Deep_Learning_Biomarkers/DQNalign/tool/RL/Learning.py#L88" target="_blank" rel="noopener" title="2_Bioinformatics_and_Genomics/Deep_Learning_Biomarkers/DQNalign/tool/RL/Learning.py:88">Learning.py:88</a>)
+      <code>SSDnetwork</code> and differential-feature <code>DiffSSDnetwork</code> (<a class="src" href="../../2_Bioinformatics_and_Genomics/Deep_Learning_Biomarkers/DQNalign/tool/RL/Learning.py#L171" target="_blank" rel="noopener" title="2_Bioinformatics_and_Genomics/Deep_Learning_Biomarkers/DQNalign/tool/RL/Learning.py:171">Learning.py:171</a>).
+    </p>
+    <ol>
+      <li>
+        <strong>Dueling Stream Split (<a class="src" href="../../2_Bioinformatics_and_Genomics/Deep_Learning_Biomarkers/DQNalign/tool/RL/Learning.py#L52" target="_blank" rel="noopener" title="2_Bioinformatics_and_Genomics/Deep_Learning_Biomarkers/DQNalign/tool/RL/Learning.py:52">Learning.py:52</a>)</strong>:
+        The final convolutional feature vector $h \in \mathbb{R}^{256}$ (<code>h_size = 256</code>) is split evenly into an
+        action-advantage stream $\text{streamAC} \in \mathbb{R}^{128}$ and a state-value stream $\text{streamVC} \in \mathbb{R}^{128}$,
+        which are recombined into $Q(s, a; \theta)$ via:
+        $$Q(s, a; \theta) = V(s; \theta_V) + \left( A(s, a; \theta_A) - \frac{1}{|\mathcal{A}|} \sum_{a'=0}^{|\mathcal{A}|-1} A(s, a'; \theta_A) \right)$$
+      </li>
+      <li>
+        <strong>Double Q-Learning Target (<a class="src" href="../../2_Bioinformatics_and_Genomics/Deep_Learning_Biomarkers/DQNalign/tool/RL/agent.py#L77" target="_blank" rel="noopener" title="2_Bioinformatics_and_Genomics/Deep_Learning_Biomarkers/DQNalign/tool/RL/agent.py:77">agent.py:77</a>)</strong>:
+        To prevent Q-value overestimation bias caused by single-network max operations, action selection uses the online network $\theta$ while value evaluation uses the target network $\theta^-$:
+        $$y_t = r_t + \gamma \, Q\!\left(s_{t+1}, \arg\max_{a'} Q(s_{t+1}, a'; \theta_t);\; \theta^-_t\right), \quad \gamma = 0.99$$
+      </li>
+      <li>
+        <strong>Polyak Soft Target Updates &amp; Zipfian Indel Distribution (<a class="src" href="../../2_Bioinformatics_and_Genomics/Deep_Learning_Biomarkers/DQNalign/tool/RL/alignment.py#L42" target="_blank" rel="noopener" title="2_Bioinformatics_and_Genomics/Deep_Learning_Biomarkers/DQNalign/tool/RL/alignment.py:42">alignment.py:42</a>)</strong>:
+        The target network is updated smoothly at every training step via $\theta^- \leftarrow \tau \theta + (1-\tau)\theta^-$ ($\tau = 0.001$),
+        and indel lengths in synthetic training sequences are sampled from a biologically realistic Zipfian power-law distribution ($s = 1.6$):
+        $$P(L_{\text{indel}} = k) = \frac{k^{-1.6}}{\sum_{n=1}^{L_{\max}} n^{-1.6}}, \quad k \in \{1, 2, \dots, L_{\max}\}$$
+      </li>
+    </ol>
+
+    <div class="tbl-wrap">
+      <table class="tbl">
+        <thead>
+          <tr>
+            <th>Parameter Symbol</th>
+            <th>Source Variable</th>
+            <th>Parsed Value</th>
+            <th>Definition Location</th>
+            <th>Engineering Meaning &amp; Role</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr>
+            <td>$B$</td>
+            <td><code>batch_size</code></td>
+            <td class="mono">32</td>
+            <td><a class="src" href="../../2_Bioinformatics_and_Genomics/Deep_Learning_Biomarkers/DQNalign/param/SSD.py#L2" target="_blank" rel="noopener" title="2_Bioinformatics_and_Genomics/Deep_Learning_Biomarkers/DQNalign/param/SSD.py:2">SSD.py:2</a></td>
+            <td>Experience Replay mini-batch sample size</td>
+          </tr>
+          <tr>
+            <td>$\gamma$</td>
+            <td><code>y</code></td>
+            <td class="mono">0.99</td>
+            <td><a class="src" href="../../2_Bioinformatics_and_Genomics/Deep_Learning_Biomarkers/DQNalign/param/SSD.py#L2" target="_blank" rel="noopener" title="2_Bioinformatics_and_Genomics/Deep_Learning_Biomarkers/DQNalign/param/SSD.py:2">SSD.py:2</a></td>
+            <td>Discount factor for future alignment rewards</td>
+          </tr>
+          <tr>
+            <td>$\epsilon_{\text{start}} \to \epsilon_{\text{end}}$</td>
+            <td><code>startE</code>, <code>endE</code></td>
+            <td class="mono">1 → 0.05</td>
+            <td><a class="src" href="../../2_Bioinformatics_and_Genomics/Deep_Learning_Biomarkers/DQNalign/param/SSD.py#L2" target="_blank" rel="noopener" title="2_Bioinformatics_and_Genomics/Deep_Learning_Biomarkers/DQNalign/param/SSD.py:2">SSD.py:2</a></td>
+            <td>$\epsilon$-Greedy exploration probability annealing range (<code>annealing_steps = 10000.0</code>)</td>
+          </tr>
+          <tr>
+            <td>$D_{\text{hidden}}$</td>
+            <td><code>h_size</code></td>
+            <td class="mono">256</td>
+            <td><a class="src" href="../../2_Bioinformatics_and_Genomics/Deep_Learning_Biomarkers/DQNalign/param/SSD.py#L2" target="_blank" rel="noopener" title="2_Bioinformatics_and_Genomics/Deep_Learning_Biomarkers/DQNalign/param/SSD.py:2">SSD.py:2</a></td>
+            <td>Hidden feature dimension right before Dueling split ($128 + 128$ split)</td>
+          </tr>
+          <tr>
+            <td>$\tau$</td>
+            <td><code>tau</code></td>
+            <td class="mono">0.001</td>
+            <td><a class="src" href="../../2_Bioinformatics_and_Genomics/Deep_Learning_Biomarkers/DQNalign/param/SSD.py#L2" target="_blank" rel="noopener" title="2_Bioinformatics_and_Genomics/Deep_Learning_Biomarkers/DQNalign/param/SSD.py:2">SSD.py:2</a></td>
+            <td>Target network soft-update coefficient (Polyak averaging)</td>
+          </tr>
+          <tr>
+            <td>$|\mathcal{D}|$</td>
+            <td><code>BUFFER_SIZE</code></td>
+            <td class="mono">50,000</td>
+            <td><a class="src" href="../../2_Bioinformatics_and_Genomics/Deep_Learning_Biomarkers/DQNalign/tool/RL/Learning.py#L17" target="_blank" rel="noopener" title="2_Bioinformatics_and_Genomics/Deep_Learning_Biomarkers/DQNalign/tool/RL/Learning.py:17">Learning.py:17</a></td>
+            <td>Maximum transition storage capacity of the Experience Replay Buffer</td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+  </section>
+
+  <section id="sec-sim-dqnalign">
+    <h2>Interactive Simulator · DQNAlign Sliding Window &amp; Exact-Skip</h2>
+    <p>
+      The simulator below compares the alignment trajectory and computational complexity of <strong>global Needleman-Wunsch DP</strong>
+      against the <strong>DQNAlign agent</strong> in real time as you vary sequence mutation rate (SNP/Indel), sliding-window size $W$, and <code>Agent.skip()</code> activation.
+    </p>
+
+    <section class="sim" id="sim-dqnalign">
+      <div class="sim-head">
+        <span class="sim-tag">SIMULATOR 02 · INTERACTIVE MDP TRAJECTORY</span>
+        <h3>Needleman-Wunsch DP Grid vs. DQNAlign Sliding Window &amp; Exact-Skip</h3>
+      </div>
+      <div class="sim-body side">
+        <div class="sim-view">
+          <canvas id="bio-dqn-canvas"></canvas>
+        </div>
+        <div class="sim-controls">
+          <label class="ctrl">
+            <span>Sequence Length $N$ (Grid Size) <output id="bio-lbl-n">42 bp</output></span>
+            <input type="range" id="bio-rng-n" min="24" max="64" step="2" value="42" />
+          </label>
+          <label class="ctrl">
+            <span>Mutation &amp; Indel Rate <output id="bio-lbl-mut">16%</output></span>
+            <input type="range" id="bio-rng-mut" min="4" max="40" step="2" value="16" />
+          </label>
+          <label class="ctrl">
+            <span>Sliding Window Size $W$ <output id="bio-lbl-w">8x8</output></span>
+            <input type="range" id="bio-rng-w" min="4" max="14" step="2" value="8" />
+          </label>
+          <div class="ctrl">
+            <span>Exact Match Skip (<code>Agent.skip</code>)</span>
+            <div class="seg" id="bio-skip-btns">
+              <button type="button" class="on" data-skip="1">ON (Skip + DDQN)</button>
+              <button type="button" data-skip="0">OFF (Pure DDQN)</button>
+            </div>
+          </div>
+          <div class="btn-row">
+            <button type="button" id="bio-btn-regen">🔄 Generate New Mutated Sequence Pair (Zipfian Indel)</button>
+          </div>
+        </div>
+      </div>
+      <div class="sim-readout">
+        <div class="stat"><span class="k">NW DP Cell Evaluations</span><span class="v" id="bio-st-nw">1,764 cells</span></div>
+        <div class="stat"><span class="k">DQN Network Calls</span><span class="v" id="bio-st-dqn">8 calls</span></div>
+        <div class="stat"><span class="k">Exact-Skip Ratio</span><span class="v" id="bio-st-skip">80.0%</span></div>
+        <div class="stat"><span class="k">Speedup (NW / DQN)</span><span class="v" id="bio-st-speed">220.5x</span></div>
+      </div>
+      <div class="sim-note" id="bio-dqn-readout"></div>
+    </section>
+  </section>
+
+  <section id="sec-reminer">
+    <h2>High-Speed Repeat Sequence Mining (REminerII · PixelRE) &amp; MFC Visualization Suite</h2>
+    <p>
+      To discover interspersed repeat elements (e.g., Alu, LINE, SINE—which account for over half of the human genome) at chromosome scale,
+      Theme 2 provides two complementary mining engines:
+    </p>
+    <ul>
+      <li>
+        <strong>REminerII (<a class="src" href="../../2_Bioinformatics_and_Genomics/Sequence_Mining_and_Alignment/REminerII/Insilico.py#L74" target="_blank" rel="noopener" title="2_Bioinformatics_and_Genomics/Sequence_Mining_and_Alignment/REminerII/Insilico.py:74">Insilico.py:74</a>)</strong>:
+        Built on a C++ core engine and Python pipeline, <code>Setparam()</code> (<a class="src" href="../../2_Bioinformatics_and_Genomics/Sequence_Mining_and_Alignment/REminerII/Insilico.py#L40" target="_blank" rel="noopener" title="2_Bioinformatics_and_Genomics/Sequence_Mining_and_Alignment/REminerII/Insilico.py:40">Insilico.py:40</a>) configures default parameters of
+        seed length <code>WORD_SIZE = 14</code>, mismatch tolerance <code>ALLOW_SIZE = 1</code>, merge spacing <code>SPACE_SIZE = 2</code>,
+        minimum seed length <code>MIN_SEED_LEN = 28</code>, and early-termination threshold <code>GREEDY_X = 30</code>.
+        During Greedy X-Drop extension, if the current alignment score drops by $X_{\text{drop}} = 30$ or more below the running maximum, extension terminates immediately to prune unproductive search branches.
+      </li>
+      <li>
+        <strong>PixelRE (<a class="src" href="../../2_Bioinformatics_and_Genomics/Sequence_Mining_and_Alignment/PixelRE/PixelRE.m#L3" target="_blank" rel="noopener" title="2_Bioinformatics_and_Genomics/Sequence_Mining_and_Alignment/PixelRE/PixelRE.m:3">PixelRE.m:3</a>)</strong>:
+        Projects the sequence homology matrix into a 2D binary dot-plot image and applies multi-scale sliding windows <code>w = [7, 8, 10, 12, 14]</code>
+        with morphological diagonal filtering to rapidly extract both forward and reverse-complement repeat clusters.
+      </li>
+      <li>
+        <strong>11 Win32 MFC / DirectX Visualization Suites (<code>RE_*</code>)</strong>:
+        Includes 11 standalone C++/MFC submodules—such as <code>RE_viewer</code>, <code>RE_heatmap</code>, and <code>RE_renderer</code>—for real-time desktop rendering of massive repeat density maps and heatmaps.
+      </li>
+    </ul>
+  </section>
+
+  <section id="sec-sim-reminer">
+    <h2>Interactive Simulator · REminerII &amp; PixelRE Dot-Plot Seed Extension</h2>
+    <p>
+      The simulator below renders 2D dot-plot repeat detection results in real time across genomic segments containing both forward repeats and reverse-complement (RC) inversions as you vary seed length $w$ and the <code>GREEDY_X</code> threshold.
+    </p>
+
+    <section class="sim" id="sim-reminer">
+      <div class="sim-head">
+        <span class="sim-tag">SIMULATOR 03 · DOT-PLOT REPEAT MINER</span>
+        <h3>REminerII Seed-and-Extend &amp; PixelRE Multi-Scale Dot-Plot</h3>
+      </div>
+      <div class="sim-body side">
+        <div class="sim-view">
+          <canvas id="bio-rem-canvas"></canvas>
+        </div>
+        <div class="sim-controls">
+          <label class="ctrl">
+            <span>Seed / Window Size $w$ (PixelRE / WORD_SIZE) <output id="rem-lbl-w">12 bp</output></span>
+            <input type="range" id="rem-rng-w" min="7" max="16" step="1" value="12" />
+          </label>
+          <label class="ctrl">
+            <span>Greedy X-Drop Threshold (<code>GREEDY_X</code>) <output id="rem-lbl-x">30</output></span>
+            <input type="range" id="rem-rng-x" min="10" max="50" step="5" value="30" />
+          </label>
+          <label class="ctrl">
+            <span>Background Substitution Noise <output id="rem-lbl-noise">12%</output></span>
+            <input type="range" id="rem-rng-noise" min="2" max="30" step="2" value="12" />
+          </label>
+          <div class="ctrl">
+            <span>Strand Detection Mode</span>
+            <div class="seg" id="rem-strand-btns" style="display:grid;grid-template-columns:1fr 1fr;gap:5px;">
+              <button type="button" data-s="FWD">Forward Only</button>
+              <button type="button" data-s="RC">RC Only</button>
+              <button type="button" class="on" data-s="BOTH" style="grid-column:1 / -1;">Both (Fwd + RC)</button>
+            </div>
+          </div>
+        </div>
+      </div>
+      <div class="sim-readout">
+        <div class="stat"><span class="k">Detected Seed Hits</span><span class="v" id="rem-st-seeds">0</span></div>
+        <div class="stat"><span class="k">Extended Forward REs</span><span class="v" id="rem-st-fwd">0</span></div>
+        <div class="stat"><span class="k">Extended RC REs</span><span class="v" id="rem-st-rc">0</span></div>
+        <div class="stat"><span class="k">False-Positive Noise</span><span class="v" id="rem-st-fp">0 dots</span></div>
+      </div>
+      <div class="sim-note" id="rem-readout"></div>
+    </section>
+  </section>
+
+  <section id="sec-biomarkers">
+    <h2>Cancer Biomarker Classifiers (REDNN · RERNN) &amp; Population Genetics</h2>
+    <p>
+      Two downstream pipelines connect discovered repeat-element variation profiles to clinical disease risk prediction and human population evolution analysis:
+    </p>
+    <ul>
+      <li>
+        <strong>REDNN &amp; RERNN (<a class="src" href="../../2_Bioinformatics_and_Genomics/Deep_Learning_Biomarkers/REDNN/REDNN.py#L74" target="_blank" rel="noopener" title="2_Bioinformatics_and_Genomics/Deep_Learning_Biomarkers/REDNN/REDNN.py:74">REDNN.py:74</a>, <a class="src" href="https://patents.google.com/patent/US20190385696A1/en" target="_blank" rel="noopener">US 2019/0385696 A1 ↗</a>)</strong>:
+        Takes a patient-specific $12{,}288$-dimensional genomic repeat-element feature vector $x \in \mathbb{R}^{12288}$ (<a class="src" href="../../2_Bioinformatics_and_Genomics/Deep_Learning_Biomarkers/REDNN/REDNN.py#L69" target="_blank" rel="noopener" title="2_Bioinformatics_and_Genomics/Deep_Learning_Biomarkers/REDNN/REDNN.py:69">REDNN.py:69</a>) and classifies 4 clinical risk groups via a
+        6-layer fully connected deep neural network ($12288 \to 512 \to 256 \to 128 \to 64 \to 32 \to 4$ with ReLU activations and Softmax cross-entropy loss) alongside a recurrent LSTM model (<code>RERNN</code>).
+      </li>
+      <li>
+        <strong>Population Genetics (<code>1092x</code> · <code>clustering205</code> · <code>EvolDist</code> · <code>RepeatLengthPdf</code>, <a class="src" href="https://ieeexplore.ieee.org/document/8333425" target="_blank" rel="noopener">IEEE BHI '18 ↗</a>, <a class="src" href="https://ieeexplore.ieee.org/document/8037707" target="_blank" rel="noopener">IEEE EMBC '17 ↗</a>)</strong>:
+        Computes repeated K-Word length probability density functions (PDFs) and Jukes-Cantor evolutionary distance matrices across $1{,}092$ individual human genomes from the 1000 Genomes Project as well as viral/bacterial sequences for phylogenetic tree reconstruction.
+      </li>
+    </ul>
+  </section>
+
+  <section class="keypoints" id="summary">
+    <h2>Key Takeaways · Chapter 02</h2>
+    <ol>
+      <li><strong>DQNAlign Linear-Time Alignment</strong>: Combining $W \times W$ local window observations with <code>Agent.skip()</code> Exact Match Skip reduces $O(N_1 N_2)$ global DP to $O(N)$ linear time and constant window memory.</li>
+      <li><strong>REminerII · PixelRE · REDNN</strong>: Seed hashing + Greedy X-Drop ($X=30$) and multi-scale dot-plots mine chromosome-scale repeat elements, feeding a 12,288-D deep neural classifier for clinical cancer risk prediction.</li>
+    </ol>
+  </section>
+
+  <script>
+  document.addEventListener("DOMContentLoaded", function () {
+    var BIO_INFO = {
+      "bio-window": {
+        title: "STAGE 1 · Pairwise MDP Environment & Exact Match Skip",
+        body: "The Pairwise class in alignment.py extracts a W x W local subsequence window at the current alignment coordinate (x, y). In agent.py, skip(), reverseskip(), and skipRC() advance diagonally without neural network inference whenever bases match, achieving O(N) runtime."
+      },
+      "bio-ddqn": {
+        title: "STAGE 2 · Dueling Double DQN & Separable Conv2D (Learning.py)",
+        body: "Qnetwork and SSDnetwork split the 256-D hidden feature vector into Value (128) and Advantage (128) streams to estimate Q(s,a), stabilized by a 50,000-entry Experience Replay Buffer and tau=0.001 Polyak soft target updates."
+      },
+      "bio-reminer": {
+        title: "STAGE 3 · REminerII Seed-and-Extend & PixelRE Dot-Plot",
+        body: "REminerII combines WORD_SIZE=14 seed indexing and GREEDY_X=30 X-Drop extension to detect repeat elements with MIN_SEED_LEN>=28, while PixelRE.m extracts 2D diagonal repeat patterns using w=[7,8,10,12,14] multi-scale morphological filters."
+      },
+      "bio-rednn": {
+        title: "STAGE 4 · REDNN / RERNN Biomarker Classifier & 1092x EvolDist",
+        body: "REDNN.py maps 12,288-D genomic feature vectors through 512-256-128-64-32-4 layers to predict cancer risk groups, while 1092x, clustering205, and EvolDist reconstruct phylogenetic trees across 1,092 human genomes."
+      }
+    };
+    var bioNodes = document.querySelectorAll("#bio-svg .svg-node");
+    bioNodes.forEach(function (n) {
+      n.addEventListener("click", function () {
+        bioNodes.forEach(function (x) { x.classList.remove("is-selected"); });
+        n.classList.add("is-selected");
+        var info = BIO_INFO[n.getAttribute("data-node")];
+        if (info) {
+          document.getElementById("bio-insp-title").textContent = "📌 " + info.title;
+          document.getElementById("bio-insp-body").textContent = info.body;
+        }
+      });
+    });
+
+    // 2. Sim 02: DQNAlign vs NW DP Simulator
+    var rngN = document.getElementById("bio-rng-n");
+    var rngMut = document.getElementById("bio-rng-mut");
+    var rngW = document.getElementById("bio-rng-w");
+    var useSkip = true;
+    var seedOffset = 1;
+    var dqnState = { N: 42, W: 8, path: [], nwCells: 1764, dqnCalls: 8, skipRatio: "80.0", speed: "220.5" };
+
+    var dqnChart = window.SB && window.SB.canvas("bio-dqn-canvas", 320, function (ctx, CW, CH, P) {
+      var N = dqnState.N;
+      var W = dqnState.W;
+      var path = dqnState.path;
+      var padL = 32, padT = 26;
+      var gridSz = Math.min(CW - 210, CH - 48);
+      var cell = gridSz / N;
+
+      ctx.fillStyle = P.surface;
+      ctx.fillRect(padL, padT, gridSz, gridSz);
+      ctx.strokeStyle = P.grid;
+      ctx.lineWidth = 1;
+      for (var i = 0; i <= N; i += 2) {
+        var px = padL + i * cell;
+        var py = padT + i * cell;
+        ctx.beginPath(); ctx.moveTo(px, padT); ctx.lineTo(px, padT + gridSz); ctx.stroke();
+        ctx.beginPath(); ctx.moveTo(padL, py); ctx.lineTo(padL + gridSz, py); ctx.stroke();
+      }
+      ctx.strokeStyle = P.border;
+      ctx.strokeRect(padL, padT, gridSz, gridSz);
+
+      ctx.strokeStyle = P.faint;
+      ctx.setLineDash([4, 4]);
+      ctx.beginPath();
+      ctx.moveTo(padL, padT);
+      ctx.lineTo(padL + gridSz, padT + gridSz);
+      ctx.stroke();
+      ctx.setLineDash([]);
+
+      for (var k = 1; k < path.length; k++) {
+        var p0 = path[k - 1], p1 = path[k];
+        var x0 = padL + p0.x * cell + cell * 0.5;
+        var y0 = padT + p0.y * cell + cell * 0.5;
+        var x1 = padL + p1.x * cell + cell * 0.5;
+        var y1 = padT + p1.y * cell + cell * 0.5;
+
+        if (p1.type === "dqn" || p1.type === "indel") {
+          var wx = padL + p0.x * cell;
+          var wy = padT + p0.y * cell;
+          var ww = Math.min(W * cell, padL + gridSz - wx);
+          var wh = Math.min(W * cell, padT + gridSz - wy);
+          ctx.fillStyle = P.acc2Soft;
+          ctx.fillRect(wx, wy, ww, wh);
+          ctx.strokeStyle = P.accent2;
+          ctx.lineWidth = 1;
+          ctx.strokeRect(wx, wy, ww, wh);
+        }
+
+        ctx.lineWidth = 2.6;
+        if (p1.type === "skip") ctx.strokeStyle = P.ok;
+        else if (p1.type === "indel") ctx.strokeStyle = P.bad;
+        else ctx.strokeStyle = P.accent2;
+
+        ctx.beginPath();
+        ctx.moveTo(x0, y0);
+        ctx.lineTo(x1, y1);
+        ctx.stroke();
+      }
+
+      var lx = padL + gridSz + 20;
+      ctx.fillStyle = P.text;
+      ctx.font = "600 12px 'JetBrains Mono', monospace";
+      ctx.fillText("TRAJECTORY LEGEND", lx, 44);
+
+      var leg = [
+        { c: P.ok, t: "Exact Match Skip" },
+        { c: P.accent2, t: "DDQN Forward" },
+        { c: P.bad, t: "DDQN Indel Gap" },
+        { c: P.accent, t: "W x W Window" }
+      ];
+      leg.forEach(function (it, idx) {
+        var ly = 70 + idx * 26;
+        ctx.fillStyle = it.c;
+        ctx.fillRect(lx, ly - 8, 14, 10);
+        ctx.fillStyle = P.dim;
+        ctx.font = "11.5px 'JetBrains Mono', monospace";
+        ctx.fillText(it.t, lx + 20, ly);
+      });
+
+      ctx.fillStyle = P.accent;
+      ctx.font = "600 11.5px 'JetBrains Mono', monospace";
+      ctx.fillText("COMPLEXITY METRICS", lx, 198);
+      ctx.fillStyle = P.dim;
+      ctx.font = "11.5px 'JetBrains Mono', monospace";
+      ctx.fillText("NW Grid : " + dqnState.nwCells, lx, 220);
+      ctx.fillText("DQN Call: " + dqnState.dqnCalls, lx, 238);
+      ctx.fillText("Skip Opt: " + dqnState.skipRatio + "%", lx, 256);
+      ctx.fillStyle = P.ok;
+      ctx.font = "600 11.5px 'JetBrains Mono', monospace";
+      ctx.fillText("Speedup : " + dqnState.speed + "x", lx, 278);
+    });
+
+    function runDqnSim() {
+      var N = parseInt(rngN.value, 10);
+      var mutPct = parseInt(rngMut.value, 10);
+      var W = parseInt(rngW.value, 10);
+      document.getElementById("bio-lbl-n").textContent = N + " bp";
+      document.getElementById("bio-lbl-mut").textContent = mutPct + "%";
+      document.getElementById("bio-lbl-w").textContent = W + "x" + W;
+
+      var x = 0, y = 0;
+      var path = [{ x: 0, y: 0, type: "start" }];
+      var skipSteps = 0;
+      var dqnCalls = 0;
+      var score = 0;
+      var stepIdx = 0;
+
+      while (x < N - 1 && y < N - 1) {
+        stepIdx++;
+        var h = ((stepIdx * 37 + seedOffset * 101 + x * 13 + y * 17) % 100);
+        if (h >= mutPct) {
+          x++; y++;
+          score += 2;
+          if (useSkip) {
+            skipSteps++;
+            path.push({ x: x, y: y, type: "skip" });
+          } else {
+            dqnCalls++;
+            path.push({ x: x, y: y, type: "dqn" });
+          }
+        } else if (h < Math.floor(mutPct * 0.45)) {
+          dqnCalls++;
+          score -= 2;
+          if (stepIdx % 2 === 0 && x < N - 2) {
+            x++;
+            path.push({ x: x, y: y, type: "indel" });
+          } else if (y < N - 2) {
+            y++;
+            path.push({ x: x, y: y, type: "indel" });
+          } else {
+            x++; y++;
+            path.push({ x: x, y: y, type: "dqn" });
+          }
+        } else {
+          dqnCalls++;
+          score -= 1;
+          x++; y++;
+          path.push({ x: x, y: y, type: "dqn" });
+        }
+      }
+
+      var totalSteps = Math.max(1, skipSteps + dqnCalls);
+      var skipRatio = ((skipSteps / totalSteps) * 100).toFixed(1);
+      var nwCells = N * N;
+      var speed = (nwCells / Math.max(1, dqnCalls)).toFixed(1);
+
+      window.SB.stat("bio-st-nw", nwCells.toLocaleString() + " cells");
+      window.SB.stat("bio-st-dqn", dqnCalls + " calls");
+      window.SB.stat("bio-st-skip", skipRatio + "%");
+      window.SB.stat("bio-st-speed", speed + "x");
+
+      document.getElementById("bio-dqn-readout").innerHTML =
+        "Align Score: <strong>" + score + "</strong> · Total Steps: <strong>" + totalSteps + "</strong> " +
+        "(Exact-Skip: <strong style='color:var(--ok)'>" + skipSteps + "</strong>, Dueling-DDQN: <strong style='color:var(--accent-2)'>" + dqnCalls + "</strong>) · " +
+        "Window Memory: <strong>" + (W * W) + " cells</strong> vs NW Grid: <strong>" + nwCells + " cells</strong>";
+
+      dqnState = { N: N, W: W, path: path, nwCells: nwCells, dqnCalls: dqnCalls, skipRatio: skipRatio, speed: speed };
+      if (dqnChart) dqnChart.redraw();
+    }
+
+    [rngN, rngMut, rngW].forEach(function (el) {
+      if (el) el.addEventListener("input", runDqnSim);
+    });
+    document.querySelectorAll("#bio-skip-btns button").forEach(function (b) {
+      b.addEventListener("click", function () {
+        document.querySelectorAll("#bio-skip-btns button").forEach(function (x) { x.classList.remove("on"); });
+        b.classList.add("on");
+        useSkip = b.getAttribute("data-skip") === "1";
+        runDqnSim();
+      });
+    });
+    var btnRegen = document.getElementById("bio-btn-regen");
+    if (btnRegen) {
+      btnRegen.addEventListener("click", function () {
+        seedOffset = (seedOffset + 7) % 97;
+        runDqnSim();
+      });
+    }
+    runDqnSim();
+
+    // 3. Sim 03: REminerII & PixelRE Dot-Plot Simulator
+    var remW = document.getElementById("rem-rng-w");
+    var remX = document.getElementById("rem-rng-x");
+    var remNoise = document.getElementById("rem-rng-noise");
+    var remStrand = "BOTH";
+    var remState = { w: 12, xDrop: 30, noise: 12, fpDots: 30, fwdSegs: [], rcSegs: [] };
+
+    var remChart = window.SB && window.SB.canvas("bio-rem-canvas", 315, function (ctx, CW, CH, P) {
+      var ox = 32, oy = 22, sz = Math.min(CW - 225, CH - 44);
+      var scale = sz / 276;
+
+      ctx.fillStyle = P.surface;
+      ctx.fillRect(ox, oy, sz, sz);
+      ctx.strokeStyle = P.border;
+      ctx.lineWidth = 1;
+      ctx.strokeRect(ox, oy, sz, sz);
+
+      ctx.fillStyle = P.faint;
+      for (var i = 0; i < remState.fpDots; i++) {
+        var nx = ox + (((i * 73 + remState.w * 19 + remState.noise * 31) % 268) + 4) * scale;
+        var ny = oy + (((i * 127 + remState.xDrop * 23 + remState.noise * 17) % 268) + 4) * scale;
+        ctx.fillRect(nx, ny, 2.5, 2.5);
+      }
+
+      if (remStrand !== "RC") {
+        remState.fwdSegs.forEach(function (s, idx) {
+          ctx.strokeStyle = idx === 0 ? P.ok : P.accent;
+          ctx.lineWidth = 3;
+          ctx.beginPath();
+          ctx.moveTo(ox + s.x0 * scale, oy + s.y0 * scale);
+          ctx.lineTo(ox + Math.min(270, s.x0 + s.len) * scale, oy + Math.min(270, s.y0 + s.len) * scale);
+          ctx.stroke();
+
+          ctx.strokeStyle = P.accent;
+          ctx.lineWidth = 1;
+          ctx.strokeRect(
+            ox + (s.x0 - 3) * scale,
+            oy + (s.y0 - 3) * scale,
+            Math.min(276 - s.x0, s.len + 6) * scale,
+            Math.min(276 - s.y0, s.len + 6) * scale
+          );
+        });
+      }
+
+      if (remStrand !== "FWD") {
+        remState.rcSegs.forEach(function (s) {
+          ctx.strokeStyle = P.bad;
+          ctx.lineWidth = 3;
+          ctx.beginPath();
+          ctx.moveTo(ox + s.x0 * scale, oy + s.y0 * scale);
+          ctx.lineTo(ox + Math.min(270, s.x0 + s.len) * scale, oy + Math.max(6, s.y0 - s.len) * scale);
+          ctx.stroke();
+        });
+      }
+
+      var rx = ox + sz + 20;
+      ctx.fillStyle = P.text;
+      ctx.font = "600 12px 'JetBrains Mono', monospace";
+      ctx.fillText("2D GENOMIC DOT-PLOT", rx, 44);
+
+      var rleg = [
+        { c: P.ok, t: "Self-Diagonal (Homology)" },
+        { c: P.accent, t: "Forward Repeat (Alu/LINE)" },
+        { c: P.bad, t: "Reverse-Complement (RC)" },
+        { c: P.faint, t: "Filtered K-mer Noise" }
+      ];
+      rleg.forEach(function (it, idx) {
+        var ly = 72 + idx * 26;
+        ctx.fillStyle = it.c;
+        ctx.fillRect(rx, ly - 8, 14, 10);
+        ctx.fillStyle = P.dim;
+        ctx.font = "11.5px 'JetBrains Mono', monospace";
+        ctx.fillText(it.t, rx + 20, ly);
+      });
+
+      ctx.fillStyle = P.accent2;
+      ctx.font = "600 11.5px 'JetBrains Mono', monospace";
+      ctx.fillText("SEED-AND-EXTEND PARAMS", rx, 198);
+      ctx.fillStyle = P.dim;
+      ctx.font = "11.5px 'JetBrains Mono', monospace";
+      ctx.fillText("WORD_SIZE   : " + remState.w + " bp", rx, 220);
+      ctx.fillText("GREEDY_X    : " + remState.xDrop, rx, 238);
+      ctx.fillText("MIN_SEED_LEN: 28 bp", rx, 256);
+      ctx.fillText("SPACE_SIZE  : 2 bp", rx, 274);
+    });
+
+    function runRemSim() {
+      var w = parseInt(remW.value, 10);
+      var xDrop = parseInt(remX.value, 10);
+      var noise = parseInt(remNoise.value, 10);
+      document.getElementById("rem-lbl-w").textContent = w + " bp";
+      document.getElementById("rem-lbl-x").textContent = String(xDrop);
+      document.getElementById("rem-lbl-noise").textContent = noise + "%";
+
+      var fwdSegs = [
+        { x0: 25, y0: 25, len: 95 },
+        { x0: 45, y0: 140, len: 70 + Math.floor(xDrop * 0.4) },
+        { x0: 150, y0: 55, len: 65 + Math.floor(xDrop * 0.35) }
+      ];
+      var rcSegs = [
+        { x0: 60, y0: 230, len: 68 + Math.floor(xDrop * 0.3) },
+        { x0: 175, y0: 245, len: 58 + Math.floor(xDrop * 0.25) }
+      ];
+
+      var fpDots = Math.max(2, Math.round((noise * 18) / Math.max(1, w - 5)));
+      var seedHits = (remStrand !== "RC" ? fwdSegs.length * 4 : 0) + (remStrand !== "FWD" ? rcSegs.length * 3 : 0);
+
+      window.SB.stat("rem-st-seeds", seedHits + " seeds");
+      window.SB.stat("rem-st-fwd", (remStrand !== "RC" ? fwdSegs.length : 0) + " families");
+      window.SB.stat("rem-st-rc", (remStrand !== "FWD" ? rcSegs.length : 0) + " inversions");
+      window.SB.stat("rem-st-fp", fpDots + " dots");
+
+      document.getElementById("rem-readout").innerHTML =
+        "REminerII Filter: <code>WORD_SIZE=" + w + "</code>, <code>GREEDY_X=" + xDrop + "</code>, <code>MIN_SEED_LEN=28</code> · " +
+        "Larger seed length <code>w</code> exponentially suppresses background false-positive k-mer noise (<strong>" + fpDots + " dots</strong>).";
+
+      remState = { w: w, xDrop: xDrop, noise: noise, fpDots: fpDots, fwdSegs: fwdSegs, rcSegs: rcSegs };
+      if (remChart) remChart.redraw();
+    }
+
+    [remW, remX, remNoise].forEach(function (el) {
+      if (el) el.addEventListener("input", runRemSim);
+    });
+    document.querySelectorAll("#rem-strand-btns button").forEach(function (b) {
+      b.addEventListener("click", function () {
+        document.querySelectorAll("#rem-strand-btns button").forEach(function (x) { x.classList.remove("on"); });
+        b.classList.add("on");
+        remStrand = b.getAttribute("data-s") || "BOTH";
+        runRemSim();
+      });
+    });
+    runRemSim();
+  });
+  </script>
+
+</main>
+</body>
+</html>

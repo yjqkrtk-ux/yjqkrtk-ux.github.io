@@ -1,0 +1,338 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Ch.02 — E2E AI Remosaic (Gen 1–4): Heterogeneous Parallelization &amp; Feature History · Samsung S.LSI 200MP ISOCELL &amp; E2E AI Remosaic Guidebook</title>
+<meta name="description" content="Ch.02 — E2E AI Remosaic (Gen 1–4): Heterogeneous Parallelization &amp; Feature History — Samsung S.LSI 200MP ISOCELL &amp; E2E AI Remosaic Project Guidebook">
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/katex@0.16.11/dist/katex.min.css">
+<script defer src="https://cdn.jsdelivr.net/npm/katex@0.16.11/dist/katex.min.js"></script>
+<script defer src="https://cdn.jsdelivr.net/npm/katex@0.16.11/dist/contrib/auto-render.min.js"></script>
+<link rel="stylesheet" href="../css/style.css?v=1950d4d">
+<link rel="stylesheet" href="../css/glossary-tooltips.css?v=1950d4d">
+<script src="../js/glossary-data.js?v=1950d4d"></script>
+<script src="../js/common.js?v=1950d4d"></script>
+<script defer src="../js/glossary-tooltips.js?v=1950d4d"></script>
+</head>
+<body data-chapter="e2e_remosaic" data-root="../">
+<main class="chapter">
+
+  <header class="chapter-hero">
+    <div class="eyebrow">CHAPTER 02 · PILLAR 2 — E2E AI REMOSAIC TURN-KEY PLATFORM (SEP 2022 – PRESENT)</div>
+    <h1>E2E AI Remosaic (Gen 1–4) — Heterogeneous Parallelization on the Camera ISP Pipeline</h1>
+    <p class="lead">
+      Supplying a 200MP image sensor to global smartphone OEMs requires more than a standalone Remosaic model: if Deep Learning Remosaic and the Camera ISP run sequentially, a single 200MP capture (<code>cfa2yuv</code>) takes ~3 seconds.
+      <strong>E2E AI Remosaic</strong> distributes <strong>DL Remosaic</strong> and <strong>Camera ISP</strong> workloads across mobile heterogeneous compute units (<code>CPU / GPU / NPU / ISP</code>) and mounts them directly on top of the <strong>Camera ISP pipeline</strong>—accelerating 200MP capture latency <strong>up to 3× faster (<code>3s → 1s @ SM8550</code>)</strong> across <strong>30+ commercial OEM smartphone models</strong> and earning the <strong>SEC Annual Awards 2023 (Silver Award)</strong>.
+    </p>
+    <ul class="objectives">
+      <li><strong>Heterogeneous Parallelization on the Camera ISP Pipeline:</strong> Understand how Camera ISP and DL Remosaic workloads are distributed across <code>CPU</code>, <code>NPU</code>, <code>GPU</code>, and <code>ISP</code> and mounted onto the Camera ISP pipeline so stages execute in parallel without serial stalls.</li>
+      <li><strong>Chronological Feature Evolution (Gen 1 → Gen 4):</strong> Trace the feature progression from <strong>Gen 1</strong> (foundational turn-key ISP) and <strong>Gen 2</strong> (Heterogeneous SoC parallelization, 3× speedup) to <strong>Gen 3</strong> (In-Sensor Zoom &amp; Multi-frame expansion) and <strong>Gen 4</strong> (DL-based Multi-frame Remosaic on flagship AP NPUs).</li>
+      <li><strong>Commercial Smartphone Lineup (Table &amp; List):</strong> Review the consolidated table and itemized list of commercial smartphones equipped with E2E AI Remosaic.</li>
+    </ul>
+    <div class="ch-pubs" role="region" aria-label="Official Samsung E2E AI Remosaic Press &amp; Recognition">
+      <span class="ch-pubs-label">OFFICIAL SAMSUNG PRESS &amp; RECOGNITION</span>
+      <a class="pub-tag paper" href="https://semiconductor.samsung.com/news-events/news/samsung-electronics-introduces-isocell-zoom-anyplace-and-e2e-ai-remosaic-solutions-for-the-200-megapixel-image-sensor/" target="_blank" rel="noopener">📰 Samsung Newsroom: E2E AI Remosaic Solution ↗</a>
+      <a class="pub-tag paper" href="https://semiconductor.samsung.com/technologies/sensor/remosaic/" target="_blank" rel="noopener">🔬 Samsung Remosaic Technology ↗</a>
+      <a class="pub-tag code" href="https://yjqkrtk-ux.github.io/" target="_blank" rel="noopener">🏆 SEC Annual Awards 2023 — Silver Award (E2E AI RMSC) ↗</a>
+    </div>
+  </header>
+
+  <section id="sec-isp-parallelization">
+    <h2>How Heterogeneous (CPU / GPU / NPU / ISP) Parallelization Works on the Camera ISP Pipeline</h2>
+    <p>
+      In a mobile camera system, once the 200MP non-Bayer RAW frame captured by the sensor is loaded into SoC memory via MIPI, the system must execute both <strong>DL Remosaic</strong> (converting the $4\times 4$ non-Bayer mosaic into standard Bayer) and <strong>Camera ISP processing</strong> (Demosaic, Denoising, Sharpening, Tone Mapping, and YUV color conversion—collectively <code>cfa2yuv</code>).
+    </p>
+    <ul>
+      <li><strong>Limitation of the Conventional Serial Pipeline (~3.0s Latency):</strong> In a conventional setup, the system waits for full-frame 200MP DL Remosaic to finish completely, writes the 200MP Bayer frame back to DRAM, and only then starts the downstream Camera ISP pipeline sequentially. Because all 200 million pixels must pass through Remosaic and ISP in series, end-to-end <code>cfa2yuv</code> capture takes ~3 seconds.</li>
+      <li><strong>E2E AI Remosaic — Distributing Across CPU/GPU/NPU/ISP &amp; Mounting on the Camera ISP Pipeline (~1.0s, up to 3× Faster):</strong>
+        Instead of treating Remosaic as an isolated pre-processing step before the ISP, <strong>E2E AI Remosaic</strong> jointly optimizes <strong>DL Remosaic</strong> and <strong>S/W ISP</strong>, distributes their workloads across the mobile SoC's heterogeneous compute engines (<strong>CPU, NPU, GPU, and H/W ISP</strong>), and <strong>mounts them directly on top of the Camera ISP pipeline</strong> for parallel execution.
+        While the NPU executes deep learning Remosaic inference, the GPU, CPU, and ISP concurrently process downstream Camera ISP stages (<code>cfa2yuv</code>) in a pipelined manner—cutting 200MP capture latency by up to 3× on Qualcomm Snapdragon and MediaTek Dimensity platforms.
+      </li>
+    </ul>
+
+    <figure class="diagram">
+      <svg viewBox="0 0 1080 310" xmlns="http://www.w3.org/2000/svg" role="img" aria-label="Comparison of Conventional Serial Remosaic + ISP vs E2E AI Remosaic Heterogeneous Parallelization on the Camera ISP Pipeline">
+        <defs>
+          <marker id="e2e-arr" viewBox="0 0 10 10" refX="8" refY="5" markerWidth="6" markerHeight="6" orient="auto-start-reverse">
+            <path d="M 0 1 L 9 5 L 0 9 z" fill="var(--accent)" />
+          </marker>
+        </defs>
+        <rect x="4" y="4" width="1072" height="302" rx="12" class="f-surface" />
+
+        <!-- Top: Conventional Serial Flow -->
+        <text x="24" y="28" class="t-warn">A. CONVENTIONAL SERIAL 200MP CAPTURE FLOW (SEQUENTIAL REMOSAIC → CAMERA ISP · ~3.0s LATENCY)</text>
+        <rect x="24" y="38" width="210" height="68" rx="8" class="f-elev" />
+        <text x="38" y="64" class="t" font-weight="700">1. 200MP Sensor RAW</text>
+        <text x="38" y="86" class="t-dim">4×4 Non-Bayer CFA in DRAM</text>
+
+        <line x1="236" y1="72" x2="266" y2="72" class="s-acc" stroke-width="2" marker-end="url(#e2e-arr)" />
+
+        <rect x="268" y="38" width="260" height="68" rx="8" class="f-warn-soft" />
+        <text x="284" y="64" class="t-warn">2. Standalone DL Remosaic</text>
+        <text x="284" y="86" class="t-dim">Waits for full 200MP frame completion</text>
+
+        <line x1="530" y1="72" x2="560" y2="72" class="s-acc" stroke-width="2" marker-end="url(#e2e-arr)" />
+
+        <rect x="562" y="38" width="260" height="68" rx="8" class="f-warn-soft" />
+        <text x="578" y="64" class="t-warn">3. Sequential Camera ISP</text>
+        <text x="578" y="86" class="t-dim">Starts only after Remosaic finishes</text>
+
+        <line x1="824" y1="72" x2="854" y2="72" class="s-acc" stroke-width="2" marker-end="url(#e2e-arr)" />
+
+        <rect x="856" y="38" width="200" height="68" rx="8" class="f-elev" />
+        <text x="872" y="64" class="t" font-weight="700">4. 200MP YUV Out</text>
+        <text x="872" y="86" class="t-warn">Total cfa2yuv: ~3.0 sec</text>
+
+        <!-- Divider -->
+        <line x1="24" y1="124" x2="1056" y2="124" class="s-border" stroke-dasharray="4 4" />
+
+        <!-- Bottom: E2E AI Remosaic Parallel Flow -->
+        <text x="24" y="148" class="t-ok">B. E2E AI REMOSAIC · DISTRIBUTED ACROSS CPU / GPU / NPU / ISP &amp; MOUNTED ON THE CAMERA ISP PIPELINE (~1.0s · UP TO 3× FASTER)</text>
+
+        <rect x="24" y="160" width="210" height="126" rx="8" class="f-elev" />
+        <text x="38" y="192" class="t" font-weight="700">1. 200MP Sensor RAW</text>
+        <text x="38" y="214" class="t-dim">4×4 Non-Bayer CFA</text>
+        <text x="38" y="234" class="t-dim">Partitioned &amp; scheduled</text>
+        <text x="38" y="254" class="t-dim">into ISP pipeline stages</text>
+
+        <line x1="236" y1="223" x2="266" y2="223" class="s-acc" stroke-width="2" marker-end="url(#e2e-arr)" />
+
+        <!-- Mounted ISP Pipeline Container -->
+        <rect x="268" y="160" width="554" height="126" rx="10" class="f-acc-soft" />
+        <text x="284" y="182" class="t-acc">2. CAMERA ISP PIPELINE (JOINT DL REMOSAIC &amp; S/W ISP PARALLEL EXECUTION)</text>
+
+        <rect x="284" y="192" width="126" height="80" rx="6" class="f-surface" />
+        <text x="296" y="214" class="t-acc2">NPU Engine</text>
+        <text x="296" y="234" class="t-dim">DL Remosaic &amp;</text>
+        <text x="296" y="252" class="t-dim">MF Reconstruction</text>
+
+        <rect x="420" y="192" width="126" height="80" rx="6" class="f-surface" />
+        <text x="432" y="214" class="t-acc">GPU Engine</text>
+        <text x="432" y="234" class="t-dim">S/W ISP Color,</text>
+        <text x="432" y="252" class="t-dim">Denoise &amp; Blend</text>
+
+        <rect x="556" y="192" width="126" height="80" rx="6" class="f-surface" />
+        <text x="568" y="214" class="t-ok">H/W ISP</text>
+        <text x="568" y="234" class="t-dim">Demosaic, Tone</text>
+        <text x="568" y="252" class="t-dim">&amp; YUV Formatting</text>
+
+        <rect x="692" y="192" width="116" height="80" rx="6" class="f-surface" />
+        <text x="704" y="214" class="t" font-weight="700">CPU Scheduler</text>
+        <text x="704" y="234" class="t-dim">Multi-thread</text>
+        <text x="704" y="252" class="t-dim">Sync &amp; Control</text>
+
+        <line x1="824" y1="223" x2="854" y2="223" class="s-acc" stroke-width="2" marker-end="url(#e2e-arr)" />
+
+        <rect x="856" y="160" width="200" height="126" rx="8" class="f-ok-soft" />
+        <text x="872" y="192" class="t-ok">3. 200MP YUV Out</text>
+        <text x="872" y="216" class="t" font-weight="700">Up to 3× Faster</text>
+        <text x="872" y="238" class="t-dim">3s → 1s (@ SM8550)</text>
+        <text x="872" y="258" class="t-mono">Qualcomm &amp; MediaTek</text>
+      </svg>
+      <figcaption><b>Figure 2-1.</b> Comparison between conventional serial 200MP processing (top) and <strong>E2E AI Remosaic</strong> parallel architecture (bottom), which distributes DL Remosaic and S/W ISP across <code>NPU</code>, <code>GPU</code>, <code>H/W ISP</code>, and <code>CPU</code> mounted directly on the Camera ISP pipeline.</figcaption>
+    </figure>
+  </section>
+
+  <section id="sec-e2e-history">
+    <h2>Chronological Feature Evolution History (Gen 1 – Gen 4)</h2>
+    <p>
+      From September 2022 to the present, Dr. Yongjoon Song has architected and expanded <strong>E2E AI Remosaic</strong> across four commercial generations—evolving it into Samsung Electronics S.LSI's standard 200MP S/W ISP turn-key platform (<strong>commercialized across 30+ OEM smartphone models</strong>):
+    </p>
+
+    <figure class="diagram">
+      <svg viewBox="0 0 1080 245" xmlns="http://www.w3.org/2000/svg" role="img" aria-label="E2E AI Remosaic Gen 1 to Gen 4 Feature Evolution Timeline">
+        <defs>
+          <marker id="gen-arr" viewBox="0 0 10 10" refX="8" refY="5" markerWidth="6" markerHeight="6" orient="auto-start-reverse">
+            <path d="M 0 1 L 9 5 L 0 9 z" fill="var(--accent)" />
+          </marker>
+        </defs>
+        <rect x="4" y="4" width="1072" height="237" rx="12" class="f-surface" />
+        <text x="24" y="28" class="t-acc">E2E AI REMOSAIC FEATURE EVOLUTION · GEN 1 (SEP 2022) → GEN 4 (PRESENT)</text>
+
+        <!-- Gen 1 -->
+        <rect x="20" y="44" width="242" height="178" rx="9" class="f-acc-soft" />
+        <text x="34" y="68" class="t-acc">GEN 1 · SEP 2022</text>
+        <text x="34" y="92" class="t" font-weight="700">Foundational Turn-Key ISP</text>
+        <text x="34" y="114" class="t-dim">• End-to-End Remosaic + SW ISP</text>
+        <text x="34" y="132" class="t-dim">  architecture for 200MP sensors</text>
+        <text x="34" y="152" class="t-dim">• Unified cfa2yuv S/W pipeline</text>
+        <text x="34" y="172" class="t-dim">• Established production-ready</text>
+        <text x="34" y="190" class="t-dim">  OEM turn-key delivery model</text>
+        <text x="34" y="210" class="t-mono">200MP Turn-Key Foundation</text>
+
+        <line x1="264" y1="133" x2="282" y2="133" class="s-acc" stroke-width="2" marker-end="url(#gen-arr)" />
+
+        <!-- Gen 2 -->
+        <rect x="284" y="44" width="252" height="178" rx="9" class="f-acc2-soft" />
+        <text x="298" y="68" class="t-acc2">GEN 2 · JAN 2023 – DEC 2024</text>
+        <text x="298" y="92" class="t" font-weight="700">Heterogeneous SoC Parallel</text>
+        <text x="298" y="114" class="t-dim">• Joint optimization &amp; parallel</text>
+        <text x="298" y="132" class="t-dim">  DL Remosaic + SW ISP on</text>
+        <text x="298" y="150" class="t-dim">  CPU / GPU / NPU / ISP</text>
+        <text x="298" y="170" class="t-dim">• Up to 3× faster (3s→1s @SM8550)</text>
+        <text x="298" y="190" class="t-dim">• SEC 2023 Silver Award</text>
+        <text x="298" y="210" class="t-mono">Magic7 Pro · vivo X200 Pro</text>
+
+        <line x1="538" y1="133" x2="556" y2="133" class="s-acc" stroke-width="2" marker-end="url(#gen-arr)" />
+
+        <!-- Gen 3 -->
+        <rect x="558" y="44" width="242" height="178" rx="9" class="f-ok-soft" />
+        <text x="572" y="68" class="t-ok">GEN 3 · JAN 2025 – DEC 2025</text>
+        <text x="572" y="92" class="t" font-weight="700">In-Sensor Zoom &amp; Multi-Frame</text>
+        <text x="572" y="114" class="t-dim">• Feature upgrade for In-Sensor</text>
+        <text x="572" y="132" class="t-dim">  Zoom (2× / 4× lossless crop)</text>
+        <text x="572" y="152" class="t-dim">• Expanded Multi-frame &amp; Zoom</text>
+        <text x="572" y="170" class="t-dim">  processing capability</text>
+        <text x="572" y="190" class="t-dim">• Broader sensor/OEM coverage</text>
+        <text x="572" y="210" class="t-mono">REDMI Note 15 Pro+ 5G (HPE)</text>
+
+        <line x1="802" y1="133" x2="820" y2="133" class="s-acc" stroke-width="2" marker-end="url(#gen-arr)" />
+
+        <!-- Gen 4 -->
+        <rect x="822" y="44" width="238" height="178" rx="9" class="f-warn-soft" />
+        <text x="836" y="68" class="t-warn">GEN 4 · JAN 2026 – PRESENT</text>
+        <text x="836" y="92" class="t" font-weight="700">DL Multi-Frame on AP NPU</text>
+        <text x="836" y="114" class="t-dim">• DL-based Multi-frame Remosaic</text>
+        <text x="836" y="132" class="t-dim">• Joint MF reconstruction for</text>
+        <text x="836" y="150" class="t-dim">  detail recovery &amp; denoising</text>
+        <text x="836" y="170" class="t-dim">• Optimized for flagship AP NPU</text>
+        <text x="836" y="190" class="t-dim">• Commercial 200MP MF capture</text>
+        <text x="836" y="210" class="t-mono">HONOR Magic 9 &amp; 9 Pro Max</text>
+      </svg>
+      <figcaption><b>Figure 2-2.</b> Four-generation feature evolution of E2E AI Remosaic from foundational turn-key S/W ISP (Gen 1) to DL-based Multi-Frame Remosaic on flagship AP NPUs (Gen 4).</figcaption>
+    </figure>
+
+    <div class="grid-2">
+      <article class="card">
+        <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:8px">
+          <span class="eyebrow" style="font-size:11px">GEN 1 · SEP 2022</span><span class="badge b-area">Turn-Key Foundation</span>
+        </div>
+        <h3>Foundational E2E Remosaic + S/W ISP Architecture</h3>
+        <p>Built the foundational End-to-End Remosaic + S/W ISP (<code>cfa2yuv</code>) integrated architecture for 200MP ISOCELL sensors, establishing the commercial turn-key platform supplied to global smartphone OEMs.</p>
+      </article>
+      <article class="card">
+        <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:8px">
+          <span class="eyebrow" style="font-size:11px">GEN 2 · JAN 2023 – DEC 2024</span><span class="badge b-measured">SEC 2023 Silver Award</span>
+        </div>
+        <h3>Heterogeneous SoC Parallelization (Up to 3× Faster)</h3>
+        <p>Jointly optimized and distributed DL Remosaic and S/W ISP across <code>CPU/GPU/NPU/ISP</code> on Qualcomm and MediaTek SoCs, accelerating 200MP <code>cfa2yuv</code> capture latency <strong>up to 3× faster (<code>3s → 1s @ SM8550</code>)</strong> (deployed on <strong>HONOR Magic7 Pro</strong>, <strong>vivo X200 Pro ZEISS</strong>, <strong>Redmi Note 13 Pro+ 5G</strong>).</p>
+      </article>
+      <article class="card">
+        <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:8px">
+          <span class="eyebrow" style="font-size:11px">GEN 3 · JAN 2025 – DEC 2025</span><span class="badge b-sim">In-Sensor Zoom &amp; MF</span>
+        </div>
+        <h3>In-Sensor Zoom &amp; Multi-Frame Expansion</h3>
+        <p>Expanded Multi-frame and $2\times / 4\times$ In-Sensor Zoom processing capability inside E2E AI Remosaic for broader sensor and OEM device coverage (deployed on <strong>Xiaomi REDMI Note 15 Pro+ 5G</strong> with HPE sensor).</p>
+      </article>
+      <article class="card">
+        <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:8px">
+          <span class="eyebrow" style="font-size:11px">GEN 4 · JAN 2026 – PRESENT</span><span class="badge b-measured">Flagship AP NPU</span>
+        </div>
+        <h3>DL-Based Multi-Frame Remosaic</h3>
+        <p>Joint multi-frame reconstruction in the neural remosaic stage to maximize fine detail recovery and noise reduction, optimized for cutting-edge flagship AP NPU architectures (deployed on <strong>HONOR Magic 9 &amp; Magic 9 Pro Max</strong>).</p>
+      </article>
+    </div>
+  </section>
+
+  <section id="sec-commercial-products">
+    <h2>Commercial Smartphone Product Lineup (Consolidated Table &amp; List)</h2>
+    <p>
+      Below is the consolidated table and itemized list of commercial smartphones powered by Dr. Yongjoon Song's <strong>E2E AI Remosaic (Gen 1–4)</strong> and <strong>200MP ISOCELL Remosaic</strong> technologies, as documented in the Resume and LinkedIn profile:
+    </p>
+
+    <div class="tbl-wrap">
+      <table class="tbl">
+        <thead>
+          <tr>
+            <th>OEM Brand</th>
+            <th>Commercial Smartphone Model</th>
+            <th>Platform / Generation</th>
+            <th>Sensor &amp; Camera Mode</th>
+            <th>Key Technical Highlight</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr>
+            <td><strong>Samsung</strong></td>
+            <td><strong>Galaxy S23 Ultra</strong></td>
+            <td>In-Sensor QMSC</td>
+            <td><strong>ISOCELL HP2</strong> (<code>0.6µm</code>, 200MP Main Camera)</td>
+            <td>In-sensor AI-based 4×4 Q-cell Remosaic (<code>QMSC</code>) enabling 200MP capture &amp; <strong>12MP 4× In-Sensor Zoom</strong>.</td>
+          </tr>
+          <tr>
+            <td><strong>HONOR</strong></td>
+            <td><strong>HONOR Magic 9 &amp; Magic 9 Pro Max</strong></td>
+            <td>E2E AI Remosaic · <strong>Gen 4</strong></td>
+            <td>200MP Flagship Camera</td>
+            <td><strong>DL-based Multi-frame Remosaic</strong> optimized for cutting-edge flagship AP NPU architectures (multi-frame detail recovery &amp; noise reduction).</td>
+          </tr>
+          <tr>
+            <td><strong>Xiaomi</strong></td>
+            <td><strong>REDMI Note 15 Pro+ 5G</strong></td>
+            <td>E2E AI Remosaic · <strong>Gen 3</strong></td>
+            <td>200MP Main Camera Mode (<strong>ISOCELL HPE</strong> sensor)</td>
+            <td><strong>In-Sensor Zoom</strong> feature upgrade: expanded Multi-frame &amp; Zoom processing capability in E2E AI Remosaic.</td>
+          </tr>
+          <tr>
+            <td><strong>HONOR</strong></td>
+            <td><strong>HONOR Magic7 Pro</strong></td>
+            <td>E2E AI Remosaic · <strong>Gen 2</strong> + <strong>HP9</strong></td>
+            <td>200MP Periscope Telephoto Camera</td>
+            <td>Concurrent DL Remosaic &amp; S/W ISP execution via <code>CPU/GPU/NPU/ISP</code> heterogeneous parallelization (~3× faster 200MP capture).</td>
+          </tr>
+          <tr>
+            <td><strong>vivo</strong></td>
+            <td><strong>vivo X200 Pro</strong></td>
+            <td>E2E AI Remosaic · <strong>Gen 2</strong> + <strong>HP9</strong></td>
+            <td><strong>200MP ZEISS APO Telephoto Camera</strong> (<code>ISOCELL HP9</code>, <code>0.56µm</code>)</td>
+            <td>Flagship telephoto zoom combining World's 1st DL Hexadeca (16-cell) Remosaic S/W + Gen 2 Heterogeneous SoC E2E AI Remosaic.</td>
+          </tr>
+          <tr>
+            <td><strong>Xiaomi</strong></td>
+            <td><strong>Redmi Note 13 Pro+ 5G</strong></td>
+            <td>E2E AI Remosaic · <strong>Gen 2</strong> + <strong>HP3</strong></td>
+            <td>200MP Main Camera (<code>ISOCELL HP3</code>, <code>0.56µm</code>)</td>
+            <td>High-speed 200MP full-resolution capture &amp; 2×/4× lossless in-sensor zoom on heterogeneous mobile SoC.</td>
+          </tr>
+          <tr>
+            <td><strong>HONOR</strong></td>
+            <td><strong>HONOR 80 Pro</strong></td>
+            <td>DL Hexadeca Remosaic + <strong>HP3</strong></td>
+            <td>160MP Mode for Main Camera (<code>ISOCELL HP3</code>)</td>
+            <td>Early commercial deployment of the World's 1st Deep Learning-based Hexadeca (16-cell) Remosaic S/W algorithm.</td>
+          </tr>
+          <tr>
+            <td><strong>Global / CN OEMs</strong></td>
+            <td><strong>30+ Commercial OEM Smartphone Models</strong></td>
+            <td>E2E AI Remosaic · <strong>Gen 1–4</strong></td>
+            <td>200MP Main &amp; Telephoto Cameras (<code>HP3 / HP9 / HPE / HP5</code>)</td>
+            <td>Standard commercial 200MP S/W ISP turn-key platform deployed across HONOR, vivo, Xiaomi, and global OEMs (<strong>SEC Annual Award 2023 Silver</strong>).</td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+
+    <h3>Itemized List of Highlighted Commercial Deployments &amp; Official Links</h3>
+    <ul>
+      <li><strong>Samsung Galaxy S23 Ultra</strong> — <code>ISOCELL HP2 (0.6µm, 200MP, 1/1.3")</code>: In-sensor AI $4\times 4$ Q-cell Remosaic (<code>QMSC</code>) enabling 12MP $4\times$ In-Sensor Zoom and 200MP main camera capture (<a href="https://semiconductor.samsung.com/image-sensor/mobile-image-sensor/isocell-hp2/" target="_blank" rel="noopener">ISOCELL HP2 Official Page ↗</a>).</li>
+      <li><strong>HONOR Magic 9 &amp; HONOR Magic 9 Pro Max</strong> — <code>E2E AI Remosaic (Gen 4)</code>: Commercial 200MP DL-based Multi-frame Remosaic optimized for flagship AP NPU architectures.</li>
+      <li><strong>Xiaomi REDMI Note 15 Pro+ 5G</strong> — <code>E2E AI Remosaic (Gen 3)</code>: Deployed for Main camera mode with HPE sensor, performing expanded Multi-frame &amp; In-Sensor Zoom processing (<a href="https://www.mi.com/global/" target="_blank" rel="noopener">Xiaomi Global ↗</a>).</li>
+      <li><strong>vivo X200 Pro (200MP ZEISS Camera)</strong> — <code>ISOCELL HP9 (0.56µm, 200MP, 1/1.4")</code> &amp; <code>E2E AI Remosaic (Gen 2)</code>: World's 1st DL Hexadeca Remosaic S/W and Heterogeneous SoC E2E AI Remosaic powering the 200MP ZEISS periscope telephoto camera (<a href="https://www.vivo.com/en/products/x200-pro" target="_blank" rel="noopener">vivo X200 Pro Official Page ↗</a>).</li>
+      <li><strong>HONOR Magic7 Pro</strong> — <code>E2E AI Remosaic (Gen 2)</code> &amp; <code>ISOCELL HP9</code>: 200MP telephoto camera with DL Remosaic &amp; S/W ISP heterogeneous SoC parallelization (<a href="https://www.honor.com/global/phones/honor-magic7-pro/" target="_blank" rel="noopener">HONOR Magic7 Pro Official Page ↗</a>).</li>
+      <li><strong>Xiaomi Redmi Note 13 Pro+ 5G</strong> — <code>E2E AI Remosaic (Gen 2)</code> &amp; <code>ISOCELL HP3 (0.56µm, 200MP)</code>: 200MP main camera supporting accelerated <code>cfa2yuv</code> capture latency and 2×/4× in-sensor zoom.</li>
+      <li><strong>HONOR 80 Pro</strong> — <code>ISOCELL HP3 (0.56µm)</code>: Equipped with 160MP mode for Main camera powered by Deep Learning Hexadeca Remosaic S/W.</li>
+    </ul>
+  </section>
+
+  <section class="keypoints" id="summary">
+    <h2>Chapter 02 Key Takeaways</h2>
+    <ol>
+      <li><strong>Heterogeneous Parallelization on the Camera ISP Pipeline:</strong> Instead of running Remosaic and Camera ISP serially (~3.0s), <strong>E2E AI Remosaic</strong> distributes DL Remosaic and S/W ISP stages across <code>CPU</code>, <code>GPU</code>, <code>NPU</code>, and <code>ISP</code> and mounts them directly on top of the <strong>Camera ISP pipeline</strong>—accelerating 200MP <code>cfa2yuv</code> capture latency <strong>up to 3× faster (<code>3s → 1s @ SM8550</code>)</strong>.</li>
+      <li><strong>Four-Generation Feature Evolution (Sep 2022 – Present):</strong> Evolved from <strong>Gen 1</strong> (foundational 200MP turn-key ISP) and <strong>Gen 2</strong> (Heterogeneous SoC parallelization, <strong>SEC Annual Awards 2023 Silver Award</strong>) to <strong>Gen 3</strong> (In-Sensor Zoom &amp; Multi-frame expansion) and <strong>Gen 4</strong> (DL-based Multi-frame Remosaic on flagship AP NPUs).</li>
+      <li><strong>Deployed Across 30+ Commercial Smartphones:</strong> Commercialized across 30+ smartphones including <strong>HONOR Magic 9 / 9 Pro Max</strong>, <strong>vivo X200 Pro ZEISS 200MP</strong>, <strong>HONOR Magic7 Pro</strong>, <strong>REDMI Note 15 Pro+ 5G</strong>, and <strong>Redmi Note 13 Pro+ 5G</strong>.</li>
+    </ol>
+  </section>
+
+</main>
+</body>
+</html>

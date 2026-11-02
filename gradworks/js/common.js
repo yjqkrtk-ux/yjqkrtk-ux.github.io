@@ -1,8 +1,9 @@
 /* ==========================================================================
-   Workspace & KAIST Grad Works Guidebook — 공통 런타임 (SensorBook 프레임워크)
+   Workspace & KAIST Grad Works Guidebook — SensorBook Runtime
    ========================================================================== */
 (function () {
   const SB = (window.SB = window.SB || {});
+  const DOC_LANG = document.documentElement.lang === "en" ? "en" : "ko";
 
   SB.CHAPTERS = [
   {
@@ -104,6 +105,29 @@
     return m ? m[1] : "index";
   }
 
+  function otherLangHref() {
+    const fromChapter = location.pathname.includes("/chapters/") || (document.body && document.body.dataset.root === "../");
+    const slug = currentSlug();
+    if (DOC_LANG === "ko") {
+      return (fromChapter ? "../en/chapters/" + slug + ".html" : "en/index.html") + location.hash;
+    } else {
+      return (fromChapter ? "../../chapters/" + slug + ".html" : "../index.html") + location.hash;
+    }
+  }
+
+  try {
+    const urlLang = new URLSearchParams(location.search).get("lang");
+    if (urlLang === "ko" || urlLang === "en") localStorage.setItem("sb-lang", urlLang);
+    const savedLang = localStorage.getItem("sb-lang");
+    if ((savedLang === "en" && DOC_LANG === "ko") || (savedLang === "ko" && DOC_LANG === "en")) {
+      if (document.body) {
+        location.replace(otherLangHref());
+      } else {
+        document.addEventListener("DOMContentLoaded", () => location.replace(otherLangHref()), { once: true });
+      }
+    }
+  } catch {}
+
   // ---------- Theme ----------
   const THEME_KEY = "kaist-grad-works-book-theme";
   function getSavedTheme() { try { return localStorage.getItem(THEME_KEY); } catch { return null; } }
@@ -161,7 +185,7 @@
     bar.innerHTML = `
       <button class="sb-iconbtn" id="sb-open-drawer" aria-label="목차 열기">
         <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M4 6h16M4 12h16M4 18h12"/></svg>
-        <span>챕터 ${cur ? cur.num : "목차"}</span>
+        <span>${cur ? ("챕터 " + cur.num) : "목차"}</span>
       </button>
       <a class="sb-brand" href="${root}index.html">
         ${LOGO}
@@ -181,6 +205,9 @@
       <a class="sb-iconbtn series-link" href="${root}chapters/notes.html" title="용어집 및 코드·문서·아카이브 정합성 검증 노트">
         <span>용어집 · 검증</span>
       </a>
+      <button class="sb-iconbtn sb-lang-toggle" id="sb-lang-btn" aria-label="한국어 정본 · Click to switch to English (EN)" title="한국어 정본 · Click to switch to English (EN)">
+        <span class="lg-on">KO</span><span class="lg-dim">/</span><span class="lg-dim">EN</span>
+      </button>
       <button class="sb-iconbtn" id="sb-theme" aria-label="테마 전환" title="라이트/다크 전환">
         <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 3a9 9 0 1 0 9 9c0-.46-.04-.92-.1-1.36a5.389 5.389 0 0 1-4.4 2.26 5.403 5.403 0 0 1-3.14-9.8c-.44-.06-.9-.1-1.36-.1z"/></svg>
       </button>
@@ -255,6 +282,17 @@
     document.getElementById("sb-close-drawer").addEventListener("click", close);
     backdrop.addEventListener("click", close);
     window.addEventListener("keydown", e => { if (e.key === "Escape") close(); });
+
+    const langBtn = document.getElementById("sb-lang-btn");
+    if (langBtn) {
+      langBtn.addEventListener("click", () => {
+        try {
+          localStorage.setItem("sb-lang", DOC_LANG === "en" ? "ko" : "en");
+          sessionStorage.setItem("sb-scroll-y", String(window.scrollY || 0));
+        } catch {}
+        location.href = otherLangHref();
+      });
+    }
 
     document.getElementById("sb-theme").addEventListener("click", () => {
       const next = SB.isDark() ? "light" : "dark";
@@ -346,7 +384,7 @@
 
       const foot = document.createElement("footer");
       foot.className = "sb-foot";
-      foot.innerHTML = `GoogleDrive Master Workspace (Development · Documents · Photos) · 인터랙티브 아키텍처 가이드북 · Build 2026-11-01 (<code>80b6792</code>) · <code>docs/build_spec_portal.py</code> 자동 생성`;
+      foot.innerHTML = `GoogleDrive Master Workspace (Development · Documents · Photos) · 인터랙티브 아키텍처 가이드북 · Build 2026-11-01 (<code>1950d4d</code>) · <code>docs/build_spec_portal.py</code> 자동 생성`;
       main.appendChild(foot);
     });
   }
@@ -801,7 +839,7 @@
         return;
       }
       box.innerHTML = currentHits.map((it, idx) => {
-        const tc = it.type === "시뮬레이터" ? "sim" : (it.type === "용어" ? "gl" : "");
+        const tc = (it.type === "시뮬레이터" || it.type === "Simulator") ? "sim" : ((it.type === "용어" || it.type === "Glossary") ? "gl" : "");
         return `<a href="${itemHref(it)}" class="${idx === 0 ? "on" : ""}" data-idx="${idx}">
           <div class="sr-head"><span class="sr-type ${tc}">${it.type}</span><span>${it.title}</span></div>
           <div class="sr-sub">CH.${it.num} ${it.chTitle}</div>
@@ -842,6 +880,14 @@
     mountDetails();
     mountPager();
     mountKaTeX();
+
+    try {
+      const sy = sessionStorage.getItem("sb-scroll-y");
+      if (sy !== null) {
+        sessionStorage.removeItem("sb-scroll-y");
+        window.scrollTo(0, parseInt(sy, 10) || 0);
+      }
+    } catch {}
 
     // Rewrite repo source code pills (<a class="src">) to public GitHub repos / Scholar / Resume when hosted on GitHub Pages
     if (location.protocol === "http:" || location.protocol === "https:") {

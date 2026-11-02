@@ -1,0 +1,186 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Ch.07 Glossary &amp; Code-Document-Patent-Archive Verification Notes · KAIST Grad Works &amp; Workspace Guidebook</title>
+<meta name="description" content="29 cross-domain verification audit notes across Development, Documents, and Photos, 5 automated build gates, and a 56-term interactive glossary.">
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/katex@0.16.11/dist/katex.min.css">
+<script defer src="https://cdn.jsdelivr.net/npm/katex@0.16.11/dist/katex.min.js"></script>
+<script defer src="https://cdn.jsdelivr.net/npm/katex@0.16.11/dist/contrib/auto-render.min.js"></script>
+<link rel="stylesheet" href="../css/style.css?v=1950d4d">
+<link rel="stylesheet" href="../css/glossary-tooltips.css?v=1950d4d">
+<script src="../js/glossary-data.js?v=1950d4d"></script>
+<script src="../js/common.js?v=1950d4d"></script>
+<script defer src="../js/glossary-tooltips.js?v=1950d4d"></script>
+</head>
+<body data-chapter="notes" data-root="../">
+<main class="chapter">
+
+  <header class="chapter-hero">
+    <div class="eyebrow">CHAPTER 07 · AUDIT NOTES &amp; INTERACTIVE GLOSSARY</div>
+    <h1>Code, Document, Patent &amp; Archive Verification Audit Notes &amp; Core Glossary</h1>
+    <p class="lead">
+      Operating 15 years of research code (<code>Development/</code>), 1,200+ academic and career documents (<code>Documents/</code>), and a 20 TB lifetime media archive (<code>Photos/</code>)
+      within a single unified master workspace requires continuous verification between early paper/slide descriptions, executable source code, and archival governance rules.
+      This chapter transparently documents <strong>29 cross-verification audit items</strong> across every domain and provides an interactive <strong>49-term technical glossary</strong> that powers inline tooltips throughout the guidebook.
+    </p>
+    <ul class="objectives">
+      <li>Review all <strong>29 verification audit items</strong> spanning <code>Development/</code> (Bio · WPT · Auto · Life), <code>Documents/</code> (KAIST academic records · Web Resume · Privacy isolation), and <code>Photos/</code> (7 categories · Zero-ZIP · EXIF).</li>
+      <li>Understand the <strong>5 automated build verification gates</strong> enforced by <code>docs/build_spec_portal.py</code> (file/line existence, KaTeX math balance, HTML DOM tag balance, unfilled template tokens, and Privacy Gate).</li>
+      <li>Search and explore the <strong>49 core technical and operational terms</strong> linked as dotted-underline tooltips (<code>.gl-term</code>) across all chapters.</li>
+    </ul>
+  </header>
+
+  <section id="notes-audit">
+    <h2>Code, Patent, Document &amp; Archive Verification Audit Table (29 Items)</h2>
+    <p>
+      Every chapter of this guidebook (Ch.01 through Ch.06) was authored using the <strong>"Actual Code &amp; Archive Ground Truth"</strong> column in the table below as its Single Source of Truth.
+      Click any domain filter chip to filter by repository or research theme.
+    </p>
+    <div class="card">
+      <div class="filter-row" role="group" aria-label="Domain Filter">
+        <button type="button" class="chip active" data-filter="all">All (29)</button>
+        <button type="button" class="chip" data-filter="Bio">Theme 2 · Bio (6)</button>
+        <button type="button" class="chip" data-filter="WPT">Theme 1 · WPT (5)</button>
+        <button type="button" class="chip" data-filter="Auto">Themes 3·4 · Auto (6)</button>
+        <button type="button" class="chip" data-filter="Life">Theme 5 · Life (4)</button>
+        <button type="button" class="chip" data-filter="Documents">Documents/ (4)</button>
+        <button type="button" class="chip" data-filter="Photos">Photos/ (4)</button>
+      </div>
+      <div class="tbl-wrap">
+        <table class="tbl" id="notes-tbl">
+          <thead>
+            <tr>
+              <th>Domain</th>
+              <th>Inspected Claim / Initial Summary Description</th>
+              <th>Actual Code &amp; Archive Ground Truth (Canonical)</th>
+              <th>Verified Evidence File</th>
+              <th>Status</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr data-area='Bio' data-status='resolved'><td><span class='badge b-area'>Bio</span></td><td>Initial summary claiming DQNAlign executes CNN inference at every single base-pair step</td><td>Applies O(N) linear-time acceleration via Exact Match Skip (skip / reverseskip / skipRC) that bypasses the neural network across exact-match stretches</td><td><a class="src" href="../../2_Bioinformatics_and_Genomics/Deep_Learning_Biomarkers/DQNalign/tool/RL/agent.py#L82" target="_blank" rel="noopener" title="2_Bioinformatics_and_Genomics/Deep_Learning_Biomarkers/DQNalign/tool/RL/agent.py:82">agent.py:82</a></td><td><span class='badge b-on'>Verified</span></td></tr>
+            <tr data-area='Bio' data-status='resolved'><td><span class='badge b-area'>Bio</span></td><td>Dueling DQN hidden layer dimension and stream split specification</td><td>Splits the h_size=256 hidden vector via tf.split into two exact halves: a 128-D Advantage stream (streamAC) and a 128-D Value stream (streamVC)</td><td><a class="src" href="../../2_Bioinformatics_and_Genomics/Deep_Learning_Biomarkers/DQNalign/tool/RL/Learning.py#L52" target="_blank" rel="noopener" title="2_Bioinformatics_and_Genomics/Deep_Learning_Biomarkers/DQNalign/tool/RL/Learning.py:52">Learning.py:52</a></td><td><span class='badge b-on'>Verified</span></td></tr>
+            <tr data-area='Bio' data-status='resolved'><td><span class='badge b-area'>Bio</span></td><td>SSDnetwork convolutional operator structure</td><td>Uses depthwise separable convolutions (tf.nn.separable_conv2d) instead of standard Conv2D to reduce parameter count and MAC operations</td><td><a class="src" href="../../2_Bioinformatics_and_Genomics/Deep_Learning_Biomarkers/DQNalign/tool/RL/Learning.py#L88" target="_blank" rel="noopener" title="2_Bioinformatics_and_Genomics/Deep_Learning_Biomarkers/DQNalign/tool/RL/Learning.py:88">Learning.py:88</a></td><td><span class='badge b-on'>Verified</span></td></tr>
+            <tr data-area='Bio' data-status='resolved'><td><span class='badge b-area'>Bio</span></td><td>Synthetic genome Indel length distribution assumption</td><td>Applies a biological power-law Zipfian distribution (s=1.6) rather than a uniform distribution across both alignment.py and Insilico.py</td><td><a class="src" href="../../2_Bioinformatics_and_Genomics/Deep_Learning_Biomarkers/DQNalign/tool/RL/alignment.py#L42" target="_blank" rel="noopener" title="2_Bioinformatics_and_Genomics/Deep_Learning_Biomarkers/DQNalign/tool/RL/alignment.py:42">alignment.py:42</a></td><td><span class='badge b-on'>Verified</span></td></tr>
+            <tr data-area='Bio' data-status='resolved'><td><span class='badge b-area'>Bio</span></td><td>REminerII canonical seeding and extension parameters</td><td>Parsed directly from source: WORD_SIZE=14, ALLOW_SIZE=1, SPACE_SIZE=2, MIN_SEED_LEN=28, GREEDY_X=30, THRESHOLD=3000</td><td><a class="src" href="../../2_Bioinformatics_and_Genomics/Sequence_Mining_and_Alignment/REminerII/Insilico.py#L40" target="_blank" rel="noopener" title="2_Bioinformatics_and_Genomics/Sequence_Mining_and_Alignment/REminerII/Insilico.py:40">Insilico.py:40</a></td><td><span class='badge b-on'>Verified</span></td></tr>
+            <tr data-area='Bio' data-status='resolved'><td><span class='badge b-area'>Bio</span></td><td>REDNN cancer biomarker neural network architecture (US 2019/0385696 A1)</td><td>Implemented as ensemble feature selection (F-score, MI, ExtraTrees) followed by a 153 → 128 → 64 → 2 fully connected classifier with Dropout 0.5</td><td><a class="src" href="../../2_Bioinformatics_and_Genomics/Deep_Learning_Biomarkers/REDNN/REDNN.py#L74" target="_blank" rel="noopener" title="2_Bioinformatics_and_Genomics/Deep_Learning_Biomarkers/REDNN/REDNN.py:74">REDNN.py:74</a></td><td><span class='badge b-on'>Verified</span></td></tr>
+            <tr data-area='WPT' data-status='resolved'><td><span class='badge b-area'>WPT</span></td><td>3D WPT camera calibration model</td><td>Custom implementation of Tsai's two-stage 11-DoF pinhole model and projection matrix estimation (Find_K_Matrix) rather than default OpenCV checkerboard routines</td><td><a class="src" href="../../1_Wireless_Power_Transfer_and_EV/3D_Positioning_and_Vision/ObjectDetection/TsaiCalibration.py#L4" target="_blank" rel="noopener" title="1_Wireless_Power_Transfer_and_EV/3D_Positioning_and_Vision/ObjectDetection/TsaiCalibration.py:4">TsaiCalibration.py:4</a></td><td><span class='badge b-on'>Verified</span></td></tr>
+            <tr data-area='WPT' data-status='resolved'><td><span class='badge b-area'>WPT</span></td><td>Binocular 3D coordinate triangulation formula</td><td>Reconstructs 3D target coordinates as the midpoint (Est_Point / ImgTo3D) of the shortest common perpendicular segment between two non-intersecting 3D skew rays</td><td><a class="src" href="../../1_Wireless_Power_Transfer_and_EV/3D_Positioning_and_Vision/ObjectDetection/TsaiCalibration.py#L58" target="_blank" rel="noopener" title="1_Wireless_Power_Transfer_and_EV/3D_Positioning_and_Vision/ObjectDetection/TsaiCalibration.py:58">TsaiCalibration.py:58</a></td><td><span class='badge b-on'>Verified</span></td></tr>
+            <tr data-area='WPT' data-status='resolved'><td><span class='badge b-area'>WPT</span></td><td>Human-body detection wireless charging safety cutoff patent implementation (US 12,496,917 B2)</td><td>Fuses Coral EdgeTPU MobileNet SSD vision detection with a FLIR Lepton thermal IR TFLite model (FIROD.tflite) for real-time TX power cutoff control</td><td><a class="src" href="../../1_Wireless_Power_Transfer_and_EV/3D_Positioning_and_Vision/FIR/README.md" target="_blank" rel="noopener" title="1_Wireless_Power_Transfer_and_EV/3D_Positioning_and_Vision/FIR/README.md">README.md</a></td><td><span class='badge b-on'>Verified</span></td></tr>
+            <tr data-area='WPT' data-status='resolved'><td><span class='badge b-area'>WPT</span></td><td>85 kHz OLEV power inverter Pre-ON look-ahead distance calculation</td><td>Projects WGS84 latitude/longitude onto a metric plane via deg2utm, then computes point-to-segment distance (get_lane_distance) and time-to-arrival</td><td><a class="src" href="../../1_Wireless_Power_Transfer_and_EV/Telematics_and_GPS/GPS/get_lane_distance.m#L1" target="_blank" rel="noopener" title="1_Wireless_Power_Transfer_and_EV/Telematics_and_GPS/GPS/get_lane_distance.m:1">get_lane_distance.m:1</a></td><td><span class='badge b-on'>Verified</span></td></tr>
+            <tr data-area='WPT' data-status='resolved'><td><span class='badge b-area'>WPT</span></td><td>Android vehicle terminal ↔ OLEV inverter communication protocol</td><td>The InverterGPS Android app streams real-time GPS position and velocity packets over UDP/TCP sockets to synchronize segment switching timing</td><td><a class="src" href="../../1_Wireless_Power_Transfer_and_EV/Telematics_and_GPS/InverterGPS/README.md" target="_blank" rel="noopener" title="1_Wireless_Power_Transfer_and_EV/Telematics_and_GPS/InverterGPS/README.md">README.md</a></td><td><span class='badge b-on'>Verified</span></td></tr>
+            <tr data-area='Auto' data-status='resolved'><td><span class='badge b-area'>Auto</span></td><td>CMaple keyboard input injection mechanism</td><td>Injects Win32 SendInput + DirectInput hardware scancodes (e.g., 0x1E) rather than OS virtual keycodes (VK) blocked by DirectX polling loops</td><td><a class="src" href="../../3_Intelligent_Automation/Vision_and_Driver_Automation/CMaple/README.md" target="_blank" rel="noopener" title="3_Intelligent_Automation/Vision_and_Driver_Automation/CMaple/README.md">README.md</a></td><td><span class='badge b-on'>Verified</span></td></tr>
+            <tr data-area='Auto' data-status='resolved'><td><span class='badge b-area'>Auto</span></td><td>PyMaple vision automation state space and Rune cooldown timer</td><td>Combines a 13-state priority FSM with a runeperiod=900 s (15 min) cooldown timer and a 4-way arrow HSV/template classifier</td><td><a class="src" href="../../3_Intelligent_Automation/Vision_and_Driver_Automation/PyMaple/PyMaple2/pydetect.py#L40" target="_blank" rel="noopener" title="3_Intelligent_Automation/Vision_and_Driver_Automation/PyMaple/PyMaple2/pydetect.py:40">pydetect.py:40</a></td><td><span class='badge b-on'>Verified</span></td></tr>
+            <tr data-area='Auto' data-status='resolved'><td><span class='badge b-area'>Auto</span></td><td>Markov formulation of StarForce Chance Time (100% success after 2 consecutive drops)</td><td>Incorporates the consecutive drop counter (fail==2) and auxiliary states into the transition model to convert non-Markovian history into a first-order Markov chain</td><td><a class="src" href="../../3_Intelligent_Automation/Modeling_and_Intelligence/StarForce/StarForce.m#L1" target="_blank" rel="noopener" title="3_Intelligent_Automation/Modeling_and_Intelligence/StarForce/StarForce.m:1">StarForce.m:1</a></td><td><span class='badge b-on'>Verified</span></td></tr>
+            <tr data-area='Auto' data-status='resolved'><td><span class='badge b-area'>Auto</span></td><td>StarForce StarCatch (+5% multiplicative boost) and 12-star destruction reset rules</td><td>Accurately implements Success(level+1)*(1+starcatch) multiplicative scaling, level=12 reset upon destruction, and drop-protection floors at 10★, 15★, and 20★</td><td><a class="src" href="../../3_Intelligent_Automation/Modeling_and_Intelligence/StarForce/StarForce.m#L24" target="_blank" rel="noopener" title="3_Intelligent_Automation/Modeling_and_Intelligence/StarForce/StarForce.m:24">StarForce.m:24</a></td><td><span class='badge b-on'>Verified</span></td></tr>
+            <tr data-area='Auto' data-status='resolved'><td><span class='badge b-area'>Auto</span></td><td>Casio FX-9860G embedded game rendering pipeline</td><td>Double-buffered 128×64 1-bit monochrome VRAM pipeline: Bdisp_AllClr_VRAM → bitmask sprite blitting → Bdisp_PutDisp_DD</td><td><a class="src" href="../../4_Specialty_Systems/Embedded_Casio_Engines/RPG/README.md" target="_blank" rel="noopener" title="4_Specialty_Systems/Embedded_Casio_Engines/RPG/README.md">README.md</a></td><td><span class='badge b-on'>Verified</span></td></tr>
+            <tr data-area='Auto' data-status='resolved'><td><span class='badge b-area'>Auto</span></td><td>WINNER II 3D MIMO channel modeling scope</td><td>Implements a full 3D geometry-based stochastic channel covering both azimuth and elevation (ZOD/ZOA) angles alongside 60 GHz oxygen absorption attenuation</td><td><a class="src" href="../../4_Specialty_Systems/Wireless_Communications/WinnerIIChannel/Main.m" target="_blank" rel="noopener" title="4_Specialty_Systems/Wireless_Communications/WinnerIIChannel/Main.m">Main.m</a></td><td><span class='badge b-on'>Verified</span></td></tr>
+            <tr data-area='Life' data-status='resolved'><td><span class='badge b-area'>Life</span></td><td>Ledger cancellation and refund transaction handling rule</td><td>Prohibits abs() conversion and preserves the negative sign via -tx['amount'] so refunds are accurately deducted from net category spending</td><td><a class="src" href="../../5_Household_and_Life_Automation/1_Household_Finance/analyzer.py#L14" target="_blank" rel="noopener" title="5_Household_and_Life_Automation/1_Household_Finance/analyzer.py:14">analyzer.py:14</a></td><td><span class='badge b-on'>Verified</span></td></tr>
+            <tr data-area='Life' data-status='resolved'><td><span class='badge b-area'>Life</span></td><td>Separation of Pure Expense (Track A) vs. Fixed Financial Burden (Track B)</td><td>Isolates fixed repayments, taxes, and long-term obligations into build_monthly_burden (Track B) so monthly variable operating metrics remain undistorted</td><td><a class="src" href="../../5_Household_and_Life_Automation/1_Household_Finance/analyzer.py#L77" target="_blank" rel="noopener" title="5_Household_and_Life_Automation/1_Household_Finance/analyzer.py:77">analyzer.py:77</a></td><td><span class='badge b-on'>Verified</span></td></tr>
+            <tr data-area='Life' data-status='resolved'><td><span class='badge b-area'>Life</span></td><td>Zero-dependency Excel (.xlsx) workbook generator</td><td>Packages [Content_Types].xml, styles.xml, and sheet1..N.xml directly using Python's standard zipfile module without openpyxl or pandas</td><td><a class="src" href="../../5_Household_and_Life_Automation/1_Household_Finance/xlsx_writer.py#L10" target="_blank" rel="noopener" title="5_Household_and_Life_Automation/1_Household_Finance/xlsx_writer.py:10">xlsx_writer.py:10</a></td><td><span class='badge b-on'>Verified</span></td></tr>
+            <tr data-area='Life' data-status='resolved'><td><span class='badge b-area'>Life</span></td><td>Offline map web planner POI database specification</td><td>Maintains coordinates, budgets, operating hours, and day-by-day routing for 100 curated POIs in a canonical destinations.json store</td><td><a class="src" href="../../5_Household_and_Life_Automation/2_Travel_and_Trip_Planners/2026_Osaka/data/destinations.json" target="_blank" rel="noopener" title="5_Household_and_Life_Automation/2_Travel_and_Trip_Planners/2026_Osaka/data/destinations.json">destinations.json</a></td><td><span class='badge b-on'>Verified</span></td></tr>
+            <tr data-area='Documents' data-status='resolved'><td><span class='badge b-area'>Documents</span></td><td>Location of final KAIST PhD dissertation and degree examination records</td><td>Complete PhD dissertation PDF, Qualifying Exam (QE), proposal, and defense committee records archived under Documents/Documents/PhD_Administration/</td><td><a class="src" href="../../../Documents/Documents/PhD_Administration/README.md" target="_blank" rel="noopener" title="Documents/Documents/PhD_Administration/README.md">README.md</a></td><td><span class='badge b-on'>Verified</span></td></tr>
+            <tr data-area='Documents' data-status='resolved'><td><span class='badge b-area'>Documents</span></td><td>Taxonomy of KAIST graduate coursework (449 files) and UMLS lab seminars (430 files)</td><td>Structured into Academic_Coursework/ (15+ courses including EE405, EE528, EE686, EE827) and Lab_Meetings/ (2010–2020 weekly seminars)</td><td><a class="src" href="../../../Documents/Documents/README.md" target="_blank" rel="noopener" title="Documents/Documents/README.md">README.md</a></td><td><span class='badge b-on'>Verified</span></td></tr>
+            <tr data-area='Documents' data-status='resolved'><td><span class='badge b-area'>Documents</span></td><td>Professional web resume Deploy Parity rule</td><td>Every edit to Resume/resume_yongjoon_song.html is mirrored 100% identically to deploy/index.html (yjqkrtk-ux.github.io)</td><td><a class="src" href="../../../Documents/Resume/README.md" target="_blank" rel="noopener" title="Documents/Resume/README.md">README.md</a></td><td><span class='badge b-on'>Verified</span></td></tr>
+            <tr data-area='Documents' data-status='resolved'><td><span class='badge b-area'>Documents</span></td><td>Isolation of private administrative vault (Documents/Personal/) and local ledger files</td><td>Private records under Personal/ and local ledger files (Data/*.xlsx) are blocked from external exposure by .gitignore and the build-time Privacy Gate</td><td><a class="src" href="../../../Documents/README.md" target="_blank" rel="noopener" title="Documents/README.md">README.md</a></td><td><span class='badge b-on'>Verified</span></td></tr>
+            <tr data-area='Photos' data-status='resolved'><td><span class='badge b-area'>Photos</span></td><td>Photos/ root 7 top-level master category taxonomy</td><td>Root directory strictly limited to 7 standard categories: Events, Travel, Business_Trips, Family_Archive, Daily, Screenshots, and Downloads (no raw year folders at root)</td><td><a class="src" href="../../../Photos/GEMINI.md" target="_blank" rel="noopener" title="Photos/GEMINI.md">GEMINI.md</a></td><td><span class='badge b-on'>Verified</span></td></tr>
+            <tr data-area='Photos' data-status='resolved'><td><span class='badge b-area'>Photos</span></td><td>Zero-ZIP Policy (complete ban on compressed archives inside Photos/)</td><td>All .zip/.7z/.rar/.tar archives are fully extracted so cloud media backup clients never miss embedded photos or videos</td><td><a class="src" href="../../../Photos/README.md" target="_blank" rel="noopener" title="Photos/README.md">README.md</a></td><td><span class='badge b-on'>Verified</span></td></tr>
+            <tr data-area='Photos' data-status='resolved'><td><span class='badge b-area'>Photos</span></td><td>Zero Non-Media Policy and Purity of the Daily Feed</td><td>Non-media documents (.pdf/.hwp/.pptx/.xlsx) are relocated to Documents/ or Development/, while screen captures and web images are isolated into Screenshots/ and Downloads/</td><td><a class="src" href="../../../Photos/GEMINI.md" target="_blank" rel="noopener" title="Photos/GEMINI.md">GEMINI.md</a></td><td><span class='badge b-on'>Verified</span></td></tr>
+            <tr data-area='Photos' data-status='resolved'><td><span class='badge b-area'>Photos</span></td><td>Photos/ mount policy in AI Photo Memory Studio</td><td>4_Photo_Memory_Studio/server.py mounts Photos/ in strict Read-Only mode and stores YuNet+SFace 128-D indices in a separate SQLite database</td><td><a class="src" href="../../5_Household_and_Life_Automation/4_Photo_Memory_Studio/server.py#L30" target="_blank" rel="noopener" title="5_Household_and_Life_Automation/4_Photo_Memory_Studio/server.py:30">server.py:30</a></td><td><span class='badge b-on'>Verified</span></td></tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+  </section>
+
+  <section id="notes-policy">
+    <h2>Single-Source-of-Truth Build Principle &amp; 5-Stage Automated Verification</h2>
+    <p>
+      The entire guidebook (<code>docs/index.html</code>, <code>docs/chapters/*.html</code>, <code>docs/css/*</code>, <code>docs/js/*</code>) is generated deterministically by <a class="src" href="../../docs/build_spec_portal.py" target="_blank" rel="noopener" title="docs/build_spec_portal.py">docs/build_spec_portal.py</a> rather than manual HTML editing, and must pass all five integrity gates below before any deployment artifact is updated.
+    </p>
+    <div class="grid-3">
+      <div class="card">
+        <h3>Gate 1 · Source Link &amp; Line Anchor Verification</h3>
+        <p>
+          Every <code>src()</code> call in the text is checked to verify that the target file exists on disk and that the searched function, class, or constant resolves to its exact 1-based line anchor (<code>#Lxx</code>).
+        </p>
+      </div>
+      <div class="card">
+        <h3>Gate 2 · KaTeX Math &amp; HTML DOM Integrity</h3>
+        <p>
+          Checks brace balance across all display and inline LaTeX equations, blocks unescaped non-ASCII characters inside math mode, and validates matching open/close tags via Python's <code>HTMLParser</code>.
+        </p>
+      </div>
+      <div class="card">
+        <h3>Gate 3 · Privacy Gate (Enforcing Rule 5)</h3>
+        <p>
+          Immediately aborts the build if even a single reference to private files under <code>Documents/Personal/</code>, local financial ledgers (<code>Data/*.xlsx</code>), or restricted personal identifiers appears in the output.
+        </p>
+      </div>
+    </div>
+  </section>
+
+  <section id="glossary-sec">
+    <h2>Master Workspace Technical &amp; Operational Glossary (Interactive Glossary)</h2>
+    <p>
+      Definitions, abbreviations, and chapter cross-references for all 49 core terms highlighted with dotted underlines across the guidebook.
+      Type any keyword or abbreviation into the search box below to filter in real time.
+    </p>
+    <input type="search" class="gl-search" id="gl-search-input" placeholder="Search glossary terms (e.g., DQNAlign, Tsai, StarForce, Zero-ZIP, Documents, Photos, SFace, OOXML...)" aria-label="Search glossary terms">
+    <div class="gl-list" id="gl-list-box"></div>
+  </section>
+
+  <section class="keypoints" id="summary">
+    <h2>Key Takeaways · Chapter 07</h2>
+    <ol>
+      <li><strong>End-to-End Ground-Truth Consistency</strong>: Cross-verifies not only the source code across all 5 themes of <code>Development/</code>, but also the operational charters of the <code>Documents/</code> academic/resume repository and the 20 TB <code>Photos/</code> media archive under a single unified standard.</li>
+      <li><strong>Deterministic One-Command Build</strong>: Running <code>python3 docs/build_spec_portal.py</code> re-verifies and regenerates all 7 chapters, the full-text search index, glossary tooltips, and 140+ source code links in one pass.</li>
+    </ol>
+  </section>
+
+<script>
+(function(){
+  document.querySelectorAll('.chip[data-filter]').forEach(c => {
+    c.addEventListener('click', () => {
+      document.querySelectorAll('.chip[data-filter]').forEach(x => x.classList.toggle('active', x === c));
+      const f = c.dataset.filter;
+      document.querySelectorAll('#notes-tbl tbody tr').forEach(tr => {
+        tr.style.display = (f === 'all' || tr.dataset.area === f) ? '' : 'none';
+      });
+    });
+  });
+
+  const listBox = document.getElementById('gl-list-box');
+  const searchInput = document.getElementById('gl-search-input');
+  const terms = ((window.BOOK_GLOSSARY && window.BOOK_GLOSSARY.terms) || []).slice().sort((a, b) => (a.ko || '').localeCompare(b.ko || '', 'en'));
+
+  function renderGlossary(q){
+    if(!listBox) return;
+    const query = (q || '').trim().toLowerCase();
+    const html = [];
+    terms.forEach(item => {
+      const hay = ((item.ko || '') + ' ' + (item.en || '') + ' ' + (item.abbr || '') + ' ' + (item.def || '')).toLowerCase();
+      if(query && !hay.includes(query)) return;
+      const chBadges = (item.chapters || []).map(ch => `<a class="src" href="${ch}.html">Ch.${ch.toUpperCase()}</a>`).join(' ');
+      const abbrSpan = item.abbr ? `<span class="badge b-area">${item.abbr}</span>` : '';
+      html.push(
+        `<div class="gl-item">` +
+          `<div class="gl-head"><span class="gl-name">${item.ko || ''}</span>${abbrSpan}<span class="gl-en">${item.en || ''}</span>${chBadges}</div>` +
+          `<div class="gl-desc">${item.def || ''}</div>` +
+        `</div>`
+      );
+    });
+    listBox.innerHTML = html.length ? html.join('') : '<div class="card"><p>No matching glossary terms found.</p></div>';
+  }
+  renderGlossary('');
+  if(searchInput){
+    searchInput.addEventListener('input', e => renderGlossary(e.target.value));
+  }
+})();
+</script>
+
+</main>
+</body>
+</html>

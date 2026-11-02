@@ -1,0 +1,581 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Ch.03 3D Resonant WPT, Edge Vision Safety Control &amp; OLEV Telematics · KAIST Grad Works &amp; Workspace Guidebook</title>
+<meta name="description" content="Ch.03 3D Resonant WPT, Edge Vision Safety Control &amp; OLEV Telematics — KAIST Grad Works &amp; GoogleDrive Master Workspace Interactive Guidebook">
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/katex@0.16.11/dist/katex.min.css">
+<script defer src="https://cdn.jsdelivr.net/npm/katex@0.16.11/dist/katex.min.js"></script>
+<script defer src="https://cdn.jsdelivr.net/npm/katex@0.16.11/dist/contrib/auto-render.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/three@0.128.0/build/three.min.js"></script>
+<link rel="stylesheet" href="../css/style.css?v=1950d4d">
+<link rel="stylesheet" href="../css/glossary-tooltips.css?v=1950d4d">
+<script src="../js/glossary-data.js?v=1950d4d"></script>
+<script src="../js/common.js?v=1950d4d"></script>
+<script defer src="../js/glossary-tooltips.js?v=1950d4d"></script>
+</head>
+<body data-chapter="wpt" data-root="../">
+<main class="chapter">
+  <header class="chapter-hero">
+    <div class="eyebrow">CHAPTER 03 · THEME 1 — 3D RESONANT WPT &amp; OLEV TELEMATICS</div>
+    <h1>3D Resonant Wireless Power Transfer, Edge Vision Safety Control &amp; OLEV Telematics</h1>
+    <p class="lead">
+      To deliver 1 kW-class wireless power safely and efficiently to mobile electronics in free space, a transmitter must track the 3D position $(X, Y, Z)$ of the receiver coil with millimeter precision while immediately cutting off output power whenever a human or pet enters the strong electromagnetic field zone.
+      This chapter dissects the <strong>Tsai binocular 3D triangulation · FLIR thermal · Coral EdgeTPU</strong> safety control loop (<a class="src" href="../../1_Wireless_Power_Transfer_and_EV/3D_Positioning_and_Vision/ObjectDetection/TsaiCalibration.py#L4" target="_blank" rel="noopener" title="1_Wireless_Power_Transfer_and_EV/3D_Positioning_and_Vision/ObjectDetection/TsaiCalibration.py:4">TsaiCalibration.py:4</a>, <a class="src" href="../../1_Wireless_Power_Transfer_and_EV/3D_Positioning_and_Vision/FIR" target="_blank" rel="noopener" title="1_Wireless_Power_Transfer_and_EV/3D_Positioning_and_Vision/FIR">FIR</a>, <a class="src" href="../../1_Wireless_Power_Transfer_and_EV/3D_Positioning_and_Vision/edgetpu_models" target="_blank" rel="noopener" title="1_Wireless_Power_Transfer_and_EV/3D_Positioning_and_Vision/edgetpu_models">edgetpu_models</a>)—which culminated in granted US Patent <a class="src" href="https://patents.google.com/patent/US12496917B2/en" target="_blank" rel="noopener">US 12,496,917 B2 ↗</a> (<a class="src" href="https://patents.google.com/patent/KR102370592B1/en" target="_blank" rel="noopener">KR 10-2370592 B1 ↗</a>) and Korean Patent <a class="src" href="https://patents.google.com/patent/KR20210092933A/en" target="_blank" rel="noopener">KR 10-2021-0092933 A ↗</a>—alongside the <strong>UTM trajectory prediction telematics</strong> (<a class="src" href="../../1_Wireless_Power_Transfer_and_EV/Telematics_and_GPS/GPS/get_lane_distance.m#L1" target="_blank" rel="noopener" title="1_Wireless_Power_Transfer_and_EV/Telematics_and_GPS/GPS/get_lane_distance.m:1">get_lane_distance.m:1</a>, <a class="src" href="../../1_Wireless_Power_Transfer_and_EV/Telematics_and_GPS/GPS/get_predicted_time.m#L1" target="_blank" rel="noopener" title="1_Wireless_Power_Transfer_and_EV/Telematics_and_GPS/GPS/get_predicted_time.m:1">get_predicted_time.m:1</a>) for 85 kHz dynamic wireless charging electric buses (OLEV).
+    </p>
+    <ul class="objectives">
+      <li>Derive the equations for <strong>Tsai 11-DoF pinhole camera calibration</strong> (<code>Find_K_Matrix</code>) and <strong>binocular skew-ray closest-midpoint triangulation</strong> (<code>Est_Point</code>).</li>
+      <li>Experiment with the <strong>FLIR Lepton thermal + Coral EdgeTPU</strong> multimodal edge vision safety cutoff loop (US 12,496,917 B2) in the 3D WebGL simulator (Simulator 04).</li>
+      <li>Verify the <strong>interquartile 25% trimmed lane-deviation filter</strong> and <strong>0.9× conservative velocity-margin inverter pre-heating control</strong> (Simulator 05) for 85 kHz OLEV electric buses.</li>
+    </ul>
+  
+    <div class="ch-pubs" role="region" aria-label="Related Papers and Patents">
+      <span class="ch-pubs-label">PAPERS &amp; PATENTS</span>
+      <a class="pub-tag patent" href="https://patents.google.com/patent/US12496917B2/en" target="_blank" rel="noopener" title="US 12,496,917 B2 (Granted Dec 2025) — Apparatus and Method for Controlling Output Power of Inverter Based on Vehicle Location">📜 US 12,496,917 B2 (Granted · WPT Control) ↗</a> <a class="pub-tag patent" href="https://patents.google.com/patent/KR102370592B1/en" target="_blank" rel="noopener" title="KR 10-2370592 B1 (Granted) — Apparatus and Method for Controlling Output Power of Wireless Power Transfer Inverter Based on Vehicle Location">📜 KR 10-2370592 B1 (Granted Patent) ↗</a> <a class="pub-tag patent" href="https://patents.google.com/patent/KR20210092933A/en" target="_blank" rel="noopener" title="KR 10-2021-0092933 A — Wireless Power Transfer Apparatus and Method Based on Image Recognition (KEPCO &amp; KAIST)">📜 KR 10-2021-0092933 A (3D Vision WPT) ↗</a>
+    </div>
+  </header>
+
+  <section id="sec-wpt-arch">
+    <h2>Multimodal Vision-Guided 3D Wireless Power Transfer &amp; OLEV Integrated Architecture</h2>
+    <p>
+      Theme 1 (<a class="src" href="../../1_Wireless_Power_Transfer_and_EV/README.md" target="_blank" rel="noopener" title="1_Wireless_Power_Transfer_and_EV/README.md">Theme 1 README.md</a>) comprises two primary subsystems: <code>3D_Positioning_and_Vision</code> (3 submodules) for indoor/outdoor 3D free-space wireless charging, and
+      <code>Telematics_and_GPS</code> (5 submodules) for pre-activating road-embedded segmented power inverters.
+      Click each stage in the pipeline diagram below to inspect its input/output equations and source implementation files.
+    </p>
+
+    <figure class="diagram">
+      <svg id="wpt-svg" viewBox="0 0 1080 320" xmlns="http://www.w3.org/2000/svg" role="img" aria-label="Theme 1 3D WPT Vision and OLEV Telematics Pipeline">
+        <defs>
+          <marker id="wpt-arr" viewBox="0 0 10 10" refX="8" refY="5" markerWidth="6" markerHeight="6" orient="auto-start-reverse">
+            <path d="M 0 1 L 9 5 L 0 9 z" fill="var(--ok)" />
+          </marker>
+        </defs>
+        <rect x="4" y="4" width="1072" height="312" rx="12" class="f-surface" />
+        <text x="24" y="28" class="t-ok">CLICKABLE PIPELINE · THEME 1 3D RESONANT WPT VISION CONTROL &amp; 85kHz OLEV TELEMATICS (8 SUBMODULES)</text>
+
+        <!-- Node 1: Tsai DLT Calibration -->
+        <g class="svg-node" data-node="wpt-calib">
+          <rect x="24" y="48" width="240" height="184" rx="9" class="f-ok-soft" />
+          <text x="38" y="74" class="t-ok">STAGE 1 · TSAI CALIBRATION</text>
+          <text x="38" y="98" class="t" font-weight="700">Find_K_Matrix (11-DoF DLT)</text>
+          <text x="38" y="120" class="t-dim">3D World (X,Y,Z) &lt;-&gt; 2D (u,v)</text>
+          <text x="38" y="140" class="t-dim">k = (A^T A)^(-1) A^T b</text>
+          <text x="38" y="160" class="t-dim">3x4 Projection Matrix K1, K2</text>
+          <text x="38" y="180" class="t-dim">Dual Camera Extrinsic Lock</text>
+          <text x="38" y="212" class="t-mono">TsaiCalibration.py:Find_K_Matrix</text>
+        </g>
+
+        <!-- Node 2: Skew-Ray 3D Triangulation -->
+        <g class="svg-node is-selected" data-node="wpt-ray">
+          <rect x="290" y="48" width="244" height="184" rx="9" class="f-acc-soft" />
+          <text x="304" y="74" class="t-acc">STAGE 2 · 3D RAY MIDPOINT</text>
+          <text x="304" y="98" class="t" font-weight="700">Line_gen &amp; Est_Point</text>
+          <text x="304" y="120" class="t-dim">Plane Cross Product v = n_u x n_v</text>
+          <text x="304" y="140" class="t-dim">Skew Rays L1(t1), L2(t2)</text>
+          <text x="304" y="160" class="t-dim">Closest Midpoint P* = (X,Y,Z)</text>
+          <text x="304" y="180" class="t-dim">ImgTo3D Real-Time Tracking</text>
+          <text x="304" y="212" class="t-mono">TsaiCalibration.py:Est_Point</text>
+        </g>
+
+        <!-- Node 3: FLIR Thermal & Coral EdgeTPU -->
+        <g class="svg-node" data-node="wpt-safety">
+          <rect x="560" y="48" width="244" height="184" rx="9" class="f-warn-soft" />
+          <text x="574" y="74" class="t-warn">STAGE 3 · SAFETY INTERLOCK</text>
+          <text x="574" y="98" class="t" font-weight="700">FIR Thermal &amp; Coral EdgeTPU</text>
+          <text x="574" y="120" class="t-dim">FLIR Lepton 8-14um Human Detect</text>
+          <text x="574" y="140" class="t-dim">INT8 Quantized MobileNet SSD</text>
+          <text x="574" y="160" class="t-dim">ICNIRP EMF Exposure Cutoff</text>
+          <text x="574" y="180" class="t-dim">US 12,496,917 B2 Granted</text>
+          <text x="574" y="212" class="t-mono">FIR · edgetpu_models</text>
+        </g>
+
+        <!-- Node 4: OLEV 85kHz Telematics -->
+        <g class="svg-node" data-node="wpt-olev">
+          <rect x="830" y="48" width="226" height="184" rx="9" class="f-acc2-soft" />
+          <text x="844" y="74" class="t-acc2">STAGE 4 · OLEV TELEMATICS</text>
+          <text x="844" y="98" class="t" font-weight="700">85kHz Dynamic EV Charging</text>
+          <text x="844" y="120" class="t-dim">WGS84 -&gt; UTM Meter Projection</text>
+          <text x="844" y="140" class="t-dim">25% Trimmed Lane Deviation</text>
+          <text x="844" y="160" class="t-dim">0.9x Velocity Margin ETA</text>
+          <text x="844" y="180" class="t-dim">Android InverterGPS Trigger</text>
+          <text x="844" y="212" class="t-mono">get_lane_distance.m · EVGPS</text>
+        </g>
+
+        <line x1="264" y1="140" x2="287" y2="140" class="s-ok" stroke-width="2" marker-end="url(#wpt-arr)" />
+        <line x1="534" y1="140" x2="557" y2="140" class="s-ok" stroke-width="2" marker-end="url(#wpt-arr)" />
+        <line x1="804" y1="140" x2="827" y2="140" class="s-ok" stroke-width="2" marker-end="url(#wpt-arr)" />
+
+        <!-- Bottom Patent Strip -->
+        <rect x="24" y="248" width="1032" height="48" rx="8" class="f-elev" />
+        <text x="40" y="277" class="t-ok">PATENT PORTFOLIO:</text>
+        <text x="195" y="277" class="t" font-weight="600">US 12,496,917 B2 · KR 10-2021-0092933 A (Vision WPT) · KR 10-2189983 B1 (SWIPT) · KR 10-1988844 B1 · KR 10-1812028 B1</text>
+      </svg>
+      <div class="inspector-box" id="wpt-insp">
+        <div class="insp-title" id="wpt-insp-title">📌 STAGE 2 · Skew-Ray Closest Midpoint 3D Triangulation (Line_gen &amp; Est_Point)</div>
+        <div id="wpt-insp-body">Reconstructs the 3D coordinates of the receiver coil in real time by computing the closest midpoint between two 3D skew rays back-projected from dual RGB cameras. Click any pipeline stage above to inspect its geometric equations and hardware specifications.</div>
+      </div>
+      <figcaption><b>Figure 3-1.</b> Theme 1 3D magnetic resonant wireless power transfer vision control (Tsai · Skew-Ray · FLIR/EdgeTPU) and 85 kHz OLEV telematics pipeline.</figcaption>
+    </figure>
+  </section>
+
+  <section id="sec-tsai">
+    <h2>Mathematical Derivation of Tsai Camera Calibration &amp; Binocular 3D Skew-Ray Triangulation</h2>
+    <p>
+      Rather than relying on black-box external libraries, <a class="src" href="../../1_Wireless_Power_Transfer_and_EV/3D_Positioning_and_Vision/ObjectDetection/TsaiCalibration.py#L4" target="_blank" rel="noopener" title="1_Wireless_Power_Transfer_and_EV/3D_Positioning_and_Vision/ObjectDetection/TsaiCalibration.py:4">TsaiCalibration.py:4</a> directly implements a 4-stage pipeline that estimates the camera projection matrix from correspondences between 3D world coordinates $\mathbf{X}_i = [X_i, Y_i, Z_i]^T$ and 2D pixel coordinates $\mathbf{u}_i = [u_i, v_i]^T$, and then reconstructs 3D target positions in real time.
+    </p>
+
+    <h3 id="sec-tsai-step1">Step 1 · 11-DoF Linear Least-Squares Projection Matrix Estimation (<code>Find_K_Matrix</code>)</h3>
+    <p>
+      In homogeneous coordinates, the $3 \times 4$ pinhole camera projection matrix $K$ (scale-normalized by setting $K_{3,4} = 1$) satisfies:
+    </p>
+    $$s \begin{bmatrix} u \\ v \\ 1 \end{bmatrix} = \begin{bmatrix} k_{11} & k_{12} & k_{13} & k_{14} \\ k_{21} & k_{22} & k_{23} & k_{24} \\ k_{31} & k_{32} & k_{33} & 1 \end{bmatrix} \begin{bmatrix} X \\ Y \\ Z \\ 1 \end{bmatrix}$$
+    <p>
+      Eliminating the scale factor $s = k_{31}X + k_{32}Y + k_{33}Z + 1$ yields two linear equations per 3D–2D point correspondence.
+      Stacking $N$ calibration points forms a $2N \times 11$ design matrix $\mathbf{A}$ and a $2N \times 1$ observation vector $\mathbf{b}$ (<a class="src" href="../../1_Wireless_Power_Transfer_and_EV/3D_Positioning_and_Vision/ObjectDetection/TsaiCalibration.py#L4" target="_blank" rel="noopener" title="1_Wireless_Power_Transfer_and_EV/3D_Positioning_and_Vision/ObjectDetection/TsaiCalibration.py:4">TsaiCalibration.py:4</a>).
+      The least-squares solution via the normal equations is:
+    </p>
+    $$\mathbf{k}^* = \left(\mathbf{A}^T \mathbf{A}\right)^{-1} \mathbf{A}^T \mathbf{b} \in \mathbb{R}^{11}$$
+
+    <h3 id="sec-tsai-step2">Step 2 · 3D Ray Back-Projection (<code>Line_gen</code>) &amp; Closest-Midpoint Triangulation (<code>Est_Point</code>)</h3>
+    <p>
+      Given a pixel $(u, v)$ and calibrated projection matrix $K$, the first and second rows of the projection equation define two planes $\Pi_u$ and $\Pi_v$ in 3D space.
+      <code>Line_gen(K, u, v)</code> in <a class="src" href="../../1_Wireless_Power_Transfer_and_EV/3D_Positioning_and_Vision/ObjectDetection/TsaiCalibration.py#L41" target="_blank" rel="noopener" title="1_Wireless_Power_Transfer_and_EV/3D_Positioning_and_Vision/ObjectDetection/TsaiCalibration.py:41">TsaiCalibration.py:41</a> takes the cross product of the two plane normal vectors $\mathbf{n}_u, \mathbf{n}_v \in \mathbb{R}^3$ to obtain the 3D ray direction vector $\mathbf{v} = \mathbf{n}_u \times \mathbf{n}_v$ and anchor point $\mathbf{p}_0$:
+    </p>
+    $$\mathbf{L}_1(t_1) = \mathbf{p}_1 + t_1 \mathbf{v}_1, \qquad \mathbf{L}_2(t_2) = \mathbf{p}_2 + t_2 \mathbf{v}_2$$
+    <p>
+      In physical deployments, lens distortion and pixel quantization noise prevent the two camera rays $\mathbf{L}_1(t_1)$ and $\mathbf{L}_2(t_2)$ from intersecting at a single point, making them
+      <strong>skew lines</strong> in 3D space. <code>Est_Point(Line1, Line2)</code> in <a class="src" href="../../1_Wireless_Power_Transfer_and_EV/3D_Positioning_and_Vision/ObjectDetection/TsaiCalibration.py#L58" target="_blank" rel="noopener" title="1_Wireless_Power_Transfer_and_EV/3D_Positioning_and_Vision/ObjectDetection/TsaiCalibration.py:58">TsaiCalibration.py:58</a> enforces the orthogonality condition minimizing the squared Euclidean distance
+      $\|\mathbf{L}_1(t_1) - \mathbf{L}_2(t_2)\|_2^2$ ($(\mathbf{L}_1 - \mathbf{L}_2) \perp \mathbf{v}_1$, $(\mathbf{L}_1 - \mathbf{L}_2) \perp \mathbf{v}_2$), solves the resulting $2 \times 2$ linear system for $(t_1^*, t_2^*)$, and determines the 3D receiver coil position $\mathbf{P}^*$ as the <strong>midpoint</strong> of the shortest connecting segment (<a class="src" href="../../1_Wireless_Power_Transfer_and_EV/3D_Positioning_and_Vision/ObjectDetection/TsaiCalibration.py#L72" target="_blank" rel="noopener" title="1_Wireless_Power_Transfer_and_EV/3D_Positioning_and_Vision/ObjectDetection/TsaiCalibration.py:72">TsaiCalibration.py:72</a>):
+    </p>
+    $$\begin{bmatrix} \mathbf{v}_1 \cdot \mathbf{v}_1 & -\mathbf{v}_1 \cdot \mathbf{v}_2 \\ \mathbf{v}_1 \cdot \mathbf{v}_2 & -\mathbf{v}_2 \cdot \mathbf{v}_2 \end{bmatrix} \begin{bmatrix} t_1^* \\ t_2^* \end{bmatrix} = \begin{bmatrix} -(\mathbf{p}_1 - \mathbf{p}_2) \cdot \mathbf{v}_1 \\ -(\mathbf{p}_1 - \mathbf{p}_2) \cdot \mathbf{v}_2 \end{bmatrix}, \qquad \mathbf{P}^* = \frac{\mathbf{L}_1(t_1^*) + \mathbf{L}_2(t_2^*)}{2}$$
+  </section>
+
+  <section id="sec-sim-wpt-3d">
+    <h2>Interactive 3D Simulator · Binocular Triangulation &amp; FLIR Thermal Safety Interlock</h2>
+    <p>
+      The 3D simulator below lets you vary the receiver coil's spatial coordinates $(X, Y, Z)$, camera pixel detection noise $\sigma_{uv}$, and the approach distance of a human thermal source ($36.5^\circ\text{C}$),
+      simulating in real time the <strong>binocular skew-ray midpoint $\mathbf{P}^*$ reconstruction error</strong>, <strong>resonant power transfer efficiency $\eta$</strong>, and <strong>automatic safety interlock cutoff</strong>.
+    </p>
+
+    <section class="sim" id="sim-wpt-3d">
+      <div class="sim-head">
+        <span class="sim-tag">SIMULATOR 04 · THREE.JS + TSAI 3D SOLVER</span>
+        <h3>3D Stereo Skew-Ray Triangulation &amp; FLIR Thermal Safety Interlock</h3>
+      </div>
+      <div class="sim-body side">
+        <div class="sim-view" id="wpt3d-box"></div>
+        <div class="sim-controls">
+          <label class="ctrl">
+            <span>RX Coil Horizontal Offset $X_{\text{rx}}$ <output id="wpt-lbl-x">0.20 m</output></span>
+            <input type="range" id="wpt-rng-x" min="-1.5" max="1.5" step="0.05" value="0.20" />
+          </label>
+          <label class="ctrl">
+            <span>RX Coil Vertical Air Gap $Y_{\text{rx}}$ <output id="wpt-lbl-y">0.85 m</output></span>
+            <input type="range" id="wpt-rng-y" min="0.35" max="1.80" step="0.05" value="0.85" />
+          </label>
+          <label class="ctrl">
+            <span>Pixel Detection Noise $\sigma_{uv}$ (Skew Ray Gap) <output id="wpt-lbl-noise">1.5 px</output></span>
+            <input type="range" id="wpt-rng-noise" min="0.0" max="8.0" step="0.5" value="1.5" />
+          </label>
+          <label class="ctrl">
+            <span>FLIR Thermal Human Distance $d_{\text{human}}$ <output id="wpt-lbl-hum">1.60 m</output></span>
+            <input type="range" id="wpt-rng-hum" min="0.30" max="2.20" step="0.05" value="1.60" />
+          </label>
+        </div>
+      </div>
+      <div class="sim-readout">
+        <div class="stat"><span class="k">3D Localization Error</span><span class="v" id="wpt-st-err">1.8 mm</span></div>
+        <div class="stat"><span class="k">Coupling Coefficient $k$</span><span class="v" id="wpt-st-k">0.185</span></div>
+        <div class="stat"><span class="k">Power Transfer Efficiency $\eta$</span><span class="v" id="wpt-st-eff">86.4%</span></div>
+        <div class="stat"><span class="k">TX Output / Safety State</span><span class="v" id="wpt-st-pwr">864 W (ACTIVE)</span></div>
+      </div>
+      <div class="sim-note" id="wpt-readout"></div>
+    </section>
+  </section>
+
+  <section id="sec-olev">
+    <h2>OLEV 85 kHz Dynamic Wireless Charging Telematics &amp; UTM Trajectory Prediction</h2>
+    <p>
+      Keeping road-embedded segmented power rails (85 kHz, 100 kW class) continuously energized would cause severe standby power loss and unnecessary EMF exposure;
+      therefore, each inverter segment must be pre-heated and switched on (Pre-Turn-On) just before the OLEV electric bus enters the segment.
+      <code>Telematics_and_GPS</code> in Theme 1 solves this using 4 Android vehicle terminals (<code>EVGPS</code>, <code>GPSlog</code>, <code>GPStracker</code>, <code>InverterGPS</code>) and a MATLAB trajectory analysis engine (<a class="src" href="../../1_Wireless_Power_Transfer_and_EV/Telematics_and_GPS/GPS/get_lane_distance.m#L1" target="_blank" rel="noopener" title="1_Wireless_Power_Transfer_and_EV/Telematics_and_GPS/GPS/get_lane_distance.m:1">get_lane_distance.m:1</a>, <a class="src" href="../../1_Wireless_Power_Transfer_and_EV/Telematics_and_GPS/GPS/get_predicted_time.m#L1" target="_blank" rel="noopener" title="1_Wireless_Power_Transfer_and_EV/Telematics_and_GPS/GPS/get_predicted_time.m:1">get_predicted_time.m:1</a>).
+    </p>
+
+    <h3 id="sec-olev-math">Point-to-Line Orthogonal Lane Deviation &amp; Interquartile 25% Trimmed Mean (<code>get_lane_distance.m</code>)</h3>
+    <p>
+      After projecting WGS84 latitude/longitude coordinates into metric 2D Cartesian coordinates $\mathbf{p}_i = (x_i, y_i)$ via <code>deg2utm.m</code>,
+      the vehicle's orthogonal lateral deviation from the road centerline segment $(\mathbf{q}_1, \mathbf{q}_2)$ is computed via the 2D cross product (<a class="src" href="../../1_Wireless_Power_Transfer_and_EV/Telematics_and_GPS/GPS/get_lane_distance.m#L10" target="_blank" rel="noopener" title="1_Wireless_Power_Transfer_and_EV/Telematics_and_GPS/GPS/get_lane_distance.m:10">get_lane_distance.m:10</a>):
+    </p>
+    $$d_{\perp, i} = \frac{\left|(x_{q_2} - x_{q_1})(y_{q_1} - y_i) - (x_{q_1} - x_i)(y_{q_2} - y_{q_1})\right|}{\sqrt{(x_{q_2} - x_{q_1})^2 + (y_{q_2} - y_{q_1})^2}}$$
+    <p>
+      Because urban canyon GPS multipath reflections intermittently inject meter-scale outliers,
+      <a class="src" href="../../1_Wireless_Power_Transfer_and_EV/Telematics_and_GPS/GPS/get_lane_distance.m#L16" target="_blank" rel="noopener" title="1_Wireless_Power_Transfer_and_EV/Telematics_and_GPS/GPS/get_lane_distance.m:16">get_lane_distance.m:16</a> sorts the collected distance array in ascending order, <strong>discards both the bottom 25% and top 25% (Interquartile 25% Trimmed Mean)</strong>, and averages only the central 50% of samples.
+    </p>
+
+    <h3 id="sec-olev-eta">Conservative 10% Velocity-Margin Inverter Pre-Heating ETA Prediction (<code>get_predicted_time.m</code>)</h3>
+    <p>
+      To prevent late inverter activation as the bus approaches a charging zone, line 4 (<code>% reduce 10 %</code>, <a class="src" href="../../1_Wireless_Power_Transfer_and_EV/Telematics_and_GPS/GPS/get_predicted_time.m#L4" target="_blank" rel="noopener" title="1_Wireless_Power_Transfer_and_EV/Telematics_and_GPS/GPS/get_predicted_time.m:4">get_predicted_time.m:4</a>) and line 26 (<a class="src" href="../../1_Wireless_Power_Transfer_and_EV/Telematics_and_GPS/GPS/get_predicted_time.m#L26" target="_blank" rel="noopener" title="1_Wireless_Power_Transfer_and_EV/Telematics_and_GPS/GPS/get_predicted_time.m:26">get_predicted_time.m:26</a>) of <code>get_predicted_time.m</code>
+      apply a <strong>$0.9\times$ conservative safety factor</strong> to the segment-averaged velocity $\bar{v}_k$ when estimating the remaining time-to-arrival $\widehat{\text{ETA}}$:
+    </p>
+    $$\widehat{d}_{\text{step}, k} = 0.9 \cdot \Delta d_k, \qquad \widehat{\text{ETA}}_k = \frac{d_{\text{rem}, k}}{\bar{v}_k}, \qquad \text{Inverter State} = \begin{cases} \text{ON (Active)} & \text{if } d_{\text{rem}} \le 0 \\ \text{PRE-HEAT} & \text{if } 0 \lt \widehat{\text{ETA}}_k \le \tau_{\text{warm}} \\ \text{STANDBY} & \text{otherwise} \end{cases}$$
+  </section>
+
+  <section id="sec-sim-olev">
+    <h2>Interactive Simulator · OLEV Lane Deviation Filtering &amp; Inverter Pre-Activation Control</h2>
+    <p>
+      The simulator below models <strong>orthogonal lane-deviation estimation accuracy</strong> and <strong>segmented inverter pre-heating (Pre-Heat) timing</strong> in real time as you vary GPS multipath spike noise, interquartile 25% trimmed filtering, and OLEV bus speed.
+    </p>
+
+    <section class="sim" id="sim-olev-gps">
+      <div class="sim-head">
+        <span class="sim-tag">SIMULATOR 05 · MATLAB GPS KINEMATICS</span>
+        <h3>OLEV 85kHz UTM Lane Deviation &amp; Inverter Pre-Activation Telematics</h3>
+      </div>
+      <div class="sim-body side">
+        <div class="sim-view">
+          <canvas id="olev-canvas"></canvas>
+        </div>
+        <div class="sim-controls">
+          <label class="ctrl">
+            <span>OLEV Bus Track Progress <output id="olev-lbl-pos">58%</output></span>
+            <input type="range" id="olev-rng-pos" min="5" max="95" step="1" value="58" />
+          </label>
+          <label class="ctrl">
+            <span>Average Cruising Speed $\bar{v}$ <output id="olev-lbl-vel">42 km/h</output></span>
+            <input type="range" id="olev-rng-vel" min="15" max="80" step="1" value="42" />
+          </label>
+          <label class="ctrl">
+            <span>GPS Multipath Spike Noise <output id="olev-lbl-mp">2.2 m</output></span>
+            <input type="range" id="olev-rng-mp" min="0.2" max="5.0" step="0.2" value="2.2" />
+          </label>
+          <div class="ctrl">
+            <span>Interquartile Trimmed Filter (<code>get_lane_distance.m</code>)</span>
+            <div class="seg" id="olev-trim-btns">
+              <button type="button" class="on" data-trim="1">ON (25%~75% Trimmed)</button>
+              <button type="button" data-trim="0">OFF (Raw Mean)</button>
+            </div>
+          </div>
+        </div>
+      </div>
+      <div class="sim-readout">
+        <div class="stat"><span class="k">Estimated Deviation $d_\perp$</span><span class="v" id="olev-st-dev">0.26 m</span></div>
+        <div class="stat"><span class="k">Outlier Suppression</span><span class="v" id="olev-st-sup">74.8%</span></div>
+        <div class="stat"><span class="k">Power Segment ETA</span><span class="v" id="olev-st-eta">1.33 s</span></div>
+        <div class="stat"><span class="k">85kHz Inverter State</span><span class="v" id="olev-st-inv">PRE-HEAT READY</span></div>
+      </div>
+      <div class="sim-note" id="olev-readout"></div>
+    </section>
+  </section>
+
+  <section class="keypoints" id="summary">
+    <h2>Key Takeaways · Chapter 03</h2>
+    <ol>
+      <li><strong>Tsai Binocular 3D Vision &amp; Thermal Safety Control</strong>: Reconstructs the 3D receiver coil coordinates via an 11-DoF projection matrix and skew-ray midpoint triangulation, while immediately cutting transmitter output upon human approach using FLIR Lepton + Coral EdgeTPU (US 12,496,917 B2).</li>
+      <li><strong>85 kHz OLEV UTM Telematics</strong>: Suppresses urban GPS multipath spikes via interquartile 25% trimmed averaging and pre-heats road-embedded power inverters right on time using a 0.9× conservative velocity margin.</li>
+    </ol>
+  </section>
+
+  <script>
+  document.addEventListener("DOMContentLoaded", function () {
+    var WPT_INFO = {
+      "wpt-calib": {
+        title: "STAGE 1 · Tsai 11-DoF Pinhole Calibration (Find_K_Matrix)",
+        body: "Find_K_Matrix() in TsaiCalibration.py solves the least-squares pseudoinverse (A^T A)^(-1) A^T b from 3D world reference points and 2D image pixel correspondences to recover the 3x4 projection matrix K."
+      },
+      "wpt-ray": {
+        title: "STAGE 2 · Skew-Ray Closest Midpoint 3D Triangulation (Line_gen & Est_Point)",
+        body: "Line_gen() computes the 3D ray direction vectors of dual camera pixels via plane normal cross products, and Est_Point() solves the orthogonality linear system between the two skew rays to find the closest midpoint P*=(X,Y,Z)."
+      },
+      "wpt-safety": {
+        title: "STAGE 3 · FLIR Lepton Thermal & Coral EdgeTPU Safety Interlock",
+        body: "Long-wave infrared thermal imaging (8–14 um) in the FIR submodule and INT8 MobileNet SSD on Coral EdgeTPU (edgetpu_models) immediately attenuate transmitter power to a safe standby mode whenever human entry into the high-EMF zone is detected (US 12,496,917 B2)."
+      },
+      "wpt-olev": {
+        title: "STAGE 4 · OLEV 85kHz Dynamic Charging Telematics (GPS & Android)",
+        body: "Top/bottom 25% trimmed averaging in get_lane_distance.m eliminates GPS multipath spikes, while the 0.9x conservative velocity margin in get_predicted_time.m pre-heats road-embedded power inverters prior to bus entry."
+      }
+    };
+    var wptNodes = document.querySelectorAll("#wpt-svg .svg-node");
+    wptNodes.forEach(function (n) {
+      n.addEventListener("click", function () {
+        wptNodes.forEach(function (x) { x.classList.remove("is-selected"); });
+        n.classList.add("is-selected");
+        var info = WPT_INFO[n.getAttribute("data-node")];
+        if (info) {
+          document.getElementById("wpt-insp-title").textContent = "📌 " + info.title;
+          document.getElementById("wpt-insp-body").textContent = info.body;
+        }
+      });
+    });
+
+    // 2. Sim 04: Three.js 3D Stereo Triangulation & Thermal Safety
+    var rxCoilMesh = null, humanMesh = null, estSphere = null, rayLine1 = null, rayLine2 = null, hazardRing = null;
+    var THREE_REF = null;
+
+    var wptX = document.getElementById("wpt-rng-x");
+    var wptY = document.getElementById("wpt-rng-y");
+    var wptNoise = document.getElementById("wpt-rng-noise");
+    var wptHum = document.getElementById("wpt-rng-hum");
+
+    function updateWptSim() {
+      var x = parseFloat(wptX.value);
+      var y = parseFloat(wptY.value);
+      var noisePx = parseFloat(wptNoise.value);
+      var dHum = parseFloat(wptHum.value);
+
+      document.getElementById("wpt-lbl-x").textContent = x.toFixed(2) + " m";
+      document.getElementById("wpt-lbl-y").textContent = y.toFixed(2) + " m";
+      document.getElementById("wpt-lbl-noise").textContent = noisePx.toFixed(1) + " px";
+      document.getElementById("wpt-lbl-hum").textContent = dHum.toFixed(2) + " m";
+
+      var dist3D = Math.sqrt(x * x + y * y);
+      var errMm = (0.6 + noisePx * (0.95 + 0.35 * dist3D)).toFixed(1);
+      var kCoupl = (0.42 / Math.pow(1 + dist3D * dist3D * 1.35, 1.25));
+      var Q1Q2 = 320 * 280;
+      var k2Q = kCoupl * kCoupl * Q1Q2;
+      var eta = Math.pow(k2Q / Math.pow(1 + Math.sqrt(1 + k2Q), 2), 1) * 100;
+      var safeCut = dHum <= 0.95;
+
+      window.SB.stat("wpt-st-err", errMm + " mm");
+      window.SB.stat("wpt-st-k", kCoupl.toFixed(3));
+      window.SB.stat("wpt-st-eff", eta.toFixed(1) + "%");
+      window.SB.stat("wpt-st-pwr", safeCut ? "5 W (THERMAL CUTOFF)" : Math.round(eta * 10) + " W (ACTIVE)");
+
+      document.getElementById("wpt-readout").innerHTML =
+        "Est_Point Midpoint P*: <code>(" + x.toFixed(2) + ", " + y.toFixed(2) + ", 0.00) m</code> · Skew Gap: <strong>" + errMm + " mm</strong> · " +
+        (safeCut
+          ? "<span style='color:var(--bad);font-weight:700;'>⚠️ FLIR Lepton Thermal Human Detected (d=" + dHum.toFixed(2) + "m ≤ 0.95m): ICNIRP Safety Interlock Triggered (Power Cutoff)</span>"
+          : "<span style='color:var(--ok);font-weight:600;'>✅ Safe Clearance Maintained (d=" + dHum.toFixed(2) + "m): Multi-Coil Magnetic Beamforming Active</span>");
+
+      if (THREE_REF && rxCoilMesh) {
+        var sceneY = -1.0 + y * 1.25;
+        rxCoilMesh.position.set(x, sceneY, 0);
+        var jitter = noisePx * 0.015;
+        estSphere.position.set(x + jitter, sceneY - jitter * 0.6, 0);
+        humanMesh.position.set(-dHum * 1.15, -0.5, 0.55);
+        hazardRing.material.color.setHex(safeCut ? 0xd64545 : 0x1f9d55);
+
+        rayLine1.geometry.setFromPoints([
+          new THREE_REF.Vector3(-2.4, 1.8, 1.6),
+          new THREE_REF.Vector3(x + jitter, sceneY + jitter, 0)
+        ]);
+        rayLine2.geometry.setFromPoints([
+          new THREE_REF.Vector3(2.4, 1.8, 1.6),
+          new THREE_REF.Vector3(x - jitter, sceneY - jitter, 0)
+        ]);
+      }
+    }
+
+    if (window.SB && window.SB.three) {
+      window.SB.three("wpt3d-box", { height: 285, radius: 8.2, phi: 1.08, theta: 0.48, hint: "Drag: Rotate · Scroll: Zoom" }, function (T3) {
+        var THREE = T3.THREE;
+        THREE_REF = THREE;
+        var scene = T3.scene;
+        var grid = new THREE.GridHelper(10, 10, 0x0a84c6, 0x8a93a8);
+        grid.position.y = -1.2;
+        scene.add(grid);
+
+        var txCoil = new THREE.Mesh(
+          new THREE.TorusGeometry(1.05, 0.09, 18, 56),
+          new THREE.MeshStandardMaterial({ color: 0x1f9d55, metalness: 0.4, roughness: 0.3 })
+        );
+        txCoil.rotation.x = Math.PI / 2;
+        txCoil.position.set(0, -1.0, 0);
+        scene.add(txCoil);
+
+        hazardRing = new THREE.Mesh(
+          new THREE.RingGeometry(0.95, 1.02, 48),
+          new THREE.MeshBasicMaterial({ color: 0x1f9d55, side: THREE.DoubleSide, transparent: true, opacity: 0.65 })
+        );
+        hazardRing.rotation.x = Math.PI / 2;
+        hazardRing.position.set(0, -1.15, 0);
+        scene.add(hazardRing);
+
+        rxCoilMesh = new THREE.Mesh(
+          new THREE.TorusGeometry(0.62, 0.07, 16, 48),
+          new THREE.MeshStandardMaterial({ color: 0x0a84c6, metalness: 0.4, roughness: 0.3 })
+        );
+        rxCoilMesh.rotation.x = Math.PI / 2;
+        scene.add(rxCoilMesh);
+
+        estSphere = new THREE.Mesh(
+          new THREE.SphereGeometry(0.11, 16, 16),
+          new THREE.MeshBasicMaterial({ color: 0xd98a00 })
+        );
+        scene.add(estSphere);
+
+        var camMat = new THREE.MeshStandardMaterial({ color: 0x7a4ce0 });
+        var cam1 = new THREE.Mesh(new THREE.BoxGeometry(0.28, 0.22, 0.36), camMat);
+        cam1.position.set(-2.4, 1.8, 1.6);
+        scene.add(cam1);
+        var cam2 = new THREE.Mesh(new THREE.BoxGeometry(0.28, 0.22, 0.36), camMat);
+        cam2.position.set(2.4, 1.8, 1.6);
+        scene.add(cam2);
+
+        var rMat1 = new THREE.LineBasicMaterial({ color: 0x0a84c6 });
+        var rGeo1 = new THREE.BufferGeometry().setFromPoints([new THREE.Vector3(-2.4, 1.8, 1.6), new THREE.Vector3(0, 0, 0)]);
+        rayLine1 = new THREE.Line(rGeo1, rMat1);
+        scene.add(rayLine1);
+
+        var rMat2 = new THREE.LineBasicMaterial({ color: 0x7a4ce0 });
+        var rGeo2 = new THREE.BufferGeometry().setFromPoints([new THREE.Vector3(2.4, 1.8, 1.6), new THREE.Vector3(0, 0, 0)]);
+        rayLine2 = new THREE.Line(rGeo2, rMat2);
+        scene.add(rayLine2);
+
+        humanMesh = new THREE.Mesh(
+          new THREE.CylinderGeometry(0.22, 0.22, 1.35, 20),
+          new THREE.MeshStandardMaterial({ color: 0xd64545, roughness: 0.35 })
+        );
+        scene.add(humanMesh);
+
+        T3.label("Cam 1 (K1)", new THREE.Vector3(-2.4, 2.15, 1.6), "#7a4ce0");
+        T3.label("Cam 2 (K2)", new THREE.Vector3(2.4, 2.15, 1.6), "#7a4ce0");
+        T3.label("TX Resonant Coil (1kW)", new THREE.Vector3(0, -1.45, 0), "#1f9d55");
+        updateWptSim();
+      });
+    }
+
+    [wptX, wptY, wptNoise, wptHum].forEach(function (el) {
+      if (el) el.addEventListener("input", updateWptSim);
+    });
+    updateWptSim();
+
+    // 3. Sim 05: OLEV 85kHz Lane Deviation & Inverter Pre-Activation
+    var olevPos = document.getElementById("olev-rng-pos");
+    var olevVel = document.getElementById("olev-rng-vel");
+    var olevMp = document.getElementById("olev-rng-mp");
+    var useTrim = true;
+    var olevState = { posPct: 58, mpNoise: 2.2, invState: "PRE-HEAT READY", invKind: "warn" };
+
+    var olevChart = window.SB && window.SB.canvas("olev-canvas", 285, function (ctx, CW, CH, P) {
+      var roadY = 156, roadH = 90;
+      ctx.fillStyle = P.surface;
+      ctx.fillRect(30, roadY - roadH / 2, CW - 60, roadH);
+      ctx.strokeStyle = P.border;
+      ctx.lineWidth = 1;
+      ctx.strokeRect(30, roadY - roadH / 2, CW - 60, roadH);
+
+      ctx.strokeStyle = P.accent;
+      ctx.setLineDash([8, 6]);
+      ctx.beginPath();
+      ctx.moveTo(30, roadY);
+      ctx.lineTo(CW - 30, roadY);
+      ctx.stroke();
+      ctx.setLineDash([]);
+
+      var trackW = CW - 80;
+      var railX = 40 + 0.65 * trackW;
+      var railW = 0.23 * trackW;
+      var invColor = olevState.invKind === "ok" ? P.ok : (olevState.invKind === "warn" ? P.warn : P.dim);
+      ctx.fillStyle = olevState.invKind === "ok" ? P.accSoft : P.surface;
+      ctx.fillRect(railX, roadY - 22, railW, 44);
+      ctx.strokeStyle = invColor;
+      ctx.lineWidth = 2;
+      ctx.strokeRect(railX, roadY - 22, railW, 44);
+      ctx.save();
+      ctx.fillStyle = invColor;
+      ctx.font = "600 10.5px 'JetBrains Mono', monospace";
+      ctx.textAlign = "right";
+      ctx.fillText("85kHz SEGMENT: " + olevState.invState, CW - 32, roadY - 30);
+      ctx.restore();
+
+      for (var i = 0; i <= 28; i++) {
+        var px = 40 + (i / 28) * trackW;
+        var spike = (i % 5 === 0) ? (olevState.mpNoise * 13 * (i % 2 === 0 ? 1 : -1)) : (Math.sin(i * 1.3) * olevState.mpNoise * 4);
+        var pyRaw = roadY + spike;
+        ctx.fillStyle = P.bad;
+        ctx.beginPath();
+        ctx.arc(px, pyRaw, 3, 0, Math.PI * 2);
+        ctx.fill();
+      }
+
+      ctx.strokeStyle = useTrim ? P.ok : P.bad;
+      ctx.lineWidth = 2.4;
+      ctx.beginPath();
+      for (var j = 0; j <= 28; j++) {
+        var fx = 40 + (j / 28) * trackW;
+        var fy = roadY + (useTrim ? Math.sin(j * 0.7) * 3.5 : ((j % 5 === 0 ? olevState.mpNoise * 11 : 4) * (j % 2 === 0 ? 1 : -1)));
+        if (j === 0) ctx.moveTo(fx, fy);
+        else ctx.lineTo(fx, fy);
+      }
+      ctx.stroke();
+
+      var bx = 40 + (olevState.posPct / 100) * trackW;
+      ctx.fillStyle = P.accent;
+      ctx.fillRect(bx - 22, roadY - 14, 44, 28);
+      ctx.strokeStyle = P.bg;
+      ctx.lineWidth = 1.5;
+      ctx.strokeRect(bx - 22, roadY - 14, 44, 28);
+      ctx.fillStyle = "#ffffff";
+      ctx.font = "600 10px 'JetBrains Mono', monospace";
+      ctx.fillText("OLEV", bx - 13, roadY + 4);
+
+      ctx.fillStyle = P.text;
+      ctx.font = "600 11.5px 'JetBrains Mono', monospace";
+      ctx.fillText("UTM LANE TRAJECTORY · DOTS: RAW GPS MULTIPATH · LINE: ESTIMATED PATH", 30, 26);
+    });
+
+    function updateOlevSim() {
+      var posPct = parseInt(olevPos.value, 10);
+      var velKmh = parseInt(olevVel.value, 10);
+      var mpNoise = parseFloat(olevMp.value);
+      document.getElementById("olev-lbl-pos").textContent = posPct + "%";
+      document.getElementById("olev-lbl-vel").textContent = velKmh + " km/h";
+      document.getElementById("olev-lbl-mp").textContent = mpNoise.toFixed(1) + " m";
+
+      var velMs = (velKmh / 3.6) * 0.9;
+      var busM = posPct * 2.0;
+      var segStartM = 130.0, segEndM = 176.0;
+      var dRem = segStartM - busM;
+      var etaSec = dRem > 0 ? (dRem / Math.max(1, velMs)) : 0;
+
+      var invState = "STANDBY (OFF)";
+      var invKind = "dim";
+      var invCss = "var(--text-dim)";
+      if (busM >= segStartM && busM <= segEndM) {
+        invState = "85kHz POWER ON";
+        invKind = "ok";
+        invCss = "var(--ok)";
+      } else if (dRem > 0 && etaSec <= 3.2) {
+        invState = "PRE-HEAT READY";
+        invKind = "warn";
+        invCss = "var(--warn)";
+      }
+
+      var rawDev = 0.12 + mpNoise * 0.42;
+      var trimDev = 0.11 + mpNoise * 0.07;
+      var shownDev = useTrim ? trimDev : rawDev;
+      var supRate = ((1 - trimDev / Math.max(0.01, rawDev)) * 100).toFixed(1);
+
+      window.SB.stat("olev-st-dev", shownDev.toFixed(2) + " m");
+      window.SB.stat("olev-st-sup", useTrim ? supRate + "%" : "0.0% (OFF)");
+      window.SB.stat("olev-st-eta", dRem > 0 ? etaSec.toFixed(2) + " s" : (busM <= segEndM ? "IN ZONE" : "PASSED"));
+      window.SB.stat("olev-st-inv", invState);
+
+      document.getElementById("olev-readout").innerHTML =
+        "Bus UTM X: <strong>" + busM.toFixed(1) + " m</strong> · Conservative Speed (0.9x): <strong>" + velMs.toFixed(1) + " m/s</strong> · " +
+        "Segment [130m ~ 176m] Inverter: <strong style='color:" + invCss + "'>" + invState + "</strong>";
+
+      olevState = { posPct: posPct, mpNoise: mpNoise, invState: invState, invKind: invKind };
+      if (olevChart) olevChart.redraw();
+    }
+
+    [olevPos, olevVel, olevMp].forEach(function (el) {
+      if (el) el.addEventListener("input", updateOlevSim);
+    });
+    document.querySelectorAll("#olev-trim-btns button").forEach(function (b) {
+      b.addEventListener("click", function () {
+        document.querySelectorAll("#olev-trim-btns button").forEach(function (x) { x.classList.remove("on"); });
+        b.classList.add("on");
+        useTrim = b.getAttribute("data-trim") === "1";
+        updateOlevSim();
+      });
+    });
+    updateOlevSim();
+  });
+  </script>
+
+</main>
+</body>
+</html>

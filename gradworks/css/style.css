@@ -197,6 +197,9 @@ body {
 .book-search-results .sr-empty { padding: 14px 10px; color: var(--text-dim); font-size: 13px; text-align: center; }
 .series-link { text-decoration: none; font-weight: 600; color: var(--accent) !important; border-color: color-mix(in srgb, var(--accent) 45%, var(--border)) !important; white-space: nowrap; }
 .series-link:hover { background: var(--accent-soft) !important; }
+.sb-lang-toggle { font-family: var(--mono); font-weight: 700; font-size: 12.5px; letter-spacing: 0.02em; padding: 0 10px; gap: 4px; }
+.sb-lang-toggle .lg-on { color: var(--accent); }
+.sb-lang-toggle .lg-dim { color: var(--text-faint); font-weight: 500; }
 @media (max-width: 680px) {
   .sb-brand small { display: none; }
   .book-search { flex: 1 1 120px; min-width: 100px; }

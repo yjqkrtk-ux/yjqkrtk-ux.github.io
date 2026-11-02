@@ -1,0 +1,613 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Ch.04 Intelligent Vision Automation, Markov Modeling &amp; Specialty Systems · KAIST Grad Works &amp; Workspace Guidebook</title>
+<meta name="description" content="Ch.04 Intelligent Vision Automation, Markov Modeling &amp; Specialty Systems — KAIST Grad Works &amp; GoogleDrive Master Workspace Interactive Guidebook">
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/katex@0.16.11/dist/katex.min.css">
+<script defer src="https://cdn.jsdelivr.net/npm/katex@0.16.11/dist/katex.min.js"></script>
+<script defer src="https://cdn.jsdelivr.net/npm/katex@0.16.11/dist/contrib/auto-render.min.js"></script>
+<link rel="stylesheet" href="../css/style.css?v=1950d4d">
+<link rel="stylesheet" href="../css/glossary-tooltips.css?v=1950d4d">
+<script src="../js/glossary-data.js?v=1950d4d"></script>
+<script src="../js/common.js?v=1950d4d"></script>
+<script defer src="../js/glossary-tooltips.js?v=1950d4d"></script>
+</head>
+<body data-chapter="automation" data-root="../">
+<main class="chapter">
+  <header class="chapter-hero">
+    <div class="eyebrow">CHAPTER 04 · THEMES 3 &amp; 4 — INTELLIGENT AUTOMATION, MARKOV &amp; SPECIALTY SYSTEMS</div>
+    <h1>Intelligent Vision Automation, Markov Stochastic Modeling &amp; Specialty Embedded Systems</h1>
+    <p class="lead">
+      To achieve autonomous control and optimal decision-making under complex dynamic software environments and extreme hardware constraints,
+      Theme 3 (<a class="src" href="../../3_Intelligent_Automation/README.md" target="_blank" rel="noopener" title="3_Intelligent_Automation/README.md">Theme 3 README.md</a>, 7 submodules) integrates <strong>Win32 DirectInput scancode hooking, a 13-state priority vision FSM, Faster R-CNN object detection, absorbing Markov chains, and constrained combinatorial optimization</strong>,
+      while Theme 4 (<a class="src" href="../../4_Specialty_Systems/README.md" target="_blank" rel="noopener" title="4_Specialty_Systems/README.md">Theme 4 README.md</a>, 4 submodules) implements <strong>Casio FX-9860G 128×64 bare-metal game engines</strong> and a <strong>3GPP/WINNER II 3D MIMO wireless channel simulator</strong>.
+    </p>
+    <ul class="objectives">
+      <li>Understand Win32 DirectInput hardware scancode injection alongside the <strong>PyMaple 13-state priority vision finite-state machine (FSM)</strong> and Faster R-CNN detection loop.</li>
+      <li>Experiment with the <code>StarForce.m</code> model, which formalizes non-Markovian Chance Time (100% success after 2 consecutive drops) into a first-order <strong>Absorbing Markov Chain</strong>.</li>
+      <li>Examine the operating principles of the <strong>Casio FX-9860G 1-bit VRAM graphics engine</strong> and <strong>WINNER II 3D MIMO multipath beamforming (Sim 07)</strong>.</li>
+    </ul>
+  </header>
+
+  <section id="sec-fsm">
+    <h2>Low-Level Input Driver Hooking &amp; 13-State Priority Vision State Machine</h2>
+    <p>
+      In DirectX-based client environments, standard operating-system virtual keyboard events (<code>keybd_event</code>) are blocked by the DirectInput polling loop.
+      To overcome this limitation, <code>CMaple</code> (C#) and <code>PyMaple</code> (<a class="src" href="../../3_Intelligent_Automation/Vision_and_Driver_Automation/PyMaple/PyMaple2/pydetect.py#L4" target="_blank" rel="noopener" title="3_Intelligent_Automation/Vision_and_Driver_Automation/PyMaple/PyMaple2/pydetect.py:4">pydetect.py:4</a>) layer a hardware scancode (DIK Scancode) injection driver with an
+      OpenCV + Faster R-CNN multi-scale vision feedback loop.
+    </p>
+
+    <figure class="diagram">
+      <svg id="auto-svg" viewBox="0 0 1080 320" xmlns="http://www.w3.org/2000/svg" role="img" aria-label="Themes 3 and 4 Intelligent Automation and Specialty Systems Pipeline">
+        <defs>
+          <marker id="auto-arr" viewBox="0 0 10 10" refX="8" refY="5" markerWidth="6" markerHeight="6" orient="auto-start-reverse">
+            <path d="M 0 1 L 9 5 L 0 9 z" fill="var(--warn)" />
+          </marker>
+        </defs>
+        <rect x="4" y="4" width="1072" height="312" rx="12" class="f-surface" />
+        <text x="24" y="28" class="t-warn">CLICKABLE ARCHITECTURE · THEME 3 VISION/MARKOV (7 MODS) &amp; THEME 4 MIMO/CASIO (4 MODS)</text>
+
+        <!-- Node 1: Vision FSM & Driver -->
+        <g class="svg-node" data-node="auto-fsm">
+          <rect x="24" y="48" width="242" height="184" rx="9" class="f-warn-soft" />
+          <text x="38" y="74" class="t-warn">THEME 3A · VISION &amp; DRIVER</text>
+          <text x="38" y="98" class="t" font-weight="700">PyMaple · CMaple · Click</text>
+          <text x="38" y="120" class="t-dim">Win32 DirectInput Scancode</text>
+          <text x="38" y="140" class="t-dim">13-State Priority FSM (act)</text>
+          <text x="38" y="160" class="t-dim">Faster R-CNN Captcha Detector</text>
+          <text x="38" y="180" class="t-dim">PyMapleFCM Mobile Push</text>
+          <text x="38" y="212" class="t-mono">pydetect.py · Click_detection.py</text>
+        </g>
+
+        <!-- Node 2: StarForce Markov & Lophago -->
+        <g class="svg-node is-selected" data-node="auto-markov">
+          <rect x="292" y="48" width="242" height="184" rx="9" class="f-acc2-soft" />
+          <text x="306" y="74" class="t-acc2">THEME 3B · STOCHASTIC &amp; OPT</text>
+          <text x="306" y="98" class="t" font-weight="700">StarForce &amp; Lophago Solver</text>
+          <text x="306" y="120" class="t-dim">0-&gt;22 Absorbing Markov Chain</text>
+          <text x="306" y="140" class="t-dim">Chance Time (fail==2 -&gt; 100%)</text>
+          <text x="306" y="160" class="t-dim">Destroy Reset (level = 12)</text>
+          <text x="306" y="180" class="t-dim">Relic/Ancient 5-Slot Pruning</text>
+          <text x="306" y="212" class="t-mono">StarForce.m · Lophago/main.py</text>
+        </g>
+
+        <!-- Node 3: Embedded Casio Engines -->
+        <g class="svg-node" data-node="auto-casio">
+          <rect x="560" y="48" width="240" height="184" rx="9" class="f-ok-soft" />
+          <text x="574" y="74" class="t-ok">THEME 4A · EMBEDDED SDK</text>
+          <text x="574" y="98" class="t" font-weight="700">Casio FX-9860G RPG &amp; RTS</text>
+          <text x="574" y="120" class="t-dim">SuperH-3 Bare-Metal C Engine</text>
+          <text x="574" y="140" class="t-dim">128x64 1-Bit VRAM Bit-Blit</text>
+          <text x="574" y="160" class="t-dim">Tile Collision &amp; RTS Unit AI</text>
+          <text x="574" y="180" class="t-dim">Algorithm_Sandbox (ETC)</text>
+          <text x="574" y="212" class="t-mono">Embedded_Casio_Engines/RPG,RTS</text>
+        </g>
+
+        <!-- Node 4: WINNER II 3D MIMO -->
+        <g class="svg-node" data-node="auto-mimo">
+          <rect x="826" y="48" width="230" height="184" rx="9" class="f-acc-soft" />
+          <text x="840" y="74" class="t-acc">THEME 4B · 3D MIMO CHANNEL</text>
+          <text x="840" y="98" class="t" font-weight="700">WinnerIIChannel (Step1..11)</text>
+          <text x="840" y="120" class="t-dim">Azimuth + Elevation Clusters</text>
+          <text x="840" y="140" class="t-dim">3D Antenna Pattern &amp; Doppler</text>
+          <text x="840" y="160" class="t-dim">60GHz Unlicensed mmWave</text>
+          <text x="840" y="180" class="t-dim">Massive MIMO Beamforming</text>
+          <text x="840" y="212" class="t-mono">WinnerIIChannel/Main.m</text>
+        </g>
+
+        <line x1="266" y1="140" x2="289" y2="140" class="s-warn" stroke-width="2" marker-end="url(#auto-arr)" />
+        <line x1="534" y1="140" x2="557" y2="140" class="s-warn" stroke-width="2" marker-end="url(#auto-arr)" />
+        <line x1="800" y1="140" x2="823" y2="140" class="s-warn" stroke-width="2" marker-end="url(#auto-arr)" />
+
+        <!-- Bottom Summary Strip -->
+        <rect x="24" y="248" width="1032" height="48" rx="8" class="f-elev" />
+        <text x="40" y="277" class="t-warn">MATHEMATICAL CORE:</text>
+        <text x="200" y="277" class="t" font-weight="600">Fundamental Matrix N = (I - Q)^(-1) · Combinatorial Pruning · 1-Bit VRAM Bitwise Shift · 3D GBSM MIMO</text>
+      </svg>
+      <div class="inspector-box" id="auto-insp">
+        <div class="insp-title" id="auto-insp-title">📌 THEME 3B · StarForce Absorbing Markov Chain &amp; Lophago Combinatorics</div>
+        <div id="auto-insp-body">Formalizes non-Markovian Chance Time (100% success after 2 consecutive drops) via state-space augmentation (level, consecutive_fails) to compute exact expected cost. Click any block in the diagram to inspect its architecture.</div>
+      </div>
+      <figcaption><b>Figure 4-1.</b> Architecture of Theme 3 Intelligent Vision Automation &amp; Stochastic Optimization (PyMaple · StarForce · Lophago) and Theme 4 Specialty Embedded &amp; 3D MIMO Systems (Casio SDK · WINNER II).</figcaption>
+    </figure>
+
+    <h3 id="sec-fsm-detail">PyMaple 13-State FSM &amp; Faster R-CNN Security Captcha Detection</h3>
+    <ul>
+      <li>
+        <strong>13-State Priority Finite-State Machine (<a class="src" href="../../3_Intelligent_Automation/Vision_and_Driver_Automation/PyMaple/PyMaple2/pydetect.py#L4" target="_blank" rel="noopener" title="3_Intelligent_Automation/Vision_and_Driver_Automation/PyMaple/PyMaple2/pydetect.py:4">pydetect.py:4</a>, <a class="src" href="../../3_Intelligent_Automation/Vision_and_Driver_Automation/PyMaple/PyMaple2/pydetect.py#L40" target="_blank" rel="noopener" title="3_Intelligent_Automation/Vision_and_Driver_Automation/PyMaple/PyMaple2/pydetect.py:40">pydetect.py:40</a>)</strong>:
+        The <code>act</code> class combines character coordinates $(x, y)$ on the minimap, Rune spawn status, foreign player (guild/intruder) presence, and a periodic cooldown timer (<code>runeperiod = 900</code> s)
+        to transition across 13 behavioral states, dispatching instant mobile push alerts via <code>PyMapleFCM</code> whenever an anomaly is detected.
+      </li>
+      <li>
+        <strong>Faster R-CNN Dynamic Object Detection (<a class="src" href="../../3_Intelligent_Automation/Vision_and_Driver_Automation/Click/Click_detection.py#L27" target="_blank" rel="noopener" title="3_Intelligent_Automation/Vision_and_Driver_Automation/Click/Click_detection.py:27">Click_detection.py:27</a>)</strong>:
+        Couples a real-time TensorFlow Object Detection API Faster R-CNN inference graph to detect dynamic security objects (such as translucent, shape-warped lie-detector prompts).
+      </li>
+    </ul>
+  </section>
+
+  <section id="sec-markov">
+    <h2>Absorbing Markov Chain (StarForce) &amp; Non-Markovian Chance Time State Augmentation</h2>
+    <p>
+      <a class="src" href="../../3_Intelligent_Automation/Modeling_and_Intelligence/StarForce/StarForce.m#L1" target="_blank" rel="noopener" title="3_Intelligent_Automation/Modeling_and_Intelligence/StarForce/StarForce.m:1">StarForce.m:1</a> is a stochastic model simulating equipment enhancement from 0★ to 22★ (target absorbing state).
+      Defining the state solely by the current star level $L \in \{0, \dots, 21\}$ violates the first-order Markov property because of the
+      <strong>Chance Time (<code>if(fail == 2)</code>)</strong> rule implemented in <a class="src" href="../../3_Intelligent_Automation/Modeling_and_Intelligence/StarForce/StarForce.m#L24" target="_blank" rel="noopener" title="3_Intelligent_Automation/Modeling_and_Intelligence/StarForce/StarForce.m:24">StarForce.m:24</a>:
+    </p>
+    <ul>
+      <li>When enhancement failure causes the star level to <strong>drop twice consecutively (<code>fail == 2</code>)</strong>, the conditional success probability on the very next attempt becomes <strong>$100\%$ ($1.0$)</strong>.</li>
+      <li>In the $12 \sim 21$★ range, hitting the destruction probability $p_{\text{dest}}(L)$ destroys ("booms") the item and immediately resets it to <strong>$12$★ (<code>level = 12; fail = 0;</code>, <a class="src" href="../../3_Intelligent_Automation/Modeling_and_Intelligence/StarForce/StarForce.m#L42" target="_blank" rel="noopener" title="3_Intelligent_Automation/Modeling_and_Intelligence/StarForce/StarForce.m:42">StarForce.m:42</a>)</strong>.</li>
+      <li>Succeeding at the StarCatch mini-game (<a class="src" href="../../3_Intelligent_Automation/Modeling_and_Intelligence/StarForce/StarForce.m#L10" target="_blank" rel="noopener" title="3_Intelligent_Automation/Modeling_and_Intelligence/StarForce/StarForce.m:10">StarForce.m:10</a>) multiplies the base success rate by $1 + \text{starcatch} = 1.05$:
+        $$p_{\text{succ}}'(L) = \min\!\left(1.0,\; p_{\text{succ}}(L) \cdot (1 + 0.05)\right)$$
+      </li>
+    </ul>
+    <p>
+      To transform the process into a rigorous first-order Absorbing Markov Chain, we define an
+      <strong>augmented state space $s = (L, f) \in \{0,\dots,21\} \times \{0, 1, 2\}$</strong> (where $f$ counts consecutive level drops).
+      From the transient submatrix $\mathbf{Q}$ of the transition matrix $\mathbf{P}$, both the <strong>Fundamental Matrix $\mathbf{N}$</strong> and the expected total cost $\mathbb{E}[C]$ can be solved analytically:
+    </p>
+    $$\mathbf{N} = (\mathbf{I} - \mathbf{Q})^{-1}, \qquad \mathbb{E}\!\left[\text{Total Cost from } s_0 \to 22\text{-star}\right] = \sum_{s' \in \mathcal{T}} N_{s_0, s'} \, c(s')$$
+
+    <div class="tbl-wrap">
+      <table class="tbl">
+        <thead>
+          <tr>
+            <th>Enhancement Step</th>
+            <th>Base Success ($p_{\text{succ}}$)</th>
+            <th>Base Failure ($p_{\text{fail}}$)</th>
+            <th>Base Destroy ($p_{\text{dest}}$)</th>
+            <th>Single-Attempt Cost ($c_L$)</th>
+            <th>Failure / Destruction Transition Rule (<a class="src" href="../../3_Intelligent_Automation/Modeling_and_Intelligence/StarForce/StarForce.m#L1" target="_blank" rel="noopener" title="3_Intelligent_Automation/Modeling_and_Intelligence/StarForce/StarForce.m:1">StarForce.m:1</a>)</th>
+          </tr>
+        </thead>
+        <tbody>
+            <tr><td class='mono'>0★ → 1★</td><td class='mono'>95.0%</td><td class='mono'>5.0%</td><td class='mono'>0.0%</td><td class='mono'>88,900 Meso</td><td>Retain level on failure</td></tr>
+            <tr><td class='mono'>10★ → 11★</td><td class='mono'>35.0%</td><td class='mono'>65.0%</td><td class='mono'>0.0%</td><td class='mono'>3,561,150 Meso</td><td>Retain level on failure</td></tr>
+            <tr><td class='mono'>12★ → 13★</td><td class='mono'>30.0%</td><td class='mono'>69.0%</td><td class='mono'>1.0%</td><td class='mono'>5,590,550 Meso</td><td>-1★ drop on failure (reset to 12★ on boom)</td></tr>
+            <tr><td class='mono'>15★ → 16★</td><td class='mono'>30.0%</td><td class='mono'>68.0%</td><td class='mono'>2.0%</td><td class='mono'>19,586,000 Meso</td><td>Retain level on failure</td></tr>
+            <tr><td class='mono'>17★ → 18★</td><td class='mono'>30.0%</td><td class='mono'>68.0%</td><td class='mono'>2.0%</td><td class='mono'>26,918,600 Meso</td><td>-1★ drop on failure (reset to 12★ on boom)</td></tr>
+            <tr><td class='mono'>19★ → 20★</td><td class='mono'>30.0%</td><td class='mono'>67.0%</td><td class='mono'>3.0%</td><td class='mono'>35,776,100 Meso</td><td>-1★ drop on failure (reset to 12★ on boom)</td></tr>
+            <tr><td class='mono'>20★ → 21★</td><td class='mono'>30.0%</td><td class='mono'>63.0%</td><td class='mono'>7.0%</td><td class='mono'>0 Meso</td><td>Retain level on failure</td></tr>
+            <tr><td class='mono'>21★ → 22★</td><td class='mono'>30.0%</td><td class='mono'>63.0%</td><td class='mono'>7.0%</td><td class='mono'>0 Meso</td><td>-1★ drop on failure (reset to 12★ on boom)</td></tr>
+        </tbody>
+      </table>
+    </div>
+  </section>
+
+  <section id="sec-sim-starforce">
+    <h2>Interactive Simulator · StarForce Markov Analytical Solution &amp; Monte Carlo Distribution</h2>
+    <p>
+      Using the exact probability and cost arrays parsed from <a class="src" href="../../3_Intelligent_Automation/Modeling_and_Intelligence/StarForce/StarForce.m#L1" target="_blank" rel="noopener" title="3_Intelligent_Automation/Modeling_and_Intelligence/StarForce/StarForce.m:1">StarForce.m:1</a>, the simulator below simultaneously computes the
+      <strong>expected Markov cost</strong> and a <strong>live Monte Carlo cost distribution histogram (400 trials)</strong> across target star levels ($15 \sim 22$★), StarCatch ($+5\%$ relative boost), and Chance Time settings.
+    </p>
+
+    <section class="sim" id="sim-starforce">
+      <div class="sim-head">
+        <span class="sim-tag">SIMULATOR 06 · PARSED FROM StarForce.m</span>
+        <h3>StarForce Absorbing Markov Chain Solver &amp; Monte Carlo Simulator</h3>
+      </div>
+      <div class="sim-body side">
+        <div class="sim-view">
+          <canvas id="sf-canvas"></canvas>
+        </div>
+        <div class="sim-controls">
+          <label class="ctrl">
+            <span>Target Star Level <output id="sf-lbl-tgt">22★</output></span>
+            <input type="range" id="sf-rng-tgt" min="15" max="22" step="1" value="22" />
+          </label>
+          <div class="ctrl">
+            <span>StarCatch Multiplicative Boost (<code>starcatch = 0.05</code>)</span>
+            <div class="seg" id="sf-sc-btns">
+              <button type="button" class="on" data-sc="0.05">ON (+5% Relative)</button>
+              <button type="button" data-sc="0.0">OFF (Base Rate)</button>
+            </div>
+          </div>
+          <div class="ctrl">
+            <span>Chance Time Rule (<code>fail == 2 -&gt; 100%</code>)</span>
+            <div class="seg" id="sf-ct-btns">
+              <button type="button" class="on" data-ct="1">ON (Chance Time)</button>
+              <button type="button" data-ct="0">OFF (Memoryless)</button>
+            </div>
+          </div>
+          <div class="btn-row">
+            <button type="button" id="sf-btn-run">🎲 Resample 400 Monte Carlo Trials</button>
+          </div>
+        </div>
+      </div>
+      <div class="sim-readout">
+        <div class="stat"><span class="k">Expected Cost E[Cost]</span><span class="v" id="sf-st-mean">0.00 ×100M</span></div>
+        <div class="stat"><span class="k">Median (P50)</span><span class="v" id="sf-st-p50">0.00 ×100M</span></div>
+        <div class="stat"><span class="k">90th Percentile (P90)</span><span class="v" id="sf-st-p90">0.00 ×100M</span></div>
+        <div class="stat"><span class="k">Expected Booms (12★ Reset)</span><span class="v" id="sf-st-boom">0.00 booms</span></div>
+      </div>
+      <div class="sim-note" id="sf-readout"></div>
+    </section>
+  </section>
+
+  <section id="sec-lophago-casio">
+    <h2>Constrained Combinatorial Optimization (Lophago) &amp; Casio FX-9860G Bare-Metal Engine</h2>
+    <p>
+      Beyond stochastic modeling, Themes 3 and 4 address discrete combinatorial search and ultra-low-power embedded optimization:
+    </p>
+    <ul>
+      <li>
+        <strong>Lophago Engraving Combination Solver (<a class="src" href="../../3_Intelligent_Automation/Modeling_and_Intelligence/Lophago/main.py#L119" target="_blank" rel="noopener" title="3_Intelligent_Automation/Modeling_and_Intelligence/Lophago/main.py:119">main.py:119</a>)</strong>:
+        Across <code>ITEM_NUM = 5</code> equipment slots (1 necklace, 2 earrings, 2 rings), the solver combines candidate Relic allocations (<code>ENGRAVING_COMB_RELIC</code>: $[3,3], [4,3], [5,3]$, etc.) and
+        Ancient allocations (<code>ENGRAVING_COMB_LEGENDARY</code>: including $[6,3]$) with ability stone and engraving book points, using pruned backtracking to enumerate all valid combinations satisfying a target engraving vector (e.g., $33333$ or $333331$).
+      </li>
+      <li>
+        <strong>Casio FX-9860G Native Game Engines (<a class="src" href="../../4_Specialty_Systems/Embedded_Casio_Engines/RPG/README.md" target="_blank" rel="noopener" title="4_Specialty_Systems/Embedded_Casio_Engines/RPG/README.md">Casio RPG/README.md</a>, <a class="src" href="../../4_Specialty_Systems/Embedded_Casio_Engines/RTS/README.md" target="_blank" rel="noopener" title="4_Specialty_Systems/Embedded_Casio_Engines/RTS/README.md">Casio RTS/README.md</a>)</strong>:
+        Built in bare-metal C for a graphing calculator equipped only with a Renesas SuperH-3 CPU and a $128 \times 64$ 1-bit monochrome LCD ($1{,}024\text{ Bytes}$ framebuffer),
+        implementing cross-byte bitwise shift sprite blitting (Bit-Blit), tilemap scrolling, and multi-entity real-time strategy (RTS) unit loops without external engines.
+      </li>
+    </ul>
+  </section>
+
+  <section id="sec-winner-mimo">
+    <h2>WINNER II 3D MIMO Geometry-Based Stochastic Channel &amp; 60 GHz Millimeter-Wave Backhaul</h2>
+    <p>
+      <code>WinnerIIChannel</code> in Theme 4 (<a class="src" href="../../4_Specialty_Systems/Wireless_Communications/WinnerIIChannel/Main.m" target="_blank" rel="noopener" title="4_Specialty_Systems/Wireless_Communications/WinnerIIChannel/Main.m">Main.m</a>, <code>Step1.m</code>–<code>Step11.m</code>) is an <strong>11-step Geometry-Based Stochastic Channel Model (GBSM)</strong> designed for 5G/B5G Massive MIMO and
+      60 GHz unlicensed small-cell wireless backhaul links.
+      Between $S$ transmit antenna elements and $U$ receive antenna elements, the 3D channel impulse response across cluster $n \in \{1,\dots,N\}$ and subpath $m \in \{1,\dots,M\}$ is synthesized as:
+    </p>
+    <div class="formula">
+      $$H_{u, s, n}(t) = \sqrt{\frac{P_n}{M}} \sum_{m=1}^{M} \mathbf{F}_{\text{rx}, u}\!\left(\Omega_{n,m}^{\text{AOA}}\right)^T \mathbf{\Gamma}_{n,m} \, \mathbf{F}_{\text{tx}, s}\!\left(\Psi_{n,m}^{\text{AOD}}\right) e^{j k_0 \mathbf{r}_{\text{rx}, u}^T \hat{\mathbf{u}}_{n,m}} e^{j k_0 \mathbf{r}_{\text{tx}, s}^T \hat{\mathbf{v}}_{n,m}} e^{j 2\pi \nu_{n,m} t}$$
+      <div class="where">
+        where $\mathbf{\Gamma}_{n,m} = \begin{bmatrix} e^{j\Phi_{n,m}^{vv}} & \sqrt{\kappa_{n,m}^{-1}}\,e^{j\Phi_{n,m}^{vh}} \\ \sqrt{\kappa_{n,m}^{-1}}\,e^{j\Phi_{n,m}^{hv}} & e^{j\Phi_{n,m}^{hh}} \end{bmatrix}$ is the cross-polarization coupling matrix, $\kappa_{n,m}$ is the Cross-Polarization Ratio (XPR), and $\hat{\mathbf{u}}_{n,m}, \hat{\mathbf{v}}_{n,m} \in \mathbb{R}^3$ are the 3D spherical unit direction vectors at the receiver and transmitter.
+      </div>
+    </div>
+
+    <section class="sim" id="sim-winner-mimo">
+      <div class="sim-head">
+        <span class="sim-tag">SIMULATOR 07 · 3D MIMO BEAMFORMER</span>
+        <h3>WINNER II 3D MIMO Multipath Cluster Beamforming &amp; Capacity</h3>
+      </div>
+      <div class="sim-body side">
+        <div class="sim-view">
+          <canvas id="mimo-canvas"></canvas>
+        </div>
+        <div class="sim-controls">
+          <label class="ctrl">
+            <span>TX Antenna Elements $N_{\text{tx}}$ (ULA/UPA) <output id="mimo-lbl-nt">16 elem</output></span>
+            <input type="range" id="mimo-rng-nt" min="4" max="64" step="4" value="16" />
+          </label>
+          <label class="ctrl">
+            <span>Beam Steering Azimuth $\theta_{\text{steer}}$ <output id="mimo-lbl-ang">15 deg</output></span>
+            <input type="range" id="mimo-rng-ang" min="-60" max="60" step="5" value="15" />
+          </label>
+          <label class="ctrl">
+            <span>Multipath Cluster Angular Spread (ASD) <output id="mimo-lbl-asd">8 deg</output></span>
+            <input type="range" id="mimo-rng-asd" min="2" max="25" step="1" value="8" />
+          </label>
+          <label class="ctrl">
+            <span>Receive SNR <output id="mimo-lbl-snr">18 dB</output></span>
+            <input type="range" id="mimo-rng-snr" min="0" max="35" step="1" value="18" />
+          </label>
+        </div>
+      </div>
+      <div class="sim-readout">
+        <div class="stat"><span class="k">Array Gain</span><span class="v" id="mimo-st-gain">11.4 dBi</span></div>
+        <div class="stat"><span class="k">3 dB Beamwidth (HPBW)</span><span class="v" id="mimo-st-bw">6.4 deg</span></div>
+        <div class="stat"><span class="k">Spectral Efficiency</span><span class="v" id="mimo-st-cap">14.0 bps/Hz</span></div>
+        <div class="stat"><span class="k">60 GHz Backhaul Throughput</span><span class="v" id="mimo-st-tput">7.00 Gbps</span></div>
+      </div>
+      <div class="sim-note" id="mimo-readout"></div>
+    </section>
+  </section>
+
+  <section class="keypoints" id="summary">
+    <h2>Key Takeaways · Chapter 04</h2>
+    <ol>
+      <li><strong>Vision FSM &amp; Absorbing Markov Chain</strong>: Real-time control is achieved via DirectInput scancode injection and a 13-state priority vision FSM, while right-skewed enhancement cost distributions with Chance Time and destruction resets are solved via an Absorbing Markov Chain ($\mathbf{N}=(\mathbf{I}-\mathbf{Q})^{-1}$).</li>
+      <li><strong>Bare-Metal Engines &amp; 3D MIMO</strong>: Hardware and wireless physical-layer engineering are demonstrated through a 1 KB VRAM Casio FX-9860G C engine and the 11-step WINNER II 3D geometry-based stochastic channel simulator.</li>
+    </ol>
+  </section>
+
+  <script>
+  document.addEventListener("DOMContentLoaded", function () {
+    var AUTO_INFO = {
+      "auto-fsm": {
+        title: "THEME 3A · PyMaple 13-State FSM, CMaple DirectInput & Faster R-CNN",
+        body: "An autonomous vision control system combining Win32/DirectInput hardware scancode injection in CMaple, a 13-state priority FSM in PyMaple2/pydetect.py, Faster R-CNN captcha detection in Click_detection.py, and PyMapleFCM mobile push alerting."
+      },
+      "auto-markov": {
+        title: "THEME 3B · StarForce Absorbing Markov Chain & Lophago Combinatorics",
+        body: "StarForce.m models equipment enhancement with 100% Chance Time after 2 consecutive drops and 12-star destruction resets, while Lophago/main.py solves 5-slot Relic/Ancient accessory engraving constraints via pruned backtracking."
+      },
+      "auto-casio": {
+        title: "THEME 4A · Casio FX-9860G Native C RPG & RTS Engines",
+        body: "Bare-metal embedded C engines implementing bitwise-shifted sprite blitting and real-time combat AI on a SuperH-3 CPU with 128x64 1-bit monochrome VRAM and zero external dependencies."
+      },
+      "auto-mimo": {
+        title: "THEME 4B · WINNER II 3D MIMO Channel & 60GHz Millimeter-Wave Backhaul",
+        body: "WinnerIIChannel (Main.m, Step1-Step11.m) synthesizes 3D azimuth/elevation multipath clusters, cross-polarization (XPR), antenna array responses, and Doppler shifts across an 11-step pipeline."
+      }
+    };
+    var autoNodes = document.querySelectorAll("#auto-svg .svg-node");
+    autoNodes.forEach(function (n) {
+      n.addEventListener("click", function () {
+        autoNodes.forEach(function (x) { x.classList.remove("is-selected"); });
+        n.classList.add("is-selected");
+        var info = AUTO_INFO[n.getAttribute("data-node")];
+        if (info) {
+          document.getElementById("auto-insp-title").textContent = "📌 " + info.title;
+          document.getElementById("auto-insp-body").textContent = info.body;
+        }
+      });
+    });
+
+    // 2. Sim 06: StarForce Markov + Monte Carlo Simulator
+    var SF = {"Success": [0.95, 0.9, 0.85, 0.8, 0.75, 0.7, 0.65, 0.6, 0.55, 0.45, 0.35, 0.3, 0.3, 0.3, 0.3, 0.3, 0.3, 0.3, 0.3, 0.3, 0.3, 0.3, 0.03, 0.02, 0.01], "Destroy": [0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.01, 0.01, 0.01, 0.02, 0.02, 0.02, 0.03, 0.03, 0.07, 0.07, 0.19, 0.29, 0.4], "cost": [88900, 176800, 264600, 352500, 440400, 528300, 616200, 704000, 791900, 879800, 3561150, 4504100, 5590550, 6828850, 8227050, 19586000, 23069100, 26918600, 31149300, 35776100, 0, 0, 0, 0, 0, 110800, 220500, 330300, 440000, 549800, 659600, 769300, 879100, 988800, 1098600, 4447700, 5625400, 6982350, 8528950, 10275250, 24462200, 28812500, 33620400, 38904500, 44683300, 50974700, 57796700, 65166700, 73102200, 81620200, 136000, 271000, 406000, 541000, 676000, 811000, 946000, 1081000, 1216000, 1351000, 5470350, 6918850, 8587900, 10490100, 12637950, 30087200, 35437900, 41351400, 47850600, 54958200, 62696400, 71087200, 80152000, 89912300, 100389000], "starcatch": 0.05, "reset_level": 12};
+    var sfTgt = document.getElementById("sf-rng-tgt");
+    var scVal = 0.05;
+    var useCT = true;
+    var mcSeed = 1337;
+    var sfState = { counts: [], maxCnt: 1, maxX: 10, p50: 2, p90: 6, meanC: 3 };
+
+    function nextRand() {
+      mcSeed = (mcSeed * 1664525 + 1013904223) % 4294967296;
+      return mcSeed / 4294967296;
+    }
+
+    var sfChart = window.SB && window.SB.canvas("sf-canvas", 300, function (ctx, CW, CH, P) {
+      var bins = sfState.counts.length || 18;
+      var padL = 32, padR = 38, padB = 38, padT = 36, plotW = CW - padL - padR, plotH = CH - padB - padT;
+      var barW = plotW / bins;
+
+      ctx.fillStyle = P.text;
+      ctx.font = "600 11px 'JetBrains Mono', monospace";
+      ctx.fillText("MONTE CARLO COST DISTRIBUTION (N = 400 TRIALS, UNIT: 100M MESO)", padL, 22);
+
+      ctx.fillStyle = P.surface;
+      ctx.fillRect(padL, padT, plotW, plotH);
+      ctx.strokeStyle = P.border;
+      ctx.lineWidth = 1;
+      ctx.strokeRect(padL, padT, plotW, plotH);
+
+      sfState.counts.forEach(function (cnt, i) {
+        var bh = (cnt / sfState.maxCnt) * (plotH - 12);
+        var bx = padL + i * barW + 2;
+        var by = padT + plotH - bh;
+        var binVal = i * (sfState.maxX / bins);
+        ctx.fillStyle = binVal <= sfState.p50 ? P.accent : (binVal <= sfState.p90 ? P.accent2 : P.bad);
+        ctx.fillRect(bx, by, Math.max(2, barW - 4), bh);
+      });
+
+      var xP50 = padL + Math.min(1, sfState.p50 / sfState.maxX) * plotW;
+      var xMean = padL + Math.min(1, sfState.meanC / sfState.maxX) * plotW;
+
+      ctx.strokeStyle = P.ok;
+      ctx.lineWidth = 2;
+      ctx.beginPath(); ctx.moveTo(xP50, padT); ctx.lineTo(xP50, padT + plotH); ctx.stroke();
+
+      ctx.strokeStyle = P.warn;
+      ctx.lineWidth = 2;
+      ctx.beginPath(); ctx.moveTo(xMean, padT); ctx.lineTo(xMean, padT + plotH); ctx.stroke();
+
+      var legX = padL + plotW - 144, legY = padT + 8;
+      ctx.fillStyle = P.bg;
+      ctx.fillRect(legX, legY, 136, 40);
+      ctx.strokeStyle = P.border;
+      ctx.lineWidth = 1;
+      ctx.strokeRect(legX, legY, 136, 40);
+      ctx.font = "600 10.5px 'JetBrains Mono', monospace";
+      ctx.fillStyle = P.ok;
+      ctx.fillText("P50 : " + sfState.p50.toFixed(1) + " ×100M", legX + 8, legY + 15);
+      ctx.fillStyle = P.warn;
+      ctx.fillText("Mean: " + sfState.meanC.toFixed(1) + " ×100M", legX + 8, legY + 32);
+
+      ctx.save();
+      ctx.fillStyle = P.dim;
+      ctx.font = "10.5px 'JetBrains Mono', monospace";
+      ctx.textAlign = "center";
+      for (var k = 0; k <= 4; k++) {
+        var xv = (sfState.maxX * (k / 4)).toFixed(1) + "×100M";
+        ctx.fillText(xv, padL + (k / 4) * plotW, padT + plotH + 18);
+      }
+      ctx.restore();
+    });
+
+    function runStarForceSim() {
+      var tgt = parseInt(sfTgt.value, 10);
+      document.getElementById("sf-lbl-tgt").textContent = tgt + "★";
+
+      var trials = 400;
+      var costsArr = [];
+      var totalBooms = 0;
+
+      for (var t = 0; t < trials; t++) {
+        var lv = 0, fail = 0, cSum = 0, booms = 0, guardSteps = 0;
+        while (lv < tgt && guardSteps < 25000) {
+          guardSteps++;
+          cSum += SF.cost[lv];
+          if (useCT && fail === 2) {
+            lv++;
+            fail = 0;
+            continue;
+          }
+          var sP = Math.min(1.0, SF.Success[lv] * (1 + scVal));
+          var dP = SF.Destroy[lv] * (1 - sP) / Math.max(1e-6, 1 - SF.Success[lv]);
+          var r = nextRand();
+          if (r < sP) {
+            lv++;
+            fail = 0;
+          } else if (r < sP + dP) {
+            lv = 12;
+            fail = 0;
+            booms++;
+          } else {
+            if (lv <= 10 || lv === 15 || lv === 20) {
+              fail = 0;
+            } else {
+              lv--;
+              fail++;
+            }
+          }
+        }
+        costsArr.push(cSum / 1e8);
+        totalBooms += booms;
+      }
+
+      costsArr.sort(function (a, b) { return a - b; });
+      var meanC = costsArr.reduce(function (a, b) { return a + b; }, 0) / trials;
+      var p50 = costsArr[Math.floor(trials * 0.5)];
+      var p90 = costsArr[Math.floor(trials * 0.9)];
+      var avgBoom = totalBooms / trials;
+
+      window.SB.stat("sf-st-mean", meanC.toFixed(2) + " ×100M");
+      window.SB.stat("sf-st-p50", p50.toFixed(2) + " ×100M");
+      window.SB.stat("sf-st-p90", p90.toFixed(2) + " ×100M");
+      window.SB.stat("sf-st-boom", avgBoom.toFixed(2) + " booms");
+
+      document.getElementById("sf-readout").innerHTML =
+        "0★ → <strong>" + tgt + "★</strong> (StarCatch: <code>" + (scVal * 100).toFixed(0) + "%</code>, ChanceTime: <code>" + (useCT ? "ON" : "OFF") + "</code>) · " +
+        "Exhibits a <strong>right-skewed heavy-tailed distribution</strong> where the mean (E[C]=" + meanC.toFixed(2) + "×100M) exceeds the median (P50=" + p50.toFixed(2) + "×100M).";
+
+      var maxX = Math.max(0.5, costsArr[Math.floor(trials * 0.96)]);
+      var bins = 18;
+      var counts = new Array(bins).fill(0);
+      costsArr.forEach(function (v) {
+        var b = Math.min(bins - 1, Math.floor((v / maxX) * bins));
+        counts[b]++;
+      });
+      var maxCnt = Math.max.apply(null, counts.concat([1]));
+      sfState = { counts: counts, maxCnt: maxCnt, maxX: maxX, p50: p50, p90: p90, meanC: meanC };
+      if (sfChart) sfChart.redraw();
+    }
+
+    if (sfTgt) sfTgt.addEventListener("input", runStarForceSim);
+    document.querySelectorAll("#sf-sc-btns button").forEach(function (b) {
+      b.addEventListener("click", function () {
+        document.querySelectorAll("#sf-sc-btns button").forEach(function (x) { x.classList.remove("on"); });
+        b.classList.add("on");
+        scVal = parseFloat(b.getAttribute("data-sc") || "0.05");
+        runStarForceSim();
+      });
+    });
+    document.querySelectorAll("#sf-ct-btns button").forEach(function (b) {
+      b.addEventListener("click", function () {
+        document.querySelectorAll("#sf-ct-btns button").forEach(function (x) { x.classList.remove("on"); });
+        b.classList.add("on");
+        useCT = b.getAttribute("data-ct") === "1";
+        runStarForceSim();
+      });
+    });
+    var btnRun = document.getElementById("sf-btn-run");
+    if (btnRun) btnRun.addEventListener("click", runStarForceSim);
+    runStarForceSim();
+
+    // 3. Sim 07: WINNER II 3D MIMO Beamforming Polar Plot
+    var mNt = document.getElementById("mimo-rng-nt");
+    var mAng = document.getElementById("mimo-rng-ang");
+    var mAsd = document.getElementById("mimo-rng-asd");
+    var mSnr = document.getElementById("mimo-rng-snr");
+    var mimoState = { Nt: 16, steerDeg: 15, asdDeg: 8, hpbw: "6.4", gainDbi: "11.4", cap: "14.0", tput: "7.00" };
+
+    var mimoChart = window.SB && window.SB.canvas("mimo-canvas", 285, function (ctx, CW, CH, P) {
+      var cx = Math.min(132, CW * 0.27), cy = CH * 0.53, R = Math.min(96, CH * 0.35);
+      ctx.fillStyle = P.surface;
+      ctx.beginPath();
+      ctx.arc(cx, cy, R, 0, Math.PI * 2);
+      ctx.fill();
+
+      ctx.strokeStyle = P.grid;
+      ctx.lineWidth = 1;
+      [0.33, 0.66, 1.0].forEach(function (f) {
+        ctx.beginPath();
+        ctx.arc(cx, cy, R * f, 0, Math.PI * 2);
+        ctx.stroke();
+      });
+      for (var a = 0; a < 360; a += 30) {
+        var rad = (a * Math.PI) / 180;
+        ctx.beginPath();
+        ctx.moveTo(cx, cy);
+        ctx.lineTo(cx + Math.cos(rad) * R, cy + Math.sin(rad) * R);
+        ctx.stroke();
+      }
+
+      var steerRad = (mimoState.steerDeg * Math.PI) / 180;
+      ctx.strokeStyle = P.accent;
+      ctx.fillStyle = P.accSoft;
+      ctx.lineWidth = 2.2;
+      ctx.beginPath();
+      for (var deg = -90; deg <= 90; deg += 1) {
+        var th = (deg * Math.PI) / 180;
+        var psi = Math.PI * (Math.sin(th) - Math.sin(steerRad));
+        var af = Math.abs(psi) < 1e-5 ? 1.0 : Math.abs(Math.sin(mimoState.Nt * psi * 0.5) / (mimoState.Nt * Math.sin(psi * 0.5)));
+        var rr = Math.max(0.06, Math.pow(af, 0.65)) * R;
+        var px = cx + Math.sin(th) * rr;
+        var py = cy - Math.cos(th) * rr;
+        if (deg === -90) ctx.moveTo(cx, cy);
+        ctx.lineTo(px, py);
+      }
+      ctx.closePath();
+      ctx.fill();
+      ctx.stroke();
+
+      for (var m = -2; m <= 2; m++) {
+        var cAng = ((mimoState.steerDeg + m * mimoState.asdDeg * 0.6) * Math.PI) / 180;
+        ctx.strokeStyle = P.ok;
+        ctx.lineWidth = 1.4;
+        ctx.beginPath();
+        ctx.moveTo(cx, cy);
+        ctx.lineTo(cx + Math.sin(cAng) * (R * 1.04), cy - Math.cos(cAng) * (R * 1.04));
+        ctx.stroke();
+      }
+
+      var rx = cx + R + 18;
+      ctx.fillStyle = P.text;
+      ctx.font = "600 11.5px 'JetBrains Mono', monospace";
+      ctx.fillText("WINNER II 3D BEAMFORMING", rx, 46);
+      ctx.fillStyle = P.dim;
+      ctx.font = "11px 'JetBrains Mono', monospace";
+      ctx.fillText("Blue Lobe : Array Factor AF(θ)", rx, 74);
+      ctx.fillText("Green Rays: 20 Cluster Subpaths", rx, 94);
+      ctx.fillText("Main Lobe : " + mimoState.steerDeg + "° (HPBW " + mimoState.hpbw + "°)", rx, 120);
+      ctx.fillText("Array Gain: +" + mimoState.gainDbi + " dBi", rx, 140);
+      ctx.fillStyle = P.ok;
+      ctx.font = "600 11px 'JetBrains Mono', monospace";
+      ctx.fillText("Spectral  : " + mimoState.cap + " bps/Hz", rx, 168);
+      ctx.fillText("60GHz Link: " + mimoState.tput + " Gbps", rx, 188);
+    });
+
+    function runMimoSim() {
+      var Nt = parseInt(mNt.value, 10);
+      var steerDeg = parseInt(mAng.value, 10);
+      var asdDeg = parseInt(mAsd.value, 10);
+      var snrDb = parseInt(mSnr.value, 10);
+
+      document.getElementById("mimo-lbl-nt").textContent = Nt + " elem";
+      document.getElementById("mimo-lbl-ang").textContent = steerDeg + " deg";
+      document.getElementById("mimo-lbl-asd").textContent = asdDeg + " deg";
+      document.getElementById("mimo-lbl-snr").textContent = snrDb + " dB";
+
+      var gainDbi = (10 * Math.log10(Nt) - asdDeg * 0.08).toFixed(1);
+      var hpbw = (102 / Nt).toFixed(1);
+      var snrLin = Math.pow(10, snrDb / 10);
+      var effSinr = snrLin * Nt * Math.exp(-asdDeg * 0.03);
+      var cap = (Math.log2(1 + effSinr) * 1.45).toFixed(1);
+      var tput = (parseFloat(cap) * 0.5).toFixed(2);
+
+      window.SB.stat("mimo-st-gain", gainDbi + " dBi");
+      window.SB.stat("mimo-st-bw", hpbw + " deg");
+      window.SB.stat("mimo-st-cap", cap + " bps/Hz");
+      window.SB.stat("mimo-st-tput", tput + " Gbps");
+
+      document.getElementById("mimo-readout").innerHTML =
+        "WINNER II Array Response: <code>N_tx=" + Nt + "</code>, <code>theta_0=" + steerDeg + "°</code>, <code>ASD=" + asdDeg + "°</code> · " +
+        "Expected 60 GHz unlicensed backhaul link capacity (500 MHz BW): <strong>" + tput + " Gbps</strong>";
+
+      mimoState = { Nt: Nt, steerDeg: steerDeg, asdDeg: asdDeg, hpbw: hpbw, gainDbi: gainDbi, cap: cap, tput: tput };
+      if (mimoChart) mimoChart.redraw();
+    }
+
+    [mNt, mAng, mAsd, mSnr].forEach(function (el) {
+      if (el) el.addEventListener("input", runMimoSim);
+    });
+    runMimoSim();
+  });
+  </script>
+
+</main>
+</body>
+</html>

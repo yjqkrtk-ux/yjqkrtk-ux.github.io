@@ -1,68 +1,66 @@
-# 🌐 Yongjoon Song, Ph.D. — Executive Resume & Interactive Architecture Guidebooks
+# 🌐 Yongjoon Song, Ph.D. — Executive Resume & Architecture Guidebooks
 
 [![Executive Resume](https://img.shields.io/badge/📄_Executive_Resume-yjqkrtk--ux.github.io-0a84c6?style=for-the-badge)](https://yjqkrtk-ux.github.io/)
-[![Samsung S.LSI Guidebook](https://img.shields.io/badge/🏢_ISOCELL_200MP_&_E2E_AI_Remosaic-/isocell/-1428a0?style=for-the-badge)](https://yjqkrtk-ux.github.io/isocell/)
-[![AICAMERA Guidebook](https://img.shields.io/badge/📷_AICAMERA_(Edge_LSP)-/aicamera/-7a4ce0?style=for-the-badge)](https://yjqkrtk-ux.github.io/aicamera/)
-[![KAIST Grad Works](https://img.shields.io/badge/🎓_KAIST_Ph.D._Research-/gradworks/-1f9d55?style=for-the-badge)](https://yjqkrtk-ux.github.io/gradworks/)
+[![Samsung S.LSI Guidebook](https://img.shields.io/badge/🏢_ISOCELL_200MP_&_E2E_AI_Remosaic-/isocell/-1428a0?style=for-the-badge)](https://yjqkrtk-ux.github.io/isocell/en/)
+[![AICAMERA Guidebook](https://img.shields.io/badge/📷_AICAMERA_(Edge_LSP)-/aicamera/-7a4ce0?style=for-the-badge)](https://yjqkrtk-ux.github.io/aicamera/en/)
+[![KAIST Grad Works](https://img.shields.io/badge/🎓_KAIST_Ph.D._Research-/gradworks/-1f9d55?style=for-the-badge)](https://yjqkrtk-ux.github.io/gradworks/en/)
 [![LinkedIn](https://img.shields.io/badge/LinkedIn-Yongjoon_Song-0A66C2?style=for-the-badge&logo=linkedin&logoColor=white)](https://www.linkedin.com/in/yongjoon-song-52b03a208/)
 [![Google Scholar](https://img.shields.io/badge/Scholar-Citations-4285F4?style=for-the-badge&logo=googlescholar&logoColor=white)](https://scholar.google.com/citations?user=H3AQNpAAAAAJ)
 
 > **Yongjoon Song, Ph.D.** — *Staff Engineer / Technical Leader at Samsung Electronics (S.LSI Sensor Business Team) · Ph.D. in Electrical Engineering, KAIST*  
-> This repository hosts my **Executive Web Resume** alongside three **Bilingual (`KO` / `EN`) Interactive Engineering Architecture Guidebooks** featuring live mathematical derivations (KaTeX), 1:1 Korean master & English translated editions with a persistent top-bar `KO / EN` switcher, and browser-based 2D Canvas / 3D WebGL simulators.
+> Executive Web Resume and three **Bilingual (`KO` / `EN`) Interactive Engineering Guidebooks** with mathematical derivations and browser-based simulators.
 
 ---
 
 ## 🚀 Live Portals Overview
 
-| Category | Portal Title | Key Technical Scope & Commercial Impact | Live Link (`KO` / `EN`) |
+| Category | Portal | Key Technical Scope & Commercial Impact | Link |
 | :--- | :--- | :--- | :---: |
-| **📄 Resume / CV** | **Executive Web Resume** | • **Neural ISP Algorithm & On-Device AI Technical Leader** (Samsung S.LSI, 2021–Present)<br>• **3 Granted US Patents** (`US 12,574,659 B2`, `US 12,363,458 B2`, `US 12,496,917 B2`) & 4 First-Author IEEE Papers<br>• Print-ready A4 layout (`Ctrl+P`) & full career/project record | [**Resume →**](https://yjqkrtk-ux.github.io/) |
-| **🏢 Industry R&D**<br>*(Samsung S.LSI)* | **ISOCELL 200MP & E2E AI Remosaic Architecture Guidebook** | • **200MP ISOCELL Sensors**: `HP5` (0.50µm, world's smallest 200MP), `HP3/HP9` (0.56µm, world-first DL Hexadeca 16-cell remosaic), `HP2` (0.60µm, `QMSC` 4× in-sensor zoom on Galaxy S23 Ultra)<br>• **E2E AI Remosaic (Gen 1–4)**: Heterogeneous SoC (`CPU/GPU/NPU/ISP`) turn-key S/W ISP deployed across **30+ global OEM flagships** (**SEC Annual Award 2023 Silver**) | [**🇰🇷 KO**](https://yjqkrtk-ux.github.io/isocell/) · [**🇺🇸 EN**](https://yjqkrtk-ux.github.io/isocell/en/) |
-| **📷 Edge AI Camera**<br>*(Independent R&D)* | **AICAMERA — Latent Signal Processing (LSP) Guidebook** | • **Sensor–SoC Split Inference**: Sony IMX500 In-Sensor NPU (`.rpk`) + Hailo-8 Host NPU (`.hef`, 26 TOPS)<br>• **48× MIPI CSI-2 Payload Compression**: Saturates 30.0 FPS physical sensor ceiling (`25.06 ms` serial latency) with Zero-Shutter-Lag (ZSL) generative capture<br>• **10-Stage C99/Halide ISP & Universal CFA**: Verified lifting, 3A loop, and Bayer/Tetracell/Hexadecacell phase unshuffling | [**🇰🇷 KO**](https://yjqkrtk-ux.github.io/aicamera/) · [**🇺🇸 EN**](https://yjqkrtk-ux.github.io/aicamera/en/) |
-| **🎓 Ph.D. Research**<br>*(KAIST EE)* | **KAIST Grad Works & Systems Guidebook** | • **Bioinformatics & DRL**: `DQNAlign` linear-time $O(L)$ deep reinforcement learning DNA alignment (*IEEE OJEMB* 2021) & `REminerII` C++ bit-packed mining (`US 2019/0385696 A1`)<br>• **3D WPT & Edge Vision Safety**: Tsai 11-DoF stereo triangulation + Coral EdgeTPU / FLIR Lepton thermal interlock (**US Patent `12,496,917 B2`**) & 85 kHz OLEV telematics<br>• **Intelligent Automation & 60 GHz MIMO**: Absorbing Markov chains, Casio 1-bit VRAM engine, and WINNER II 3D MIMO | [**🇰🇷 KO**](https://yjqkrtk-ux.github.io/gradworks/) · [**🇺🇸 EN**](https://yjqkrtk-ux.github.io/gradworks/en/) |
+| **📄&nbsp;Resume**<br><small>Executive&nbsp;CV</small> | **Executive Web Resume**<br><small>`yjqkrtk-ux.github.io`</small> | <small>• **Neural ISP & On-Device AI Technical Leader** (Samsung S.LSI, 2021–Present)<br>• **3 Granted US Patents** (`US 12,574,659 B2`, `12,363,458 B2`, `12,496,917 B2`) & 4 First-Author IEEE Papers<br>• Print-ready A4 layout (`Ctrl+P`) with full commercial & academic record</small> | <small>[**📄&nbsp;Open**](https://yjqkrtk-ux.github.io/)</small> |
+| **🏢&nbsp;Industry**<br><small>Samsung&nbsp;S.LSI</small> | **ISOCELL 200MP & E2E AI Remosaic**<br><small>Neural ISP Guidebook</small> | <small>• **200MP Sensors**: `HP5` (0.50µm TL), `HP3/HP9` (1st DL 16-cell remosaic), `HP2` (`QMSC` on Galaxy S23 Ultra)<br>• **E2E AI Remosaic (Gen 1–4)**: Heterogeneous `CPU/GPU/NPU/ISP` parallelization on the ISP pipeline<br>• **3× Faster Capture (`3s → 1s`)**: Deployed across **30+ OEM flagships** (**SEC Annual Award 2023 Silver**)</small> | <small>[**🇺🇸&nbsp;EN**](https://yjqkrtk-ux.github.io/isocell/en/)<br>[**🇰🇷&nbsp;KO**](https://yjqkrtk-ux.github.io/isocell/)</small> |
+| **📷&nbsp;Edge&nbsp;AI**<br><small>Independent&nbsp;R&D</small> | **AICAMERA — Latent Signal Processing**<br><small>Edge NPU Guidebook</small> | <small>• **Sensor–SoC Split Inference**: Sony IMX500 In-Sensor NPU (`.rpk`) + Hailo-8 Host NPU (`.hef`, 26 TOPS)<br>• **48× MIPI CSI-2 Compression**: Saturates 30.0 FPS sensor ceiling (`25.06 ms`) with ZSL generative capture<br>• **10-Stage C99/Halide ISP & Universal CFA**: Bayer, Tetracell, and Hexadecacell phase unshuffling</small> | <small>[**🇺🇸&nbsp;EN**](https://yjqkrtk-ux.github.io/aicamera/en/)<br>[**🇰🇷&nbsp;KO**](https://yjqkrtk-ux.github.io/aicamera/)</small> |
+| **🎓&nbsp;Academic**<br><small>KAIST&nbsp;Ph.D.</small> | **KAIST Grad Works & Systems**<br><small>Ph.D. Research Guidebook</small> | <small>• **Bioinformatics & DRL**: `DQNAlign` $O(L)$ deep RL DNA alignment (*IEEE OJEMB* 2021) & `REminerII` C++ engine<br>• **3D WPT & Edge Vision**: Tsai 11-DoF stereo + Coral EdgeTPU / FLIR thermal safety (**US `12,496,917 B2`**)<br>• **Automation & 60 GHz MIMO**: Absorbing Markov chains, Casio 1-bit VRAM engine & WINNER II 3D MIMO</small> | <small>[**🇺🇸&nbsp;EN**](https://yjqkrtk-ux.github.io/gradworks/en/)<br>[**🇰🇷&nbsp;KO**](https://yjqkrtk-ux.github.io/gradworks/)</small> |
 
 ---
 
 ## 🏢 1. Samsung S.LSI — ISOCELL 200MP & E2E AI Remosaic Guidebook
-🔗 **Main Portal**: [**https://yjqkrtk-ux.github.io/isocell/**](https://yjqkrtk-ux.github.io/isocell/)
+🔗 **Portal**: [**🇺🇸 English Edition (`/isocell/en/`)**](https://yjqkrtk-ux.github.io/isocell/en/) · [**🇰🇷 Korean Master (`/isocell/`)**](https://yjqkrtk-ux.github.io/isocell/)
 
-*An English engineering guidebook accompanying my Resume, organized around my two core project tracks at Samsung Electronics S.LSI (Apr 2021 – Present).*
-
-| Chapter | Title | Core Topics & Commercial Track Record | Link |
+| Ch. | Chapter Title | Core Technical Scope & Commercial Track Record | Link |
 | :---: | :--- | :--- | :---: |
-| **Home** | **Overview & Commercial Summary** | Career & role progression at Samsung S.LSI, two-pillar project overview, and consolidated commercial product summary table | [View](https://yjqkrtk-ux.github.io/isocell/) |
-| **Ch.01** | **200MP ISOCELL Sensor Development — HP2 (`0.6µm`) · HP3/HP9 (`0.56µm`) · HP5 (`0.5µm`)** | Core principle of Non-Bayer (`4×4 Hexadeca` / `2×2 Q-cell`) to standard Bayer **Remosaic** for full 200MP capture & 2×/4× In-Sensor Zoom, chronological sensor development history across **ISOCELL HP2** (in-sensor `QMSC` 4× zoom on Galaxy S23 Ultra), **ISOCELL HP3/HP9** (**World's 1st DL Hexadeca 16-cell Remosaic S/W** for main & tele cameras, e.g., vivo X200 Pro ZEISS 200MP Tele), and **ISOCELL HP5** (**Technical Leader** for the world's smallest `0.5µm` 200MP sensor), plus sensor product table | [View](https://yjqkrtk-ux.github.io/isocell/chapters/isocell_sensors.html) |
-| **Ch.02** | **E2E AI Remosaic (Gen 1–4) — Heterogeneous SoC Parallelization on the ISP Pipeline** | Distributing **DL Remosaic** and **Camera ISP** workloads across `CPU/GPU/NPU/ISP` and mounting them directly onto the **Camera ISP pipeline** (`cfa2yuv` up to **3× faster: `3s → 1s @ SM8550`**, **SEC Annual Award 2023 Silver**), chronological feature evolution from **Gen 1 → Gen 4 (DL Multi-Frame Remosaic on Flagship AP NPU)**, and commercial smartphone table/list (**30+ OEM products**: HONOR Magic 9 / 9 Pro Max, vivo X200 Pro ZEISS, HONOR Magic7 Pro, REDMI Note 15 Pro+ 5G, Redmi Note 13 Pro+ 5G, HONOR 80 Pro) | [View](https://yjqkrtk-ux.github.io/isocell/chapters/e2e_remosaic.html) |
+| **Home** | **Overview & Track Record**<br><small>Career & Product Summary</small> | <small>• Career progression at Samsung Electronics S.LSI (Apr 2021 – Present)<br>• Two-pillar R&D overview & consolidated commercial product summary table</small> | <small>[🇺🇸&nbsp;EN](https://yjqkrtk-ux.github.io/isocell/en/)<br>[🇰🇷&nbsp;KO](https://yjqkrtk-ux.github.io/isocell/)</small> |
+| **Ch.01** | **200MP ISOCELL Sensors**<br><small>`HP2` · `HP3/HP9` · `HP5`</small> | <small>• Non-Bayer (`4×4 Hexadeca` / `2×2 Q-cell`) CFA & Remosaic principles + 2×/4× In-Sensor Zoom<br>• `HP2` (`QMSC`, Galaxy S23 Ultra) · `HP3/HP9` (1st DL 16-cell, vivo X200 Pro) · `HP5` (`0.5µm` Technical Leader)</small> | <small>[🇺🇸&nbsp;EN](https://yjqkrtk-ux.github.io/isocell/en/chapters/isocell_sensors.html)<br>[🇰🇷&nbsp;KO](https://yjqkrtk-ux.github.io/isocell/chapters/isocell_sensors.html)</small> |
+| **Ch.02** | **E2E AI Remosaic (Gen 1–4)**<br><small>Heterogeneous SoC ISP</small> | <small>• Distributing DL Remosaic & Camera ISP across `CPU/GPU/NPU/ISP` (**3× faster: `3s → 1s`**, **SEC Award Silver**)<br>• Gen 1 → Gen 4 (DL Multi-Frame Remosaic) across **30+ OEM flagships** (HONOR Magic 9/7 Pro, vivo X200 Pro, Redmi)</small> | <small>[🇺🇸&nbsp;EN](https://yjqkrtk-ux.github.io/isocell/en/chapters/e2e_remosaic.html)<br>[🇰🇷&nbsp;KO](https://yjqkrtk-ux.github.io/isocell/chapters/e2e_remosaic.html)</small> |
 
 ---
 
 ## 📷 2. AICAMERA — Heterogeneous Edge AI Camera & Latent Signal Processing
-🔗 **Main Portal**: [**https://yjqkrtk-ux.github.io/aicamera/**](https://yjqkrtk-ux.github.io/aicamera/)
+🔗 **Portal**: [**🇺🇸 English Edition (`/aicamera/en/`)**](https://yjqkrtk-ux.github.io/aicamera/en/) · [**🇰🇷 Korean Master (`/aicamera/`)**](https://yjqkrtk-ux.github.io/aicamera/)
 
-| Chapter | Title | Core Topics & Interactive Simulators | Link |
+| Ch. | Chapter Title | Core Topics & Interactive Simulators | Link |
 | :---: | :--- | :--- | :---: |
-| **Home** | **System Architecture Roadmap** | End-to-End pipeline from photons to latent tensors ($\hat{z}$) and real-time software ISP | [View](https://yjqkrtk-ux.github.io/aicamera/) |
-| **Ch.01** | **Heterogeneous Edge Camera & MIPI Bottleneck** | MIPI CSI-2 serialization bandwidth calculator · Sony IMX500 (`.rpk`) & Hailo-8 (`.hef`) dual-NPU stack | [View](https://yjqkrtk-ux.github.io/aicamera/chapters/overview.html) |
-| **Ch.02** | **Latent Signal Processing (LSP)** | Asymmetric split encoder (`Stage A` 9.59K params on sensor + `Stage B` on SoC) · 48× bus compression · 30 FPS preview & Zero-Shutter-Lag (ZSL) SD 2.1 ControlNet capture | [View](https://yjqkrtk-ux.github.io/aicamera/chapters/lsp.html) |
-| **Ch.03** | **Software ISP & Halide/NPU Optimization** | 10-stage C99 reference ISP interactive tuner (`DPC·BLC·LSC·ANF·AWB·Demosaic·CCM·Gamma·CSC·EEH`) · 3A loop · 4-Tier Halide/GPU acceleration | [View](https://yjqkrtk-ux.github.io/aicamera/chapters/isp.html) |
-| **Ch.04** | **Universal CFA — Phase-Aware In-Sensor Compression** | 3D stacked CMOS sensor cross-section viewer · Bayer (2×2), Tetracell (4×4), and Hexadecacell (8×8) `PixelUnshuffle` phase decomposition | [View](https://yjqkrtk-ux.github.io/aicamera/chapters/ucfa.html) |
-| **Ch.05** | **Audit Notes & Interactive Glossary** | 23 code-to-paper verification audit entries & 45+ searchable technical terms | [View](https://yjqkrtk-ux.github.io/aicamera/chapters/notes.html) |
+| **Home** | **Architecture Roadmap**<br><small>End-to-End Overview</small> | <small>• End-to-End pipeline from photons to latent tensors ($\hat{z}$) and real-time software ISP<br>• System KPI summary (48× compression, 30.0 FPS preview, ZSL capture) & chapter navigation</small> | <small>[🇺🇸&nbsp;EN](https://yjqkrtk-ux.github.io/aicamera/en/)<br>[🇰🇷&nbsp;KO](https://yjqkrtk-ux.github.io/aicamera/)</small> |
+| **Ch.01** | **Edge Camera & MIPI Bus**<br><small>Hardware Bottleneck</small> | <small>• MIPI CSI-2 serialization bandwidth & frame-rate ceiling interactive calculator<br>• Sony IMX500 In-Sensor NPU (`.rpk`) & Hailo-8 Host NPU (`.hef`, 26 TOPS) dual-accelerator stack</small> | <small>[🇺🇸&nbsp;EN](https://yjqkrtk-ux.github.io/aicamera/en/chapters/overview.html)<br>[🇰🇷&nbsp;KO](https://yjqkrtk-ux.github.io/aicamera/chapters/overview.html)</small> |
+| **Ch.02** | **Latent Signal Processing**<br><small>Sensor–SoC Split Codec</small> | <small>• Asymmetric split encoder (`Stage A` 9.59K params on sensor + `Stage B` on SoC) for 48× bus compression<br>• Real-time 30 FPS preview & Zero-Shutter-Lag (ZSL) SD 2.1 ControlNet capture simulator</small> | <small>[🇺🇸&nbsp;EN](https://yjqkrtk-ux.github.io/aicamera/en/chapters/lsp.html)<br>[🇰🇷&nbsp;KO](https://yjqkrtk-ux.github.io/aicamera/chapters/lsp.html)</small> |
+| **Ch.03** | **Software ISP & Halide**<br><small>10-Stage C99 Pipeline</small> | <small>• Interactive 10-stage C99 ISP tuner (`DPC·BLC·LSC·ANF·AWB·Demosaic·CCM·Gamma·CSC·EEH`)<br>• Closed-loop 3A controller & 4-Tier Halide/GPU schedule acceleration benchmark</small> | <small>[🇺🇸&nbsp;EN](https://yjqkrtk-ux.github.io/aicamera/en/chapters/isp.html)<br>[🇰🇷&nbsp;KO](https://yjqkrtk-ux.github.io/aicamera/chapters/isp.html)</small> |
+| **Ch.04** | **Universal CFA**<br><small>Phase-Aware Compression</small> | <small>• Interactive 3D stacked CMOS sensor cross-section viewer (microlens, CFA, Cu-Cu hybrid bond)<br>• Bayer (2×2), Tetracell (4×4), and Hexadecacell (8×8) `PixelUnshuffle` phase decomposition</small> | <small>[🇺🇸&nbsp;EN](https://yjqkrtk-ux.github.io/aicamera/en/chapters/ucfa.html)<br>[🇰🇷&nbsp;KO](https://yjqkrtk-ux.github.io/aicamera/chapters/ucfa.html)</small> |
+| **Ch.05** | **Audit Notes & Glossary**<br><small>Code-to-Paper Verification</small> | <small>• 23 code-to-paper mathematical and empirical verification audit records<br>• 36 searchable technical glossary definitions with interactive inline tooltips</small> | <small>[🇺🇸&nbsp;EN](https://yjqkrtk-ux.github.io/aicamera/en/chapters/notes.html)<br>[🇰🇷&nbsp;KO](https://yjqkrtk-ux.github.io/aicamera/chapters/notes.html)</small> |
 
 ---
 
 ## 🎓 3. KAIST Grad Works — Ph.D. Research & Engineering Systems
-🔗 **Main Portal**: [**https://yjqkrtk-ux.github.io/gradworks/**](https://yjqkrtk-ux.github.io/gradworks/)
+🔗 **Portal**: [**🇺🇸 English Edition (`/gradworks/en/`)**](https://yjqkrtk-ux.github.io/gradworks/en/) · [**🇰🇷 Korean Master (`/gradworks/`)**](https://yjqkrtk-ux.github.io/gradworks/)
 
-| Chapter | Title | Core Topics & Interactive Simulators | Link |
+| Ch. | Chapter Title | Core Topics & Interactive Simulators | Link |
 | :---: | :--- | :--- | :---: |
-| **Home** | **Master Workspace Roadmap** | 5 engineering themes (40 submodules) & academic/media archive architecture map | [View](https://yjqkrtk-ux.github.io/gradworks/) |
-| **Ch.01** | **Master Workspace & 3-Pillar Architecture** | Interactive 3-Pillar topology explorer & 40-submodule dependency map | [View](https://yjqkrtk-ux.github.io/gradworks/chapters/overview.html) |
-| **Ch.02** | **Bioinformatics & Deep RL Sequence Alignment** | `DQNAlign` local-window MDP & Exact Match Skip simulator (*IEEE OJEMB* 2021) · `REminerII` 2-bit packing · `JC69` evolutionary distance | [View](https://yjqkrtk-ux.github.io/gradworks/chapters/bio.html) |
-| **Ch.03** | **3D Wireless Power Transfer & OLEV Telematics** | Tsai 11-DoF stereo 3D triangulation & Coral EdgeTPU + FLIR Lepton thermal safety interlock (**US Patent `12,496,917 B2`**) · 85 kHz OLEV UTM inverter pre-heating | [View](https://yjqkrtk-ux.github.io/gradworks/chapters/wpt.html) |
-| **Ch.04** | **Intelligent Automation, Embedded & 60 GHz 3D MIMO** | 13-state vision FSM · $31\times 31$ Absorbing Markov Chain exact solver ($N=(I-Q)^{-1}$) · Casio FX-9860G 1-bit VRAM engine · WINNER II 3D MIMO | [View](https://yjqkrtk-ux.github.io/gradworks/chapters/automation.html) |
-| **Ch.05** | **Data Pipelines, Web Planners & Vision Studio** | Dual-track ledger analytics & zero-dependency OOXML `.xlsx` builder · Offline Leaflet trip planner · YuNet + SFace 128-D embedding studio | [View](https://yjqkrtk-ux.github.io/gradworks/chapters/life.html) |
-| **Ch.06** | **KAIST Academic Archive & Governance** | KAIST graduate coursework (449 docs), UMLS weekly lab seminars (430 docs), Ph.D. dissertation records & archive integrity simulator | [View](https://yjqkrtk-ux.github.io/gradworks/chapters/archive.html) |
-| **Ch.07** | **Verification Audit Notes & Technical Glossary** | 32 cross-verified audit notes & 35-term interactive glossary | [View](https://yjqkrtk-ux.github.io/gradworks/chapters/notes.html) |
+| **Home** | **Workspace Roadmap**<br><small>5 Themes · 40 Submodules</small> | <small>• 5 engineering themes (40 Git submodules) & academic/media archive architecture map<br>• Interactive 3D 3-Pillar topology preview & curriculum overview</small> | <small>[🇺🇸&nbsp;EN](https://yjqkrtk-ux.github.io/gradworks/en/)<br>[🇰🇷&nbsp;KO](https://yjqkrtk-ux.github.io/gradworks/)</small> |
+| **Ch.01** | **3-Pillar Architecture**<br><small>Master Workspace Charter</small> | <small>• Interactive 3-Pillar (`Development`, `Documents`, `Photos`) topology explorer<br>• 40-submodule language/dependency filter & 6 strict operating governance rules</small> | <small>[🇺🇸&nbsp;EN](https://yjqkrtk-ux.github.io/gradworks/en/chapters/overview.html)<br>[🇰🇷&nbsp;KO](https://yjqkrtk-ux.github.io/gradworks/chapters/overview.html)</small> |
+| **Ch.02** | **Bioinformatics & Deep RL**<br><small>`DQNAlign` & `REminerII`</small> | <small>• `DQNAlign` local-window MDP & Exact Match Skip simulator (*IEEE OJEMB* 2021)<br>• `REminerII` 2-bit seed-and-extend dot-plot engine & `JC69` evolutionary distance (*IEEE BHI/EMBC*)</small> | <small>[🇺🇸&nbsp;EN](https://yjqkrtk-ux.github.io/gradworks/en/chapters/bio.html)<br>[🇰🇷&nbsp;KO](https://yjqkrtk-ux.github.io/gradworks/chapters/bio.html)</small> |
+| **Ch.03** | **3D WPT & Edge Vision**<br><small>Safety & OLEV Telematics</small> | <small>• Tsai 11-DoF stereo triangulation & Coral EdgeTPU + FLIR Lepton thermal interlock (**US `12,496,917 B2`**)<br>• 85 kHz OLEV dynamic wireless charging UTM look-ahead inverter pre-heating simulator</small> | <small>[🇺🇸&nbsp;EN](https://yjqkrtk-ux.github.io/gradworks/en/chapters/wpt.html)<br>[🇰🇷&nbsp;KO](https://yjqkrtk-ux.github.io/gradworks/chapters/wpt.html)</small> |
+| **Ch.04** | **Automation & 60 GHz MIMO**<br><small>Markov Chains & Embedded</small> | <small>• 13-state vision FSM & $31\times 31$ Absorbing Markov Chain exact solver ($N=(I-Q)^{-1}$)<br>• Casio FX-9860G 1-bit VRAM raycaster & WINNER II 60 GHz 3D MIMO beamforming simulator</small> | <small>[🇺🇸&nbsp;EN](https://yjqkrtk-ux.github.io/gradworks/en/chapters/automation.html)<br>[🇰🇷&nbsp;KO](https://yjqkrtk-ux.github.io/gradworks/chapters/automation.html)</small> |
+| **Ch.05** | **Life Automation Suite**<br><small>Ledger · Planner · Vision</small> | <small>• Dual-track ledger analytics (`-tx['amount']` sign preservation) & zero-dependency OOXML `.xlsx` builder<br>• Offline Leaflet trip planner & YuNet + SFace 128-D cosine-similarity face studio</small> | <small>[🇺🇸&nbsp;EN](https://yjqkrtk-ux.github.io/gradworks/en/chapters/life.html)<br>[🇰🇷&nbsp;KO](https://yjqkrtk-ux.github.io/gradworks/chapters/life.html)</small> |
+| **Ch.06** | **Academic & Media Archive**<br><small>`Documents` & `Photos`</small> | <small>• KAIST coursework (449 docs), UMLS lab seminars (430 docs) & Ph.D. dissertation records<br>• 7-category media archive Zero-ZIP / Zero-Non-Media governance & SHA-256 parity</small> | <small>[🇺🇸&nbsp;EN](https://yjqkrtk-ux.github.io/gradworks/en/chapters/archive.html)<br>[🇰🇷&nbsp;KO](https://yjqkrtk-ux.github.io/gradworks/chapters/archive.html)</small> |
+| **Ch.07** | **Audit Notes & Glossary**<br><small>32 Audits · 35 Terms</small> | <small>• 32 cross-verified code-to-document audit records across all 5 engineering themes<br>• 35 searchable technical glossary terms with interactive math/code tooltips</small> | <small>[🇺🇸&nbsp;EN](https://yjqkrtk-ux.github.io/gradworks/en/chapters/notes.html)<br>[🇰🇷&nbsp;KO](https://yjqkrtk-ux.github.io/gradworks/chapters/notes.html)</small> |
 
 ---
 
@@ -88,7 +86,7 @@
 ```text
 yjqkrtk-ux.github.io/
 ├── index.html          # 📄 Executive Web Resume & CV (https://yjqkrtk-ux.github.io/)
-├── isocell/            # 🏢 Samsung S.LSI: ISOCELL 200MP & E2E AI Remosaic Guidebook (https://yjqkrtk-ux.github.io/isocell/)
-├── aicamera/           # 📷 Independent R&D: AICAMERA Latent Signal Processing Guidebook (https://yjqkrtk-ux.github.io/aicamera/)
-└── gradworks/          # 🎓 KAIST Ph.D. Research & Systems Guidebook (https://yjqkrtk-ux.github.io/gradworks/)
+├── isocell/            # 🏢 Samsung S.LSI: ISOCELL 200MP & E2E AI Remosaic (KO: /isocell/ · EN: /isocell/en/)
+├── aicamera/           # 📷 Independent R&D: AICAMERA Latent Signal Processing (KO: /aicamera/ · EN: /aicamera/en/)
+└── gradworks/          # 🎓 KAIST Ph.D. Research & Systems Guidebook (KO: /gradworks/ · EN: /gradworks/en/)
 ```

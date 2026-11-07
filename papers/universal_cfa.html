@@ -782,11 +782,11 @@
         </table>
       </div>
 
-      <!-- Figure 2: BJDD_CVPR21 Architectural Ablation & Cross-CFA Unification (3 Rows x 7 Columns) -->
+      <!-- Figure 2: BJDD_CVPR21 Neural SOTA & Cross-CFA Unification (3 Rows x 7 Columns) -->
       <div class="span-all fig-card">
-        <img src="figures/ucfa_fig2_bjdd_all_scenes_comparison.webp" alt="BJDD_CVPR21 Architectural Ablation and Cross-CFA Sensor Unification">
+        <img src="figures/ucfa_fig2_bjdd_all_scenes_comparison.webp" alt="BJDD_CVPR21 Neural SOTA and Cross-CFA Sensor Unification">
         <div class="caption">
-          <strong>Fig. 2.</strong> Architectural ablation and cross-CFA sensor unification across all 3 official <strong><code>BJDD_CVPR21</code></strong> scenes (3 rows $\times$ 7 columns: <code>01952.bmp</code> candy wrapper typography, <code>01690.bmp</code> farm lease sign, and <code>02243.bmp</code> storefront sign). Unlike classical MHC baselines, Columns 3–7 trace our progressive architectural gains: <strong>(i) 4-Ch Bottleneck LSP</strong> ($C=4$ latent truncation, causing severe stroke blurring), <strong>(ii) 16-Ch Base Trunk w/o Guided HF</strong> ($\mathcal{D}_{\text{TAEF1}}(z)$ preview $X_{\text{base}}$), and <strong>(iii) Proposed SE-Universal-CFA</strong> across all three physical CFA families—<strong><code>[1×1] Bayer</code> ($35.91\text{ dB}$ avg)</strong>, <strong><code>[2×2] Tetracell</code> ($34.56\text{ dB}$ avg, $+0.50\text{ dB}$ vs. KLAP)</strong>, and <strong><code>[4×4] Hexadecacell</code> ($30.27\text{ dB}$ avg, $+0.53\text{ dB}$ vs. KLAP)</strong>—reconstructed by the <strong>single shared 100% CFA-agnostic host network</strong> ($\mathcal{T}_B + \mathcal{D}_{\text{rec}}$) at $64.0\text{ KB}$ INT8 bus payload ($48\times$ smaller than $3,072\text{ KB}$ raw).
+          <strong>Fig. 2.</strong> Neural SOTA comparison and cross-CFA sensor unification across all 3 official <strong><code>BJDD_CVPR21</code></strong> scenes (3 rows $\times$ 7 columns: <code>01952.bmp</code> candy wrapper typography, <code>01690.bmp</code> farm lease sign, and <code>02243.bmp</code> storefront sign). Columns 3–7 compare published pixel-space neural SOTAs—<strong><code>Official BJDD / PIPNet</code> (CVPRW 2021, $3.48\text{M}$, $2\times 2$-only, $3,072\text{ KB}$)</strong> and <strong><code>KLAP Unified</code> (ICCV 2023, $1.53\text{M}$, $3,072\text{ KB}$)</strong>—against our <strong>Proposed SE-Universal-CFA</strong> across all three physical CFA families (<strong><code>[1×1] Bayer</code></strong>, <strong><code>[2×2] Tetracell</code></strong>, and <strong><code>[4×4] Hexadecacell</code></strong>) reconstructed by the <strong>single shared 100% CFA-agnostic host network</strong> ($\mathcal{T}_B + \mathcal{D}_{\text{rec}}$) at $64.0\text{ KB}$ INT8 bus payload ($48\times$ smaller than $3,072\text{ KB}$ raw).
         </div>
       </div>
 

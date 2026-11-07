@@ -328,15 +328,16 @@
     .paper-body.two-col,
     .two-col,
     .two-column-layout {
-      column-count: 2;
-      column-gap: 38px;
+      column-count: 2 !important;
+      column-gap: 32px;
       column-rule: 1px solid var(--surface-border);
+      column-fill: balance;
       text-align: justify;
     }
 
     .paper-body.one-col,
     .one-col {
-      column-count: 1;
+      column-count: 1 !important;
       text-align: justify;
     }
 
@@ -344,14 +345,15 @@
       .paper-body.two-col,
       .two-col,
       .two-column-layout {
-        column-count: 1;
+        column-gap: 20px;
+        font-size: 14.5px;
       }
     }
 
     .span-all,
     .full-width {
       column-span: all;
-      margin: 24px 0;
+      margin: 22px 0;
     }
 
     /* Headings & Text */
@@ -400,11 +402,20 @@
     }
 
     .equation {
-      margin: 12px 0;
-      padding: 8px 0;
+      margin: 10px 0;
+      padding: 6px 0;
       text-align: center;
       overflow-x: auto;
+      max-width: 100%;
       break-inside: avoid;
+    }
+
+    .paper-body.two-col .katex-display {
+      font-size: 0.90em;
+      margin: 0.45em 0;
+      overflow-x: auto;
+      overflow-y: hidden;
+      max-width: 100%;
     }
 
     /* Figures & Tables */
@@ -973,12 +984,14 @@
       if (n === 2) {
         body.classList.add('two-col');
         body.classList.remove('one-col');
+        body.style.columnCount = '2';
         if (b2) b2.classList.add('active');
         if (b1) b1.classList.remove('active');
       } else {
         body.classList.remove('two-col');
         body.classList.remove('two-column-layout');
         body.classList.add('one-col');
+        body.style.columnCount = '1';
         if (b1) b1.classList.add('active');
         if (b2) b2.classList.remove('active');
       }

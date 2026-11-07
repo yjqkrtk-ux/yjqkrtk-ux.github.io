@@ -409,6 +409,51 @@ window.BOOK_GLOSSARY = {
         "overview",
         "lsp"
       ]
+    },
+    {
+      "ko": "화이트박스 잠재 ISP",
+      "en": "White-Box Computational Latent ISP",
+      "abbr": "Comp-LSP",
+      "def": "16채널 선형 잠재 텐서(z_lin)를 픽셀 공간으로 디코딩하지 않고, 1차 제트 번들 분해(J¹ = DC ⊕ AC)와 심슨 1:4:1 구적법 및 3×3 할선 야코비안으로 카메라 고유 ISP(AWB·CCM·Gamma)를 해석적으로 적용하는 아키텍처.",
+      "chapters": [
+        "comp_lsp"
+      ]
+    },
+    {
+      "ko": "1차 제트 번들 분해",
+      "en": "First-Order Jet Bundle Decomposition",
+      "abbr": "J¹ = DC ⊕ AC",
+      "def": "잠재 벡터 z를 8×8 패치의 평균 색도를 담당하는 0차 함수값(DC 3D 색 부분공간)과 공간 고주파 텍스처 미분(AC 16채널)의 직합으로 분해해 비선형 ISP 연산을 다루는 기하학적 틀.",
+      "chapters": [
+        "comp_lsp"
+      ]
+    },
+    {
+      "ko": "심슨 1:4:1 구적법",
+      "en": "Simpson 1:4:1 / 3-Point Gauss-Legendre Quadrature",
+      "abbr": "1:4:1 Quadrature",
+      "def": "오목한 감마 곡선 위에서 발생하는 젠센 부등식 과노출 편향을 제거하기 위해, 평균 μ₀와 좌우 대칭 스프레드 μ₀±δ(δ=√1.5·σ_AC) 세 지점에서 f_ISP를 평가해 1:4:1 가중 평균하는 O(σ⁴) 수치 적분법.",
+      "chapters": [
+        "comp_lsp"
+      ]
+    },
+    {
+      "ko": "할선 야코비안",
+      "en": "Secant Jacobian Matrix",
+      "abbr": "J_3×3",
+      "def": "선형 ISP 연산자 M = M_ccm · diag(w_wb) · g와 감마 곡선의 유한 차분 할선 기울기 d_sec = (f_+ - f_-)/(2δ_c)를 연쇄 법칙으로 결합한 3×3 야코비안 행렬.",
+      "chapters": [
+        "comp_lsp"
+      ]
+    },
+    {
+      "ko": "144차원 크로네커 외적",
+      "en": "144-D Kronecker Outer Product",
+      "abbr": "z_AC ⊗ vec(J)",
+      "def": "16채널 AC 텍스처(z_AC)와 평탄화된 9원소 야코비안(vec(J_3×3))의 외적으로 생성되는 144차원 특징 텐서. 프로베니우스 사상을 통해 16개 잠재 채널에 얽힌 색-기하 결합을 동시에 회전시킨다.",
+      "chapters": [
+        "comp_lsp"
+      ]
     }
   ]
 };

@@ -1,0 +1,341 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Ch.05 White-Box Computational LSP — Analytical 16-Ch Latent ISP · AICAMERA Guidebook</title>
+<meta name="description" content="1st-order Jet bundle decomposition of 16-channel VAE latents, 1:4:1 Simpson quadrature, 3x3 secant Jacobians, 144-D Kronecker outer product, and 4-Step residual manifold refiner.">
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/katex@0.16.11/dist/katex.min.css">
+<script defer src="https://cdn.jsdelivr.net/npm/katex@0.16.11/dist/katex.min.js"></script>
+<script defer src="https://cdn.jsdelivr.net/npm/katex@0.16.11/dist/contrib/auto-render.min.js"></script>
+<link rel="stylesheet" href="../css/style.css">
+<link rel="stylesheet" href="../css/glossary-tooltips.css">
+<script src="../js/glossary-data.js"></script>
+<script src="../js/common.js"></script>
+<script defer src="../js/glossary-tooltips.js"></script>
+</head>
+<body data-chapter="comp_lsp" data-root="../">
+
+<main class="chapter">
+    <header class="ch-header">
+      <div class="eyebrow">CHAPTER 05 · WHITE-BOX COMPUTATIONAL LATENT SIGNAL PROCESSING</div>
+      <h1>White-Box Computational LSP: Analytical ISP Directly Inside 16-Channel Latent Space</h1>
+      <p class="lead">
+        In Chapters 02 (LSP) and 04 (Universal CFA), we compressed sensor data into latent space to break the MIPI CSI-2 bus bottleneck.
+        This chapter answers the next fundamental question: <strong>"Once a sensor frame is encoded into a 16-channel latent tensor \(\mathbf{z}_0 \in \mathbb{R}^{\frac{H}{8}\times\frac{W}{8}\times 16}\), can we execute black-level compensation, digital gain, white balance, \(3\times 3\) color correction (CCM), and nonlinear gamma tone mapping directly inside latent space using closed-form mathematics — without decoding to pixels or retraining neural weights?"</strong>
+        We walk through the Latent Color Subspace theory, <strong>1:4:1 Simpson / Gauss-Legendre quadrature</strong>, <strong>\(3\times 3\) Secant Jacobians</strong>, <strong>144-D Kronecker outer products (\(\otimes\))</strong>, and the <strong>4-Step Residual Manifold Refiner</strong>.
+      </p>
+      <div class="meta-bar">
+        <span>Analytical Core <b>0-Net (Zero Neural Weights · Pure Matrix &amp; Quadrature)</b></span>
+        <span>Quadrature Gain <b>1:4:1 Simpson (+3.6 to +7.5 dB Patch DC PSNR)</b></span>
+        <span>Chromatic Fidelity <b>10 Cameras · 180 Points \(R^2 = 0.9978\) (MAE 0.0055)</b></span>
+        <span>Final Fidelity <b>4-Step Refiner (96K) Mean 27.18 dB (+2.14 dB Gain)</b></span>
+      </div>
+    </header>
+
+    <section id="clsp-intuition">
+      <h2>5.1 Why Execute the ISP in Latent Space? — Emergent Order in High-Dimensional Chaos</h2>
+      <p>
+        Modern 16-channel foundation VAEs (FLUX.1, Stable Diffusion 3.5) compress each \(8\times 8\) RGB patch (\(8\times 8\times 3 = 192\) floats) into a single <strong>16-dimensional latent vector \(\mathbf{z}(y,x) \in \mathbb{R}^{16}\)</strong>.
+        Previously, changing 3A/ISP parameters \(\Theta_{\mathrm{ISP}} = (\mathbf{b}, g, \mathbf{w}_{\mathrm{wb}}, M_{\mathrm{CCM}}, \gamma)\) required either a costly <em>Decode → Pixel ISP → Re-Encode</em> round-trip or retraining a black-box neural network.
+      </p>
+
+      <div class="callout info">
+        <div class="callout-title">Theoretical Foundation: "The Latent Color Subspace: Emergent Order in High-Dimensional Chaos"</div>
+        <p>
+          Although \(\mathbb{R}^{16}\) appears entangled, it self-organizes into two nearly orthogonal subspaces (implementation: <a class="src" href="../../../comp_lsp/src/jet_basis.py" title="comp_lsp/src/jet_basis.py (line 150)" target="_blank" rel="noopener">jet_basis.py:150</a>):
+        </p>
+        <ul>
+          <li><strong>1. 3-D Chromatic DC Base Manifold (\(\mathbb{R}^3\))</strong>: Captures the \(8\times 8\) patch mean RGB color \(\bar{\mathbf{c}} = (\bar{R}, \bar{G}, \bar{B})^\top \in [0,1]^3\).</li>
+          <li><strong>2. 16-D Structural AC Fiber (\(\mathbb{R}^{16}\))</strong>: Captures intra-patch edges, textures, and local contrast (\(\boldsymbol{\sigma}_{\mathrm{AC}} \in \mathbb{R}^3\)) via the residual vector \(\mathbf{z}_{\mathrm{AC}}\).</li>
+        </ul>
+      </div>
+
+      <div class="math-block">
+        $$\bar{\mathbf{c}}_0(y,x) = \psi_{\mathrm{DC}}\!\left(\mathbf{z}_0(y,x)\right) = W_{\mathrm{dec}}\,\mathbf{z}_0(y,x) + \mathbf{b}_{\mathrm{dec}} \in \mathbb{R}^3$$
+        $$\mathbf{z}_{\mathrm{AC}}(y,x) = \mathbf{z}_0(y,x) - \phi_{\mathrm{DC}}\!\left(\bar{\mathbf{c}}_0(y,x)\right) \in \mathbb{R}^{16}, \qquad \phi_{\mathrm{DC}}(\bar{\mathbf{c}}) = W_{\mathrm{enc}}\,\bar{\mathbf{c}} + \mathbf{b}_{\mathrm{enc}}$$
+      </div>
+
+      <figure class="diagram" id="fig-clsp-geometry">
+        <img src="../../assets/img/fig6_latent_geometry_linear_vs_srgb.webp" alt="FLUX.1 16-channel latent geometry: Linear RGB vs sRGB activation curves, chromatic plane trajectories, 1:4:1 Simpson quadrature gain, and 16-D norm tracking" style="width:100%;height:auto;border-radius:8px;display:block">
+        <figcaption><b>Figure 5-1 (Paper Fig. 1).</b> 16-Channel FLUX.1 VAE Latent Geometry &amp; Step-by-Step ISP Trajectories (Source: <a class="src" href="../../../comp_lsp/results/latent_geometry_and_color_dojo_metrics.json" title="comp_lsp/results/latent_geometry_and_color_dojo_metrics.json" target="_blank" rel="noopener">latent_geometry_and_color_dojo_metrics.json</a>). <b>(a)</b> Top-4 latent channel activations across luminance \(Y \in [0,1]\) (\(R^2_{\mathrm{linear}}=0.9101 \to R^2_{\mathrm{poly3}}=0.9797\)). <b>(b)</b> Chromatic trajectories in the Jet DC plane (\(u_{\mathrm{DC},R}\) vs. \(u_{\mathrm{DC},G}\)) converging from green-biased RAW (\(G \gt R\)) onto the neutral \(R=G\) axis after white balance. <b>(c)</b> 3-Point Simpson quadrature (\(1:4:1\)) yields <b>+3.6 to +7.5 dB</b> patch DC PSNR gain over naive point evaluation \(f(\bar{\mathbf{c}}_0)\). <b>(d)</b> Step-by-step 16-D latent norm tracking.</figcaption>
+      </figure>
+    </section>
+
+    <section id="clsp-math">
+      <h2>5.2 Core Mathematical Principles: 1:4:1 Quadrature · 3×3 Secant Jacobian · 144-D Kronecker Product</h2>
+      <div class="card">
+        <h3>Principle 1 · Why 1:4:1 Weighting? — Correcting Jensen's Inequality via Simpson / Gauss-Legendre Quadrature</h3>
+        <p>
+          Because gamma tone mapping \(f_\gamma(c) = c^{1/\gamma}\) is concave (\(f''(c) \lt 0\)), evaluating \(f_{\mathrm{ISP}}\) only at the patch mean \(\bar{\mathbf{c}}_0\) suffers from <strong>Jensen's Inequality bias</strong> (\(\mathbb{E}[f_{\mathrm{ISP}}(\mathbf{x})] \lt f_{\mathrm{ISP}}(\bar{\mathbf{c}}_0)\)).
+          Evaluating three symmetric quadrature nodes \(\mathbf{c}_- = \bar{\mathbf{c}}_0 - \boldsymbol{\delta}\), \(\mathbf{c}_0 = \bar{\mathbf{c}}_0\), and \(\mathbf{c}_+ = \bar{\mathbf{c}}_0 + \boldsymbol{\delta}\) with \(\boldsymbol{\delta} = \sqrt{1.5}\,\boldsymbol{\sigma}_{\mathrm{AC}}\) and weights \(\frac{1}{6} : \frac{4}{6} : \frac{1}{6}\) (\(1:4:1\)) matches the second-order Taylor expansion \(\frac{1}{2}f''(\bar{\mathbf{c}}_0)\boldsymbol{\sigma}_{\mathrm{AC}}^2\) exactly:
+        </p>
+        <div class="math-block">
+          $$\bar{\mathbf{c}}_4 = \frac{1}{6}\,f_{\mathrm{ISP}}(\bar{\mathbf{c}}_0 - \sqrt{1.5}\,\boldsymbol{\sigma}_{\mathrm{AC}}) + \frac{4}{6}\,f_{\mathrm{ISP}}(\bar{\mathbf{c}}_0) + \frac{1}{6}\,f_{\mathrm{ISP}}(\bar{\mathbf{c}}_0 + \sqrt{1.5}\,\boldsymbol{\sigma}_{\mathrm{AC}})$$
+        </div>
+      </div>
+
+      <div class="grid-2">
+        <div class="card">
+          <h3>Principle 2 · 3×3 Secant Jacobian \(J_{3\times 3}\)</h3>
+          <p>
+            By the chain rule, intra-patch high-frequency variations transform under the composite \(3\times 3\) Jacobian matrix:
+          </p>
+          <div class="math-block">
+            $$J_{3\times 3}(y,x) = J_4(\mathbf{c}_{3,\pm})\,M_{\mathrm{CCM}}\,\mathrm{diag}(w_R, w_G, w_B)\,(g\,I_3) \in \mathbb{R}^{3\times 3}$$
+          </div>
+        </div>
+        <div class="card">
+          <h3>Principle 3 · 144-D Kronecker Outer Product (\(\otimes\))</h3>
+          <p>
+            Because all 16 VAE channels entangle RGB colors and spatial frequencies, we take the Kronecker outer product between \(\mathbf{z}_{\mathrm{AC}} \in \mathbb{R}^{16}\) and \(\mathrm{vec}(J_{3\times 3}) \in \mathbb{R}^9\):
+          </p>
+          <div class="math-block">
+            $$\boldsymbol{\xi}(y,x) = \mathbf{z}_{\mathrm{AC}}(y,x) \otimes \mathrm{vec}\!\left(J_{3\times 3}(y,x)\right) \in \mathbb{R}^{144}$$
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <section id="clsp-arch">
+      <h2>5.3 End-to-End Architecture &amp; Algorithm 1 Execution Chain</h2>
+      <figure class="diagram" id="fig-clsp-algo-chain">
+        <img src="../../assets/img/fig10_algorithm_chain_dataflow.webp" alt="White-Box Computational LSP End-to-End Architecture and Algorithm 1 Execution Chain" style="width:100%;height:auto;border-radius:8px;display:block">
+        <figcaption><b>Figure 5-2 (Paper Fig. 3).</b> Complete End-to-End Architecture &amp; Algorithm 1 Execution Chain in 16-Channel Latent Space (Source: <a class="src" href="../../../comp_lsp/paper/generate_algorithm_chain_fig.py" title="comp_lsp/paper/generate_algorithm_chain_fig.py (line 50)" target="_blank" rel="noopener">generate_algorithm_chain_fig.py:50</a>).</figcaption>
+      </figure>
+
+      <div class="tbl-wrap">
+        <table class="tbl">
+          <thead>
+            <tr>
+              <th>Stage</th>
+              <th>Tensors (\((H/8, W/8)\) Grid)</th>
+              <th>Closed-Form Operation</th>
+              <th>Source Implementation</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr>
+              <td><strong>Stage 0 · RAW Encoding</strong></td>
+              <td class="mono">\(\mathbf{x}_{\mathrm{raw}} \to \mathbf{z}_0 \in \mathbb{R}^{\frac{H}{8}\times\frac{W}{8}\times 16}\)</td>
+              <td>\(\mathbf{z}_0 = \mathcal{A}_{1\times 1}(\mathcal{E}_{\mathrm{VAE}}(\mathrm{Demosaic}(\mathbf{x}_{\mathrm{Bayer}})))\)</td>
+              <td><a class="src" href="../../../comp_lsp/src/one_step_refiner.py" title="comp_lsp/src/one_step_refiner.py (line 282)" target="_blank" rel="noopener">one_step_refiner.py:282</a> · <code>RawToLatentAdapter16Ch</code></td>
+            </tr>
+            <tr>
+              <td><strong>Step 1A · Jet Split</strong></td>
+              <td class="mono">\(\mathbf{z}_0 \to \bar{\mathbf{c}}_0 \in \mathbb{R}^3,\; \mathbf{z}_{\mathrm{AC}} \in \mathbb{R}^{16}\)</td>
+              <td>\(\bar{\mathbf{c}}_0 = \psi_{\mathrm{DC}}(\mathbf{z}_0),\; \mathbf{z}_{\mathrm{AC}} = \mathbf{z}_0 - \phi_{\mathrm{DC}}(\bar{\mathbf{c}}_0)\)</td>
+              <td><a class="src" href="../../../comp_lsp/src/jet_basis.py" title="comp_lsp/src/jet_basis.py (line 150)" target="_blank" rel="noopener">jet_basis.py:150</a> · <code>decompose_jet</code></td>
+            </tr>
+            <tr>
+              <td><strong>Step 2 · 1:4:1 Simpson DC</strong></td>
+              <td class="mono">\((\mathbf{c}_-, \mathbf{c}_0, \mathbf{c}_+) \to \bar{\mathbf{c}}_4 \in \mathbb{R}^3\)</td>
+              <td>\(\bar{\mathbf{c}}_4 = \frac{1}{6}\!\left(f_{\mathrm{ISP}}(\mathbf{c}_-) + 4\,f_{\mathrm{ISP}}(\mathbf{c}_0) + f_{\mathrm{ISP}}(\mathbf{c}_+)\right)\)</td>
+              <td><a class="src" href="../../../comp_lsp/src/latent_isp_ops.py" title="comp_lsp/src/latent_isp_ops.py (line 217)" target="_blank" rel="noopener">latent_isp_ops.py:217</a> · <code>_quadrature_dc_and_gamma_secant</code></td>
+            </tr>
+            <tr>
+              <td><strong>Step 4A · 144-D Kronecker</strong></td>
+              <td class="mono">\((\mathbf{z}_0, \Delta\bar{\mathbf{c}}, \mathbf{z}_{\mathrm{AC}}, J_{3\times 3}) \to \mathbf{z}_4 \in \mathbb{R}^{16}\)</td>
+              <td>\(\mathbf{z}_4 = \mathbf{z}_0 + \phi_{\mathrm{DC}}(\bar{\mathbf{c}}_4 - \bar{\mathbf{c}}_0) + \Phi_{\mathrm{AC}}(\mathbf{z}_{\mathrm{AC}} \otimes \mathrm{vec}(J_{3\times 3}))\)</td>
+              <td><a class="src" href="../../../comp_lsp/src/jet_basis.py" title="comp_lsp/src/jet_basis.py (line 150)" target="_blank" rel="noopener">jet_basis.py:150</a> · <code>transport_ac_kronecker</code></td>
+            </tr>
+            <tr>
+              <td><strong>Step 4B · 4-Step Refiner</strong></td>
+              <td class="mono">\((\mathbf{z}_4, \mathbf{z}_0, \bar{\mathbf{c}}_0, \bar{\mathbf{c}}_4, \Theta_{\mathrm{ISP}}) \to \hat{\mathbf{z}} \in \mathbb{R}^{16}\)</td>
+              <td>\(\mathbf{z}^{(k)} = \mathbf{z}^{(k-1)} + \alpha_k\,g_\theta(\mathbf{z}^{(k-1)}, \mathbf{z}_0, \bar{\mathbf{c}}_0, \bar{\mathbf{c}}_4, \Theta_{\mathrm{ISP}})\)</td>
+              <td><a class="src" href="../../../comp_lsp/src/one_step_refiner.py" title="comp_lsp/src/one_step_refiner.py (line 282)" target="_blank" rel="noopener">one_step_refiner.py:282</a> · <code>NStepManifoldRefiner16Ch</code></td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+    </section>
+
+    <section id="clsp-flow">
+      <h2>5.4 Block-by-Block Latent Evolution Across 3 Hardware Cameras</h2>
+      <figure class="diagram" id="fig-clsp-block-flow">
+        <img src="../../assets/img/fig8_pipeline_block_by_block_flow.webp" alt="Block-by-block 16-channel latent ISP operators, 3 hardware camera trajectories, and 16-channel latent barcode" style="width:100%;height:auto;border-radius:8px;display:block">
+        <figcaption><b>Figure 5-3 (Paper Fig. 2).</b> Unified Block-by-Block 16-Channel Latent ISP Pipeline &amp; Step-by-Step Evolution Across 3 Hardware Cameras (Source: <a class="src" href="../../../comp_lsp/paper/generate_pipeline_block_by_block_fig.py" title="comp_lsp/paper/generate_pipeline_block_by_block_fig.py (line 84)" target="_blank" rel="noopener">generate_pipeline_block_by_block_fig.py:84</a>).</figcaption>
+      </figure>
+    </section>
+
+    <section id="clsp-verify">
+      <h2>5.5 Patch-Level Verification, 10-Camera Benchmark &amp; Interactive Simulator</h2>
+      <figure class="diagram" id="fig-clsp-patch-verify">
+        <img src="../../assets/img/fig9_step_by_step_math_and_consistency.webp" alt="Patch (7,8) 3x3 Secant Jacobian matrix, 16-channel vector match, 10-camera RGB consistency, and PSNR benchmark" style="width:100%;height:auto;border-radius:8px;display:block">
+        <figcaption><b>Figure 5-4 (Paper Fig. 4).</b> Patch-Level Latent ISP Verification at \((y=7, x=8)\) &amp; 10-Camera Benchmark (Source: <a class="src" href="../../../comp_lsp/paper/generate_fig4_patch_verification_svg.py" title="comp_lsp/paper/generate_fig4_patch_verification_svg.py (line 31)" target="_blank" rel="noopener">generate_fig4_patch_verification_svg.py:31</a>).</figcaption>
+      </figure>
+
+      <div class="tbl-wrap">
+        <table class="tbl tbl-num">
+          <thead>
+            <tr>
+              <th>Camera &amp; Sensor Format</th>
+              <th>Native ISP Params (\(\mathbf{w}_{\mathrm{wb}} \cdot g \cdot \gamma\))</th>
+              <th>BLC+Gain (dB)</th>
+              <th>+WB (dB)</th>
+              <th>+CCM (dB)</th>
+              <th>+Gamma 0-Net (dB)</th>
+              <th>+1-Step (dB)</th>
+              <th>+4-Step Refiner (dB)</th>
+              <th>RGB MAE ↓</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr><td><strong>OpenISP 10-bit Full Chart (RGGB .RAW)</strong></td><td class='mono'>(1.82, 1.0, 1.25) · 1.15x · γ=2.0</td><td class='mono'>28.54</td><td class='mono'>24.20</td><td class='mono'>23.75</td><td class='mono'>23.91</td><td class='mono'>23.93</td><td class='mono'><strong>30.52</strong> <span class='badge b-ok'>+6.61 dB</span></td><td class='mono'>0.0023</td></tr>
+<tr><td><strong>OpenISP 10-bit Detail Crop (RGGB .RAW)</strong></td><td class='mono'>(1.82, 1.0, 1.25) · 1.15x · γ=2.0</td><td class='mono'>28.55</td><td class='mono'>25.56</td><td class='mono'>24.77</td><td class='mono'>26.06</td><td class='mono'>26.06</td><td class='mono'><strong>28.17</strong> <span class='badge b-ok'>+2.11 dB</span></td><td class='mono'>0.0029</td></tr>
+<tr><td><strong>Nikon D700 Mountain Cliff (12-bit BGGR .DNG)</strong></td><td class='mono'>(2.13, 1.0, 1.55) · 1.02x · γ=2.0</td><td class='mono'>32.45</td><td class='mono'>25.66</td><td class='mono'>24.13</td><td class='mono'>25.44</td><td class='mono'>25.48</td><td class='mono'><strong>26.51</strong> <span class='badge b-ok'>+1.07 dB</span></td><td class='mono'>0.0040</td></tr>
+<tr><td><strong>FiveK DSLR Architecture (14-bit RGGB .DNG)</strong></td><td class='mono'>(1.33, 1.0, 1.63) · 1.02x · γ=2.0</td><td class='mono'>32.69</td><td class='mono'>28.05</td><td class='mono'>25.92</td><td class='mono'>25.58</td><td class='mono'>25.73</td><td class='mono'><strong>26.92</strong> <span class='badge b-ok'>+1.34 dB</span></td><td class='mono'>0.0058</td></tr>
+<tr><td><strong>Canon EOS 5D Outdoor Sky (14-bit RGGB .DNG)</strong></td><td class='mono'>(2.72, 1.0, 1.22) · 1.06x · γ=2.0</td><td class='mono'>26.30</td><td class='mono'>22.22</td><td class='mono'>21.66</td><td class='mono'>21.75</td><td class='mono'>21.77</td><td class='mono'><strong>22.96</strong> <span class='badge b-ok'>+1.21 dB</span></td><td class='mono'>0.0024</td></tr>
+<tr><td><strong>Canon 1Ds MkII Foliage (12-bit RGGB .DNG)</strong></td><td class='mono'>(2.06, 1.0, 1.49) · 1.02x · γ=2.0</td><td class='mono'>29.21</td><td class='mono'>24.64</td><td class='mono'>23.88</td><td class='mono'>24.11</td><td class='mono'>23.96</td><td class='mono'><strong>24.24</strong> <span class='badge b-ok'>+0.13 dB</span></td><td class='mono'>0.0036</td></tr>
+<tr><td><strong>Canon EOS 40D Green Meadow (14-bit RGGB .DNG)</strong></td><td class='mono'>(2.45, 1.0, 1.38) · 1.02x · γ=2.0</td><td class='mono'>30.17</td><td class='mono'>23.76</td><td class='mono'>22.86</td><td class='mono'>24.19</td><td class='mono'>24.52</td><td class='mono'><strong>26.19</strong> <span class='badge b-ok'>+2.00 dB</span></td><td class='mono'>0.0019</td></tr>
+<tr><td><strong>Canon EOS 40D Daylight (14-bit RGGB .DNG)</strong></td><td class='mono'>(2.25, 1.0, 1.39) · 1.17x · γ=2.0</td><td class='mono'>25.86</td><td class='mono'>21.73</td><td class='mono'>21.15</td><td class='mono'>21.96</td><td class='mono'>21.88</td><td class='mono'><strong>23.56</strong> <span class='badge b-ok'>+1.60 dB</span></td><td class='mono'>0.0029</td></tr>
+<tr><td><strong>Google Pixel Mobile Daylight (14-bit BGGR .DNG)</strong></td><td class='mono'>(2.08, 1.0, 2.09) · 1.02x · γ=2.0</td><td class='mono'>32.28</td><td class='mono'>26.85</td><td class='mono'>26.62</td><td class='mono'>27.19</td><td class='mono'>29.25</td><td class='mono'><strong>30.14</strong> <span class='badge b-ok'>+2.95 dB</span></td><td class='mono'>0.0018</td></tr>
+<tr><td><strong>Google Pixel Mobile Indoor (14-bit BGGR .DNG)</strong></td><td class='mono'>(1.27, 1.0, 2.63) · 1.04x · γ=2.0</td><td class='mono'>36.64</td><td class='mono'>30.61</td><td class='mono'>29.75</td><td class='mono'>30.19</td><td class='mono'>30.28</td><td class='mono'><strong>32.55</strong> <span class='badge b-ok'>+2.36 dB</span></td><td class='mono'>0.0007</td></tr>
+          </tbody>
+        </table>
+      </div>
+      <p class="note">
+        Source: <a class="src" href="../../../comp_lsp/results/step_by_step_math_example.json" title="comp_lsp/results/step_by_step_math_example.json" target="_blank" rel="noopener">step_by_step_math_example.json</a> (generator: <a class="src" href="../../../comp_lsp/paper/generate_math_walkthrough_and_interactive.py" title="comp_lsp/paper/generate_math_walkthrough_and_interactive.py (line 76)" target="_blank" rel="noopener">generate_math_walkthrough_and_interactive.py:76</a>, regression tests: <a class="src" href="../../../comp_lsp/tests/test_comp_lsp_pipeline.py" title="comp_lsp/tests/test_comp_lsp_pipeline.py" target="_blank" rel="noopener">test_comp_lsp_pipeline.py</a>).
+      </p>
+
+      <div class="sim" id="sim-clsp-jet">
+        <div class="sim-head">
+          <div class="sim-title">SIMULATOR · 16-Ch White-Box Latent ISP (1:4:1 Simpson Quadrature &amp; 3×3 Secant Jacobian) Calculator</div>
+          <span class="badge b-ok">Live Math Engine</span>
+        </div>
+        <div class="sim-body">
+          <p style="margin-top:0;">
+            Select a hardware camera preset or adjust <strong>Digital Gain \(g\)</strong>, <strong>White Balance \(w_R, w_B\)</strong>, <strong>Gamma \(\gamma\)</strong>, and <strong>Patch Contrast \(\sigma_{\mathrm{AC}}\)</strong> to inspect the 1:4:1 Simpson quadrature and \(3\times 3\) Secant Jacobian in real time.
+          </p>
+          <div class="sim-controls" id="clsp-sim-ctrl"></div>
+          <div class="sim-grid-2">
+            <canvas id="clsp-quad-cv" data-w="440" data-h="270"></canvas>
+            <canvas id="clsp-jac-cv" data-w="440" data-h="270"></canvas>
+          </div>
+          <div class="sim-stats" id="clsp-sim-stats"></div>
+        </div>
+      </div>
+    </section>
+
+    <section class="keypoints" id="summary">
+      <h3>Key Takeaways · Chapter 05</h3>
+      <ul>
+        <li><strong>1st-Order Jet Decomposition</strong>: Linear probes \((\psi_{\mathrm{DC}}, \phi_{\mathrm{DC}})\) split \(\mathbf{z}_0 \in \mathbb{R}^{16}\) into patch mean RGB \(\bar{\mathbf{c}}_0 \in \mathbb{R}^3\) and structural AC fiber \(\mathbf{z}_{\mathrm{AC}} \in \mathbb{R}^{16}\).</li>
+        <li><strong>1:4:1 Simpson Quadrature</strong>: Eliminates Jensen's inequality bias across concave gamma curves, improving patch DC PSNR by <strong>+3.6 to +7.5 dB</strong>.</li>
+        <li><strong>3×3 Secant Jacobian &amp; 144-D Kronecker Product</strong>: Rotates all 16 entangled AC latent channels via \(\boldsymbol{\xi} = \mathbf{z}_{\mathrm{AC}} \otimes \mathrm{vec}(J_{3\times 3}) \in \mathbb{R}^{144}\).</li>
+        <li><strong>4-Step Residual Manifold Refiner</strong>: Boosts 10-camera average PSNR from 25.04 dB (0-Net) to <strong>27.18 dB (+2.14 dB gain)</strong> with \(R^2 = 0.9978\) RGB consistency.</li>
+      </ul>
+    </section>
+</main>
+<script>
+(function(){
+  const ctrl = document.getElementById('clsp-sim-ctrl');
+  const stats = document.getElementById('clsp-sim-stats');
+  if(!ctrl) return;
+
+  const PRESETS = {
+    nikon:  { name: 'Nikon D700', c0: [0.177, 0.296, 0.147], g: 1.02, wr: 2.13, wb: 1.55, gam: 2.0, sig: 0.08, ccm: [[1.531,-0.417,-0.114],[-0.008,1.288,-0.280],[0.012,-0.214,1.203]] },
+    canon:  { name: 'Canon 40D',  c0: [0.165, 0.372, 0.252], g: 1.02, wr: 2.45, wb: 1.38, gam: 2.0, sig: 0.09, ccm: [[1.906,-1.052,0.146],[-0.045,1.427,-0.382],[0.042,-0.449,1.407]] },
+    openisp:{ name: 'OpenISP',    c0: [0.402, 0.655, 0.598], g: 1.15, wr: 1.82, wb: 1.25, gam: 2.0, sig: 0.11, ccm: [[1.220,-0.140,-0.080],[-0.080,1.160,-0.080],[-0.040,-0.160,1.200]] },
+    pixel:  { name: 'Pixel',      c0: [0.205, 0.370, 0.210], g: 1.02, wr: 2.08, wb: 2.09, gam: 2.2, sig: 0.07, ccm: [[1.117,0.152,-0.270],[-0.184,1.522,-0.338],[-0.015,-0.486,1.502]] }
+  };
+
+  let state = Object.assign({}, PRESETS.nikon);
+
+  ctrl.appendChild(SB.seg({
+    label: 'Camera Preset',
+    options: [['nikon','Nikon D700'], ['canon','Canon 40D'], ['openisp','OpenISP'], ['pixel','Google Pixel']],
+    value: 'nikon',
+    onChange: v => {
+      state = Object.assign({}, PRESETS[v]);
+      slGain.set(state.g); slWr.set(state.wr); slWb.set(state.wb); slGam.set(state.gam); slSig.set(state.sig);
+      drawSim();
+    }
+  }));
+
+  const slGain = SB.slider({ label: 'Digital Gain g', min: 0.8, max: 1.8, step: 0.02, value: state.g, fmt: v => v.toFixed(2) + 'x', onInput: v => { state.g = v; drawSim(); } });
+  const slWr   = SB.slider({ label: 'WB Red w_R', min: 1.0, max: 3.0, step: 0.05, value: state.wr, fmt: v => v.toFixed(2), onInput: v => { state.wr = v; drawSim(); } });
+  const slWb   = SB.slider({ label: 'WB Blue w_B', min: 1.0, max: 3.0, step: 0.05, value: state.wb, fmt: v => v.toFixed(2), onInput: v => { state.wb = v; drawSim(); } });
+  const slGam  = SB.slider({ label: 'Gamma γ', min: 1.2, max: 2.6, step: 0.1, value: state.gam, fmt: v => v.toFixed(1), onInput: v => { state.gam = v; drawSim(); } });
+  const slSig  = SB.slider({ label: 'Patch Std σ_AC', min: 0.01, max: 0.18, step: 0.01, value: state.sig, fmt: v => v.toFixed(2), onInput: v => { state.sig = v; drawSim(); } });
+
+  ctrl.appendChild(slGain); ctrl.appendChild(slWr); ctrl.appendChild(slWb); ctrl.appendChild(slGam); ctrl.appendChild(slSig);
+
+  function clamp(x, a, b){ return Math.max(a, Math.min(b, x)); }
+  function applyLinearISP(c){
+    const b = 0.012;
+    const c1 = c.map(v => clamp((v - b) * state.g, 0.001, 1.0));
+    const c2 = [clamp(c1[0] * state.wr, 0.001, 1.0), c1[1], clamp(c1[2] * state.wb, 0.001, 1.0)];
+    const M = state.ccm;
+    return [
+      clamp(M[0][0]*c2[0] + M[0][1]*c2[1] + M[0][2]*c2[2], 0.002, 1.0),
+      clamp(M[1][0]*c2[0] + M[1][1]*c2[1] + M[1][2]*c2[2], 0.002, 1.0),
+      clamp(M[2][0]*c2[0] + M[2][1]*c2[1] + M[2][2]*c2[2], 0.002, 1.0)
+    ];
+  }
+  function applyGamma(c3){ return c3.map(v => Math.pow(clamp(v, 1e-4, 1.0), 1.0 / state.gam)); }
+
+  function drawSim(){
+    const delta = Math.sqrt(1.5) * state.sig;
+    const c0 = state.c0;
+    const c3Minus = applyLinearISP(c0.map(v => clamp(v - delta, 0.002, 0.99)));
+    const c3Zero  = applyLinearISP(c0);
+    const c3Plus  = applyLinearISP(c0.map(v => clamp(v + delta, 0.002, 0.99)));
+    const fMinus = applyGamma(c3Minus), fZero = applyGamma(c3Zero), fPlus = applyGamma(c3Plus);
+    const c4Simp = [0,1,2].map(i => (fMinus[i] + 4*fZero[i] + fPlus[i]) / 6.0);
+    const j4Diag = [0,1,2].map(i => (fPlus[i] - fMinus[i]) / Math.max(c3Plus[i] - c3Minus[i], 1e-3));
+    const wVec = [state.wr * state.g, state.g, state.wb * state.g];
+    const J3x3 = [0,1,2].map(r => [0,1,2].map(c => j4Diag[r] * state.ccm[r][c] * wVec[c]));
+
+    const qc = SB.canvas('#clsp-quad-cv');
+    const ctx = qc.ctx, w = qc.w, h = qc.h;
+    ctx.clearRect(0, 0, w, h);
+    const dk = SB.isDark();
+    const tx = dk ? '#e6edf6' : '#141a26';
+    const txDim = dk ? '#9aa6bf' : '#566178';
+    const gridCol = dk ? 'rgba(255,255,255,0.08)' : 'rgba(15,23,42,0.08)';
+
+    ctx.fillStyle = tx; ctx.font = '700 12.5px sans-serif'; ctx.textAlign = 'left';
+    ctx.fillText('1. Gamma Curve & 1:4:1 Simpson Quadrature (Red Ch)', 14, 21);
+    const x0 = 46, y0 = 36, gw = w - x0 - 20, gh = h - y0 - 40;
+    ctx.strokeStyle = gridCol; ctx.strokeRect(x0, y0, gw, gh);
+    const mapX = v => x0 + clamp(v, 0, 1) * gw;
+    const mapY = v => y0 + gh - clamp(v, 0, 1) * gh;
+
+    ctx.strokeStyle = '#38b6f5'; ctx.lineWidth = 2.2; ctx.beginPath();
+    for(let i = 0; i <= 100; i++){
+      const xv = i / 100.0, yv = Math.pow(Math.max(xv, 1e-4), 1.0 / state.gam);
+      if(i === 0) ctx.moveTo(mapX(xv), mapY(yv)); else ctx.lineTo(mapX(xv), mapY(yv));
+    }
+    ctx.stroke();
+
+    const jc = SB.canvas('#clsp-jac-cv');
+    const jctx = jc.ctx, jw = jc.w, jh = jc.h;
+    jctx.clearRect(0, 0, jw, jh);
+    jctx.fillStyle = tx; jctx.font = '700 12.5px sans-serif'; jctx.textAlign = 'left';
+    jctx.fillText('2. 3x3 Secant Jacobian Matrix J_3x3', 14, 21);
+    const mx0 = 78, my0 = 46, cw = 104, ch = 56;
+    for(let r = 0; r < 3; r++){
+      for(let c = 0; c < 3; c++){
+        const val = J3x3[r][c], rx = mx0 + c * cw, ry = my0 + r * ch;
+        jctx.strokeStyle = (r === c) ? '#f5b93a' : gridCol;
+        jctx.strokeRect(rx + 2, ry + 2, cw - 4, ch - 4);
+        jctx.fillStyle = tx; jctx.font = '700 13.5px monospace'; jctx.textAlign = 'center';
+        jctx.fillText((val >= 0 ? '+' : '') + val.toFixed(3), rx + cw / 2, ry + 32);
+      }
+    }
+
+    if(stats){
+      stats.innerHTML = [
+        ['Raw Patch Mean c0', `(${c0[0].toFixed(3)}, ${c0[1].toFixed(3)}, ${c0[2].toFixed(3)})`],
+        ['Naive Point Eval f(c0)', `(${fZero[0].toFixed(3)}, ${fZero[1].toFixed(3)}, ${fZero[2].toFixed(3)})`],
+        ['1:4:1 Simpson c4', `(${c4Simp[0].toFixed(3)}, ${c4Simp[1].toFixed(3)}, ${c4Simp[2].toFixed(3)})`]
+      ].map(([k, v]) => `<div><span>${k}</span><b>${v}</b></div>`).join('');
+    }
+  }
+  drawSim();
+  window.addEventListener('resize', drawSim);
+})();
+</script>
+</body>
+</html>

@@ -25,7 +25,7 @@
     var h = location.hash.slice(1);
     if (!h) return;
     var parts = h.split("/");
-    var valid = { overview: 1, lsp: 1, isp: 1, ucfa: 1, notes: 1 };
+    var valid = { overview: 1, lsp: 1, isp: 1, ucfa: 1, comp_lsp: 1, notes: 1 };
     if (valid[parts[0]]) {
       location.replace("chapters/" + parts[0] + ".html" + (parts[1] ? "#" + parts[1] : ""));
     }
@@ -42,12 +42,12 @@
       <p>센서 내장 NPU(Sony IMX500), 호스트 NPU(Hailo-8), 멀티코어 CPU·GPU(Raspberry Pi 5) 사이에서 <strong>영상 신호 처리를 어디서, 어떤 표현으로 나눌 것인가?</strong> 실제 하드웨어 측정치와 C99·PyTorch·Halide 소스를 슬라이더와 3D 구조로 직접 만지며 탐구하는 인터랙티브 가이드북입니다.</p>
       <div class="cta">
         <a class="primary" href="chapters/overview.html">1장부터 시작하기 →</a>
-        <a class="ghost" href="chapters/overview.html#s-sw-stack">IMX500 · Hailo-8 컴파일 스택</a>
+        <a class="ghost" href="chapters/comp_lsp.html">White-Box 잠재 ISP (Ch.05)</a>
         <a class="ghost" href="chapters/lsp.html">LSP 분할 인코더 보기</a>
         <a class="ghost" href="chapters/isp.html#isp-sim-sec">10단계 ISP 시뮬레이터</a>
       </div>
       <div class="hero-badges">
-        <span>5개 심층 챕터</span><span>13개 시뮬레이터</span><span>Dual-NPU 컴파일 · Agent Flow</span><span>JSON · C99 자동 검증</span>
+        <span>6개 심층 챕터</span><span>14개 시뮬레이터</span><span>Dual-NPU 컴파일 · Agent Flow</span><span>JSON · C99 자동 검증</span>
       </div>
     </div>
     <div class="hero-3d" id="hero3d"><span class="hint">드래그해서 돌려보세요 · 광자 입사 → IMX500 온칩 압축 → MIPI 64 KB → Hailo-8 잠재 디코딩</span></div>
@@ -171,14 +171,14 @@
       </div>
     </div>
     <div class="path">
-      <h3>분할 추론 · 생성형 AI (LSP)</h3>
-      <p>센서–호스트 분할 오토인코더 설계, Power-of-2 QAT, TAESD 실시간 디코딩과 ZSL 확산 캡처를 다룹니다.</p>
+      <h3>분할 추론 · 생성형 AI (LSP &amp; White-Box LSP)</h3>
+      <p>센서–호스트 분할 오토인코더 설계, 16채널 잠재 공간 해석적 ISP(1:4:1 구적법·야코비안), ZSL 확산 캡처를 다룹니다.</p>
       <div class="steps">
         <a href="chapters/lsp.html#lsp-arch">02 분할 구조</a>
-        <a href="chapters/lsp.html#lsp-model">02 Stage A/B 수식</a>
         <a href="chapters/lsp.html#lsp-bench">02 HW 실측</a>
-        <a href="chapters/lsp.html#lsp-capture">02 ZSL 캡처</a>
-        <a href="chapters/ucfa.html#ucfa-diffusion">04 One-Pass 확산</a>
+        <a href="chapters/comp_lsp.html#clsp-intuition">05 16채널 Jet 분해</a>
+        <a href="chapters/comp_lsp.html#clsp-math">05 1:4:1 구적·야코비안</a>
+        <a href="chapters/comp_lsp.html#sim-clsp-jet">05 잠재 ISP 시뮬레이터</a>
       </div>
     </div>
     <div class="path">

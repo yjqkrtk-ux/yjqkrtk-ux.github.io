@@ -409,6 +409,51 @@ window.BOOK_GLOSSARY = {
         "overview",
         "lsp"
       ]
+    },
+    {
+      "ko": "White-Box Computational Latent ISP",
+      "en": "Analytical 16-Ch Latent ISP",
+      "abbr": "Comp-LSP",
+      "def": "An analytical latent-domain ISP architecture that transforms 16-channel linear latents (z_lin) into camera-specific sRGB latents (ẑ_srgb) via First-Order Jet Bundle Decomposition (J¹ = DC ⊕ AC), Simpson 1:4:1 quadrature, and 3×3 secant Jacobians without pixel decoding.",
+      "chapters": [
+        "comp_lsp"
+      ]
+    },
+    {
+      "ko": "First-Order Jet Bundle Decomposition",
+      "en": "Latent Value + Spatial Differential Split",
+      "abbr": "J¹ = DC ⊕ AC",
+      "def": "Geometric decomposition splitting a 16-channel latent vector z into its 0th-order 8×8 patch mean color coordinates (3D DC color subspace) and 1st-order spatial texture differentials (16-channel AC residual).",
+      "chapters": [
+        "comp_lsp"
+      ]
+    },
+    {
+      "ko": "Simpson 1:4:1 Quadrature",
+      "en": "3-Point Gauss-Legendre Gamma Integration",
+      "abbr": "1:4:1 Quadrature",
+      "def": "O(σ⁴) numerical integration scheme that evaluates f_ISP at three symmetric nodes (μ₀ - δ, μ₀, μ₀ + δ with δ = √1.5·σ_AC) and combines them with 1:4:1 weights to eliminate Jensen's inequality bias across concave gamma curves.",
+      "chapters": [
+        "comp_lsp"
+      ]
+    },
+    {
+      "ko": "Secant Jacobian Matrix",
+      "en": "Chain-Rule Finite-Difference ISP Derivative",
+      "abbr": "J_3×3",
+      "def": "The 3×3 per-patch derivative matrix J_3×3 = diag(d_sec) · M combining the linear ISP matrix M = M_ccm · diag(w_wb) · g with the centered finite-difference gamma secant slope d_sec = (f_+ - f_-)/(2δ_c).",
+      "chapters": [
+        "comp_lsp"
+      ]
+    },
+    {
+      "ko": "144-D Kronecker Outer Product",
+      "en": "Entangled AC-Jacobian Bilinear Feature",
+      "abbr": "z_AC ⊗ vec(J)",
+      "def": "The 144-dimensional outer product tensor formed by interacting all 16 AC texture channels (z_AC) with all 9 flattened Jacobian entries (vec(J_3×3)), projected back to 16 channels via a Frobenius linear map.",
+      "chapters": [
+        "comp_lsp"
+      ]
     }
   ]
 };

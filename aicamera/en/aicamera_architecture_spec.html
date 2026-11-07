@@ -25,7 +25,7 @@
     var h = location.hash.slice(1);
     if (!h) return;
     var parts = h.split("/");
-    var valid = { overview: 1, lsp: 1, isp: 1, ucfa: 1, notes: 1 };
+    var valid = { overview: 1, lsp: 1, isp: 1, ucfa: 1, comp_lsp: 1, notes: 1 };
     if (valid[parts[0]]) {
       location.replace("chapters/" + parts[0] + ".html" + (parts[1] ? "#" + parts[1] : ""));
     }
@@ -42,12 +42,12 @@
       <p>Across an in-sensor NPU (Sony IMX500), a host NPU (Hailo-8), and a multi-core CPU/GPU (Raspberry Pi 5), <strong>where and in what representation should visual signal processing be partitioned?</strong> Explore hardware-measured benchmarks and C99, PyTorch, and Halide source code hands-on through interactive sliders and 3D structures.</p>
       <div class="cta">
         <a class="primary" href="chapters/overview.html">Start at Chapter 1 →</a>
-        <a class="ghost" href="chapters/overview.html#s-sw-stack">IMX500 · Hailo-8 Compile Stack</a>
+        <a class="ghost" href="chapters/comp_lsp.html">White-Box Latent ISP (Ch.05)</a>
         <a class="ghost" href="chapters/lsp.html">Explore LSP Split Encoder</a>
         <a class="ghost" href="chapters/isp.html#isp-sim-sec">10-Stage ISP Simulator</a>
       </div>
       <div class="hero-badges">
-        <span>5 Deep-Dive Chapters</span><span>13 Simulators</span><span>Dual-NPU Compile · Agent Flow</span><span>Auto-Verified JSON · C99</span>
+        <span>6 Deep-Dive Chapters</span><span>14 Simulators</span><span>Dual-NPU Compile · Agent Flow</span><span>Auto-Verified JSON · C99</span>
       </div>
     </div>
     <div class="hero-3d" id="hero3d"><span class="hint">Drag to rotate · Incident Photons → IMX500 On-Chip Compression → MIPI 64 KB → Hailo-8 Latent Decoding</span></div>
@@ -171,14 +171,14 @@
       </div>
     </div>
     <div class="path">
-      <h3>Split Inference · Generative AI (LSP)</h3>
-      <p>Explore sensor-host split autoencoder design, Power-of-2 QAT, real-time TAESD decoding, and ZSL diffusion capture.</p>
+      <h3>Split Inference · White-Box Latent ISP</h3>
+      <p>Explore sensor-host split autoencoder design, 16-ch analytical latent ISP (1:4:1 quadrature &amp; Jacobians), and ZSL capture.</p>
       <div class="steps">
         <a href="chapters/lsp.html#lsp-arch">02 Split Architecture</a>
-        <a href="chapters/lsp.html#lsp-model">02 Stage A/B Math</a>
         <a href="chapters/lsp.html#lsp-bench">02 HW Benchmarks</a>
-        <a href="chapters/lsp.html#lsp-capture">02 ZSL Capture</a>
-        <a href="chapters/ucfa.html#ucfa-diffusion">04 One-Pass Diffusion</a>
+        <a href="chapters/comp_lsp.html#clsp-intuition">05 16-Ch Jet Split</a>
+        <a href="chapters/comp_lsp.html#clsp-math">05 1:4:1 &amp; Jacobian</a>
+        <a href="chapters/comp_lsp.html#sim-clsp-jet">05 Latent ISP Simulator</a>
       </div>
     </div>
     <div class="path">

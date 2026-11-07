@@ -3,8 +3,8 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>Ch.05 용어집 &amp; 코드·문서 정합성 검증 노트 · AICAMERA Guidebook</title>
-<meta name="description" content="코드와 측정 JSON을 문서 서술과 대조한 23개 정합성 감사 노트, Single-Source-of-Truth 빌드 정책, 43개 핵심 용어 인터랙티브 사전.">
+<title>Ch.06 용어집 &amp; 코드·문서 정합성 검증 노트 · AICAMERA Guidebook</title>
+<meta name="description" content="코드와 측정 JSON을 문서 서술과 대조한 23개 정합성 감사 노트, Single-Source-of-Truth 빌드 정책, 48개 핵심 용어 인터랙티브 사전.">
 <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/katex@0.16.11/dist/katex.min.css">
 <script defer src="https://cdn.jsdelivr.net/npm/katex@0.16.11/dist/katex.min.js"></script>
 <script defer src="https://cdn.jsdelivr.net/npm/katex@0.16.11/dist/contrib/auto-render.min.js"></script>
@@ -18,7 +18,7 @@
 
 <main class="chapter">
     <header class="ch-header">
-      <div class="eyebrow">CHAPTER 05 · AUDIT NOTES &amp; INTERACTIVE GLOSSARY</div>
+      <div class="eyebrow">CHAPTER 06 · AUDIT NOTES &amp; INTERACTIVE GLOSSARY</div>
       <h1>코드·문서 정합성 검증 노트 &amp; 핵심 용어집</h1>
       <p class="lead">
         연구 저장소가 빠르게 진화하면 초기 논문 초안이나 발표 자료의 서술과 실제 동작하는 C/Python 코드 및 하드웨어 측정 JSON 사이에 미세한 차이가 생기기 쉽습니다.
@@ -28,14 +28,14 @@
       <div class="meta-bar">
         <span>정합성 감사 <b>23개 항목 (반영 완료 14 · 참고/확인 9)</b></span>
         <span>빌드 검증 <b>JSON/C 자동 추출 · 깨진 링크/수식 차단</b></span>
-        <span>인터랙티브 사전 <b>43개 도메인 핵심 용어</b></span>
+        <span>인터랙티브 사전 <b>48개 도메인 핵심 용어</b></span>
       </div>
     </header>
 
     <section id="notes-audit">
-      <h2>5.1 코드 ↔ 문서 정합성 감사 목록 (23개 항목)</h2>
+      <h2>6.1 코드 ↔ 문서 정합성 감사 목록 (23개 항목)</h2>
       <p>
-        이 가이드북의 모든 챕터(Ch.01 ~ Ch.04)는 아래 표의 <strong>“코드 · 데이터의 실제”</strong> 열을 단일 정본(Single Source of Truth)으로 삼아 작성되었습니다.
+        이 가이드북의 모든 챕터(Ch.01 ~ Ch.05)는 아래 표의 <strong>“코드 · 데이터의 실제”</strong> 열을 단일 정본(Single Source of Truth)으로 삼아 작성되었습니다.
         영역 필터 칩을 클릭해 항목을 필터링해 보세요.
       </p>
       <div class="card">
@@ -58,7 +58,7 @@
     </section>
 
     <section id="notes-policy">
-      <h2>5.2 Single-Source-of-Truth 빌드 원칙과 자동 검증</h2>
+      <h2>6.2 Single-Source-of-Truth 빌드 원칙과 자동 검증</h2>
       <p>
         가이드북 전체(<code>docs/index.html</code>, <code>docs/aicamera_architecture_spec.html</code>, <code>docs/chapters/*.html</code>, <code>docs/css/*</code>, <code>docs/js/*</code>)는
         수작업 HTML 편집이 아니라 <a class="src" href="../../docs/build_spec_portal.py" title="docs/build_spec_portal.py" target="_blank" rel="noopener">build_spec_portal.py</a> 스크립트에 의해 결정론적으로 생성됩니다.
@@ -67,7 +67,7 @@
         <div class="card">
           <h3>1. 수치는 JSON에서 직접 로드</h3>
           <p>
-            LSP 하드웨어 지연, DIV2K 화질, 12MP 4-Tier ISP 지연, Universal CFA 시뮬레이션 결과는 모두 빌드 시점에 정본 JSON 파일을 파싱해 표와 차트에 주입합니다.
+            LSP 하드웨어 지연, DIV2K 화질, 12MP 4-Tier ISP 지연, Universal CFA 시뮬레이션 결과, 10종 카메라 화이트박스 잠재 ISP 벤치마크는 모두 빌드 시점에 정본 JSON 파일을 파싱해 표와 차트에 주입합니다.
           </p>
         </div>
         <div class="card">
@@ -86,17 +86,17 @@
     </section>
 
     <section id="glossary-sec">
-      <h2>5.3 AICAMERA 핵심 기술 용어집 (Interactive Glossary)</h2>
+      <h2>6.3 AICAMERA 핵심 기술 용어집 (Interactive Glossary)</h2>
       <p>
         가이드북 본문에서 점선 밑줄로 표시되는 모든 핵심 용어의 정의와 영문 표기, 관련 챕터 링크입니다.
         검색창에 한글·영문·약어 키워드를 입력하면 실시간으로 필터링됩니다.
       </p>
-      <input type="search" class="gl-search" id="gl-search-input" placeholder="용어 검색 (예: IMX500, QAT, Halide, Tetracell, ZSL, 3A...)" aria-label="용어 검색">
+      <input type="search" class="gl-search" id="gl-search-input" placeholder="용어 검색 (예: IMX500, QAT, Halide, Tetracell, ZSL, 3A, Simpson, Jacobian...)" aria-label="용어 검색">
       <div class="gl-list" id="gl-list-box"></div>
     </section>
 
     <section class="keypoints" id="summary">
-      <h3>핵심 정리 · Chapter 05</h3>
+      <h3>핵심 정리 · Chapter 06</h3>
       <ul>
         <li><strong>코드·데이터 우선 원칙</strong>: 논문이나 슬라이드 초안의 서술과 실제 구현이 다를 때는 언제나 실행 코드(<code>.py</code>, <code>.c</code>, <code>.yaml</code>)와 실측 JSON을 정본으로 삼습니다.</li>
         <li><strong>자동화된 정합성 보장</strong>: <code>~/py311_train/bin/python docs/build_spec_portal.py</code> 명령 하나로 전체 인터랙티브 가이드북과 레거시 포털이 재생성되며 수백 개의 소스 링크가 자동 검증됩니다.</li>

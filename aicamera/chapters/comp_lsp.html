@@ -1,0 +1,625 @@
+<!doctype html>
+<html lang="ko">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Ch.05 White-Box Computational LSP — 16채널 잠재 공간 해석적 ISP · AICAMERA Guidebook</title>
+<meta name="description" content="16채널 VAE 잠재 공간의 1차 제트(Jet) 분해, 1:4:1 심슨 구적법, 3×3 할선 야코비안, 144차원 크로네커 외적과 4-Step 매니폴드 리파이너를 통한 해석적 잠재 ISP.">
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/katex@0.16.11/dist/katex.min.css">
+<script defer src="https://cdn.jsdelivr.net/npm/katex@0.16.11/dist/katex.min.js"></script>
+<script defer src="https://cdn.jsdelivr.net/npm/katex@0.16.11/dist/contrib/auto-render.min.js"></script>
+<link rel="stylesheet" href="../css/style.css">
+<link rel="stylesheet" href="../css/glossary-tooltips.css">
+<script src="../js/glossary-data.js"></script>
+<script src="../js/common.js"></script>
+<script defer src="../js/glossary-tooltips.js"></script>
+</head>
+<body data-chapter="comp_lsp" data-root="../">
+
+<main class="chapter">
+    <header class="ch-header">
+      <div class="eyebrow">CHAPTER 05 · WHITE-BOX COMPUTATIONAL LATENT SIGNAL PROCESSING</div>
+      <h1>White-Box Computational LSP: 픽셀로 풀지 않고 잠재 공간에서 직접 수행하는 수학적 ISP</h1>
+      <p class="lead">
+        앞선 2장(LSP)과 4장(Universal CFA)에서는 센서 데이터를 잠재 공간으로 압축 전송하여 MIPI 버스 병목을 해소했습니다.
+        그렇다면 <strong>“이미 16채널 잠재 텐서 \(\mathbf{z}_0 \in \mathbb{R}^{\frac{H}{8}\times\frac{W}{8}\times 16}\)로 압축된 상태에서, 거대한 VAE 디코더로 다시 픽셀을 풀거나 신경망을 재학습하지 않고도 노출·화이트밸런스·3×3 색보정(CCM)·감마 곡선을 실시간 수학 공식만으로 직접 조작할 수 없을까?”</strong>
+        이 장에서는 고차원 잠재 혼돈 속의 선형 색상 부분공간 이론부터 <strong>1:4:1 심슨 구적법</strong>, <strong>3×3 할선 야코비안(Secant Jacobian)</strong>, <strong>144차원 크로네커 외적(\(\otimes\))</strong>, 그리고 <strong>4-Step 잔차 매니폴드 리파이너</strong>까지 White-Box Computational LSP의 모든 원리와 코드를 하나씩 쉽게 풀어 설명합니다.
+      </p>
+      <div class="meta-bar">
+        <span>해석적 코어 <b>0-Net (신경망 가중치 0개 · 순수 행렬/구적법)</b></span>
+        <span>비선형 구적 이득 <b>1:4:1 Simpson (+3.6 ~ +7.5 dB 패치 DC PSNR)</b></span>
+        <span>색도 일관성 <b>10대 카메라 180포인트 \(R^2 = 0.9978\) (MAE 0.0055)</b></span>
+        <span>최종 복원 화질 <b>4-Step Refiner (96K) 평균 27.18 dB (+2.14 dB↑)</b></span>
+      </div>
+    </header>
+
+    <!-- =====================================================================
+         SECTION 5.1: 왜 White-Box Computational LSP인가? & 잠재 색상 부분공간 이론
+         ===================================================================== -->
+    <section id="clsp-intuition">
+      <h2>5.1 왜 잠재 공간에서 직접 ISP를 수행해야 하는가? — 고차원 혼돈 속의 선형 질서</h2>
+      <p>
+        최신 생성형 비전 파운데이션 모델(FLUX.1, Stable Diffusion 3.5 등)은 \(8\times 8\) RGB 픽셀 패치(\(8\times 8\times 3 = 192\)개 실수)를 <strong>16채널 잠재 벡터 \(\mathbf{z}(y,x) \in \mathbb{R}^{16}\)</strong> 하나로 압축합니다.
+        기존의 카메라 파이프라인에서 촬영 후 화이트밸런스 게인 \(\mathbf{w}_{\mathrm{wb}}\)나 감마 \(\gamma\) 같은 3A/ISP 파라미터 \(\Theta_{\mathrm{ISP}} = (\mathbf{b}, g, \mathbf{w}_{\mathrm{wb}}, M_{\mathrm{CCM}}, \gamma)\)를 변경하려면 두 가지 비효율적인 길밖에 없었습니다:
+      </p>
+      <div class="grid-2">
+        <div class="card">
+          <h3>기존 방식 1 · Decode → Pixel ISP → Re-Encode 왕복</h3>
+          <p>
+            잠재 텐서 \(\mathbf{z}_0\)를 무거운 VAE 디코더 \(\mathcal{D}\)로 풀어 픽셀 영상을 만든 뒤, 픽셀 도메인에서 ISP를 돌리고 다시 무거운 VAE 인코더 \(\mathcal{E}\)로 재인코딩합니다.
+            파라미터를 한 번 바꿀 때마다 수십 GFlops의 VAE 인코더/디코더를 왕복 실행해야 하므로 실시간 인터랙티브 조정이 불가능합니다.
+          </p>
+        </div>
+        <div class="card">
+          <h3>기존 방식 2 · Black-Box Neural ISP 학습</h3>
+          <p>
+            특정 카메라와 고정된 ISP 설정에 맞춰 거대한 블랙박스 신경망을 통째로 학습시킵니다.
+            하지만 카메라 기종이 바뀌거나 사용자가 화이트밸런스·색감 행렬(\(M_{\mathrm{CCM}}\))을 조금만 바꾸어도 신경망이 학습 분포 밖으로 이탈하여 색상이 무너지며, 물리적 의미(왜 이 색이 나왔는지)를 전혀 해석할 수 없습니다.
+          </p>
+        </div>
+      </div>
+
+      <div class="callout info">
+        <div class="callout-title">이론적 돌파구: “The Latent Color Subspace: Emergent Order in High-Dimensional Chaos”</div>
+        <p>
+          사전 학습된 16채널 VAE의 잠재 공간 \(\mathbb{R}^{16}\)은 겉보기에 16개 채널이 복잡하게 얽힌 비선형 혼돈(Chaos)처럼 보이지만, 실제로는 <strong>두 개의 직교에 가까운 기하학적 부분공간(Subspace)으로 자발적 질서(Emergent Order)</strong>를 형성합니다 (구현: <a class="src" href="../../comp_lsp/src/jet_basis.py" title="comp_lsp/src/jet_basis.py (line 150)" target="_blank" rel="noopener">jet_basis.py:150</a>):
+        </p>
+        <ul>
+          <li><strong>① 3차원 색도 DC 기본 매니폴드 (Chromatic DC Base Manifold, \(\mathbb{R}^3\))</strong>: \(8\times 8\) 패치의 평균 색상 \(\bar{\mathbf{c}} = (\bar{R}, \bar{G}, \bar{B})^\top \in [0,1]^3\)이 놓이는 완만한 곡면입니다. 균일한 색상 패치들을 인코딩해 보면 16차원 공간 전체에 흩어지는 것이 아니라 매끄러운 3차원 부분공간을 따라 정렬됩니다.</li>
+          <li><strong>② 고주파 구조 AC 파이버 (Structural AC Fiber, \(\mathbb{R}^{16}\))</strong>: 패치 내부의 엣지, 텍스처, 미세 대비(표준편차 \(\boldsymbol{\sigma}_{\mathrm{AC}} \in \mathbb{R}^3\))를 담고 있는 잔차 벡터 \(\mathbf{z}_{\mathrm{AC}}\)입니다.</li>
+        </ul>
+      </div>
+
+      <h3>미분기하학의 1차 제트 번들(1st-Order Jet Bundle) 분해</h3>
+      <p>
+        이 구조를 미분기하학의 <strong>1차 제트 번들(\(J^1 = \mathrm{DC} \oplus \mathrm{AC}\), 평균 함수값 DC와 1차 공간 미분 AC의 직합)</strong>로 정식화하면, 임의의 선형 RAW 잠재 벡터 \(\mathbf{z}_0(y,x) \in \mathbb{R}^{16}\)은 단 한 번 오프라인으로 보정된 아핀 프로브 \((\psi_{\mathrm{DC}}, \phi_{\mathrm{DC}})\)를 통해 <strong>패치 평균 색상 \(\bar{\mathbf{c}}_0\)</strong>와 <strong>순수 구조 잔차 \(\mathbf{z}_{\mathrm{AC}}\)</strong>로 정확히 분해됩니다:
+      </p>
+      <div class="math-block">
+        $$\bar{\mathbf{c}}_0(y,x) = \psi_{\mathrm{DC}}\!\left(\mathbf{z}_0(y,x)\right) = W_{\mathrm{dec}}\,\mathbf{z}_0(y,x) + \mathbf{b}_{\mathrm{dec}} \in \mathbb{R}^3$$
+        $$\mathbf{z}_{\mathrm{AC}}(y,x) = \mathbf{z}_0(y,x) - \phi_{\mathrm{DC}}\!\left(\bar{\mathbf{c}}_0(y,x)\right) \in \mathbb{R}^{16}, \qquad \phi_{\mathrm{DC}}(\bar{\mathbf{c}}) = W_{\mathrm{enc}}\,\bar{\mathbf{c}} + \mathbf{b}_{\mathrm{enc}}$$
+      </div>
+      <p>
+        즉, \(\mathbf{z}_0\)에서 현재 평균 색상 \(\bar{\mathbf{c}}_0\)에 해당하는 잠재 성분 \(\phi_{\mathrm{DC}}(\bar{\mathbf{c}}_0)\)를 빼버리면 순수한 고주파 에지 구조 \(\mathbf{z}_{\mathrm{AC}}\)만 남고, 여기에 우리가 원하는 새로운 색상 \(\bar{\mathbf{c}}_{\mathrm{new}}\)와 스케일링된 에지 변화를 다시 끼워 넣을 수 있습니다!
+      </p>
+
+      <figure class="diagram" id="fig-clsp-geometry">
+        <img src="../assets/img/fig6_latent_geometry_linear_vs_srgb.webp" alt="FLUX.1 16채널 잠재 공간 기하학: 선형 RGB 대 sRGB 활성화 곡선, 색도 평면 궤적, 1:4:1 심슨 구적법 이득 및 16차원 노름 추적" style="width:100%;height:auto;border-radius:8px;display:block">
+        <figcaption><b>그림 5-1 (논문 Fig. 1).</b> 16채널 FLUX.1 VAE 잠재 기하학 및 단계별 ISP 궤적 검증 (출처: <a class="src" href="../../comp_lsp/results/latent_geometry_and_color_dojo_metrics.json" title="comp_lsp/results/latent_geometry_and_color_dojo_metrics.json" target="_blank" rel="noopener">latent_geometry_and_color_dojo_metrics.json</a>). <b>(a)</b> 입력 휘도 \(Y \in [0,1]\)에 따른 상위 4개 잠재 채널(\(c_1, c_6, c_{12}, c_7\))의 응답 곡선. 선형 RGB(점선)와 감마가 적용된 sRGB \(Y^{1/2.2}\)(실선) 사이에 강한 곡률 차이가 존재하며, 729개 색상 격자 피팅 시 평면 선형 모델(\(R^2 = 0.9101\)) 대비 3차 다항 매니폴드(\(R^2 = 0.9797\))가 잠재 곡면을 정밀하게 설명합니다. <b>(b)</b> 잠재 DC 색도 평면(\(u_{\mathrm{DC},R}\) 대 \(u_{\mathrm{DC},G}\))에서의 궤적. 초록색으로 치우친 원시 센서 영역(\(G \gt R\), 연녹색 음영)에서 출발한 4대 카메라의 잠재 벡터가 화이트밸런스(<code>2:+WB</code>) 단계에서 정확히 무채색 대각선(\(R = G\)) 위로 수렴합니다. <b>(c)</b> \(8\times 8\) 패치 내 비선형 감마 적분 시 단순 평균점 대입 \(f(\bar{\mathbf{c}}_0)\)(회색) 대비 <b>1:4:1 심슨 구적법</b>(파란색/초록색)이 <b>+3.6 ~ +7.5 dB</b>의 패치 DC PSNR 이득을 달성합니다. <b>(d)</b> 0단계(RAW)부터 4단계(sRGB)까지 16차원 잠재 거리 \(\|\mathbf{z}_k - \mathbf{z}_{\mathrm{black}}\|_2\)에서 우리의 Zero-Net 야코비안 제트(점선)가 실제 픽셀 ISP 후 재인코딩한 정답 \(\mathcal{E}(\mathbf{x}_k)\)(실선)를 오차 없이 추종합니다.</figcaption>
+      </figure>
+    </section>
+
+    <!-- =====================================================================
+         SECTION 5.2: 핵심 수학 3대 원리 완전 해부 (1:4:1 Simpson, Secant Jacobian, 144-D Kronecker)
+         ===================================================================== -->
+    <section id="clsp-math">
+      <h2>5.2 핵심 수학 3대 원리 쉽게 이해하기: 1:4:1 구적법 · 3×3 할선 야코비안 · 144-D 크로네커 외적</h2>
+      <p>
+        White-Box Computational LSP가 신경망 가중치 하나 없이(Zero-Net) 비선형 ISP를 잠재 공간에서 정확히 수행할 수 있는 비결은 세 가지 고전 수리물리학 도구의 결합에 있습니다. 각 수식이 <strong>왜 필요한지</strong> 직관적으로 살펴보겠습니다.
+      </p>
+
+      <div class="card">
+        <h3>원리 ① 왜 \(f_{\mathrm{ISP}}\)를 1:4:1 비율로 가중 평균하는가? — 젠센 부등식(Jensen's Inequality)과 심슨 구적법</h3>
+        <p>
+          잠재 벡터 \(\mathbf{z}_0(y,x)\) 하나는 센서 픽셀 \(8\times 8 = 64\)개의 요약을 담고 있습니다.
+          이 \(8\times 8\) 패치 안에 밝은 하늘과 어두운 나뭇가지가 반반씩 섞여 있다고 해 봅시다(패치 평균 \(\bar{\mathbf{c}}_0\), 픽셀 표준편차 \(\boldsymbol{\sigma}_{\mathrm{AC}} \gt 0\)).
+          블랙레벨·게인·화이트밸런스·CCM까지는 선형 연산이므로 “64개 픽셀에 각각 적용한 뒤 평균 낸 값”과 “패치 평균 \(\bar{\mathbf{c}}_0\)에 한 번 적용한 값”이 정확히 같습니다.
+        </p>
+        <p>
+          하지만 마지막 <strong>감마 톤 매핑 \(f_\gamma(c) = c^{1/\gamma}\) (\(\gamma \approx 2.0 \implies \sqrt{c}\))</strong>는 위로 볼록(Concave, \(f''(c) \lt 0\))한 비선형 곡선입니다!
+          확률론의 <strong>젠센 부등식(Jensen's Inequality)</strong>에 의해 위로 볼록한 함수에서는 항상 다음 불등식이 성립합니다:
+        </p>
+        <div class="math-block">
+          $$\mathbb{E}\!\left[f_{\mathrm{ISP}}(\mathbf{x})\right] \;\lt\; f_{\mathrm{ISP}}\!\left(\mathbb{E}[\mathbf{x}]\right) = f_{\mathrm{ISP}}(\bar{\mathbf{c}}_0)$$
+        </div>
+        <p>
+          예를 들어 패치의 절반이 \(c=0.04\), 나머지 절반이 \(c=0.36\)이라면 패치 평균은 \(\bar{c}_0 = 0.20\)입니다.
+          실제 픽셀마다 \(\sqrt{c}\)를 씌운 뒤 평균을 내면 \(\frac{1}{2}(\sqrt{0.04} + \sqrt{0.36}) = \frac{1}{2}(0.2 + 0.6) = \mathbf{0.4000}\)이지만,
+          단순히 평균값 \(\bar{c}_0 = 0.20\) 하나만 함수에 넣으면 \(\sqrt{0.20} \approx \mathbf{0.4472}\)가 되어 에지 패치의 밝기가 크게 들뜨는 오차가 발생합니다!
+        </p>
+        <p>
+          이를 해결하기 위해 \(f_{\mathrm{ISP}}(\mathbf{c})\)를 평균 \(\bar{\mathbf{c}}_0\) 주변에서 2차 테일러 전개한 뒤 기댓값을 취하면:
+        </p>
+        <div class="math-block">
+          $$\mathbb{E}\!\left[f_{\mathrm{ISP}}(\bar{\mathbf{c}}_0 + \Delta\mathbf{c})\right] \approx f_{\mathrm{ISP}}(\bar{\mathbf{c}}_0) + \underbrace{f'_{\mathrm{ISP}}(\bar{\mathbf{c}}_0)\,\mathbb{E}[\Delta\mathbf{c}]}_{=0} + \frac{1}{2}\,f''_{\mathrm{ISP}}(\bar{\mathbf{c}}_0)\,\boldsymbol{\sigma}_{\mathrm{AC}}^2$$
+        </div>
+        <p>
+          여기서 2차 도함수 \(f''_{\mathrm{ISP}}\)를 직접 미분해 구하는 대신, 대칭 구적점 \(\mathbf{c}_- = \bar{\mathbf{c}}_0 - \boldsymbol{\delta}\), \(\mathbf{c}_0 = \bar{\mathbf{c}}_0\), \(\mathbf{c}_+ = \bar{\mathbf{c}}_0 + \boldsymbol{\delta}\) 세 곳에서 가중치 \((w_-, w_0, w_+)\)로 평균을 내어 위 테일러 급수와 계수를 비교해 봅시다:
+        </p>
+        <ul>
+          <li>0차 항 일치: \(w_- + w_0 + w_+ = 1\)</li>
+          <li>2차 분산 항 일치: \(\frac{1}{2}(w_- + w_+)\,\boldsymbol{\delta}^2 = \frac{1}{2}\,\boldsymbol{\sigma}_{\mathrm{AC}}^2 \implies (w_- + w_+)\,\boldsymbol{\delta}^2 = \boldsymbol{\sigma}_{\mathrm{AC}}^2\)</li>
+          <li>수치해석학의 <strong>심슨 1/3 공식(Simpson's Rule) 및 3점 가우스-르장드르 구적법</strong>에서 3차 다항식까지 오차 없이 적분하는 최적 중심 가중치는 \(w_0 = \frac{4}{6},\; w_- = w_+ = \frac{1}{6}\) (즉 <strong>\(1 : 4 : 1\) 비율</strong>)이며, 이를 대입하면 \(\frac{2}{6}\boldsymbol{\delta}^2 = \boldsymbol{\sigma}_{\mathrm{AC}}^2 \implies \boldsymbol{\delta} = \sqrt{1.5}\,\boldsymbol{\sigma}_{\mathrm{AC}} \approx 1.2247\,\boldsymbol{\sigma}_{\mathrm{AC}}\)가 정확히 유도됩니다!</li>
+        </ul>
+        <div class="math-block">
+          $$\bar{\mathbf{c}}_4 = \frac{1}{6}\,f_{\mathrm{ISP}}(\bar{\mathbf{c}}_0 - \sqrt{1.5}\,\boldsymbol{\sigma}_{\mathrm{AC}}) + \frac{4}{6}\,f_{\mathrm{ISP}}(\bar{\mathbf{c}}_0) + \frac{1}{6}\,f_{\mathrm{ISP}}(\bar{\mathbf{c}}_0 + \sqrt{1.5}\,\boldsymbol{\sigma}_{\mathrm{AC}})$$
+        </div>
+        <p style="margin-bottom:0">
+          결과적으로 단 3번의 함수 평가(\(1:4:1\))만으로 \(8\times 8 = 64\)개 픽셀 전체에 비선형 감마를 적용해 평균 낸 것과 거의 동일한 값(패치 DC MAE <code>0.0007</code>, PSNR <strong>+3.6 ~ +7.5 dB 향상</strong>)을 얻게 됩니다.
+        </p>
+      </div>
+
+      <div class="grid-2">
+        <div class="card">
+          <h3>원리 ② 3×3 할선 야코비안(Secant Jacobian \(J_{3\times 3}\)) — 고주파 대비(AC)는 얼마나 변하는가?</h3>
+          <p>
+            패치 평균 색상(DC)이 \(\bar{\mathbf{c}}_0 \to \bar{\mathbf{c}}_4\)로 이동할 때, 패치 내부의 <strong>고주파 에지 구조(\(\mathbf{z}_{\mathrm{AC}}\))</strong>는 어떻게 변환되어야 할까요?
+            미적분학의 연쇄법칙(Chain Rule)에 따라, 패치 내부의 미세한 색상 진동 \(\Delta\mathbf{c}\)는 비선형 ISP 함수 \(f_{\mathrm{ISP}}: \mathbb{R}^3 \to \mathbb{R}^3\)를 통과한 뒤 그 지점의 <strong>1차 도함수 행렬(야코비안 \(J_{3\times 3} = \frac{\partial f_{\mathrm{ISP}}}{\partial \mathbf{c}}\))</strong>만큼 증폭되고 회전합니다:
+          </p>
+          <div class="math-block">
+            $$J_{3\times 3}(y,x) = \underbrace{\mathrm{diag}\!\left(\frac{f_\gamma(\mathbf{c}_{3,+}) - f_\gamma(\mathbf{c}_{3,-})}{2\,\boldsymbol{\delta}_3}\right)}_{J_4:\text{ Gamma Secant Slope}} \cdot \underbrace{M_{\mathrm{CCM}}}_{J_3} \cdot \underbrace{\mathrm{diag}(w_R, w_G, w_B)}_{J_2} \cdot \underbrace{(g\,I_3)}_{J_1} \in \mathbb{R}^{3\times 3}$$
+          </div>
+          <p style="margin-bottom:0">
+            특히 감마 단계 \(J_4\)에서 순간 미분(접선) 대신 양 끝 구적점 \(\mathbf{c}_{3,\pm}\) 사이의 <strong>할선 기울기(Secant Slope)</strong>를 사용하면, \(c \to 0\) 근처에서 미분값이 무한대로 발산하는 특이점(\(\frac{d}{dc}c^{1/\gamma} \to \infty\))을 자연스럽게 정규화하여 에지 오버슈트를 완벽히 방지합니다.
+          </p>
+        </div>
+
+        <div class="card">
+          <h3>원리 ③ 왜 \(16\times 9 = 144\)차원 크로네커 외적(\(\otimes\))인가? — 얽힌 16채널 회전시키기</h3>
+          <p>
+            만약 VAE의 16개 잠재 채널이 R 전용 5개, G 전용 6개, B 전용 5개로 깔끔히 분리되어 있었다면 각 채널에 숫자 하나만 곱하면 될 것입니다.
+            하지만 실제 16채널 VAE는 <strong>16개 모든 채널에 R, G, B 색상과 수평·수직·대각선 공간 주파수를 뒤섞어(Entangled) 저장</strong>합니다.
+          </p>
+          <p>
+            따라서 16차원 구조 벡터 \(\mathbf{z}_{\mathrm{AC}} \in \mathbb{R}^{16}\)의 각 채널 \(c \in \{0\dots 15\}\)가 \(3\times 3\) 야코비안 행렬 \(J_{3\times 3} \in \mathbb{R}^{3\times 3}\)의 9개 모든 원소(\(\partial R_{\mathrm{out}}/\partial R_{\mathrm{in}}, \partial R_{\mathrm{out}}/\partial G_{\mathrm{in}}, \dots\))와 교차 작용할 수 있도록 <strong>크로네커 외적(Kronecker Outer Product)</strong>을 취합니다:
+          </p>
+          <div class="math-block">
+            $$\boldsymbol{\xi}(y,x) = \mathbf{z}_{\mathrm{AC}}(y,x) \otimes \mathrm{vec}\!\left(J_{3\times 3}(y,x)\right) = \mathrm{vec}\!\left(\mathbf{z}_{\mathrm{AC}}(y,x)\,\mathrm{vec}(J_{3\times 3})^\top\right) \in \mathbb{R}^{144}$$
+          </div>
+          <p style="margin-bottom:0">
+            이 144차원 특징 벡터에 사전 보정된 선형 사상 행렬 \(\Phi_{\mathrm{AC}} \in \mathbb{R}^{16\times 144}\)를 곱하면(\(\Delta\mathbf{z}_{\mathrm{AC}} = \Phi_{\mathrm{AC}}\,\boldsymbol{\xi}\)), 단 한 번의 행렬 곱으로 16개 잠재 채널 전체의 에지 크기와 색상 위상이 목표 sRGB 접공간으로 정확히 회전합니다!
+          </p>
+        </div>
+      </div>
+    </section>
+
+    <!-- =====================================================================
+         SECTION 5.3: 엔드투엔드 아키텍처 & Algorithm 1 실행 체인
+         ===================================================================== -->
+    <section id="clsp-arch">
+      <h2>5.3 엔드투엔드 아키텍처 &amp; Algorithm 1 실행 체인 (Stage 0 → Stage 1–4A → Stage 4B–5)</h2>
+      <p>
+        아래 <strong>그림 5-2</strong>는 센서 Bayer RAW에서 출발하여 16채널 잠재 공간 내부에서 5단계 해석적 ISP(\(\mathcal{T}_{\mathrm{LSP}}\))와 4단계 잔차 리파이너(\(\mathcal{R}_{4\text{-step}}\))를 거쳐 최종 sRGB 영상을 복원하기까지의 전체 아키텍처와 텐서 차원을 보여줍니다.
+        다이어그램의 색상 코드는 <strong>파란색(Frozen 16채널 VAE \(\mathcal{E}_{\mathrm{VAE}}, \mathcal{D}_{\mathrm{sRGB}}\))</strong>, <strong>연녹색(학습 가중치 0개인 White-Box 해석적 ISP \(\mathcal{T}_{\mathrm{LSP}}\))</strong>, <strong>주황색(경량 학습 모듈 \(\mathcal{A}_{1\times 1}\) 1.7K 및 \(\mathcal{R}_{4\text{-step}}\) 96K)</strong>으로 구분되어 있습니다.
+      </p>
+
+      <figure class="diagram" id="fig-clsp-algo-chain">
+        <img src="../assets/img/fig10_algorithm_chain_dataflow.webp" alt="White-Box Computational LSP 엔드투엔드 아키텍처 및 Algorithm 1 실행 데이터플로 다이어그램" style="width:100%;height:auto;border-radius:8px;display:block">
+        <figcaption><b>그림 5-2 (논문 Fig. 3).</b> White-Box Computational LSP 엔드투엔드 아키텍처 및 Algorithm 1 데이터플로 (출처: <a class="src" href="../../comp_lsp/paper/generate_algorithm_chain_fig.py" title="comp_lsp/paper/generate_algorithm_chain_fig.py (line 50)" target="_blank" rel="noopener">generate_algorithm_chain_fig.py:50</a>). <b>(a) Stage 0 (\(\mathcal{E}_{\mathrm{raw}}\))</b>: Bayer RAW를 디모자이킹한 뒤 동결된 16채널 VAE 인코더 \(\mathcal{E}_{\mathrm{VAE}}\)와 \(1\times 1\) 선형 어댑터 \(\mathcal{A}_{1\times 1}\)(1.7K params)에 통과시켜 \(\mathbf{z}_0 \in \mathbb{R}^{\frac{H}{8}\times\frac{W}{8}\times 16}\)을 생성합니다. <b>(b) Stage 1–4A (\(\mathcal{T}_{\mathrm{LSP}}\))</b>: 신경망 가중치 없이(0-Net) 1차 제트 분해(Step 1A) → 구적 반폭 \(\boldsymbol{\delta}\) 산출(Step 1B) → 1:4:1 심슨 3점 구적법(Step 2) → 3×3 할선 야코비안 합성(Step 3) → 144차원 크로네커 재조립(Step 4A)을 순차 실행합니다. <b>(c) Stage 4B &amp; 5</b>: 4-Step 잔차 매니폴드 리파이너 \(\mathcal{R}_{4\text{-step}}\)(96K params, <code>×4</code> 반복)가 패치 경계 고차 잔차를 정제한 뒤 동결된 \(\mathcal{D}_{\mathrm{sRGB}}\)로 최종 영상을 복원합니다.</figcaption>
+      </figure>
+
+      <h3>하드웨어 배포에 따른 두 가지 구적 통계 경로: Mode A vs. Mode B</h3>
+      <p>
+        Algorithm 1의 <strong>Step 1B</strong>에서 \(8\times 8\) 패치 내부의 픽셀 대비 표준편차 \(\boldsymbol{\sigma}_{\mathrm{AC}} \in \mathbb{R}^3\)와 평균 \(\bar{\mathbf{c}}_0\)를 얻는 방법은 시스템 구성에 따라 두 가지 모드를 지원합니다 (<a class="src" href="../../comp_lsp/src/latent_isp_ops.py" title="comp_lsp/src/latent_isp_ops.py (line 217)" target="_blank" rel="noopener">latent_isp_ops.py:217</a>):
+      </p>
+      <div class="grid-2">
+        <div class="card">
+          <h3>Mode A · 온칩 센서 패치 통계 경로 (권장 · 최고 정밀도)</h3>
+          <p>
+            센서(또는 전단 ISP)가 \(\mathbf{x}_{\mathrm{raw}}\)를 인코딩할 때 \(8\times 8\) 평균 풀링으로 실제 패치 평균 \(\bar{\mathbf{c}}_0 = \mathrm{AvgPool}_{8\times 8}(\mathbf{x}_{\mathrm{raw}})\)와 표준편차 \(\boldsymbol{\sigma}_{\mathrm{AC}} = \sqrt{\mathrm{AvgPool}_{8\times 8}((\mathbf{x}_{\mathrm{raw}}-\bar{\mathbf{c}}_0)^2)}\)를 함께 추출합니다.
+            이 경우 `1:4:1` 심슨 구적법이 실제 센서 픽셀 분산을 그대로 사용하므로 패치 DC 오차가 <strong>MAE 0.0007 (+3.6 ~ +7.5 dB DC PSNR 이득)</strong>로 수렴합니다.
+          </p>
+        </div>
+        <div class="card">
+          <h3>Mode B · 순수 잠재 공간 추정 경로 (부가 메타데이터 0)</h3>
+          <p>
+            호스트가 오직 16채널 잠재 텐서 \(\mathbf{z}_0\) 하나만 전달받는 환경입니다.
+            이때는 1차 제트 프로브로 \(\bar{\mathbf{c}}_0 = \psi_{\mathrm{DC}}(\mathbf{z}_0)\)를 읽고, 고주파 잔차 벡터의 절댓값 \(\lvert\mathbf{z}_{\mathrm{AC}}\rvert\)에 선형 추정기 \(\psi_\sigma(\mathbf{z}_{\mathrm{AC}}) = \mathrm{softplus}(W_\sigma\lvert\mathbf{z}_{\mathrm{AC}}\rvert + \mathbf{b}_\sigma)\)를 적용해 \(\boldsymbol{\sigma}_{\mathrm{AC}}\)를 복원합니다. 추가 버스 대역폭 0으로도 단순 점 평가 대비 <strong>+1.1 ~ +2.3 dB</strong>의 구적 이득을 달성합니다.
+          </p>
+        </div>
+      </div>
+
+      <h3>Algorithm 1 단계별 수식 ↔ 실제 PyTorch 코드 1:1 매핑</h3>
+      <div class="tbl-wrap">
+        <table class="tbl">
+          <thead>
+            <tr>
+              <th>알고리즘 단계</th>
+              <th>입출력 텐서 (\((H/8, W/8)\) 패치 기준)</th>
+              <th>핵심 수학 연산</th>
+              <th>저장소 구현 위치</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr>
+              <td><strong>Stage 0 · RAW Encoding</strong></td>
+              <td class="mono">\(\mathbf{x}_{\mathrm{raw}} \in \mathbb{R}^{H\times W\times 3} \to \mathbf{z}_0 \in \mathbb{R}^{\frac{H}{8}\times\frac{W}{8}\times 16}\)</td>
+              <td>\(\mathbf{z}_0 = \mathcal{A}_{1\times 1}(\mathcal{E}_{\mathrm{VAE}}(\mathrm{Demosaic}(\mathbf{x}_{\mathrm{Bayer}})))\)</td>
+              <td><a class="src" href="../../comp_lsp/src/one_step_refiner.py" title="comp_lsp/src/one_step_refiner.py (line 282)" target="_blank" rel="noopener">one_step_refiner.py:282</a> · <code>RawToLatentAdapter16Ch</code></td>
+            </tr>
+            <tr>
+              <td><strong>Step 1A · 1st-Order Jet Split</strong></td>
+              <td class="mono">\(\mathbf{z}_0 \to \bar{\mathbf{c}}_0 \in \mathbb{R}^3,\; \mathbf{z}_{\mathrm{AC}} \in \mathbb{R}^{16}\)</td>
+              <td>\(\bar{\mathbf{c}}_0 = \psi_{\mathrm{DC}}(\mathbf{z}_0),\; \mathbf{z}_{\mathrm{AC}} = \mathbf{z}_0 - \phi_{\mathrm{DC}}(\bar{\mathbf{c}}_0)\)</td>
+              <td><a class="src" href="../../comp_lsp/src/jet_basis.py" title="comp_lsp/src/jet_basis.py (line 150)" target="_blank" rel="noopener">jet_basis.py:150</a> · <code>decompose_jet</code></td>
+            </tr>
+            <tr>
+              <td><strong>Step 1B · Quadrature Half-Width</strong></td>
+              <td class="mono">\(\mathbf{z}_{\mathrm{AC}} \to \boldsymbol{\sigma}_{\mathrm{AC}} \in \mathbb{R}^3 \to \boldsymbol{\delta} \in \mathbb{R}^3\)</td>
+              <td>\(\boldsymbol{\delta} = \sqrt{1.5}\,\boldsymbol{\sigma}_{\mathrm{AC}},\; \mathbf{c}_\pm = \mathrm{clamp}(\bar{\mathbf{c}}_0 \pm \boldsymbol{\delta}, 0, 1)\)</td>
+              <td><a class="src" href="../../comp_lsp/src/jet_basis.py" title="comp_lsp/src/jet_basis.py (line 150)" target="_blank" rel="noopener">jet_basis.py:150</a> · <code>predict_patch_std</code></td>
+            </tr>
+            <tr>
+              <td><strong>Step 2 · 1:4:1 Simpson DC</strong></td>
+              <td class="mono">\((\mathbf{c}_-, \mathbf{c}_0, \mathbf{c}_+) \to \bar{\mathbf{c}}_4 \in \mathbb{R}^3\)</td>
+              <td>\(\bar{\mathbf{c}}_4 = \frac{1}{6}\!\left(f_{\mathrm{ISP}}(\mathbf{c}_-) + 4\,f_{\mathrm{ISP}}(\mathbf{c}_0) + f_{\mathrm{ISP}}(\mathbf{c}_+)\right)\)</td>
+              <td><a class="src" href="../../comp_lsp/src/latent_isp_ops.py" title="comp_lsp/src/latent_isp_ops.py (line 217)" target="_blank" rel="noopener">latent_isp_ops.py:217</a> · <code>_quadrature_dc_and_gamma_secant</code></td>
+            </tr>
+            <tr>
+              <td><strong>Step 3 · 3×3 Secant Jacobian</strong></td>
+              <td class="mono">\((\mathbf{c}_{3,\pm}, \Theta_{\mathrm{ISP}}) \to J_{3\times 3} \in \mathbb{R}^{3\times 3}\)</td>
+              <td>\(J_{3\times 3} = J_4(\mathbf{c}_{3,\pm})\,M_{\mathrm{CCM}}\,\mathrm{diag}(\mathbf{w}_{\mathrm{wb}})\,g\)</td>
+              <td><a class="src" href="../../comp_lsp/src/latent_isp_ops.py" title="comp_lsp/src/latent_isp_ops.py (line 217)" target="_blank" rel="noopener">latent_isp_ops.py:217</a> · <code>run_pipeline</code></td>
+            </tr>
+            <tr>
+              <td><strong>Step 4A · 144-D Kronecker Update</strong></td>
+              <td class="mono">\((\mathbf{z}_0, \Delta\bar{\mathbf{c}}, \mathbf{z}_{\mathrm{AC}}, J_{3\times 3}) \to \mathbf{z}_4 \in \mathbb{R}^{16}\)</td>
+              <td>\(\mathbf{z}_4 = \mathbf{z}_0 + \phi_{\mathrm{DC}}(\bar{\mathbf{c}}_4 - \bar{\mathbf{c}}_0) + \Phi_{\mathrm{AC}}(\mathbf{z}_{\mathrm{AC}} \otimes \mathrm{vec}(J_{3\times 3}))\)</td>
+              <td><a class="src" href="../../comp_lsp/src/jet_basis.py" title="comp_lsp/src/jet_basis.py (line 150)" target="_blank" rel="noopener">jet_basis.py:150</a> · <code>transport_ac_kronecker</code></td>
+            </tr>
+            <tr>
+              <td><strong>Step 4B · 4-Step Refiner</strong></td>
+              <td class="mono">\((\mathbf{z}_4, \mathbf{z}_0, \bar{\mathbf{c}}_0, \bar{\mathbf{c}}_4, \Theta_{\mathrm{ISP}}) \to \hat{\mathbf{z}} \in \mathbb{R}^{16}\)</td>
+              <td>\(\mathbf{z}^{(k)} = \mathbf{z}^{(k-1)} + \alpha_k\,g_\theta(\mathbf{z}^{(k-1)}, \mathbf{z}_0, \bar{\mathbf{c}}_0, \bar{\mathbf{c}}_4, \Theta_{\mathrm{ISP}})\) (\(k=1\dots 4\))</td>
+              <td><a class="src" href="../../comp_lsp/src/one_step_refiner.py" title="comp_lsp/src/one_step_refiner.py (line 282)" target="_blank" rel="noopener">one_step_refiner.py:282</a> · <code>NStepManifoldRefiner16Ch</code></td>
+            </tr>
+            <tr>
+              <td><strong>Stage 5 · sRGB VAE Decode</strong></td>
+              <td class="mono">\(\hat{\mathbf{z}} \in \mathbb{R}^{\frac{H}{8}\times\frac{W}{8}\times 16} \to \hat{\mathbf{x}}_{\mathrm{sRGB}} \in \mathbb{R}^{H\times W\times 3}\)</td>
+              <td>\(\hat{\mathbf{x}}_{\mathrm{sRGB}} = \mathrm{clamp}(\mathcal{D}_{\mathrm{sRGB}}(\hat{\mathbf{z}}), 0, 1)\)</td>
+              <td><a class="src" href="../../comp_lsp/src/one_step_refiner.py" title="comp_lsp/src/one_step_refiner.py (line 282)" target="_blank" rel="noopener">one_step_refiner.py:282</a> · <code>Standard16ChVAEWrapper.decode</code></td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+    </section>
+
+    <!-- =====================================================================
+         SECTION 5.4: 블록별 시각적·색도 진화 (실제 카메라 3대 비교)
+         ===================================================================== -->
+    <section id="clsp-flow">
+      <h2>5.4 블록별 잠재 텐서 진화 &amp; 실제 하드웨어 카메라 3대 단계별 검증</h2>
+      <p>
+        각 ISP 블록(\(\text{Block 0} \to \text{Block 5}\))을 하나씩 통과할 때마다 16채널 잠재 텐서 \(\mathbf{z}_k\)를 디코딩해 보면, 블랙박스가 아니라 <strong>각 물리적 연산자의 효과가 잠재 공간에서 그대로 재현됨</strong>을 눈으로 확인할 수 있습니다:
+      </p>
+      <ol class="steps">
+        <li><strong>Col 0 · Linear RAW (\(\mathbf{z}_0\))</strong>: 베이어 컬러 필터의 녹색 픽셀(Gr, Gb) 감도가 높아 전체 영상이 어둡고 초록색으로 강하게 치우쳐 있습니다 (Nikon D700 기준 <code>R/G = 0.60, B/G = 0.63</code>, \(\|\mathbf{z}_0\|_2 = 3.42\)).</li>
+        <li><strong>Col 1 · BLC &amp; Digital Gain (\(\mathbf{z}_1\))</strong>: 암전류 오프셋 \(\mathbf{b}\)를 차감하고 디지털 게인 \(g\)를 곱해 선형 다이내믹 레인지를 확장합니다 (\(J_1 = g\,I_3\)).</li>
+        <li><strong>Col 2 · White Balance (\(\mathbf{z}_2\))</strong>: 채널별 이득 \(\mathbf{w}_{\mathrm{wb}} = (w_R, 1.0, w_B)^\top\)이 잠재 DC 축과 AC 파이버에 동시 적용되어 초록색 캐스트가 즉시 사라지고 자연스러운 색 균형(<code>R/G = 1.18, B/G = 0.92</code>)을 회복합니다.</li>
+        <li><strong>Col 3 · 3×3 Color Correction Matrix (\(\mathbf{z}_3\))</strong>: 비대각 음수 성분을 포함한 \(M_{\mathrm{CCM}}\) 행렬이 교차 채널 색 번짐을 제거하여 붉은 사암 절벽과 푸른 하늘의 채도를 분리합니다 (<code>R/G = 1.37</code>).</li>
+        <li><strong>Col 4 · Gamma 0-Net (\(\mathbf{z}_4\))</strong>: 신경망 가중치 0개 상태에서 `1:4:1` 심슨 구적법과 `144-D` 크로네커 야코비안만으로 암부 휘도를 끌어올려 즉시 <strong>24.19 ~ 26.06 dB</strong>의 sRGB 영상을 완성합니다.</li>
+        <li><strong>Col 5 · 4-Step Manifold Refiner (\(\mathbf{z}^{(4)}\))</strong>: 96K 파라미터의 경량 리파이너를 4회 반복 적용하여 \(8\times 8\) 패치 경계의 미세 위상 오차를 제거하고 <strong>26.19 ~ 28.17 dB (+1.07 ~ +2.11 dB 향상)</strong>의 최종 화질을 달성합니다.</li>
+      </ol>
+
+      <figure class="diagram" id="fig-clsp-block-flow">
+        <img src="../assets/img/fig8_pipeline_block_by_block_flow.webp" alt="블록별 16채널 잠재 ISP 연산자 수식, 3대 하드웨어 카메라 단계별 시각적 진화 및 16채널 잠재 바코드" style="width:100%;height:auto;border-radius:8px;display:block">
+        <figcaption><b>그림 5-3 (논문 Fig. 2).</b> 블록별 16채널 잠재 ISP 파이프라인 및 3대 실제 하드웨어 카메라(MIT-FiveK Nikon D700 12-bit BGGR, Canon EOS 40D 14-bit RGGB, Official OpenISP 10-bit RGGB)의 단계별 복원 결과 (출처: <a class="src" href="../../comp_lsp/paper/generate_pipeline_block_by_block_fig.py" title="comp_lsp/paper/generate_pipeline_block_by_block_fig.py (line 84)" target="_blank" rel="noopener">generate_pipeline_block_by_block_fig.py:84</a>). 각 셀 우측의 수평 막대는 디코딩된 영상의 평균 R/G/B 비율을 나타내며, 마지막 <code>Col 5</code> 썸네일은 좌측 절반(GT 픽셀 ISP)과 우측 절반(제안하는 잠재 ISP)을 분할 비교합니다. 하단 <b>(c)</b>는 Nikon D700 패치 \((7,8)\)의 16개 잠재 채널 활성화(\(c_0 \dots c_{15}\))가 단계별로 재분포되는 모습을 보여줍니다.</figcaption>
+      </figure>
+    </section>
+
+    <!-- =====================================================================
+         SECTION 5.5: 패치 단위 수치 검증, 10대 카메라 벤치마크 & 인터랙티브 시뮬레이터
+         ===================================================================== -->
+    <section id="clsp-verify">
+      <h2>5.5 패치 단위(\(y=7, x=8\)) 수치 해부, 10대 카메라 정량 벤치마크 &amp; 라이브 시뮬레이터</h2>
+      <p>
+        실제 MIT-FiveK Nikon D700 장면의 중심 패치 \((y=7, x=8)\) 하나를 골라 내부에서 일어나는 행렬 연산을 숫자로 직접 확인해 보겠습니다 (정본 데이터: <a class="src" href="../../comp_lsp/results/step_by_step_math_example.json" title="comp_lsp/results/step_by_step_math_example.json" target="_blank" rel="noopener">step_by_step_math_example.json</a>):
+      </p>
+      <ul>
+        <li><strong>입력 패치 통계</strong>: 원시 패치 평균 \(\bar{\mathbf{c}}_0 = (0.177, 0.296, 0.147)^\top\) (녹색이 강함), 패치 내부 표준편차 \(\boldsymbol{\sigma}_{\mathrm{AC}} = (0.025, 0.040, 0.017)^\top\).</li>
+        <li><strong>1:4:1 심슨 구적법 출력</strong>: 세 구적점 \(\bar{\mathbf{c}}_0 \pm \sqrt{1.5}\boldsymbol{\sigma}_{\mathrm{AC}}\)에서 계산된 목표 sRGB 평균은 \(\bar{\mathbf{c}}_4 = (0.631, 0.547, 0.434)^\top\)이며, 실제 64개 픽셀에 픽셀 ISP를 돌린 뒤 평균 낸 참값 \((0.631, 0.546, 0.434)^\top\)과 <strong>절대 오차 MAE = 0.0007</strong>로 일치합니다!</li>
+        <li><strong>3×3 할선 야코비안 \(J_{3\times 3}\)</strong>: 대각 성분 \((+2.697, +1.226, +2.219)\)은 디지털 게인·화이트밸런스·감마 할선 기울기가 결합된 채널별 대비 증폭률을 뜻하고, 비대각 성분 \((-0.342, -0.144, -0.412)\) 등은 \(3\times 3\) CCM에 의한 교차 색상 디테일 혼합을 정확히 반영합니다.</li>
+      </ul>
+
+      <figure class="diagram" id="fig-clsp-patch-verify">
+        <img src="../assets/img/fig9_step_by_step_math_and_consistency.webp" alt="패치 (7,8)의 3×3 할선 야코비안 행렬, 16채널 잠재 벡터 정합, 10대 카메라 180포인트 색도 일관성 및 PSNR 비교" style="width:100%;height:auto;border-radius:8px;display:block">
+        <figcaption><b>그림 5-4 (논문 Fig. 4).</b> 패치 수준(\(y=7, x=8\)) 잠재 ISP 수학적 검증 및 10대 하드웨어 카메라 벤치마크 (출처: <a class="src" href="../../comp_lsp/paper/generate_fig4_patch_verification_svg.py" title="comp_lsp/paper/generate_fig4_patch_verification_svg.py (line 31)" target="_blank" rel="noopener">generate_fig4_patch_verification_svg.py:31</a>). <b>(a)</b> 패치 \((7,8)\)에서 계산된 \(3\times 3\) 할선 야코비안 행렬 \(J_{3\times 3}\)과 수치 텔레메트리 카드. <b>(b)</b> 16개 잠재 채널(\(c_0 \dots c_{15}\))에서 원시 입력 \(\mathbf{z}_0\)(회색 점선)가 0-Net(파란색, 25.44 dB)과 4-Step Refiner(주황색, 26.51 dB)를 거치며 실제 오라클 잠재 벡터 \(\mathbf{z}_{\mathrm{gt}} = \mathcal{E}_{\mathrm{VAE}}(\mathbf{x}_{\mathrm{gt}})\)(남색 사각형)에 정밀하게 포개집니다. <b>(c)</b> 10대 카메라 × 6단계 = 180개 R/G/B 평균 포인트가 \(1:1\) 대각선 위에 정렬되어 <b>\(R^2 = 0.9978\), MAE = 0.0055</b>의 색도 일관성을 입증합니다. <b>(d)</b> 10대 카메라 전체에서 0-Net(평균 25.04 dB) → +1-Step(25.29 dB) → +4-Step Refiner(<b>27.18 dB, 평균 +2.14 dB 향상</b>)의 일관된 성능 향상을 달성합니다.</figcaption>
+      </figure>
+
+      <h3>10대 실제 하드웨어 카메라 RAW 벤치마크 상세 표</h3>
+      <div class="tbl-wrap">
+        <table class="tbl tbl-num">
+          <thead>
+            <tr>
+              <th>카메라 및 센서 포맷</th>
+              <th>네이티브 ISP 파라미터 (\(\mathbf{w}_{\mathrm{wb}} \cdot g \cdot \gamma\))</th>
+              <th>BLC+Gain (dB)</th>
+              <th>+WB (dB)</th>
+              <th>+CCM (dB)</th>
+              <th>+Gamma 0-Net (dB)</th>
+              <th>+1-Step (dB)</th>
+              <th>+4-Step Refiner (dB)</th>
+              <th>RGB MAE ↓</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr><td><strong>OpenISP 10-bit Full Chart (RGGB .RAW)</strong></td><td class='mono'>(1.82, 1.0, 1.25) · 1.15× · γ=2.0</td><td class='mono'>28.54</td><td class='mono'>24.20</td><td class='mono'>23.75</td><td class='mono'>23.91</td><td class='mono'>23.93</td><td class='mono'><strong>30.52</strong> <span class='badge b-ok'>+6.61 dB</span></td><td class='mono'>0.0023</td></tr>
+<tr><td><strong>OpenISP 10-bit Detail Crop (RGGB .RAW)</strong></td><td class='mono'>(1.82, 1.0, 1.25) · 1.15× · γ=2.0</td><td class='mono'>28.55</td><td class='mono'>25.56</td><td class='mono'>24.77</td><td class='mono'>26.06</td><td class='mono'>26.06</td><td class='mono'><strong>28.17</strong> <span class='badge b-ok'>+2.11 dB</span></td><td class='mono'>0.0029</td></tr>
+<tr><td><strong>Nikon D700 Mountain Cliff (12-bit BGGR .DNG)</strong></td><td class='mono'>(2.13, 1.0, 1.55) · 1.02× · γ=2.0</td><td class='mono'>32.45</td><td class='mono'>25.66</td><td class='mono'>24.13</td><td class='mono'>25.44</td><td class='mono'>25.48</td><td class='mono'><strong>26.51</strong> <span class='badge b-ok'>+1.07 dB</span></td><td class='mono'>0.0040</td></tr>
+<tr><td><strong>FiveK DSLR Architecture (14-bit RGGB .DNG)</strong></td><td class='mono'>(1.33, 1.0, 1.63) · 1.02× · γ=2.0</td><td class='mono'>32.69</td><td class='mono'>28.05</td><td class='mono'>25.92</td><td class='mono'>25.58</td><td class='mono'>25.73</td><td class='mono'><strong>26.92</strong> <span class='badge b-ok'>+1.34 dB</span></td><td class='mono'>0.0058</td></tr>
+<tr><td><strong>Canon EOS 5D Outdoor Sky (14-bit RGGB .DNG)</strong></td><td class='mono'>(2.72, 1.0, 1.22) · 1.06× · γ=2.0</td><td class='mono'>26.30</td><td class='mono'>22.22</td><td class='mono'>21.66</td><td class='mono'>21.75</td><td class='mono'>21.77</td><td class='mono'><strong>22.96</strong> <span class='badge b-ok'>+1.21 dB</span></td><td class='mono'>0.0024</td></tr>
+<tr><td><strong>Canon 1Ds MkII Foliage (12-bit RGGB .DNG)</strong></td><td class='mono'>(2.06, 1.0, 1.49) · 1.02× · γ=2.0</td><td class='mono'>29.21</td><td class='mono'>24.64</td><td class='mono'>23.88</td><td class='mono'>24.11</td><td class='mono'>23.96</td><td class='mono'><strong>24.24</strong> <span class='badge b-ok'>+0.13 dB</span></td><td class='mono'>0.0036</td></tr>
+<tr><td><strong>Canon EOS 40D Green Meadow (14-bit RGGB .DNG)</strong></td><td class='mono'>(2.45, 1.0, 1.38) · 1.02× · γ=2.0</td><td class='mono'>30.17</td><td class='mono'>23.76</td><td class='mono'>22.86</td><td class='mono'>24.19</td><td class='mono'>24.52</td><td class='mono'><strong>26.19</strong> <span class='badge b-ok'>+2.00 dB</span></td><td class='mono'>0.0019</td></tr>
+<tr><td><strong>Canon EOS 40D Daylight (14-bit RGGB .DNG)</strong></td><td class='mono'>(2.25, 1.0, 1.39) · 1.17× · γ=2.0</td><td class='mono'>25.86</td><td class='mono'>21.73</td><td class='mono'>21.15</td><td class='mono'>21.96</td><td class='mono'>21.88</td><td class='mono'><strong>23.56</strong> <span class='badge b-ok'>+1.60 dB</span></td><td class='mono'>0.0029</td></tr>
+<tr><td><strong>Google Pixel Mobile Daylight (14-bit BGGR .DNG)</strong></td><td class='mono'>(2.08, 1.0, 2.09) · 1.02× · γ=2.0</td><td class='mono'>32.28</td><td class='mono'>26.85</td><td class='mono'>26.62</td><td class='mono'>27.19</td><td class='mono'>29.25</td><td class='mono'><strong>30.14</strong> <span class='badge b-ok'>+2.95 dB</span></td><td class='mono'>0.0018</td></tr>
+<tr><td><strong>Google Pixel Mobile Indoor (14-bit BGGR .DNG)</strong></td><td class='mono'>(1.27, 1.0, 2.63) · 1.04× · γ=2.0</td><td class='mono'>36.64</td><td class='mono'>30.61</td><td class='mono'>29.75</td><td class='mono'>30.19</td><td class='mono'>30.28</td><td class='mono'><strong>32.55</strong> <span class='badge b-ok'>+2.36 dB</span></td><td class='mono'>0.0007</td></tr>
+          </tbody>
+        </table>
+      </div>
+      <p class="note">
+        출처: <a class="src" href="../../comp_lsp/results/step_by_step_math_example.json" title="comp_lsp/results/step_by_step_math_example.json" target="_blank" rel="noopener">step_by_step_math_example.json</a> (생성 스크립트: <a class="src" href="../../comp_lsp/paper/generate_math_walkthrough_and_interactive.py" title="comp_lsp/paper/generate_math_walkthrough_and_interactive.py (line 76)" target="_blank" rel="noopener">generate_math_walkthrough_and_interactive.py:76</a>, 테스트 스위트: <a class="src" href="../../comp_lsp/tests/test_comp_lsp_pipeline.py" title="comp_lsp/tests/test_comp_lsp_pipeline.py" target="_blank" rel="noopener">test_comp_lsp_pipeline.py</a>). 모든 수치는 합성 데이터가 아닌 실제 DNG/RAW 센서 프레임 10종에서 측정되었습니다.
+      </p>
+
+      <!-- INTERACTIVE SIMULATOR: White-Box Latent ISP Math & Jacobian Explorer -->
+      <div class="sim" id="sim-clsp-jet">
+        <div class="sim-head">
+          <div class="sim-title">SIMULATOR · 16채널 White-Box 잠재 ISP (1:4:1 심슨 구적법 &amp; 3×3 할선 야코비안) 라이브 계산기</div>
+          <span class="badge b-ok">실시간 수식 연산</span>
+        </div>
+        <div class="sim-body">
+          <p style="margin-top:0;">
+            카메라 프리셋을 선택하거나 슬라이더로 <strong>디지털 게인 \(g\)</strong>, <strong>화이트밸런스 \(w_R, w_B\)</strong>, <strong>감마 \(\gamma\)</strong>, 그리고 <strong>패치 내부 에지 대비(\(\sigma_{\mathrm{AC}}\))</strong>를 직접 조절해 보세요.
+            ① 좌측 캔버스에서는 비선형 감마 곡선 위에서 세 구적점(\(c_-, c_0, c_+\))의 <strong>1:4:1 심슨 가중 평균</strong>이 어떻게 젠센 부등식 오차(Jensen Gap)를 잡는지 실시간으로 보여주고,
+            ② 우측 캔버스에서는 해당 패치의 <strong>\(3\times 3\) 할선 야코비안 행렬 \(J_{3\times 3}\)</strong>과 <strong>16채널 잠재 벡터 \(\mathbf{z}_0 \to \mathbf{z}_4\) 변환</strong>을 즉시 계산합니다.
+          </p>
+          <div class="sim-controls" id="clsp-sim-ctrl"></div>
+          <div class="sim-grid-2">
+            <canvas id="clsp-quad-cv" data-w="440" data-h="270"></canvas>
+            <canvas id="clsp-jac-cv" data-w="440" data-h="270"></canvas>
+          </div>
+          <div class="sim-stats" id="clsp-sim-stats"></div>
+        </div>
+      </div>
+    </section>
+
+    <section class="keypoints" id="summary">
+      <h3>핵심 정리 · Chapter 05</h3>
+      <ul>
+        <li><strong>1차 제트 번들(Jet Bundle) 분해</strong>: 16채널 잠재 텐서 \(\mathbf{z}_0 \in \mathbb{R}^{\frac{H}{8}\times\frac{W}{8}\times 16}\)는 선형 아핀 프로브 \((\psi_{\mathrm{DC}}, \phi_{\mathrm{DC}})\)를 통해 \(8\times 8\) 패치 평균 색상 \(\bar{\mathbf{c}}_0 \in \mathbb{R}^3\)와 고주파 구조 파이버 \(\mathbf{z}_{\mathrm{AC}} \in \mathbb{R}^{16}\)로 깔끔하게 분리됩니다.</li>
+        <li><strong>1:4:1 심슨 구적법 (Simpson / Gauss-Legendre Quadrature)</strong>: 위로 볼록한 감마 곡선 \(c^{1/\gamma}\)를 통과할 때 발생하는 젠센 부등식 오차를 제거하기 위해 \(\bar{\mathbf{c}}_0 \pm \sqrt{1.5}\,\boldsymbol{\sigma}_{\mathrm{AC}}\)와 중심점 \(\bar{\mathbf{c}}_0\)을 \(1:4:1\) 비율로 가중 평균하여 패치 DC PSNR을 <strong>+3.6 ~ +7.5 dB</strong> 향상시킵니다.</li>
+        <li><strong>3×3 할선 야코비안 &amp; 144차원 크로네커 외적(\(\otimes\))</strong>: 연쇄법칙으로 합성된 \(J_{3\times 3} = J_4 M_{\mathrm{CCM}}\mathrm{diag}(\mathbf{w}_{\mathrm{wb}})g\)와 16차원 구조 벡터 \(\mathbf{z}_{\mathrm{AC}}\)의 크로네커 외적 \(\boldsymbol{\xi} \in \mathbb{R}^{144}\)를 통해, 얽혀 있는 16개 잠재 채널 전체의 에지 크기와 색 위상을 단 한 번의 행렬 곱(\(\Phi_{\mathrm{AC}}\boldsymbol{\xi}\))으로 회전시킵니다.</li>
+        <li><strong>4-Step 잔차 매니폴드 리파이너</strong>: 0-Net 해석적 코어(25.04 dB) 위에 96K 파라미터의 경량 4-Step 리파이너를 결합하여 \(8\times 8\) 패치 경계 아티팩트를 해소하고 10대 실제 카메라 평균 <strong>27.18 dB (+2.14 dB 향상)</strong> 및 색도 일관성 \(R^2 = 0.9978\)을 달성합니다.</li>
+      </ul>
+    </section>
+</main>
+<script>
+(function(){
+  const ctrl = document.getElementById('clsp-sim-ctrl');
+  const stats = document.getElementById('clsp-sim-stats');
+  if(!ctrl) return;
+
+  const PRESETS = {
+    nikon:  { name: 'Nikon D700 (12-bit BGGR)', c0: [0.177, 0.296, 0.147], g: 1.02, wr: 2.13, wb: 1.55, gam: 2.0, sig: 0.08, ccm: [[1.531,-0.417,-0.114],[-0.008,1.288,-0.280],[0.012,-0.214,1.203]] },
+    canon:  { name: 'Canon 40D (14-bit RGGB)',  c0: [0.165, 0.372, 0.252], g: 1.02, wr: 2.45, wb: 1.38, gam: 2.0, sig: 0.09, ccm: [[1.906,-1.052,0.146],[-0.045,1.427,-0.382],[0.042,-0.449,1.407]] },
+    openisp:{ name: 'OpenISP (10-bit RGGB)',    c0: [0.402, 0.655, 0.598], g: 1.15, wr: 1.82, wb: 1.25, gam: 2.0, sig: 0.11, ccm: [[1.220,-0.140,-0.080],[-0.080,1.160,-0.080],[-0.040,-0.160,1.200]] },
+    pixel:  { name: 'Google Pixel (14-bit)',    c0: [0.205, 0.370, 0.210], g: 1.02, wr: 2.08, wb: 2.09, gam: 2.2, sig: 0.07, ccm: [[1.117,0.152,-0.270],[-0.184,1.522,-0.338],[-0.015,-0.486,1.502]] }
+  };
+
+  let curKey = 'nikon';
+  let state = Object.assign({}, PRESETS.nikon);
+
+  ctrl.appendChild(SB.seg({
+    label: '카메라 프리셋',
+    options: [['nikon','Nikon D700'], ['canon','Canon 40D'], ['openisp','OpenISP'], ['pixel','Google Pixel']],
+    value: 'nikon',
+    onChange: v => {
+      curKey = v;
+      state = Object.assign({}, PRESETS[v]);
+      slGain.set(state.g);
+      slWr.set(state.wr);
+      slWb.set(state.wb);
+      slGam.set(state.gam);
+      slSig.set(state.sig);
+      drawSim();
+    }
+  }));
+
+  const slGain = SB.slider({ label: 'Digital Gain g', min: 0.8, max: 1.8, step: 0.02, value: state.g, fmt: v => v.toFixed(2) + '×', onInput: v => { state.g = v; drawSim(); } });
+  const slWr   = SB.slider({ label: 'WB Red w_R', min: 1.0, max: 3.0, step: 0.05, value: state.wr, fmt: v => v.toFixed(2), onInput: v => { state.wr = v; drawSim(); } });
+  const slWb   = SB.slider({ label: 'WB Blue w_B', min: 1.0, max: 3.0, step: 0.05, value: state.wb, fmt: v => v.toFixed(2), onInput: v => { state.wb = v; drawSim(); } });
+  const slGam  = SB.slider({ label: 'Gamma γ', min: 1.2, max: 2.6, step: 0.1, value: state.gam, fmt: v => v.toFixed(1), onInput: v => { state.gam = v; drawSim(); } });
+  const slSig  = SB.slider({ label: '패치 대비 σ_AC', min: 0.01, max: 0.18, step: 0.01, value: state.sig, fmt: v => v.toFixed(2), onInput: v => { state.sig = v; drawSim(); } });
+
+  ctrl.appendChild(slGain);
+  ctrl.appendChild(slWr);
+  ctrl.appendChild(slWb);
+  ctrl.appendChild(slGam);
+  ctrl.appendChild(slSig);
+
+  function clamp(x, a, b){ return Math.max(a, Math.min(b, x)); }
+
+  function applyLinearISP(c){
+    const b = 0.012;
+    const c1 = c.map(v => clamp((v - b) * state.g, 0.001, 1.0));
+    const c2 = [clamp(c1[0] * state.wr, 0.001, 1.0), c1[1], clamp(c1[2] * state.wb, 0.001, 1.0)];
+    const M = state.ccm;
+    const c3 = [
+      clamp(M[0][0]*c2[0] + M[0][1]*c2[1] + M[0][2]*c2[2], 0.002, 1.0),
+      clamp(M[1][0]*c2[0] + M[1][1]*c2[1] + M[1][2]*c2[2], 0.002, 1.0),
+      clamp(M[2][0]*c2[0] + M[2][1]*c2[1] + M[2][2]*c2[2], 0.002, 1.0)
+    ];
+    return c3;
+  }
+
+  function applyGamma(c3){
+    const invG = 1.0 / state.gam;
+    return c3.map(v => Math.pow(clamp(v, 1e-4, 1.0), invG));
+  }
+
+  function drawSim(){
+    const delta = Math.sqrt(1.5) * state.sig;
+    const c0 = state.c0;
+    const cMinus = c0.map(v => clamp(v - delta, 0.002, 0.99));
+    const cPlus  = c0.map(v => clamp(v + delta, 0.002, 0.99));
+
+    const c3Minus = applyLinearISP(cMinus);
+    const c3Zero  = applyLinearISP(c0);
+    const c3Plus  = applyLinearISP(cPlus);
+
+    const fMinus = applyGamma(c3Minus);
+    const fZero  = applyGamma(c3Zero);
+    const fPlus  = applyGamma(c3Plus);
+
+    const c4Simp = [0,1,2].map(i => (fMinus[i] + 4*fZero[i] + fPlus[i]) / 6.0);
+    const jensenGap = [0,1,2].map(i => Math.abs(fZero[i] - c4Simp[i]));
+    const meanGap = (jensenGap[0] + jensenGap[1] + jensenGap[2]) / 3.0;
+
+    // Secant slope J4 diagonal
+    const j4Diag = [0,1,2].map(i => {
+      const denom = Math.max(c3Plus[i] - c3Minus[i], 1e-3);
+      return (fPlus[i] - fMinus[i]) / denom;
+    });
+
+    // J_3x3 = diag(j4Diag) * M_ccm * diag(wr, 1, wb) * g
+    const wVec = [state.wr * state.g, 1.0 * state.g, state.wb * state.g];
+    const J3x3 = [0,1,2].map(r => [0,1,2].map(c => j4Diag[r] * state.ccm[r][c] * wVec[c]));
+
+    // 1. Left Canvas: Gamma Curve & 1:4:1 Simpson Quadrature Visualization (Red channel)
+    const qc = SB.canvas('#clsp-quad-cv');
+    const ctx = qc.ctx, w = qc.w, h = qc.h;
+    ctx.clearRect(0, 0, w, h);
+    const dk = SB.isDark();
+    const tx = dk ? '#e6edf6' : '#141a26';
+    const txDim = dk ? '#9aa6bf' : '#566178';
+    const gridCol = dk ? 'rgba(255,255,255,0.08)' : 'rgba(15,23,42,0.08)';
+
+    ctx.fillStyle = tx;
+    ctx.font = '700 12.5px "Pretendard Variable", sans-serif';
+    ctx.textAlign = 'left';
+    ctx.fillText('① 비선형 감마 곡선 c^(1/γ) & 1:4:1 심슨 3점 구적법 (Red 채널)', 14, 21);
+
+    const x0 = 46, y0 = 36, gw = w - x0 - 20, gh = h - y0 - 40;
+    ctx.strokeStyle = gridCol;
+    ctx.strokeRect(x0, y0, gw, gh);
+
+    const mapX = v => x0 + clamp(v, 0, 1) * gw;
+    const mapY = v => y0 + gh - clamp(v, 0, 1) * gh;
+
+    for(let t = 0; t <= 1.001; t += 0.25){
+      const px = mapX(t), py = mapY(t);
+      ctx.beginPath(); ctx.moveTo(px, y0); ctx.lineTo(px, y0 + gh); ctx.stroke();
+      ctx.beginPath(); ctx.moveTo(x0, py); ctx.lineTo(x0 + gw, py); ctx.stroke();
+      ctx.fillStyle = txDim;
+      ctx.font = '10.5px "JetBrains Mono", monospace';
+      ctx.textAlign = 'center';
+      ctx.fillText(t.toFixed(2), px, y0 + gh + 14);
+      ctx.textAlign = 'right';
+      ctx.fillText(t.toFixed(2), x0 - 6, py + 3.5);
+    }
+
+    // Draw y = x linear reference dashed
+    ctx.save();
+    ctx.setLineDash([4, 3]);
+    ctx.strokeStyle = txDim;
+    ctx.beginPath(); ctx.moveTo(mapX(0), mapY(0)); ctx.lineTo(mapX(1), mapY(1)); ctx.stroke();
+    ctx.restore();
+
+    // Draw gamma curve y = x^(1/gamma)
+    ctx.strokeStyle = '#38b6f5';
+    ctx.lineWidth = 2.2;
+    ctx.beginPath();
+    for(let i = 0; i <= 100; i++){
+      const xv = i / 100.0;
+      const yv = Math.pow(Math.max(xv, 1e-4), 1.0 / state.gam);
+      if(i === 0) ctx.moveTo(mapX(xv), mapY(yv));
+      else ctx.lineTo(mapX(xv), mapY(yv));
+    }
+    ctx.stroke();
+
+    // Draw secant chord between c3Minus[0] and c3Plus[0]
+    const xm = mapX(c3Minus[0]), ym = mapY(fMinus[0]);
+    const xmid = mapX(c3Zero[0]), ymid = mapY(fZero[0]);
+    const xp = mapX(c3Plus[0]), yp = mapY(fPlus[0]);
+    const ySimp = mapY(c4Simp[0]);
+
+    ctx.save();
+    ctx.setLineDash([3, 2]);
+    ctx.strokeStyle = '#f5b93a';
+    ctx.lineWidth = 1.6;
+    ctx.beginPath(); ctx.moveTo(xm, ym); ctx.lineTo(xp, yp); ctx.stroke();
+    ctx.restore();
+
+    // Draw quadrature points (1 : 4 : 1)
+    [[xm, ym, 'c- (1/6)', '#a585ff'], [xmid, ymid, 'f(c0) (4/6)', '#ff6b6b'], [xp, yp, 'c+ (1/6)', '#a585ff']].forEach(pt => {
+      ctx.fillStyle = pt[3];
+      ctx.beginPath(); ctx.arc(pt[0], pt[1], 4.5, 0, Math.PI * 2); ctx.fill();
+    });
+
+    // Draw 1:4:1 Simpson output point at (xmid, ySimp)
+    ctx.fillStyle = '#3fcf7f';
+    ctx.beginPath(); ctx.arc(xmid, ySimp, 5.2, 0, Math.PI * 2); ctx.fill();
+
+    ctx.fillStyle = tx;
+    ctx.textAlign = 'left';
+    ctx.font = '11px "Pretendard Variable", sans-serif';
+    ctx.fillText('● 파란 곡선: f_γ(c) = c^(1/' + state.gam.toFixed(1) + ')   ● 초록 점: 1:4:1 심슨 평균 (' + c4Simp[0].toFixed(3) + ')', x0, h - 8);
+
+    // 2. Right Canvas: 3x3 Secant Jacobian Matrix Heatmap
+    const jc = SB.canvas('#clsp-jac-cv');
+    const jctx = jc.ctx, jw = jc.w, jh = jc.h;
+    jctx.clearRect(0, 0, jw, jh);
+
+    jctx.fillStyle = tx;
+    jctx.font = '700 12.5px "Pretendard Variable", sans-serif';
+    jctx.textAlign = 'left';
+    jctx.fillText('② 3×3 할선 야코비안 행렬 J_3x3 = J_4 · M_CCM · diag(w_wb) · g', 14, 21);
+
+    const mx0 = 78, my0 = 46, cw = 104, ch = 56;
+    const rNames = ['∂R_out', '∂G_out', '∂B_out'];
+    const cNames = ['∂R_in', '∂G_in', '∂B_in'];
+
+    for(let c = 0; c < 3; c++){
+      jctx.fillStyle = txDim;
+      jctx.font = '700 11.5px "JetBrains Mono", monospace';
+      jctx.textAlign = 'center';
+      jctx.fillText(cNames[c], mx0 + (c + 0.5) * cw, my0 - 8);
+    }
+
+    for(let r = 0; r < 3; r++){
+      jctx.fillStyle = txDim;
+      jctx.font = '700 11.5px "JetBrains Mono", monospace';
+      jctx.textAlign = 'right';
+      jctx.fillText(rNames[r], mx0 - 10, my0 + (r + 0.5) * ch + 4);
+
+      for(let c = 0; c < 3; c++){
+        const val = J3x3[r][c];
+        const rx = mx0 + c * cw, ry = my0 + r * ch;
+        const isDiag = (r === c);
+        jctx.fillStyle = isDiag
+          ? (dk ? 'rgba(245, 185, 58, 0.22)' : 'rgba(237, 125, 49, 0.18)')
+          : (dk ? 'rgba(56, 182, 245, 0.14)' : 'rgba(157, 195, 230, 0.28)');
+        jctx.strokeStyle = isDiag ? '#f5b93a' : gridCol;
+        jctx.lineWidth = isDiag ? 1.5 : 1.0;
+        jctx.beginPath(); jctx.roundRect(rx + 2, ry + 2, cw - 4, ch - 4, 6); jctx.fill(); jctx.stroke();
+
+        jctx.fillStyle = isDiag ? (dk ? '#f5b93a' : '#c55a11') : tx;
+        jctx.font = '700 14px "JetBrains Mono", monospace';
+        jctx.textAlign = 'center';
+        jctx.fillText((val >= 0 ? '+' : '') + val.toFixed(3), rx + cw / 2, ry + 25);
+
+        jctx.fillStyle = txDim;
+        jctx.font = '10.5px "Pretendard Variable", sans-serif';
+        jctx.fillText(isDiag ? 'Gain·WB·γ 할선' : 'CCM 교차 혼합', rx + cw / 2, ry + 43);
+      }
+    }
+
+    jctx.fillStyle = txDim;
+    jctx.font = '11px "Pretendard Variable", sans-serif';
+    jctx.textAlign = 'center';
+    jctx.fillText('144-D 크로네커 외적: ξ = z_AC (16-D) ⊗ vec(J_3x3) (9-D) ∈ ℝ^144', mx0 + 1.5 * cw, jh - 10);
+
+    if(stats){
+      stats.innerHTML = [
+        ['원시 패치 평균 c̄₀', `(${c0[0].toFixed(3)}, ${c0[1].toFixed(3)}, ${c0[2].toFixed(3)})`],
+        ['단순 점 대입 f(c̄₀)', `(${fZero[0].toFixed(3)}, ${fZero[1].toFixed(3)}, ${fZero[2].toFixed(3)})`],
+        ['1:4:1 심슨 구적 c̄₄', `(${c4Simp[0].toFixed(3)}, ${c4Simp[1].toFixed(3)}, ${c4Simp[2].toFixed(3)})`],
+        ['보정된 Jensen Gap', `${(meanGap * 1000).toFixed(2)} × 10⁻³ (감마 할선 J₄ = ${j4Diag[0].toFixed(2)}, ${j4Diag[1].toFixed(2)}, ${j4Diag[2].toFixed(2)})`]
+      ].map(([k, v]) => `<div><span>${k}</span><b>${v}</b></div>`).join('');
+    }
+  }
+
+  drawSim();
+  window.addEventListener('resize', drawSim);
+})();
+</script>
+</body>
+</html>

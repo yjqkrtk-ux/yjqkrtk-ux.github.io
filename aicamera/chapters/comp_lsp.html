@@ -380,6 +380,43 @@
         <li><strong>3×3 할선 야코비안 \(J_{3\times 3}\)</strong>: 대각 성분 \((+2.697, +1.226, +2.219)\)은 디지털 게인·화이트밸런스·감마 할선 기울기가 결합된 채널별 대비 증폭률을 뜻하고, 비대각 성분 \((-0.342, -0.144, -0.412)\) 등은 \(3\times 3\) CCM에 의한 교차 색상 디테일 혼합을 정확히 반영합니다.</li>
       </ul>
 
+      <div class="callout info" style="margin:22px 0;">
+        <div class="callout-title">구체적 수치 계산 예시 · Class III 공간 커널 연산자 (주변 정보를 활용하는 커널 함수류, 패치 \(y=7, x=8\))</div>
+        <p>
+          점별(Pointwise) 선형/비선형 연산뿐 아니라, <strong>주변 픽셀 정보를 참조하는 공간 커널 연산자(\(\mathcal{F}_{\mathrm{kernel}}\): 라플라시안 샤프닝 <code>EEH</code>, 엣지 보존 양방향 노이즈 억제 <code>NR</code>, 로컬 톤 매핑 <code>LTM</code>)</strong>가 픽셀 디코딩 없이 16채널 잠재 공간에서 어떻게 계산되는지 <code>OpenISP 10-bit Full Chart</code>의 중심 패치 \((y=7, x=8)\) 실제 수치로 따라가 보겠습니다 (코드: <a class="src" href="../../comp_lsp/src/latent_isp_ops.py" title="comp_lsp/src/latent_isp_ops.py (line 217)" target="_blank" rel="noopener">latent_isp_ops.py:217</a>, 데이터: <a class="src" href="../../comp_lsp/results/step_by_step_math_example.json" title="comp_lsp/results/step_by_step_math_example.json" target="_blank" rel="noopener">step_by_step_math_example.json</a>):
+        </p>
+        <ol class="steps" style="margin-bottom:0;">
+          <li>
+            <strong>① 패치 내부 커널 (Intra-Patch Subspace Kernel, \(r &lt; 8\text{ px}\) · <code>EEH</code> 샤프닝 &amp; <code>NR</code> 디노이징)</strong>:<br>
+            13차원 순수 AC 부분공간 \(P_{\mathrm{AC}} = I_{16} - \Phi_{\mathrm{DC}}\Psi_{\mathrm{DC}}\) 내부의 르장드르 제트 기저를 QR 직교정규화하면, \(8\times 8\) 패치 내부의 <strong>수평 기울기(\(\Pi_x\), rank 3)</strong>, <strong>수직 기울기(\(\Pi_y\), rank 3)</strong>, <strong>2차 라플라시안 곡률(\(\Pi_{\mathrm{curv}}\), rank 7)</strong>을 분리하는 3개의 직교 사영 행렬(\(\Pi_x + \Pi_y + \Pi_{\mathrm{curv}} = P_{\mathrm{AC}}\), \(\mathrm{cond}(\Pi_\bullet) = 1.0\))을 얻습니다. 패치 \((7,8)\)의 AC 잠재 벡터 \(\mathbf{z}_{\mathrm{AC}}(7,8)\) (\(\|\mathbf{z}_{\mathrm{AC}}\|_2 = 2.7924\))를 투영하면:
+            \[
+              \|\mathbf{z}_x\|_2 = \|\Pi_x\mathbf{z}_{\mathrm{AC}}\|_2 = \mathbf{1.4986}, \qquad
+              \|\mathbf{z}_y\|_2 = \|\Pi_y\mathbf{z}_{\mathrm{AC}}\|_2 = \mathbf{1.4756}, \qquad
+              \|\mathbf{z}_{\mathrm{curv}}\|_2 = \|\Pi_{\mathrm{curv}}\mathbf{z}_{\mathrm{AC}}\|_2 = \mathbf{1.9091}.
+            \]
+            패치 내부 RMS 기울기 에너지 \(e(7,8) = \sqrt{\tfrac{1}{16}(\|\mathbf{z}_x\|_2^2 + \|\mathbf{z}_y\|_2^2)} = \mathbf{0.5258}\)로부터 엣지 보존 코어링 게이트(\(\tau_{\mathrm{coring}} = 0.01\))를 계산합니다:
+            \[
+              w_{\mathrm{edge}}(7,8) = \frac{e(7,8)}{e(7,8) + \tau_{\mathrm{coring}}} = \frac{0.5258}{0.5258 + 0.0100} = \mathbf{0.9813}, \qquad
+              \Delta\mathbf{z}_{\mathrm{kernel,intra}}(7,8) = \Delta g_x\,\mathbf{z}_x + \Delta g_y\,\mathbf{z}_y + \Delta g_{\mathrm{curv}}\,\mathbf{z}_{\mathrm{curv}}.
+            \]
+            <ul>
+              <li><strong>\(3\times 3\) 라플라시안 엣지 샤프닝 (<code>Only EEH</code>, \(\kappa_{\mathrm{eeh}}=0.45\))</strong>: 강한 차트 경계선(\(w_{\mathrm{edge}} = 0.9813 \approx 1\))이므로 주파수 대역별 증폭 계수가 \((\Delta g_x, \Delta g_y, \Delta g_{\mathrm{curv}}) = (\mathbf{+0.0309}, \mathbf{+0.0309}, \mathbf{+0.0442})\)로 작동하여, 16차원 잠재 벡터 이동량 \(\Delta\mathbf{z}_{\mathrm{EEH}}(7,8) = [+0.0365, -0.0376, -0.0006, +0.0125, -0.0108, -0.0451, \dots]^\top\)을 더해 줍니다. 신경망 가중치 0개로도 픽셀 도메인 \(3\times 3\) 라플라시안 샤프닝 정답 대비 <strong>10대 카메라 평균 30.02 dB (OpenISP 33.12 dB)</strong>의 정확도를 달성합니다.</li>
+              <li><strong>양방향 엣지 보존 노이즈 억제 (<code>Only NR</code>, \(\lambda_Y=0.35, \lambda_C=0.45\))</strong>: 양방향 레인지 가중치 \((1 - 0.5\,w_{\mathrm{edge}}) = 0.5094\) 덕분에 경계선 패치 \((7,8)\)에서는 감쇠율이 \((\Delta g_x, \Delta g_y, \Delta g_{\mathrm{curv}}) = (\mathbf{-0.0089}, \mathbf{-0.0089}, \mathbf{-0.0183})\)로 절반만 적용되어 엣지가 보존되고, 평탄한 노이즈 영역(\(w_{\mathrm{edge}} \to 0\))에서는 2배 강하게 고주파 곡률 성분 \(\mathbf{z}_{\mathrm{curv}}\)을 억제하여 <strong>10대 카메라 평균 32.20 dB (OpenISP 35.38 dB)</strong>를 기록합니다.</li>
+            </ul>
+          </li>
+          <li>
+            <strong>② 패치 간 \(3\times 3\) 스텐실 커널 (Inter-Patch \(3\times 3\) Stencil Kernel, \(r \ge 8\text{ px}\) · <code>LTM</code> 로컬 톤 매핑)</strong>:<br>
+            패치 \((7,8)\)을 둘러싼 인접 \(3\times 3\) 잠재 셀(\(24\times 24\) 픽셀 영역)의 평균 휘도 행렬 \(\mathbf{Y}_{\mathcal{N}_{3\times 3}}(7,8)\)에 공간 커널을 적용하면:
+            \[
+              \mathbf{Y}_{\mathcal{N}_{3\times 3}}(7,8) = \begin{bmatrix} 0.7765 & 0.7896 & 0.8744 \\ 0.3000 & \mathbf{0.4371} & 0.8656 \\ 0.3866 & 0.3568 & 0.8589 \end{bmatrix} \implies
+              Y_{\mathrm{base}}(7,8) = \frac{1}{9}\sum_{(u,v)\in\mathcal{N}_{3\times 3}} \bar{Y}_0(7+u,8+v) = \mathbf{0.6273}, \quad
+              \Delta_{3\times 3} Y(7,8) = \bar{Y}_0 - Y_{\mathrm{base}} = \mathbf{-0.1901}.
+            \]
+            주변 기저 휘도 \(Y_{\mathrm{base}} = 0.6273\)으로부터 로컬 톤 매핑 게인 \(G_{\mathrm{LTM}}(7,8) = 1 + \beta_{\mathrm{sh}}(1 - Y_{\mathrm{base}})^2 - \beta_{\mathrm{hi}}Y_{\mathrm{base}}^2 = \mathbf{0.9833}\)이 결정되며, 픽셀 도메인 Bilateral LTM 정답 대비 <strong>10대 카메라 평균 28.53 dB</strong>를 달성합니다.
+          </li>
+        </ol>
+      </div>
+
       <figure class="diagram" id="fig-clsp-patch-verify">
         <img src="../assets/img/fig9_step_by_step_math_and_consistency.webp" alt="패치 (7,8)의 3×3 할선 야코비안 행렬, 16채널 잠재 벡터 정합, 10대 카메라 180포인트 색도 일관성 및 PSNR 비교" style="width:100%;height:auto;border-radius:8px;display:block">
         <figcaption><b>그림 5-4 (논문 Fig. 4).</b> 패치 수준(\(y=7, x=8\)) 잠재 ISP 수학적 검증 및 10대 하드웨어 카메라 벤치마크 (출처: <a class="src" href="../../comp_lsp/paper/generate_fig4_patch_verification_svg.py" title="comp_lsp/paper/generate_fig4_patch_verification_svg.py (line 31)" target="_blank" rel="noopener">generate_fig4_patch_verification_svg.py:31</a>). <b>(a)</b> 패치 \((7,8)\)에서 계산된 \(3\times 3\) 할선 야코비안 행렬 \(J_{3\times 3}\)과 수치 텔레메트리 카드. <b>(b)</b> 16개 잠재 채널(\(c_0 \dots c_{15}\))에서 원시 입력 \(\mathbf{z}_0\)(회색 점선)가 0-Net(파란색, 25.44 dB)과 4-Step Refiner(주황색, 26.51 dB)를 거치며 실제 오라클 잠재 벡터 \(\mathbf{z}_{\mathrm{gt}} = \mathcal{E}_{\mathrm{VAE}}(\mathbf{x}_{\mathrm{gt}})\)(남색 사각형)에 정밀하게 포개집니다. <b>(c)</b> 10대 카메라 × 6단계 = 180개 R/G/B 평균 포인트가 \(1:1\) 대각선 위에 정렬되어 <b>\(R^2 = 0.9978\), MAE = 0.0055</b>의 색도 일관성을 입증합니다. <b>(d)</b> 10대 카메라 전체에서 0-Net(평균 25.04 dB) → +1-Step(25.29 dB) → +4-Step Refiner(<b>27.18 dB, 평균 +2.14 dB 향상</b>)의 일관된 성능 향상을 달성합니다.</figcaption>
@@ -387,7 +424,7 @@
 
       <h3>10대 실제 하드웨어 카메라 RAW 벤치마크 상세 표 (단일 스테이지 연산자 정확도 &amp; 전체 결합 ISP)</h3>
       <p>
-        아래 표의 왼쪽 4개 열(<strong>Only BLC/Gain</strong>, <strong>Only WB</strong>, <strong>Only 3×3 CCM</strong>, <strong>Only Gamma</strong>)은 원시 입력 \(\mathbf{x}_0\)에 <strong>해당 단일 스테이지 연산만 수행한 픽셀 ISP 정답 \(\mathbf{x}_{\mathrm{gt},k} = f_k(\mathbf{x}_0)\)</strong>과 해석적 0-Net 잠재 연산자의 출력을 직접 비교한 순수 연산자 정확도(Single-Stage Operator PSNR)입니다. 오른쪽 4개 열(<strong>Full 0-Net</strong>, <strong>Full +1-Step</strong>, <strong>Full +4-Step Refiner</strong>, <strong>RGB MAE</strong>)은 4개 스테이지 전체를 결합한 전체 파이프라인의 복원 성능입니다.
+        아래 표의 왼쪽 6개 열(<strong>Only BLC/Gain</strong>, <strong>Only WB</strong>, <strong>Only 3×3 CCM</strong>, <strong>Only Gamma</strong>, <strong>Only EEH (샤프닝 커널)</strong>, <strong>Only NR (디노이즈 커널)</strong>)은 원시 입력 \(\mathbf{x}_0\)에 <strong>해당 단일 스테이지 연산만 수행한 픽셀 ISP 정답 \(\mathbf{x}_{\mathrm{gt},k} = f_k(\mathbf{x}_0)\)</strong>과 해석적 0-Net 잠재 연산자의 출력을 직접 비교한 순수 연산자 정확도(Single-Stage Operator PSNR)입니다. 오른쪽 4개 열(<strong>Full 0-Net</strong>, <strong>Full +1-Step</strong>, <strong>Full +4-Step Refiner</strong>, <strong>RGB MAE</strong>)은 전체 스테이지를 결합한 엔드투엔드 파이프라인의 복원 성능입니다.
       </p>
       <div class="tbl-wrap">
         <table class="tbl tbl-num">
@@ -399,6 +436,8 @@
               <th>Only WB (dB)</th>
               <th>Only 3×3 CCM (dB)</th>
               <th>Only Gamma (dB)</th>
+              <th>Only EEH 커널 (dB)</th>
+              <th>Only NR 커널 (dB)</th>
               <th>Full 0-Net (dB)</th>
               <th>Full +1-Step (dB)</th>
               <th>Full +4-Step Refiner (dB)</th>
@@ -406,17 +445,17 @@
             </tr>
           </thead>
           <tbody>
-            <tr><td><strong>OpenISP 10-bit Full Chart (RGGB .RAW)</strong></td><td class='mono'>(1.82, 1.0, 1.25) · 1.15× · γ=2.0</td><td class='mono'>29.75</td><td class='mono'>25.03</td><td class='mono'>31.70</td><td class='mono'>30.34</td><td class='mono'>23.91</td><td class='mono'>23.93</td><td class='mono'><strong>30.52</strong> <span class='badge b-ok'>+6.61 dB</span></td><td class='mono'>0.0023</td></tr>
-<tr><td><strong>OpenISP 10-bit Detail Crop (RGGB .RAW)</strong></td><td class='mono'>(1.82, 1.0, 1.25) · 1.15× · γ=2.0</td><td class='mono'>28.97</td><td class='mono'>26.68</td><td class='mono'>28.91</td><td class='mono'>30.29</td><td class='mono'>26.06</td><td class='mono'>26.06</td><td class='mono'><strong>28.17</strong> <span class='badge b-ok'>+2.11 dB</span></td><td class='mono'>0.0029</td></tr>
-<tr><td><strong>Nikon D700 Mountain Cliff (12-bit BGGR .DNG)</strong></td><td class='mono'>(2.13, 1.0, 1.55) · 1.02× · γ=2.0</td><td class='mono'>32.41</td><td class='mono'>26.42</td><td class='mono'>30.47</td><td class='mono'>30.12</td><td class='mono'>25.44</td><td class='mono'>25.48</td><td class='mono'><strong>26.51</strong> <span class='badge b-ok'>+1.07 dB</span></td><td class='mono'>0.0040</td></tr>
-<tr><td><strong>FiveK DSLR Architecture (14-bit RGGB .DNG)</strong></td><td class='mono'>(1.33, 1.0, 1.63) · 1.02× · γ=2.0</td><td class='mono'>32.69</td><td class='mono'>28.42</td><td class='mono'>30.05</td><td class='mono'>29.62</td><td class='mono'>25.58</td><td class='mono'>25.73</td><td class='mono'><strong>26.92</strong> <span class='badge b-ok'>+1.34 dB</span></td><td class='mono'>0.0058</td></tr>
-<tr><td><strong>Canon EOS 5D Outdoor Sky (14-bit RGGB .DNG)</strong></td><td class='mono'>(2.72, 1.0, 1.22) · 1.06× · γ=2.0</td><td class='mono'>26.52</td><td class='mono'>23.43</td><td class='mono'>25.63</td><td class='mono'>25.97</td><td class='mono'>21.75</td><td class='mono'>21.77</td><td class='mono'><strong>22.96</strong> <span class='badge b-ok'>+1.21 dB</span></td><td class='mono'>0.0024</td></tr>
-<tr><td><strong>Canon 1Ds MkII Foliage (12-bit RGGB .DNG)</strong></td><td class='mono'>(2.06, 1.0, 1.49) · 1.02× · γ=2.0</td><td class='mono'>29.29</td><td class='mono'>25.34</td><td class='mono'>27.57</td><td class='mono'>27.55</td><td class='mono'>24.11</td><td class='mono'>23.96</td><td class='mono'><strong>24.24</strong> <span class='badge b-ok'>+0.13 dB</span></td><td class='mono'>0.0036</td></tr>
-<tr><td><strong>Canon EOS 40D Green Meadow (14-bit RGGB .DNG)</strong></td><td class='mono'>(2.45, 1.0, 1.38) · 1.02× · γ=2.0</td><td class='mono'>30.13</td><td class='mono'>24.36</td><td class='mono'>27.97</td><td class='mono'>29.15</td><td class='mono'>24.19</td><td class='mono'>24.52</td><td class='mono'><strong>26.19</strong> <span class='badge b-ok'>+2.00 dB</span></td><td class='mono'>0.0019</td></tr>
-<tr><td><strong>Canon EOS 40D Daylight (14-bit RGGB .DNG)</strong></td><td class='mono'>(2.25, 1.0, 1.39) · 1.17× · γ=2.0</td><td class='mono'>25.93</td><td class='mono'>23.13</td><td class='mono'>25.60</td><td class='mono'>26.60</td><td class='mono'>21.96</td><td class='mono'>21.88</td><td class='mono'><strong>23.56</strong> <span class='badge b-ok'>+1.60 dB</span></td><td class='mono'>0.0029</td></tr>
-<tr><td><strong>Google Pixel Mobile Daylight (14-bit BGGR .DNG)</strong></td><td class='mono'>(2.08, 1.0, 2.09) · 1.02× · γ=2.0</td><td class='mono'>32.33</td><td class='mono'>26.81</td><td class='mono'>29.76</td><td class='mono'>30.11</td><td class='mono'>27.19</td><td class='mono'>29.25</td><td class='mono'><strong>30.14</strong> <span class='badge b-ok'>+2.95 dB</span></td><td class='mono'>0.0018</td></tr>
-<tr><td><strong>Google Pixel Mobile Indoor (14-bit BGGR .DNG)</strong></td><td class='mono'>(1.27, 1.0, 2.63) · 1.04× · γ=2.0</td><td class='mono'>36.71</td><td class='mono'>29.65</td><td class='mono'>32.42</td><td class='mono'>32.44</td><td class='mono'>30.19</td><td class='mono'>30.28</td><td class='mono'><strong>32.55</strong> <span class='badge b-ok'>+2.36 dB</span></td><td class='mono'>0.0007</td></tr>
-<tr style='border-top:2px solid var(--border);font-weight:700;'><td><strong>10대 카메라 평균 (Mean)</strong></td><td class='mono'>네이티브 DNG 메타데이터</td><td class='mono'>30.47</td><td class='mono'>25.93</td><td class='mono'>29.01</td><td class='mono'>29.22</td><td class='mono'>25.04</td><td class='mono'>25.29</td><td class='mono'><strong>27.18</strong> <span class='badge b-ok'>+2.14 dB</span></td><td class='mono'>0.0028</td></tr>
+            <tr><td><strong>OpenISP 10-bit Full Chart (RGGB .RAW)</strong></td><td class='mono'>(1.82, 1.0, 1.25) · 1.15× · γ=2.0</td><td class='mono'>29.75</td><td class='mono'>25.03</td><td class='mono'>31.70</td><td class='mono'>30.34</td><td class='mono'>33.12</td><td class='mono'>35.38</td><td class='mono'>23.91</td><td class='mono'>23.93</td><td class='mono'><strong>30.52</strong> <span class='badge b-ok'>+6.61 dB</span></td><td class='mono'>0.0023</td></tr>
+<tr><td><strong>OpenISP 10-bit Detail Crop (RGGB .RAW)</strong></td><td class='mono'>(1.82, 1.0, 1.25) · 1.15× · γ=2.0</td><td class='mono'>28.97</td><td class='mono'>26.68</td><td class='mono'>28.91</td><td class='mono'>30.29</td><td class='mono'>29.76</td><td class='mono'>31.68</td><td class='mono'>26.06</td><td class='mono'>26.06</td><td class='mono'><strong>28.17</strong> <span class='badge b-ok'>+2.11 dB</span></td><td class='mono'>0.0029</td></tr>
+<tr><td><strong>Nikon D700 Mountain Cliff (12-bit BGGR .DNG)</strong></td><td class='mono'>(2.13, 1.0, 1.55) · 1.02× · γ=2.0</td><td class='mono'>32.41</td><td class='mono'>26.42</td><td class='mono'>30.47</td><td class='mono'>30.12</td><td class='mono'>30.77</td><td class='mono'>33.31</td><td class='mono'>25.44</td><td class='mono'>25.48</td><td class='mono'><strong>26.51</strong> <span class='badge b-ok'>+1.07 dB</span></td><td class='mono'>0.0040</td></tr>
+<tr><td><strong>FiveK DSLR Architecture (14-bit RGGB .DNG)</strong></td><td class='mono'>(1.33, 1.0, 1.63) · 1.02× · γ=2.0</td><td class='mono'>32.69</td><td class='mono'>28.42</td><td class='mono'>30.05</td><td class='mono'>29.62</td><td class='mono'>31.05</td><td class='mono'>33.34</td><td class='mono'>25.58</td><td class='mono'>25.73</td><td class='mono'><strong>26.92</strong> <span class='badge b-ok'>+1.34 dB</span></td><td class='mono'>0.0058</td></tr>
+<tr><td><strong>Canon EOS 5D Outdoor Sky (14-bit RGGB .DNG)</strong></td><td class='mono'>(2.72, 1.0, 1.22) · 1.06× · γ=2.0</td><td class='mono'>26.52</td><td class='mono'>23.43</td><td class='mono'>25.63</td><td class='mono'>25.97</td><td class='mono'>25.42</td><td class='mono'>27.91</td><td class='mono'>21.75</td><td class='mono'>21.77</td><td class='mono'><strong>22.96</strong> <span class='badge b-ok'>+1.21 dB</span></td><td class='mono'>0.0024</td></tr>
+<tr><td><strong>Canon 1Ds MkII Foliage (12-bit RGGB .DNG)</strong></td><td class='mono'>(2.06, 1.0, 1.49) · 1.02× · γ=2.0</td><td class='mono'>29.29</td><td class='mono'>25.34</td><td class='mono'>27.57</td><td class='mono'>27.55</td><td class='mono'>27.79</td><td class='mono'>30.36</td><td class='mono'>24.11</td><td class='mono'>23.96</td><td class='mono'><strong>24.24</strong> <span class='badge b-ok'>+0.13 dB</span></td><td class='mono'>0.0036</td></tr>
+<tr><td><strong>Canon EOS 40D Green Meadow (14-bit RGGB .DNG)</strong></td><td class='mono'>(2.45, 1.0, 1.38) · 1.02× · γ=2.0</td><td class='mono'>30.13</td><td class='mono'>24.36</td><td class='mono'>27.97</td><td class='mono'>29.15</td><td class='mono'>28.53</td><td class='mono'>30.86</td><td class='mono'>24.19</td><td class='mono'>24.52</td><td class='mono'><strong>26.19</strong> <span class='badge b-ok'>+2.00 dB</span></td><td class='mono'>0.0019</td></tr>
+<tr><td><strong>Canon EOS 40D Daylight (14-bit RGGB .DNG)</strong></td><td class='mono'>(2.25, 1.0, 1.39) · 1.17× · γ=2.0</td><td class='mono'>25.93</td><td class='mono'>23.13</td><td class='mono'>25.60</td><td class='mono'>26.60</td><td class='mono'>26.57</td><td class='mono'>29.14</td><td class='mono'>21.96</td><td class='mono'>21.88</td><td class='mono'><strong>23.56</strong> <span class='badge b-ok'>+1.60 dB</span></td><td class='mono'>0.0029</td></tr>
+<tr><td><strong>Google Pixel Mobile Daylight (14-bit BGGR .DNG)</strong></td><td class='mono'>(2.08, 1.0, 2.09) · 1.02× · γ=2.0</td><td class='mono'>32.33</td><td class='mono'>26.81</td><td class='mono'>29.76</td><td class='mono'>30.11</td><td class='mono'>31.45</td><td class='mono'>33.56</td><td class='mono'>27.19</td><td class='mono'>29.25</td><td class='mono'><strong>30.14</strong> <span class='badge b-ok'>+2.95 dB</span></td><td class='mono'>0.0018</td></tr>
+<tr><td><strong>Google Pixel Mobile Indoor (14-bit BGGR .DNG)</strong></td><td class='mono'>(1.27, 1.0, 2.63) · 1.04× · γ=2.0</td><td class='mono'>36.71</td><td class='mono'>29.65</td><td class='mono'>32.42</td><td class='mono'>32.44</td><td class='mono'>35.75</td><td class='mono'>36.51</td><td class='mono'>30.19</td><td class='mono'>30.28</td><td class='mono'><strong>32.55</strong> <span class='badge b-ok'>+2.36 dB</span></td><td class='mono'>0.0007</td></tr>
+<tr style='border-top:2px solid var(--border);font-weight:700;'><td><strong>10대 카메라 평균 (Mean)</strong></td><td class='mono'>네이티브 DNG 메타데이터</td><td class='mono'>30.47</td><td class='mono'>25.93</td><td class='mono'>29.01</td><td class='mono'>29.22</td><td class='mono'>30.02</td><td class='mono'>32.20</td><td class='mono'>25.04</td><td class='mono'>25.29</td><td class='mono'><strong>27.18</strong> <span class='badge b-ok'>+2.14 dB</span></td><td class='mono'>0.0028</td></tr>
           </tbody>
         </table>
       </div>

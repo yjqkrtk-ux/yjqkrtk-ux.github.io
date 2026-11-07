@@ -614,18 +614,18 @@
     <div class="kpi-strip">
       <div class="kpi-card">
         <div class="kpi-label">Bayer (1×1) PSNR (BJDD / Kodak24)</div>
-        <div class="kpi-value">35.91 / 33.71 dB</div>
+        <div class="kpi-value">40.69 / 41.21 dB</div>
         <div class="kpi-sub">Single-Stream 16-Ch (64 KB INT8)</div>
       </div>
       <div class="kpi-card">
         <div class="kpi-label">Tetracell (2×2) PSNR (BJDD / Kodak24)</div>
-        <div class="kpi-value">34.56 / 33.21 dB</div>
-        <div class="kpi-sub">+0.50 dB vs. KLAP (34.06 dB)</div>
+        <div class="kpi-value">36.80 / 38.58 dB</div>
+        <div class="kpi-sub">+2.74 / +3.07 dB vs. KLAP</div>
       </div>
       <div class="kpi-card">
         <div class="kpi-label">Hexadecacell (4×4) PSNR (BJDD / Kodak24)</div>
-        <div class="kpi-value">30.27 / 31.29 dB</div>
-        <div class="kpi-sub">+0.53 dB vs. KLAP (29.74 dB)</div>
+        <div class="kpi-value">31.13 / 34.03 dB</div>
+        <div class="kpi-sub">+1.39 / +1.63 dB vs. KLAP</div>
       </div>
       <div class="kpi-card">
         <div class="kpi-label">Single-Stream Bus &amp; Host AP</div>
@@ -637,7 +637,7 @@
     <div class="abstract-box">
       <div class="abstract-title">Abstract</div>
       <p style="margin-bottom:0;">
-        Modern ultra-high-resolution mobile image sensors ($48\text{ MP–}200\text{ MP}$) rely on clustered Color Filter Arrays (CFAs)—grouping $2\times 2$ (<strong>Tetracell / Quad-Bayer</strong>, $4$-in-$1$, $4\times 4$ RGGB tile period) or $4\times 4$ (<strong>Hexadecacell / $Q\times Q$</strong>, $16$-in-$1$, $8\times 8$ RGGB tile period) adjacent photodiodes under identical color filters compared to classical $1\times 1$ <strong>Bayer</strong> ($2\times 2$ RGGB period)—to preserve low-light signal-to-noise ratio (SNR). However, deploying neural remosaicing and generative imaging on heterogeneous CFA cameras faces two fundamental system bottlenecks: (i) transmitting uncompressed raw mosaics across the MIPI CSI-2 serial bus incurs severe serialization latency ($52.91\text{ ms}$ for $3,072\text{ KB}$ frames, capping throughput at $14.9\text{ FPS}$); and (ii) changing the sensor CFA pattern forces complete retraining or dynamic weight switching on the host Application Processor (AP), as in KLAP (ICCV 2023). We resolve these bottlenecks in a <strong>single-stream architecture</strong> by proposing <strong>Universal In-Sensor Latent Signal Processing (SE-Universal-CFA)</strong> unified on the <strong>16-channel ($f=8, C=16$) <code>FLUX.1</code> / <code>TAEF1</code> latent manifold</strong>. On the sensor NPU (Sony IMX500, $&lt;2\text{ MB}$ SRAM), transpose-equivariant phase-aware <code>PixelUnshuffle(p)</code> ($p \in \{2,4,8\}$) + Squeeze-and-Excitation (<code>SELayer</code>) residual compressors ($\mathcal{E}_A^{\text{CFA}}$, $413.7\text{K–}582.5\text{K}$ INT8 params at <code>base_ch=64</code>; $16.3\text{K–}17.1\text{K}$ at <code>base_ch=16</code>) map heterogeneous $1\times 1$, $2\times 2$, and $4\times 4$ CFA clusters into a single standardized $16\times 64\times 64$ bus tensor $r$ ($64.0\text{ KB}$ INT8, $48\times$ reduction vs. $3,072\text{ KB}$ Raw RGB). On the host AP, a single sensor-invariant <code>UnifiedLatentTranslator</code> ($\mathcal{T}_B: 16 \to 16$) aligns $r$ directly onto the 16-channel <code>FLUX.1</code> / <code>TAEF1</code> latent hub $z \in \mathbb{R}^{16\times 64\times 64}$ ($\cos = 0.9205\text{–}0.9731$), driving a <strong>100% CFA-agnostic</strong> guided 16-channel decoder ($\mathcal{D}_{\text{rec}}$). Evaluated across <code>BJDD_CVPR21</code>, <code>KLAP_ICCV23 CIS</code>, <code>Kodak24</code>, and the 8-scene <code>Remosaic Stress Benchmark</code>, our single-stream 16-channel pipeline achieves <strong>$35.91\text{ dB}$ (Bayer $1\times 1$, MS-SSIM $0.9921$), $34.56\text{ dB}$ (Tetracell $2\times 2$, MS-SSIM $0.9883$), and $30.27\text{ dB}$ (Hexadecacell $4\times 4$, MS-SSIM $0.9706$)</strong> on <code>BJDD_CVPR21</code>—surpassing <strong>KLAP Unified (ICCV 2023)</strong> on both $2\times 2$ Tetracell ($34.56$ vs. $34.06\text{ dB}$, <strong>$+0.50\text{ dB}$</strong>) and $4\times 4$ Hexadecacell ($30.27$ vs. $29.74\text{ dB}$, <strong>$+0.53\text{ dB}$</strong>) while reducing MIPI bus bandwidth by $48\times$.
+        Modern ultra-high-resolution mobile image sensors ($48\text{ MP–}200\text{ MP}$) rely on clustered Color Filter Arrays (CFAs)—grouping $2\times 2$ (<strong>Tetracell / Quad-Bayer</strong>, $4$-in-$1$, $4\times 4$ RGGB tile period) or $4\times 4$ (<strong>Hexadecacell / $Q\times Q$</strong>, $16$-in-$1$, $8\times 8$ RGGB tile period) adjacent photodiodes under identical color filters compared to classical $1\times 1$ <strong>Bayer</strong> ($2\times 2$ RGGB period)—to preserve low-light signal-to-noise ratio (SNR). However, deploying neural remosaicing and generative imaging on heterogeneous CFA cameras faces two fundamental system bottlenecks: (i) transmitting uncompressed raw mosaics across the MIPI CSI-2 serial bus incurs severe serialization latency ($52.91\text{ ms}$ for $3,072\text{ KB}$ frames, capping throughput at $14.9\text{ FPS}$); and (ii) changing the sensor CFA pattern forces complete retraining or dynamic weight switching on the host Application Processor (AP), as in KLAP (ICCV 2023). We resolve these bottlenecks in a <strong>single-stream architecture</strong> by proposing <strong>Universal In-Sensor Latent Signal Processing (SE-Universal-CFA)</strong> unified on the <strong>16-channel ($f=8, C=16$) <code>FLUX.1</code> / <code>TAEF1</code> latent manifold</strong>. On the sensor NPU (Sony IMX500, $&lt;2\text{ MB}$ SRAM), transpose-equivariant phase-aware <code>PixelUnshuffle(p)</code> ($p \in \{2,4,8\}$) + Squeeze-and-Excitation (<code>SELayer</code>) residual compressors ($\mathcal{E}_A^{\text{CFA}}$, $413.7\text{K–}582.5\text{K}$ INT8 params at <code>base_ch=64</code>; $16.3\text{K–}17.1\text{K}$ at <code>base_ch=16</code>) map heterogeneous $1\times 1$, $2\times 2$, and $4\times 4$ CFA clusters into a single standardized $16\times 64\times 64$ bus tensor $r$ ($64.0\text{ KB}$ INT8, $48\times$ reduction vs. $3,072\text{ KB}$ Raw RGB). On the host AP, a single sensor-invariant <code>UnifiedLatentTranslator</code> ($\mathcal{T}_B: 16 \to 16$) aligns $r$ directly onto the 16-channel <code>FLUX.1</code> / <code>TAEF1</code> latent hub $z \in \mathbb{R}^{16\times 64\times 64}$ ($\cos = 0.9205\text{–}0.9731$), driving a <strong>100% CFA-agnostic</strong> guided 16-channel decoder ($\mathcal{D}_{\text{rec}}$). Evaluated across <code>BJDD_CVPR21</code>, <code>KLAP_ICCV23 CIS</code>, <code>Kodak24</code>, and the 8-scene <code>Remosaic Stress Benchmark</code>, our single-stream 16-channel pipeline achieves <strong>$40.69\text{ dB}$ (Bayer $1\times 1$, MS-SSIM $0.9976$), $36.80\text{ dB}$ (Tetracell $2\times 2$, MS-SSIM $0.9925$), and $31.13\text{ dB}$ (Hexadecacell $4\times 4$, MS-SSIM $0.9745$)</strong> on <code>BJDD_CVPR21</code> ($41.21 / 38.58 / 34.03\text{ dB}$ on <code>Kodak24</code>)—surpassing <strong>KLAP Unified (ICCV 2023)</strong> across all four benchmark suites by <strong>$+2.74\text{ dB}$ ($2\times 2$) and $+1.39\text{ dB}$ ($4\times 4$) on <code>BJDD_CVPR21</code></strong>, <strong>$+3.07\text{ dB}$ ($2\times 2$) and $+1.63\text{ dB}$ ($4\times 4$) on <code>Kodak24</code></strong>, and <strong>$+2.81\text{ dB}$ ($2\times 2$) and $+1.57\text{ dB}$ ($4\times 4$) on <code>KLAP_ICCV23 CIS</code></strong>, while reducing MIPI bus bandwidth by $48\times$.
       </p>
       <div class="keywords">
         <strong>Index Terms —</strong> Universal CFA, Bayer ($1\times 1$), Tetracell ($2\times 2$), Hexadecacell ($4\times 4$), In-Sensor Remosaicing, 16-Channel Latent Signal Processing, FLUX.1 / TAEF1, Sony IMX500.
@@ -767,7 +767,7 @@
               <td><strong>Official <code>BJDD / PIPNet</code> (3.48M, CVPRW 2021)</strong> [2]</td>
               <td>Pixel Heavyweight JDD (2×2 Only)</td>
               <td>3,072 KB (14.9 FPS)</td>
-              <td><strong>35.85 dB / 0.9907 / 0.0198</strong></td>
+              <td>35.85 dB / 0.9907 / 0.0198</td>
               <td>N/A (2×2 Dedicated)</td>
               <td>No (Pixel-Only)</td>
             </tr>
@@ -777,7 +777,7 @@
               <td>Host Dynamic Filter Switching</td>
               <td>3,072 KB (14.9 FPS)</td>
               <td>34.06 dB / 0.9864 / 0.0291</td>
-              <td>29.74 dB / 0.9671 / 0.0768</td>
+              <td>29.74 dB / 0.9671 / 0.0748</td>
               <td>No (Pixel-Only)</td>
             </tr>
             <tr class="highlight-row">
@@ -785,8 +785,8 @@
               <td><strong>Proposed <code>SE-Universal-CFA</code> (Ours, 16-Ch Single-Stream)</strong></td>
               <td><strong>100% Unified 16-Ch $\mathcal{T}_B + \mathcal{D}_{\text{rec}}$</strong></td>
               <td><strong>64 KB INT8 / 256 KB FP32 (48×, 30.0 FPS)</strong></td>
-              <td><strong>34.56 dB / 0.9883 / 0.0251</strong></td>
-              <td><strong>30.27 dB / 0.9706 / 0.0751</strong></td>
+              <td><strong>36.80 dB / 0.9925 / 0.0173</strong></td>
+              <td><strong>31.13 dB / 0.9745 / 0.0635</strong></td>
               <td><strong>FLUX.1 / TAEF1 (0.9529)</strong></td>
             </tr>
           </tbody>
@@ -805,7 +805,7 @@
       <div class="span-all fig-card">
         <img src="figures/ucfa_fig3_kodak_diverse_scenes.webp" alt="Kodak24 Diverse Natural & Aliasing Scenes Gallery">
         <div class="caption">
-          <strong>Fig. 3.</strong> Out-of-distribution natural scene generalization and chromatic zippering suppression on <strong><code>Kodak24</code></strong> (5 scenes $\times$ 7 columns): <code>kodim19.png</code> (Lighthouse picket fence—false-color zippering stress), <code>kodim01.png</code> (Stone masonry &amp; shutters—horizontal Moiré stress), <code>kodim23.png</code> (Macaw parrots—saturated chromatic edges &amp; feather barbs), <code>kodim04.png</code> (Portrait in red hat—eyelashes &amp; skin tones), and <code>kodim05.png</code> (Motocross spokes &amp; decals). Across <code>Kodak24</code>, our 16-channel single-stream pipeline achieves <strong>$33.71\text{ dB}$ ($1\times 1$), $33.21\text{ dB}$ ($2\times 2$), and $31.29\text{ dB}$ ($4\times 4$)</strong>—outperforming <code>Directional + MHC</code> by <strong>$+2.95\text{ dB}$ ($2\times 2$)</strong> and <strong>$+4.71\text{ dB}$ ($4\times 4$)</strong>.
+          <strong>Fig. 3.</strong> Out-of-distribution natural scene generalization and chromatic zippering suppression on <strong><code>Kodak24</code></strong> (5 scenes $\times$ 7 columns): <code>kodim19.png</code> (Lighthouse picket fence—false-color zippering stress), <code>kodim01.png</code> (Stone masonry &amp; shutters—horizontal Moiré stress), <code>kodim23.png</code> (Macaw parrots—saturated chromatic edges &amp; feather barbs), <code>kodim04.png</code> (Portrait in red hat—eyelashes &amp; skin tones), and <code>kodim05.png</code> (Motocross spokes &amp; decals). Across <code>Kodak24</code>, our 16-channel single-stream pipeline achieves <strong>$41.21\text{ dB}$ ($1\times 1$), $38.58\text{ dB}$ ($2\times 2$), and $34.03\text{ dB}$ ($4\times 4$)</strong>—surpassing <strong>KLAP Unified (ICCV 2023)</strong> ($35.51\text{ dB}$ on $2\times 2$ and $32.40\text{ dB}$ on $4\times 4$) by <strong>$+3.07\text{ dB}$ ($2\times 2$)</strong> and <strong>$+1.63\text{ dB}$ ($4\times 4$)</strong>.
         </div>
       </div>
 
@@ -813,7 +813,7 @@
       <div class="span-all fig-card">
         <img src="figures/ucfa_fig4_stress_benchmark_gallery.webp" alt="Hard-Case Remosaic Stress Benchmark Gallery">
         <div class="caption">
-          <strong>Fig. 4.</strong> Extreme Nyquist frequency and radial Siemens star evaluation on the <strong><code>Remosaic Stress Benchmark</code> (<code>remosaic_stress_bench</code>)</strong> (4 scenes $\times$ 7 columns): <code>01_iso_siemens_typography.png</code> (ISO 12233 radial Siemens star &amp; micro-typography), <code>03_urban_grating_0780.png</code> (penguin plumage), <code>04_urban_grating_0785.png</code> (branching coral crinoid filaments), and <code>05_urban_grating_0792.png</code> (corrugated ceiling grating). On the ISO Siemens star &amp; text target (Row 1), our 16-channel single-stream model ($27.25\text{ dB}$ on $2\times 2$ and $25.75\text{ dB}$ on $4\times 4$) surpasses <strong>KLAP Unified (ICCV 2023)</strong> ($26.27\text{ dB}$ on $2\times 2$ and $24.75\text{ dB}$ on $4\times 4$).
+          <strong>Fig. 4.</strong> Extreme Nyquist frequency and radial Siemens star evaluation on the <strong><code>Remosaic Stress Benchmark</code> (<code>remosaic_stress_bench</code>)</strong> (4 scenes $\times$ 7 columns): <code>01_iso_siemens_typography.png</code> (ISO 12233 radial Siemens star &amp; micro-typography), <code>03_urban_grating_0780.png</code> (penguin plumage), <code>04_urban_grating_0785.png</code> (branching coral crinoid filaments), and <code>05_urban_grating_0792.png</code> (corrugated ceiling grating). Across the stress benchmark, our 16-channel single-stream model ($31.22\text{ dB}$ on $2\times 2$ and $27.46\text{ dB}$ on $4\times 4$) surpasses <strong>KLAP Unified (ICCV 2023)</strong> ($28.98\text{ dB}$ on $2\times 2$ and $26.37\text{ dB}$ on $4\times 4$).
         </div>
       </div>
 
@@ -828,7 +828,7 @@
               <th>MobileRemosaic + MHC (2×2 / 4×4)</th>
               <th>KLAP Unified (1×1 / 2×2 / 4×4)</th>
               <th><strong>Ours <code>SE-Universal-CFA</code> (1×1 / 2×2 / 4×4)</strong></th>
-              <th>Key Gain vs. KLAP &amp; Baselines (64 KB INT8 Bus)</th>
+              <th>Key Gain vs. KLAP Unified (64 KB INT8 Bus)</th>
             </tr>
           </thead>
           <tbody>
@@ -837,56 +837,56 @@
               <td>27.23 / 23.42</td>
               <td>26.86 / 23.22</td>
               <td>34.70 / 31.35 / 26.81</td>
-              <td><strong>33.52 / 32.26 / 27.12</strong></td>
-              <td><strong>+0.91 dB vs. KLAP (2×2)</strong> · <strong>+0.31 dB vs. KLAP (4×4)</strong></td>
+              <td><strong>37.95 / 34.35 / 27.80</strong></td>
+              <td><strong>+3.00 dB vs. KLAP (2×2)</strong> · <strong>+0.99 dB vs. KLAP (4×4)</strong></td>
             </tr>
             <tr>
               <td><code>BJDD_CVPR21</code>: <code>01690.bmp</code> (Farm Sign &amp; Silos)</td>
               <td>28.97 / 26.09</td>
               <td>28.34 / 25.31</td>
               <td>36.43 / 32.71 / 29.48</td>
-              <td><strong>34.09 / 32.95 / 29.87</strong></td>
-              <td><strong>+0.24 dB vs. KLAP (2×2)</strong> · <strong>+0.39 dB vs. KLAP (4×4)</strong></td>
+              <td><strong>37.96 / 34.69 / 30.88</strong></td>
+              <td><strong>+1.98 dB vs. KLAP (2×2)</strong> · <strong>+1.40 dB vs. KLAP (4×4)</strong></td>
             </tr>
             <tr>
               <td><code>BJDD_CVPR21</code>: <code>02243.bmp</code> (Storefront Sign)</td>
               <td>34.37 / 29.20</td>
               <td>33.00 / 28.15</td>
               <td>42.19 / 38.13 / 32.92</td>
-              <td><strong>39.95 / 38.50 / 33.92</strong></td>
-              <td><strong>+0.37 dB vs. KLAP (2×2)</strong> · <strong>+1.00 dB vs. KLAP (4×4)</strong></td>
+              <td><strong>45.96 / 41.34 / 34.70</strong></td>
+              <td><strong>+3.21 dB vs. KLAP (2×2)</strong> · <strong>+1.78 dB vs. KLAP (4×4)</strong></td>
             </tr>
             <tr class="highlight-row">
               <td><strong><code>BJDD_CVPR21</code> Mean (3 Scenes)</strong></td>
               <td>30.19 / 26.24</td>
               <td>29.40 / 25.56</td>
               <td>37.77 / 34.06 / 29.74</td>
-              <td><strong>35.91 / 34.56 / 30.27</strong></td>
-              <td><strong>+0.50 dB vs. KLAP (2×2)</strong> · <strong>+0.53 dB vs. KLAP (4×4)</strong></td>
+              <td><strong>40.69 / 36.80 / 31.13</strong></td>
+              <td><strong>+2.74 dB vs. KLAP (2×2)</strong> · <strong>+1.39 dB vs. KLAP (4×4)</strong></td>
             </tr>
             <tr class="highlight-row">
               <td><strong><code>KLAP_ICCV23 CIS</code> Mean (<code>data_00001..00003.pickle</code>)</strong></td>
               <td>28.92 / 25.41</td>
               <td>28.20 / 25.04</td>
               <td>34.98 / 32.77 / 30.46</td>
-              <td><strong>31.76 / 30.95 / 29.46</strong></td>
-              <td><strong>+2.03 dB vs. 2×2 Dir</strong> · <strong>+4.05 dB vs. 4×4 Dir</strong></td>
+              <td><strong>37.94 / 35.58 / 32.03</strong></td>
+              <td><strong>+2.81 dB vs. KLAP (2×2)</strong> · <strong>+1.57 dB vs. KLAP (4×4)</strong></td>
             </tr>
             <tr class="highlight-row">
               <td><strong><code>Kodak24</code> Mean (6 Lossless Scenes)</strong></td>
               <td>30.26 / 26.58</td>
               <td>29.51 / 25.89</td>
               <td>37.90 / 35.51 / 32.40</td>
-              <td><strong>33.71 / 33.21 / 31.29</strong></td>
-              <td><strong>+2.95 dB vs. 2×2 Dir</strong> · <strong>+4.71 dB vs. 4×4 Dir</strong></td>
+              <td><strong>41.21 / 38.58 / 34.03</strong></td>
+              <td><strong>+3.07 dB vs. KLAP (2×2)</strong> · <strong>+1.63 dB vs. KLAP (4×4)</strong></td>
             </tr>
             <tr class="highlight-row">
               <td><strong><code>Remosaic Stress</code> Mean (8 Hard-Case Charts)</strong></td>
               <td>24.64 / 21.18</td>
               <td>24.11 / 20.82</td>
               <td>30.42 / 28.98 / 26.37</td>
-              <td><strong>27.68 / 27.51 / 25.58</strong></td>
-              <td><strong>+2.87 dB vs. 2×2 Dir</strong> · <strong>+4.40 dB vs. 4×4 Dir</strong></td>
+              <td><strong>33.42 / 31.22 / 27.46</strong></td>
+              <td><strong>+2.24 dB vs. KLAP (2×2)</strong> · <strong>+1.09 dB vs. KLAP (4×4)</strong></td>
             </tr>
           </tbody>
         </table>
@@ -894,7 +894,7 @@
 
       <h2 class="sec-title">5. Conclusion</h2>
       <p>
-        We presented <strong>SE-Universal-CFA</strong>, a single-stream in-sensor and host-AP collaborative imaging architecture that unifies Standard Bayer ($1\times 1$), Tetracell ($2\times 2$), and Hexadecacell ($4\times 4$) image sensors onto a single 16-channel host translator ($\mathcal{T}_B: 16\to 16$) and a single 100% CFA-agnostic guided decoder ($\mathcal{D}_{\text{rec}}$) aligned with the <code>FLUX.1</code> / <code>TAEF1</code> latent manifold. Transmitting a single standardized bus representation $r \in \mathbb{R}^{16\times 64\times 64}$ ($64.0\text{ KB}$ INT8, $48\times$ reduction vs. Raw RGB), our framework achieves $35.91 / 34.56 / 30.27\text{ dB}$ on <code>BJDD_CVPR21</code> ($33.71 / 33.21 / 31.29\text{ dB}$ on <code>Kodak24</code>)—surpassing <strong>KLAP Unified (ICCV 2023)</strong> across both $2\times 2$ Tetracell ($+0.50\text{ dB}$) and $4\times 4$ Hexadecacell ($+0.53\text{ dB}$) while sustaining $30.0\text{ FPS}$ live viewfinder streaming and one-pass ZSL latent generation.
+        We presented <strong>SE-Universal-CFA</strong>, a single-stream in-sensor and host-AP collaborative imaging architecture that unifies Standard Bayer ($1\times 1$), Tetracell ($2\times 2$), and Hexadecacell ($4\times 4$) image sensors onto a single 16-channel host translator ($\mathcal{T}_B: 16\to 16$) and a single 100% CFA-agnostic guided decoder ($\mathcal{D}_{\text{rec}}$) aligned with the <code>FLUX.1</code> / <code>TAEF1</code> latent manifold. Transmitting a single standardized bus representation $r \in \mathbb{R}^{16\times 64\times 64}$ ($64.0\text{ KB}$ INT8, $48\times$ reduction vs. Raw RGB), our framework achieves $40.69 / 36.80 / 31.13\text{ dB}$ on <code>BJDD_CVPR21</code> ($41.21 / 38.58 / 34.03\text{ dB}$ on <code>Kodak24</code>)—surpassing <strong>KLAP Unified (ICCV 2023)</strong> across all four benchmark suites while sustaining $30.0\text{ FPS}$ live viewfinder streaming and one-pass ZSL latent generation.
       </p>
     </div>
   </div>

@@ -56,6 +56,54 @@
         $$\mathbf{z}_{\mathrm{AC}}(y,x) = \mathbf{z}_0(y,x) - \phi_{\mathrm{DC}}\!\left(\bar{\mathbf{c}}_0(y,x)\right) \in \mathbb{R}^{16}, \qquad \phi_{\mathrm{DC}}(\bar{\mathbf{c}}) = W_{\mathrm{enc}}\,\bar{\mathbf{c}} + \mathbf{b}_{\mathrm{enc}}$$
       </div>
 
+      <h3>Abstract Taxonomy of Function Families in 16-Channel Latent Space</h3>
+      <p>
+        Rather than treating camera ISP stages ad hoc, any image operator \(\mathcal{O}: \mathbf{x} \mapsto \mathbf{y}\) on the 16-channel latent grid (\(\mathbf{z} \in \mathbb{R}^{\frac{H}{8}\times\frac{W}{8}\times 16} = \mathcal{S}_{\mathrm{DC}}^3 \oplus \mathcal{S}_{\mathrm{AC}}^{13}\)) belongs to one of <strong>three canonical function families</strong>:
+      </p>
+      <div class="table-wrap">
+        <table>
+          <thead>
+            <tr>
+              <th>Function Family</th>
+              <th>Representative ISP Ops</th>
+              <th>1. 3D Patch DC (\(\bar{\mathbf{c}}_{\mathrm{new}} \in \mathbb{R}^3\))</th>
+              <th>2. 13D Intra-Patch AC (\(\mathbf{z}_{\mathrm{AC}}\))</th>
+              <th>3. Cross-Patch \(3\times 3\) Stencil (\(\mathcal{N}_{3\times 3}\))</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr>
+              <td><b>I. Pointwise Linear</b><br>\(\mathcal{F}_{\mathrm{lin}}(\mathbf{x}) = A\mathbf{x} + \mathbf{b}\)</td>
+              <td>BLC, Gain, White Balance, \(3\times 3\) CCM, Color Space</td>
+              <td><b>1-Point Exact Evaluation</b> (\(\mathcal{F}''=0\)):<br>\(\bar{\mathbf{c}}_{\mathrm{new}} = A\bar{\mathbf{c}}_0 + \mathbf{b}\)</td>
+              <td><b>Constant Analytical Jacobian</b>:<br>\(J_{3\times 3} \equiv A,\;\; \mathbf{z}_{\mathrm{AC}} \otimes \mathrm{vec}(A - I_3)\)</td>
+              <td>Pointwise (\(1\times 1\)) on \(\frac{H}{8}\times\frac{W}{8}\); degree-3 curve \(\Delta\mathrm{poly}_3(\bar{\mathbf{c}})\)</td>
+            </tr>
+            <tr>
+              <td><b>II. Pointwise Non-Linear</b><br>\(\mathcal{F}_{\mathrm{nonlin}}(\mathbf{x}) = \phi(\mathbf{x})\)</td>
+              <td>Gamma (\(x^{1/\gamma}\)), S-Curve, Soft-Clip, Log/HDR, LUTs</td>
+              <td><b>3-Pt Simpson (<code>1:4:1</code>) Quadrature</b>:<br>\(\frac{1}{6}\phi(\bar{\mathbf{c}}_0-\boldsymbol{\delta}) + \frac{4}{6}\phi(\bar{\mathbf{c}}_0) + \frac{1}{6}\phi(\bar{\mathbf{c}}_0+\boldsymbol{\delta})\)</td>
+              <td><b>State-Dependent Secant Jacobian</b>:<br>\(J[:,b] = \frac{\phi(\bar{\mathbf{c}}_0+\delta_b\mathbf{e}_b)-\phi(\bar{\mathbf{c}}_0-\delta_b\mathbf{e}_b)}{2\delta_b}\)</td>
+              <td>\(3\times 3\) Secant smoothing \(\mathrm{Smooth}_{3\times 3}(J)\) + \(\mathbf{z}_0 \otimes \Delta\bar{\mathbf{c}}\) cross-terms</td>
+            </tr>
+            <tr>
+              <td><b>III-A. Intra-Patch Kernel</b><br>(\(r \lt 8\text{ px}\) Sub-Patch)</td>
+              <td>Micro-Sharpening (USM), Sub-Patch High/Low-Pass</td>
+              <td><b>Mean-Preserving (\(\sum K = 1\))</b>:<br>\(\bar{\mathbf{c}}_{\mathrm{new}} = \bar{\mathbf{c}}_0\) (\(\Delta\bar{\mathbf{c}} = \mathbf{0}\))</td>
+              <td><b>13D AC Spectral Multiplier \(\Omega_K\)</b>:<br>\(\mathbf{z}_{\mathrm{AC}}' = (I_{13} + \lambda_{\mathrm{sharp}}\Pi_{\mathrm{high}} - \lambda_{\mathrm{LPF}}\Pi_{\mathrm{low}})\mathbf{z}_{\mathrm{AC}}\)</td>
+              <td>Local within \(1\times 1\) latent cell (acts on \(\mathbf{u}_{\partial x}, \mathbf{u}_{\partial y}, \mathbf{u}_{\partial xx}, \mathbf{u}_{\partial yy}\))</td>
+            </tr>
+            <tr>
+              <td><b>III-B. Inter-Patch Kernel</b><br>(\(r \ge 8\text{ px}\) Cross-Cell)</td>
+              <td>Bilateral Denoise, Wide LPF, \(32\times 32\) Receptive-Field Sync</td>
+              <td><b>Range-Weighted Neighbor Conv</b>:<br>\(\sum_{q\in\mathcal{N}_{3\times 3}} \tilde{K}(p,q)\,w_{\mathrm{range}}(\Delta\bar{\mathbf{c}}_0)\,\bar{\mathbf{c}}(q)\)</td>
+              <td><b>Cross-Cell Differential Stencil</b>:<br>Coupled with \(\nabla_{3\times 3}\mathbf{z} = [\partial_x\mathbf{z}, \partial_y\mathbf{z}, \nabla^2\mathbf{z}]\)</td>
+              <td><b>\(3\times 3\) Stencil &amp; 4-Step Flow</b>:<br>\(\mathcal{R}_{4\text{-step}}(\mathbf{z}^{(k)}, \nabla_{3\times 3}\mathbf{z}^{(k)}, \tau_k)\)</td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+
       <figure class="diagram" id="fig-clsp-geometry">
         <img src="../../assets/img/fig6_latent_geometry_linear_vs_srgb.webp" alt="FLUX.1 16-channel latent geometry: Linear RGB vs sRGB activation curves, chromatic plane trajectories, 1:4:1 Simpson quadrature gain, and 16-D norm tracking" style="width:100%;height:auto;border-radius:8px;display:block">
         <figcaption><b>Figure 5-1 (Paper Fig. 1).</b> 16-Channel FLUX.1 VAE Latent Geometry &amp; Step-by-Step ISP Trajectories (Source: <a class="src" href="../../../comp_lsp/results/latent_geometry_and_color_dojo_metrics.json" title="comp_lsp/results/latent_geometry_and_color_dojo_metrics.json" target="_blank" rel="noopener">latent_geometry_and_color_dojo_metrics.json</a>). <b>(a)</b> Top-4 latent channel activations across luminance \(Y \in [0,1]\) (\(R^2_{\mathrm{linear}}=0.9101 \to R^2_{\mathrm{poly3}}=0.9797\)). <b>(b)</b> Chromatic trajectories in the Jet DC plane (\(u_{\mathrm{DC},R}\) vs. \(u_{\mathrm{DC},G}\)) converging from green-biased RAW (\(G \gt R\)) onto the neutral \(R=G\) axis after white balance. <b>(c)</b> 3-Point Simpson quadrature (\(1:4:1\)) yields <b>+3.6 to +7.5 dB</b> patch DC PSNR gain over naive point evaluation \(f(\bar{\mathbf{c}}_0)\). <b>(d)</b> Step-by-step 16-D latent norm tracking.</figcaption>

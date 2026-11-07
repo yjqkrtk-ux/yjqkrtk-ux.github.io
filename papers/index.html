@@ -690,24 +690,27 @@
       <!-- Paper III -->
       <article class="hub-card">
         <div class="header-badges" style="justify-content:flex-start;margin-bottom:0">
-          <span class="badge">Paper III · Computational LSP 2.0</span>
+          <span class="badge">Paper III · IEEE/CVF CVPR 2027 Track</span>
           <span class="badge">FLUX.1 &amp; TAEF1 16-Ch VAE</span>
           <span class="badge-green">10 Hardware Camera RAWs &amp; 4-Step Refiner Verified</span>
         </div>
         <a class="hub-card-title" href="comp_lsp.html">
           3. White-Box Computational Latent Signal Processing: Step-by-Step Radiometric &amp; Colorimetric Operators and Iterative Manifold Refinement in 16-Channel VAEs
         </a>
+        <div style="font-family:var(--font-ui);font-size:13px;color:var(--text-muted);margin-top:-4px;">
+          <strong>Authors:</strong> Yongjoon Song, Han-sol Lee, Jeisung Lee, Yeolmin Seong &bull; <em>Samsung Electronics, Republic of Korea</em>
+        </div>
         <p class="hub-card-desc">
-          Formulates fundamental camera radiometric, colorimetric, and tone-mapping stages (BLC &amp; Gain, Authentic WB, 3×3 CCM, and Gamma) directly on the H/8 × W/8 × 16 latent grid of genuine hardware sensor Bayer RAWs (OpenISP 10-bit .RAW, MIT-Adobe FiveK 12/14-bit DSLR .DNG, and Google Pixel 14-bit .DNG) via 3-Point Gauss-Legendre Jet Quadrature, 3×3 Secant Jacobians, and a 4-Step Damped Iterative Manifold Refiner (N=4), eliminating raw Bayer green bias (R² = 0.9978) and boosting mean sRGB PSNR from 25.04 dB (0-Net) to 27.18 dB (4-Step).
+          Establishes a unified 3-class taxonomy of latent image processing operators—(I) Pointwise Linear/Affine, (II) Pointwise Non-Linear (`1:4:1` Simpson Quadrature + $3	imes 3$ Secant Jacobians), and (III) Spatial Neighborhood Kernels (13D AC Spectral Multipliers + $3	imes 3$ Cross-Cell Bilateral/ODE Stencils)—directly on the H/8 × W/8 × 16 latent grid of genuine hardware sensor Bayer RAWs, boosting 10-camera mean sRGB PSNR from 25.04 dB (0-Net) to 27.18 dB (4-Step Refiner).
         </p>
         <div class="hub-kpis">
+          <span class="hub-kpi">3-Class Operator Taxonomy (Linear / Non-Linear / Kernel)</span>
           <span class="hub-kpi">10-Camera RGB R² = 0.9978</span>
           <span class="hub-kpi">25.04 → 27.18 dB (4-Step Refiner)</span>
           <span class="hub-kpi">0.93 ms @ 1MP (70.5× Speedup)</span>
-          <span class="hub-kpi">Interactive 10-Camera Simulator</span>
         </div>
         <div>
-          <a class="btn active" href="comp_lsp.html">Read Paper III (2-Col Interactive HTML + Simulator) →</a>
+          <a class="btn active" href="comp_lsp.html">Read Paper III (CVPR 2027 2-Col HTML + Interactive Simulator) →</a>
         </div>
       </article>
     </div>

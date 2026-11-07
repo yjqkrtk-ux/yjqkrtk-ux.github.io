@@ -591,13 +591,13 @@
   <div class="paper-container">
 <header class="paper-header">
       <div class="header-badges">
-        <span class="badge">Paper III &middot; Computational LSP 2.0</span>
+        <span class="badge">Paper III &middot; IEEE/CVF CVPR 2027 Format</span>
         <span class="badge">FLUX.1 &amp; TAEF1 16-Ch VAE</span>
         <span class="badge-green">10 Hardware Camera RAWs &amp; 4-Step Refiner Verified</span>
       </div>
       <h1 class="paper-title">White-Box Computational Latent Signal Processing: Step-by-Step Radiometric &amp; Colorimetric Operators and Iterative Manifold Refinement in 16-Channel VAEs</h1>
-      <div class="paper-authors">Yongjoon Song, Wonju Seo, Chanwoo Ahn, Changheon Lee, Han-sol Lee, Yeolmin Seong</div>
-      <div class="paper-affil">Samsung Electronics, Republic of Korea &bull; Target Venue: IEEE/CVF CVPR / ICCV / TPAMI</div>
+      <div class="paper-authors">Yongjoon Song &nbsp;&bull;&nbsp; Han-sol Lee &nbsp;&bull;&nbsp; Jeisung Lee &nbsp;&bull;&nbsp; Yeolmin Seong</div>
+      <div class="paper-affil">Samsung Electronics, Republic of Korea &bull; <code>{yongjoon.song, hansol.lee, jeisung.lee, yeolmin.seong}@samsung.com</code> &bull; IEEE/CVF CVPR 2027</div>
     </header>
 
     <div class="kpi-strip">
@@ -634,63 +634,94 @@
     </div>
 
     <div id="paper-body" class="paper-body two-col">
-      <h2>1. Introduction &amp; Architectural Positioning</h2>
+      <h2>1. Introduction &amp; Related Work Positioning</h2>
       <p>
         Processing genuine camera sensor Bayer RAWs directly inside a $1/64$-resolution 16-channel VAE latent space ($H/8 \times W/8 \times 16$) requires overcoming three fundamental challenges: (1) silicon Bayer sensors exhibit strong green photosite sensitivity ($w_R$ up to $2.72\times$ on Canon 5D, $w_B$ up to $2.63\times$ on Google Pixel Indoor) and camera-specific $3\times 3$ Color Correction Matrices; (2) internal <code>SiLU</code> and <code>GroupNorm</code> layers bend uniform RGB colors into a <strong>curved 3D polynomial manifold</strong> $\mathcal{{M}}_{{\text{{DC}}}} \subset \mathbb{{R}}^{{16}}$ ($R^2 = 0.9797$ degree-3 vs. $0.9100$ linear); and (3) non-linear gamma tone mapping ($x^{{1/\gamma}}$) couples intra-patch AC variance into patch DC color while shifting cross-patch receptive field boundaries.
       </p>
 
+      <h3>1.1 Related Work &amp; Novelty Gap Analysis Across Three Research Streams</h3>
+      <ul>
+        <li><strong>Stream 1 &mdash; VAE Latent Color Subspaces for sRGB T2I Steering (<code>Latent Color Subspace</code> [ICML 2026], <code>VAE Color Alignment</code> [2026]):</strong> Pach et al. [4] and Santamaria et al. [5] showed that uniform sRGB colors organize into a 3D linear subspace inside 16-Ch VAEs (<code>FLUX.1</code>, <code>SD 3.5</code>), enabling flat linear DC shifts ($\mathbf{{z}}' = \mathbf{{z}} + W^+\Delta\mathbf{{c}}$) for text-to-image palette steering. However, they operate strictly in gamma-compressed display sRGB, perform <strong>0th-order point evaluation</strong> (ignoring Jensen&rsquo;s inequality $\mathbb{{E}}[x^{{1/\gamma}}] &lt; (\mathbb{{E}}[x])^{{1/\gamma}}$ across $8\times 8$ patches), and leave the <strong>13D AC spatial edge channels untouched</strong>&mdash;so raw red/blue edges remain unamplified by White Balance, lack $3\times 3$ CCM cross-color mixing, and lose shadow contrast under the Gamma slope $\frac{{1}}{{\gamma}}c^{{1/\gamma-1}}$.</li>
+        <li><strong>Stream 2 &mdash; Generative Latent Diffusion ISPs (<code>LDM-ISP</code> [2025], <code>RawGen</code> [ECCV 2026]):</strong> Multi-step latent diffusion models [3, 6] denoise and render RAW images in latent space, but rely on heavy ($&gt;500\text{{ ms}}$) black-box U-Nets without analytical equations for camera metadata ($\text{{BLC}}, g, \mathbf{{w}}_{{\text{{WB}}}}, \text{{CCM}}_{{3\times 3}}, \gamma$).</li>
+        <li><strong>Stream 3 &mdash; Controllable Pixel-Domain Neural ISPs &amp; RAW Adapters (<code>ParamISP</code> [CVPR 2024], <code>CtrlISP</code> [CVPR 2026], <code>NILUT</code> [AAAI 2024], <code>RAW-Adapter</code> [ECCV 2024], <code>ReRAW</code> [CVPR 2025]):</strong> Parameter-conditioned CNNs and implicit 3D LUTs [1, 2, 7&ndash;9] support explicit camera controls, but execute on the full $H\times W\times 3$ pixel grid ($64\times$ larger than the $H/8 \times W/8$ latent grid).</li>
+      </ul>
+
       <div class="span-all">
-        <h3>Table 1: Positioning Against State-of-the-Art ISP and Latent Frameworks</h3>
+        <h3>Table 1: Comprehensive Novelty Comparison Against Prior Streams in Latent Color Editing, Generative Latent ISPs, and Pixel ISPs</h3>
         <table>
           <thead>
             <tr>
               <th>Method / Venue</th>
-              <th>Operating Domain</th>
-              <th>Grid Size</th>
-              <th>Core Mechanism</th>
-              <th>Authentic Camera WB / CCM / $\gamma$</th>
+              <th>Domain / Grid</th>
+              <th>Linear RAW WB &amp; $3\times 3$ CCM</th>
+              <th>Non-Linear DC Quadrature</th>
+              <th>AC Edge Jacobian Transport</th>
+              <th>Cross-Patch Manifold Flow</th>
               <th>1MP Latency</th>
             </tr>
           </thead>
           <tbody>
             <tr>
-              <td><strong>ParamISP</strong> <em>(CVPR 2024)</em> [1] / <strong>CtrlISP</strong> <em>(CVPR 2026)</em> [2]</td>
-              <td>Pixel Space</td>
-              <td>$H \times W$ ($1\times$)</td>
-              <td>Parameter-conditioned full-res CNNs</td>
-              <td>Yes</td>
+              <td><strong>ParamISP</strong> <em>(CVPR&rsquo;24)</em> [1] / <strong>CtrlISP</strong> <em>(CVPR&rsquo;26)</em> [2]</td>
+              <td>Pixel ($H \times W$, $1\times$)</td>
+              <td>Yes (Black-Box CNN)</td>
+              <td>N/A ($1\times 1$ px)</td>
+              <td>N/A ($1\times 1$ px)</td>
+              <td>Full-Res CNN</td>
               <td>$&gt;30\text{{--}}50\text{{ ms}}$</td>
             </tr>
             <tr>
-              <td><strong>RawGen</strong> <em>(ECCV 2026)</em> [3]</td>
-              <td>VAE Latent</td>
-              <td>$H/8 \times W/8$ ($1/64\times$)</td>
-              <td>Multi-step Black-Box Diffusion</td>
-              <td>No (Black-Box)</td>
+              <td><strong>NILUT</strong> <em>(AAAI&rsquo;24)</em> [7] / <strong>RAW-Adapter</strong> <em>(ECCV&rsquo;24)</em> [8]</td>
+              <td>Pixel ($H \times W$, $1\times$)</td>
+              <td>Yes (Implicit MLP)</td>
+              <td>N/A ($1\times 1$ px)</td>
+              <td>N/A ($1\times 1$ px)</td>
+              <td>Pointwise / Conv</td>
+              <td>$&gt;15\text{{--}}25\text{{ ms}}$</td>
+            </tr>
+            <tr>
+              <td><strong>LDM-ISP</strong> <em>(2025)</em> [6] / <strong>RawGen</strong> <em>(ECCV&rsquo;26)</em> [3]</td>
+              <td>VAE Latent ($1/64\times$)</td>
+              <td>No (Black-Box U-Net)</td>
+              <td>No</td>
+              <td>No</td>
+              <td>20&ndash;50 Step Diffusion</td>
               <td>$&gt;500\text{{ ms}}$</td>
             </tr>
             <tr>
-              <td><strong>Latent Color Subspace</strong> <em>(2026)</em> [4]</td>
-              <td>16-Ch FLUX Latent</td>
-              <td>$H/8 \times W/8$ ($1/64\times$)</td>
-              <td>Flat 3D Linear HSL Steering</td>
-              <td>No (No RAW WB/CCM/$\gamma$)</td>
+              <td><strong>Latent Color Subspace</strong> <em>(ICML&rsquo;26)</em> [4]</td>
+              <td>16-Ch Latent ($1/64\times$)</td>
+              <td>No (sRGB T2I Only)</td>
+              <td>No (Point Eval)</td>
+              <td>No (AC Untouched)</td>
+              <td>No (0-Step Flat Shift)</td>
+              <td>$&lt;1\text{{ ms}}$</td>
+            </tr>
+            <tr>
+              <td><strong>VAE Color Alignment</strong> <em>(arXiv&rsquo;26)</em> [5]</td>
+              <td>16-Ch Latent ($1/64\times$)</td>
+              <td>No (sRGB Opponent)</td>
+              <td>No (Point Eval)</td>
+              <td>No (AC Untouched)</td>
+              <td>No (Decoder LoRA)</td>
               <td>$&lt;1\text{{ ms}}$</td>
             </tr>
             <tr>
               <td><strong>Comp-LSP 2.0 (Ours, Stage 4: 0-Net Math)</strong></td>
-              <td><strong>16-Ch FLUX / TAEF1</strong></td>
-              <td><strong>$H/8 \times W/8$ ($1/64\times$)</strong></td>
-              <td><strong>3-Pt Gauss-Legendre + $3\times 3$ Secant Jacobian</strong></td>
-              <td class="highlight-val">Yes (25.04 dB Mean)</td>
+              <td><strong>16-Ch FLUX / TAEF1 ($1/64\times$)</strong></td>
+              <td class="highlight-val">Yes (White-Box Exact)</td>
+              <td class="highlight-val">Yes (<code>1:4:1</code> Simpson)</td>
+              <td class="highlight-val">Yes ($J_{{3\times 3}} \otimes \mathbf{{z}}_{{\text{{AC}}}}$)</td>
+              <td>$3\times 3$ Secant Smooth</td>
               <td class="highlight-val">0.93 ms (Halide)</td>
             </tr>
             <tr>
-              <td><strong>Comp-LSP 2.0 + $\mathcal{{R}}_{{4\text{{-step}}}}$ (Ours, Stage 6: 4-Step)</strong></td>
-              <td><strong>16-Ch FLUX / TAEF1</strong></td>
-              <td><strong>$H/8 \times W/8$ ($1/64\times$)</strong></td>
-              <td><strong>0-Net Math + 4-Step $3\times 3$ Damped Flow</strong></td>
+              <td><strong>Comp-LSP 2.0 + $\mathcal{{R}}_{{4\text{{-step}}}}$ (Ours, Stage 6)</strong></td>
+              <td><strong>16-Ch FLUX / TAEF1 ($1/64\times$)</strong></td>
               <td class="highlight-val">Yes (27.18 dB Mean)</td>
+              <td class="highlight-val">Yes ($+3.6\text{{--}}7.5\text{{ dB}}$)</td>
+              <td class="highlight-val">Yes (144-D Kronecker)</td>
+              <td class="highlight-val">Yes (4-Step $3\times 3$ ODE)</td>
               <td class="highlight-val">~3.8 ms Total</td>
             </tr>
           </tbody>
@@ -738,6 +769,66 @@
             카메라 센서 RAW 영상은 녹색 감도가 2배 높아 패치 평균색($\bar{{\mathbf{{c}}}}_0$)뿐 아니라 <strong>13차원 AC 공간에 들어있는 물체 경계선($\Delta\mathbf{{x}}$)도 녹색 대비($\Delta G$)만 크고 빨강/파랑 대비($\Delta R, \Delta B$)는 절반으로 죽어 있습니다.</strong> 만약 3차원 평균색(DC)만 바꾸고 13차원 엣지($\mathbf{{z}}_{{\text{{AC}}}}$)를 그대로 두면, 색감은 바뀌어도 <strong>경계선에 녹색/청록색 물 빠짐이 남고 암부 디테일이 뭉개집니다.</strong> 테일러 1차 전개 $f_{{\text{{ISP}}}}(\bar{{\mathbf{{c}}}}_0 + \Delta\mathbf{{x}}) \approx \bar{{\mathbf{{c}}}}_{{\text{{new}}}} + J_{{3\times 3}}\Delta\mathbf{{x}}$에 따라, 13차원 AC 경계선 성분에도 ISP 함수의 순간 기울기 행렬인 <strong>$3\times 3$ 야코비안 행렬 $J_{{3\times 3}}$ (대각 원소 = Gain &times; WB &times; Gamma 기울기 증폭, 비대각 원소 = $3\times 3$ CCM 색상 교차 혼합)</strong>을 곱해주는 것이 바로 <strong>Jacobian Translation</strong>입니다.
           </p>
         </div>
+      </div>
+
+      <h3>2.3 Abstract Taxonomy of Latent Operators: Linear, Non-Linear, and Spatial Kernel Families</h3>
+      <p>
+        To generalize beyond a fixed sequence of camera blocks, we formalize any image processing operator $\mathcal{{O}}: \mathbf{{x}} \mapsto \mathbf{{y}}$ acting on the 16-channel latent space ($\mathbf{{z}}_0 \in \mathbb{{R}}^{{(H/8)\times(W/8)\times 16}} = \mathcal{{S}}_{{\text{{DC}}}}^3 \oplus \mathcal{{S}}_{{\text{{AC}}}}^{{13}}$) into <strong>three canonical function families</strong>:
+      </p>
+      <ul>
+        <li><strong>Type I: Pointwise Linear / Affine Functions ($\mathcal{{F}}_{{\text{{lin}}}}(\mathbf{{x}}) = A\mathbf{{x}} + \mathbf{{b}}$):</strong> Includes Black Level Correction ($\mathbf{{x}}-\mathbf{{b}}_0$), Digital Gain ($gI_3$), White Balance ($\operatorname{{diag}}(\mathbf{{w}}_{{\text{{WB}}}})$), and $3\times 3$ CCM ($M_{{\text{{CCM}}}}$). Because $\nabla^2\mathcal{{F}}_{{\text{{lin}}}} = \mathbf{{0}}$, expectation commutes with $\mathcal{{F}}_{{\text{{lin}}}}$ ($\mathbb{{E}}_{{8\times 8}}[A\mathbf{{x}}+\mathbf{{b}}] = A\bar{{\mathbf{{c}}}}_0+\mathbf{{b}}$), making <strong>1-point DC evaluation exact</strong> and yielding a <strong>spatially constant analytical Jacobian</strong> $J_{{3\times 3}} \equiv A$.</li>
+        <li><strong>Type II: Pointwise Non-Linear Functions ($\mathcal{{F}}_{{\text{{nonlin}}}}(\mathbf{{x}}) = \phi(\mathbf{{x}}),\,\nabla^2\phi \neq \mathbf{{0}}$):</strong> Includes Gamma Tone Mapping ($x^{{1/\gamma}}$), S-Curves, Highlight Soft-Clipping, and 1D/3D LUTs. Because concave curvature ($\phi'' &lt; 0$) couples intra-patch AC variance $\boldsymbol{{\sigma}}_{{\text{{AC}}}}^2$ into the patch mean via Jensen&rsquo;s inequality ($\mathbb{{E}}[\phi(\mathbf{{x}})] \approx \phi(\bar{{\mathbf{{c}}}}_0) + \frac{{1}}{{2}}\phi''(\bar{{\mathbf{{c}}}}_0)\boldsymbol{{\sigma}}_{{\text{{AC}}}}^2$), Type II operators require <strong>3-Point Simpson (<code>1:4:1</code>) Quadrature</strong> at $\bar{{\mathbf{{c}}}}_0 \pm \sqrt{{1.5}}\boldsymbol{{\sigma}}_{{\text{{AC}}}}$ for DC color and a <strong>brightness-dependent $3\times 3$ Secant Chord Jacobian</strong> $J_{{3\times 3}}(\bar{{\mathbf{{c}}}}_0, \boldsymbol{{\delta}})$ for 13D AC contrast stretching.</li>
+        <li><strong>Type III: Spatial Neighborhood / Kernel Functions ($\mathcal{{F}}_{{\text{{kernel}}}}[\mathbf{{x}}](p) = \sum_{{q\in\mathcal{{N}}_r(p)}} K(p,q;\mathbf{{x}})\mathbf{{x}}(q)$):</strong> Includes Unsharp Masking (USM), Gaussian/Box Smoothing, Bilateral Denoising, and $32\times 32$ Encoder Receptive-Field Alignment. Because each latent cell $\mathbf{{z}}_0(i,j)$ already packs an $8\times 8$ pixel patch, a spatial kernel of pixel radius $r$ splits into a <strong>two-scale latent operator</strong>:
+          <ul>
+            <li><em>Sub-Patch Intra-Cell Scale ($r &lt; 8\text{{ px}}$):</em> Preserves $\bar{{\mathbf{{c}}}}_0$ and applies a <strong>spectral multiplier $\Omega_K \in \mathbb{{R}}^{{13\times 13}}$</strong> directly to the 13D AC derivative basis ($\mathbf{{u}}_{{\partial x}}, \mathbf{{u}}_{{\partial y}}, \mathbf{{u}}_{{\partial xx}}, \mathbf{{u}}_{{\partial yy}}$): $\mathbf{{z}}_{{\text{{AC}}}}^{{\text{{kernel}}}} = (I_{{13}} + \lambda_{{\text{{sharp}}}}\Pi_{{\text{{high}}}} - \lambda_{{\text{{LPF}}}}\Pi_{{\text{{low}}}})\mathbf{{z}}_{{\text{{AC}}}}$.</li>
+            <li><em>Inter-Patch Cross-Cell Scale ($r \ge 8\text{{ px}}$):</em> Aggregates across the $3\times 3$ latent grid stencil $\mathcal{{N}}_{{3\times 3}}(i,j)$ via finite-difference operators $\nabla_{{3\times 3}}\mathbf{{z}} = [\partial_x\mathbf{{z}}, \partial_y\mathbf{{z}}, \nabla^2_{{3\times 3}}\mathbf{{z}}]$, photometric bilateral range weights $w_{{\text{{range}}}} = \exp(-\|\bar{{\mathbf{{c}}}}_0(i,j)-\bar{{\mathbf{{c}}}}_0(i',j')\|_2^2/2\sigma_r^2)$, and the 4-step cross-cell convolutional ODE flow $\mathcal{{R}}_{{4\text{{-step}}}}$.</li>
+          </ul>
+        </li>
+      </ul>
+
+      <div class="span-all">
+        <h3>Table 2: Unified Taxonomy of Function Families and Their Closed-Form Computation Rules in 16-Channel Latent Space</h3>
+        <table>
+          <thead>
+            <tr>
+              <th>Function Family</th>
+              <th>Representative ISP Ops</th>
+              <th>3D DC Subspace ($\bar{{\mathbf{{c}}}}_{{\text{{new}}}} \in \mathbb{{R}}^3$)</th>
+              <th>13D AC Edge Subspace ($\mathbf{{z}}_{{\text{{AC}}}} \in \mathbb{{R}}^{{13}}$)</th>
+              <th>$3\times 3$ Cross-Patch Stencil ($\mathcal{{N}}_{{3\times 3}}$)</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr>
+              <td><strong>I. Pointwise Linear</strong><br><code>F_lin(x) = A x + b</code></td>
+              <td>BLC, Gain, White Balance, $3\times 3$ CCM, Color Space</td>
+              <td><strong>1-Point Exact Eval</strong> ($\mathcal{{F}}''=0$):<br>$\bar{{\mathbf{{c}}}}_{{\text{{new}}}} = A\bar{{\mathbf{{c}}}}_0 + \mathbf{{b}}$</td>
+              <td><strong>Constant Analytical Jacobian</strong>:<br>$J_{{3\times 3}} \equiv A,\;\; \mathbf{{z}}_{{\text{{AC}}}} \otimes \operatorname{{vec}}(A - I_3)$</td>
+              <td>Pointwise ($1\times 1$) on $\frac{{H}}{{8}}\times\frac{{W}}{{8}}$; degree-3 curve $\Delta\operatorname{{poly}}_3(\bar{{\mathbf{{c}}}})$</td>
+            </tr>
+            <tr>
+              <td><strong>II. Pointwise Non-Linear</strong><br><code>F_nonlin(x) = &phi;(x)</code></td>
+              <td>Gamma ($x^{{1/\gamma}}$), S-Curve, Soft-Clip, Log/HDR, LUTs</td>
+              <td><strong>3-Pt Simpson (<code>1:4:1</code>) Quadrature</strong>:<br>$\tfrac{{1}}{{6}}\phi(\bar{{\mathbf{{c}}}}_0-\boldsymbol{{\delta}}) + \tfrac{{4}}{{6}}\phi(\bar{{\mathbf{{c}}}}_0) + \tfrac{{1}}{{6}}\phi(\bar{{\mathbf{{c}}}}_0+\boldsymbol{{\delta}})$</td>
+              <td><strong>State-Dependent Secant Jacobian</strong>:<br>$J[:,b] = \frac{{\phi(\bar{{\mathbf{{c}}}}_0+\delta_b\mathbf{{e}}_b)-\phi(\bar{{\mathbf{{c}}}}_0-\delta_b\mathbf{{e}}_b)}}{{2\delta_b}}$</td>
+              <td>$3\times 3$ Secant smoothing $\operatorname{{Smooth}}_{{3\times 3}}(J)$ + $\mathbf{{z}}_0 \otimes \Delta\bar{{\mathbf{{c}}}}$ cross-terms</td>
+            </tr>
+            <tr>
+              <td><strong>III-A. Intra-Patch Kernel</strong><br>($r &lt; 8\text{{ px}}$ Sub-Patch)</td>
+              <td>Micro-Sharpening (USM), Sub-Patch High/Low-Pass</td>
+              <td><strong>Mean-Preserving ($\sum K = 1$)</strong>:<br>$\bar{{\mathbf{{c}}}}_{{\text{{new}}}} = \bar{{\mathbf{{c}}}}_0$ ($\Delta\bar{{\mathbf{{c}}}} = \mathbf{{0}}$)</td>
+              <td><strong>13D AC Spectral Multiplier $\Omega_K$</strong>:<br>$\mathbf{{z}}_{{\text{{AC}}}}' = (I_{{13}} + \lambda_{{\text{{sharp}}}}\Pi_{{\text{{high}}}} - \lambda_{{\text{{LPF}}}}\Pi_{{\text{{low}}}})\mathbf{{z}}_{{\text{{AC}}}}$</td>
+              <td>Local within $1\times 1$ latent cell (acts on $\mathbf{{u}}_{{\partial x}}, \mathbf{{u}}_{{\partial y}}, \mathbf{{u}}_{{\partial xx}}, \mathbf{{u}}_{{\partial yy}}$)</td>
+            </tr>
+            <tr>
+              <td><strong>III-B. Inter-Patch Kernel</strong><br>($r \ge 8\text{{ px}}$ Cross-Cell)</td>
+              <td>Bilateral Denoise, Wide LPF, $32\times 32$ Receptive-Field Sync</td>
+              <td><strong>Range-Weighted Neighbor Conv</strong>:<br>$\sum_{{q\in\mathcal{{N}}_{{3\times 3}}}} \tilde{{K}}(p,q)\,w_{{\text{{range}}}}(\Delta\bar{{\mathbf{{c}}}}_0)\,\bar{{\mathbf{{c}}}}(q)$</td>
+              <td><strong>Cross-Cell Differential Stencil</strong>:<br>Coupled with $\nabla_{{3\times 3}}\mathbf{{z}} = [\partial_x\mathbf{{z}}, \partial_y\mathbf{{z}}, \nabla^2\mathbf{{z}}]$</td>
+              <td class="highlight-val"><strong>$3\times 3$ Stencil &amp; 4-Step Flow</strong>:<br>$\mathcal{{R}}_{{4\text{{-step}}}}(\mathbf{{z}}^{{(k)}}, \nabla_{{3\times 3}}\mathbf{{z}}^{{(k)}}, \tau_k)$</td>
+            </tr>
+          </tbody>
+        </table>
       </div>
 
       <div class="span-all figure-card">
@@ -1678,12 +1769,19 @@ abla_{3	imes 3}\mathbf{z}^{(k)},\, \Theta_{	ext{ISP}},\, 	au_kig)$</div>
 
       <h2>References</h2>
       <ol class="reference-list">
-        <li>W. Kim et al., &ldquo;ParamISP: Learned forward and inverse ISPs using camera parameters,&rdquo; <em>CVPR</em>, 2024.</li>
-        <li>Z. Zhang et al., &ldquo;CtrlISP: Rescuing low-light RAW images via controllable neural ISP,&rdquo; <em>CVPR</em>, 2026.</li>
-        <li>D. Kim et al., &ldquo;RawGen: Learning camera raw image generation,&rdquo; <em>ECCV</em>, 2026.</li>
-        <li>M. Pach et al., &ldquo;The Latent Color Subspace: Emergent order in high-dimensional chaos,&rdquo; <em>arXiv:2603.12261</em>, 2026.</li>
-        <li>Black Forest Labs, &ldquo;FLUX.1 16-channel autoencoder,&rdquo; 2024; O. B. Bohan, &ldquo;TAEF1,&rdquo; 2024.</li>
-        <li>J. Ragan-Kelley et al., &ldquo;Halide: A language and compiler for image processing pipelines,&rdquo; <em>PLDI</em>, 2013.</li>
+        <li>W. Kim, W. Cho, and S.-E. Yoon, &ldquo;ParamISP: Learned forward and inverse ISPs using camera parameters,&rdquo; <em>IEEE/CVF CVPR</em>, pp. 26067&ndash;26076, 2024.</li>
+        <li>Z. Zhang, L. Yan, Y. Zheng, et al., &ldquo;CtrlISP: Rescuing low-light RAW images via controllable neural ISP,&rdquo; <em>IEEE/CVF CVPR</em>, 2026.</li>
+        <li>D. Kim, S. Park, J. Lee, et al., &ldquo;RawGen: Learning camera raw image generation,&rdquo; <em>ECCV</em>, 2026.</li>
+        <li>M. Pach, R. Rezaei, K. S. Parihar, and R. V. Babu, &ldquo;The Latent Color Subspace: Emergent order in high-dimensional chaos,&rdquo; <em>ICML</em> (<em>arXiv:2603.12261</em>), 2026.</li>
+        <li>A. Santamaria, J. van de Weijer, et al., &ldquo;On color alignment in VAE latent spaces and its applications,&rdquo; <em>arXiv:2610.07072</em>, 2026.</li>
+        <li>C. Wen et al., &ldquo;LDM-ISP: Enhancing neural insight for low light with latent diffusion models,&rdquo; <em>arXiv:2412.01112</em>, 2025.</li>
+        <li>M. V. Conde, J. Vazquez-Corral, M. S. Brown, and R. Timofte, &ldquo;NILUT: Conditional neural implicit 3D lookup tables for image enhancement,&rdquo; <em>AAAI</em>, vol. 38, no. 4, pp. 1371&ndash;1379, 2024.</li>
+        <li>Z. Cui, H. Wang, et al., &ldquo;RAW-Adapter: Adapting pre-trained visual model to camera RAW images,&rdquo; <em>ECCV</em>, 2024.</li>
+        <li>R. Berdan, M. S. Brown, et al., &ldquo;ReRAW: Reversing sRGB into sensor-specific camera RAW for data-driven vision,&rdquo; <em>IEEE/CVF CVPR</em>, 2025.</li>
+        <li>Black Forest Labs, &ldquo;FLUX.1 16-channel autoencoder,&rdquo; 2024; O. B. Bohan, &ldquo;TAEF1: Tiny AutoEncoder for FLUX.1,&rdquo; 2024.</li>
+        <li>J. Ragan-Kelley, C. Barnes, A. Adams, S. Paris, F. Durand, and S. Amarasinghe, &ldquo;Halide: A language and compiler for image processing pipelines,&rdquo; <em>ACM SIGPLAN PLDI</em>, pp. 519&ndash;530, 2013.</li>
+        <li>T. Brooks, B. Mildenhall, T. Xue, J. Chen, D. Sharlet, and J. T. Barron, &ldquo;Unprocessing images for learned raw denoising,&rdquo; <em>IEEE/CVF CVPR</em>, pp. 11036&ndash;11045, 2019.</li>
+        <li>V. Bychkovsky, S. Paris, E. Chan, and F. Durand, &ldquo;Learning photographic global tonal adjustment with a database of input/output image pairs,&rdquo; <em>IEEE CVPR</em>, pp. 97&ndash;104, 2011.</li>
       </ol>
       <!-- END_SECTION_7_INTERACTIVE_SIMULATOR -->
     </div>

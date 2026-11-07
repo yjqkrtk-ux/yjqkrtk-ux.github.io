@@ -82,6 +82,76 @@
         즉, \(\mathbf{z}_0\)에서 현재 평균 색상 \(\bar{\mathbf{c}}_0\)에 해당하는 잠재 성분 \(\phi_{\mathrm{DC}}(\bar{\mathbf{c}}_0)\)를 빼버리면 순수한 고주파 에지 구조 \(\mathbf{z}_{\mathrm{AC}}\)만 남고, 여기에 우리가 원하는 새로운 색상 \(\bar{\mathbf{c}}_{\mathrm{new}}\)와 스케일링된 에지 변화를 다시 끼워 넣을 수 있습니다!
       </p>
 
+      <h3>함수 종류별 추상화 분류 체계: 선형 · 비선형 · 주변 정보를 활용하는 공간 커널 함수류의 잠재 계산 형태</h3>
+      <p>
+        개별 카메라 ISP 블록(BLC, WB, CCM, Gamma, 샤프닝, 디노이징 등)을 하나씩 따로 취급하는 대신, 임의의 영상처리 연산자 \(\mathcal{O}: \mathbf{x} \mapsto \mathbf{y}\)를 수학적 성질에 따라 <strong>① 선형/아핀 점 함수류(Pointwise Linear)</strong>, <strong>② 비선형 점 함수류(Pointwise Non-Linear)</strong>, <strong>③ 주변 정보를 활용하는 공간 커널 함수류(Spatial Neighborhood Kernel)</strong>의 <strong>3대 추상 함수 패밀리</strong>로 분류하면, 16채널 잠재 공간(\(\mathbf{z} \in \mathbb{R}^{\frac{H}{8}\times\frac{W}{8}\times 16} = \mathcal{S}_{\mathrm{DC}}^3 \oplus \mathcal{S}_{\mathrm{AC}}^{13}\))에서 각 함수를 어떤 형태로 계산해야 하는지 완벽한 일반 공식이 도출됩니다:
+      </p>
+
+      <div class="table-wrap">
+        <table>
+          <thead>
+            <tr>
+              <th>함수 패밀리 분류</th>
+              <th>픽셀 도메인 정의 및 대표 ISP 연산</th>
+              <th>① 3차원 패치 평균색 (DC, \(\bar{\mathbf{c}}_{\mathrm{new}} \in \mathbb{R}^3\)) 계산 형태</th>
+              <th>② 13차원 패치 내 에지/주파수 (AC, \(\mathbf{z}_{\mathrm{AC}}\)) 계산 형태</th>
+              <th>③ 패치 간 \(3\times 3\) 주변 스텐실 (\(\mathcal{N}_{3\times 3}\) on \(\frac{H}{8}\times\frac{W}{8}\))</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr>
+              <td><b>I. 선형/아핀 점 함수류</b><br><span class="mono">Pointwise Linear</span><br>\(\mathcal{F}_{\mathrm{lin}}(\mathbf{x}) = A\mathbf{x} + \mathbf{b}\)</td>
+              <td>• Black Level (\(\mathbf{x}-\mathbf{b}_0\))<br>• 디지털 노출 게인 (\(gI_3\))<br>• 화이트밸런스 (\(\mathrm{diag}(\mathbf{w}_{\mathrm{wb}})\))<br>• \(3\times 3\) CCM (\(M_{\mathrm{CCM}}\))<br>• 색공간 변환 (RGB↔YUV)</td>
+              <td><b>1점 단순 대입 (Exact 1-Pt Eval)</b><br>곡률 \(\nabla^2\mathcal{F}_{\mathrm{lin}} = 0\)이므로 기댓값과 교환 성립:<br>\(\bar{\mathbf{c}}_{\mathrm{new}} = A\bar{\mathbf{c}}_0 + \mathbf{b}\)<br><span class="muted">(젠센 부등식 오차 0, 구적 불필요)</span></td>
+              <td><b>상수 해석적 야코비안 곱</b><br>패치 밝기와 무관하게 기울기 일정:<br>\(J_{3\times 3} \equiv A \in \mathbb{R}^{3\times 3}\)<br>\(\Delta\mathbf{z}_{\mathrm{AC}} = \left(\mathbf{z}_{\mathrm{AC}} \otimes \mathrm{vec}(A - I_3)\right)W_{\mathrm{AC}}\)</td>
+              <td><b>점별 독립 (\(1\times 1\))</b><br>인접 패치 간 간섭 없음;<br>3차 곡면 매니폴드 보정항 \(\Delta\mathrm{poly}_3(\bar{\mathbf{c}})\)만 반영</td>
+            </tr>
+            <tr>
+              <td><b>II. 비선형 점 함수류</b><br><span class="mono">Pointwise Non-Linear</span><br>\(\mathcal{F}_{\mathrm{nonlin}}(\mathbf{x}) = \phi(\mathbf{x})\)<br>(\(\nabla^2\phi \neq 0\))</td>
+              <td>• 감마 톤 매핑 (\(x^{1/\gamma}\))<br>• S-커브 / 필름 톤 커브<br>• 하이라이트 소프트 클리핑<br>• Log / HDR PQ 곡선<br>• 1D / 3D Color LUT</td>
+              <td><b>3점 심슨 구적법 (<code>1:4:1</code> Quadrature)</b><br>오목 곡률(\(\phi''\lt 0\))로 인해 패치 내 분산 \(\boldsymbol{\sigma}_{\mathrm{AC}}^2\)가 평균색에 결합됨:<br>\(\bar{\mathbf{c}}_{\mathrm{new}} = \frac{1}{6}\phi(\bar{\mathbf{c}}_0-\boldsymbol{\delta}) + \frac{4}{6}\phi(\bar{\mathbf{c}}_0) + \frac{1}{6}\phi(\bar{\mathbf{c}}_0+\boldsymbol{\delta})\)<br>(\(\boldsymbol{\delta} = \sqrt{1.5}\,\boldsymbol{\sigma}_{\mathrm{AC}}\), \(O(\delta^4)\) 정밀도)</td>
+              <td><b>상태 의존 \(3\times 3\) 할선 야코비안</b><br>패치 밝기 \(\bar{\mathbf{c}}_0\)와 진폭 \(\delta_b\)에 따라 순간 기울기가 달라짐:<br>\(J_{3\times 3}[:,b] = \frac{\phi(\bar{\mathbf{c}}_0+\delta_b\mathbf{e}_b)-\phi(\bar{\mathbf{c}}_0-\delta_b\mathbf{e}_b)}{2\delta_b}\)<br>\(\Delta\mathbf{z}_{\mathrm{AC}} = \left(\mathbf{z}_{\mathrm{AC}} \otimes \mathrm{vec}(J_{3\times 3}-I_3)\right)W_{\mathrm{AC}}\)</td>
+              <td><b>\(3\times 3\) 야코비안 평활화 + 상태 교차항</b><br>\(\mathrm{Smooth}_{3\times 3}(J_{3\times 3})\) 및 \(\mathbf{z}_0 \otimes \Delta\bar{\mathbf{c}}\) (48D) 결합으로 급격한 이득 점프 완화</td>
+            </tr>
+            <tr>
+              <td><b>III-A. 공간 커널 함수류<br>(패치 내부 소형 커널)</b><br><span class="mono">Intra-Patch Kernel</span><br>(반경 \(r \lt 8\text{ px}\))</td>
+              <td>• 마이크로 언샵 마스크(USM)<br>• 패치 내 고주파 샤프닝<br>• 패치 내 미세 노이즈 억제<br>• \(5\times 5\) 디모자이킹 정렬</td>
+              <td><b>패치 평균색 보존 (\(\sum K = 1\))</b><br>패치 내부에서 에너지만 재분배하므로:<br>\(\bar{\mathbf{c}}_{\mathrm{new}} = \bar{\mathbf{c}}_0 \quad (\Delta\bar{\mathbf{c}} = \mathbf{0})\)</td>
+              <td><b>13차원 AC 주파수 스펙트럼 승수 \(\Omega_K\)</b><br>제트 미분 기저(\(\mathbf{u}_{\partial x}, \mathbf{u}_{\partial y}, \mathbf{u}_{\partial xx}, \mathbf{u}_{\partial yy}\))에 주파수별 이득 직접 곱:<br>\(\mathbf{z}_{\mathrm{AC}}' = \left(I_{13} + \lambda_{\mathrm{sharp}}\Pi_{\mathrm{high}} - \lambda_{\mathrm{LPF}}\Pi_{\mathrm{low}}\right)\mathbf{z}_{\mathrm{AC}}\)</td>
+              <td><b>단일 잠재 셀 (\(1\times 1\)) 내부 완결</b><br>\(8\times 8\) 픽셀 이웃 정보가 이미 13차원 AC 기저 안에 압축되어 있으므로 \(1\times 1\) 행렬곱으로 처리</td>
+            </tr>
+            <tr>
+              <td><b>III-B. 공간 커널 함수류<br>(패치 간 광역/양방향 커널)</b><br><span class="mono">Inter-Patch Kernel</span><br>(반경 \(r \ge 8\text{ px}\))</td>
+              <td>• 엣지 보존 양방향 필터(Bilateral)<br>• 광역 가우시안/박스 스무딩<br>• 로컬 콘트라스트(LCE)<br>• \(32\times 32\) 인코더 수용장 정렬</td>
+              <td><b>색도 거리 가중 \(3\times 3\) 이웃 합성곱</b><br>DC 색상 차이 \(\Delta\bar{\mathbf{c}}_0\)로 양방향(Range) 가중치 계산:<br>\(\bar{\mathbf{c}}_{\mathrm{new}}(p) = \sum_{q\in\mathcal{N}_{3\times 3}} \tilde{K}(p,q)\,e^{-\frac{\|\bar{\mathbf{c}}_0(p)-\bar{\mathbf{c}}_0(q)\|^2}{2\sigma_r^2}}\bar{\mathbf{c}}(q)\)</td>
+              <td><b>패치 간 유한차분 스텐실 결합</b><br>인접 잠재 셀과의 1·2차 공간 미분 결합:<br>\(\nabla_{3\times 3}\mathbf{z} = \left[\partial_x\mathbf{z},\; \partial_y\mathbf{z},\; \nabla^2_{3\times 3}\mathbf{z}\right]\)</td>
+              <td><b>\(3\times 3\) 잠재 격자 커널 &amp; 4-Step ODE</b><br>\(\frac{H}{8}\times\frac{W}{8}\) 격자 위에서 \(\mathcal{R}_{4\text{-step}}\)이 4번의 감쇠 오일러 스텝으로 \(32\times 32\) 수용장 정합 완성</td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+
+      <div class="grid-3">
+        <div class="card">
+          <h3>Type I · 선형 함수류의 핵심</h3>
+          <p>
+            \(\mathcal{F}_{\mathrm{lin}}(\mathbf{x}) = A\mathbf{x} + \mathbf{b}\)는 2차 도함수가 0이므로 패치 평균색 \(\bar{\mathbf{c}}_0\) 하나만 대입해도 오차가 전혀 없으며(\(\mathbb{E}[A\mathbf{x}+\mathbf{b}] = A\bar{\mathbf{c}}_0+\mathbf{b}\)), 에지 변환 행렬 \(J_{3\times 3}\) 역시 패치 밝기와 무관한 상수 행렬 \(A\)로 즉시 결정됩니다.
+          </p>
+        </div>
+        <div class="card">
+          <h3>Type II · 비선형 함수류의 핵심</h3>
+          <p>
+            \(\mathcal{F}_{\mathrm{nonlin}}(\mathbf{x}) = \phi(\mathbf{x})\)는 곡률 \(\phi'' \neq 0\) 때문에 패치 내부 분산 \(\boldsymbol{\sigma}_{\mathrm{AC}}^2\)가 평균색을 이동시키므로 <strong>1:4:1 심슨 구적법</strong>이 필수이며, 에지 역시 현재 밝기 \(\bar{\mathbf{c}}_0\)에서의 <strong>할선 야코비안 \(J_{3\times 3}(\bar{\mathbf{c}}_0, \boldsymbol{\delta})\)</strong>으로 스케일링해야 합니다.
+          </p>
+        </div>
+        <div class="card">
+          <h3>Type III · 공간 커널 함수류의 핵심</h3>
+          <p>
+            \(8\times 8\) 패치보다 작은 커널(\(r \lt 8\text{ px}\))은 <strong>13차원 AC 주파수 기저의 대각/스펙트럼 스케일링</strong>으로 즉시 계산되고, 패치 경계를 넘는 광역·양방향 커널(\(r \ge 8\text{ px}\))은 \(\frac{H}{8}\times\frac{W}{8}\) 격자 위의 <strong>\(3\times 3\) 차분 스텐실 \(\nabla_{3\times 3}\mathbf{z}\)와 색도 가중치 \(w_{\mathrm{range}}(\Delta\bar{\mathbf{c}}_0)\)</strong>로 계산됩니다.
+          </p>
+        </div>
+      </div>
+
       <figure class="diagram" id="fig-clsp-geometry">
         <img src="../assets/img/fig6_latent_geometry_linear_vs_srgb.webp" alt="FLUX.1 16채널 잠재 공간 기하학: 선형 RGB 대 sRGB 활성화 곡선, 색도 평면 궤적, 1:4:1 심슨 구적법 이득 및 16차원 노름 추적" style="width:100%;height:auto;border-radius:8px;display:block">
         <figcaption><b>그림 5-1 (논문 Fig. 1).</b> 16채널 FLUX.1 VAE 잠재 기하학 및 단계별 ISP 궤적 검증 (출처: <a class="src" href="../../comp_lsp/results/latent_geometry_and_color_dojo_metrics.json" title="comp_lsp/results/latent_geometry_and_color_dojo_metrics.json" target="_blank" rel="noopener">latent_geometry_and_color_dojo_metrics.json</a>). <b>(a)</b> 입력 휘도 \(Y \in [0,1]\)에 따른 상위 4개 잠재 채널(\(c_1, c_6, c_{12}, c_7\))의 응답 곡선. 선형 RGB(점선)와 감마가 적용된 sRGB \(Y^{1/2.2}\)(실선) 사이에 강한 곡률 차이가 존재하며, 729개 색상 격자 피팅 시 평면 선형 모델(\(R^2 = 0.9101\)) 대비 3차 다항 매니폴드(\(R^2 = 0.9797\))가 잠재 곡면을 정밀하게 설명합니다. <b>(b)</b> 잠재 DC 색도 평면(\(u_{\mathrm{DC},R}\) 대 \(u_{\mathrm{DC},G}\))에서의 궤적. 초록색으로 치우친 원시 센서 영역(\(G \gt R\), 연녹색 음영)에서 출발한 4대 카메라의 잠재 벡터가 화이트밸런스(<code>2:+WB</code>) 단계에서 정확히 무채색 대각선(\(R = G\)) 위로 수렴합니다. <b>(c)</b> \(8\times 8\) 패치 내 비선형 감마 적분 시 단순 평균점 대입 \(f(\bar{\mathbf{c}}_0)\)(회색) 대비 <b>1:4:1 심슨 구적법</b>(파란색/초록색)이 <b>+3.6 ~ +7.5 dB</b>의 패치 DC PSNR 이득을 달성합니다. <b>(d)</b> 0단계(RAW)부터 4단계(sRGB)까지 16차원 잠재 거리 \(\|\mathbf{z}_k - \mathbf{z}_{\mathrm{black}}\|_2\)에서 우리의 Zero-Net 야코비안 제트(점선)가 실제 픽셀 ISP 후 재인코딩한 정답 \(\mathcal{E}(\mathbf{x}_k)\)(실선)를 오차 없이 추종합니다.</figcaption>

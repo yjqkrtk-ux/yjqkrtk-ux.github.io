@@ -28,7 +28,7 @@
       <div class="meta-bar">
         <span>해석적 코어 <b>0-Net (신경망 가중치 0개 · 순수 행렬/구적법)</b></span>
         <span>비선형 구적 이득 <b>1:4:1 Simpson (+3.6 ~ +7.5 dB 패치 DC PSNR)</b></span>
-        <span>색도 일관성 <b>10대 카메라 180포인트 \(R^2 = 0.9978\) (MAE 0.0055)</b></span>
+        <span>색도 일관성 <b>10대 카메라 180포인트 R² = 0.9978 (MAE 0.0055)</b></span>
         <span>최종 복원 화질 <b>4-Step Refiner (96K) 평균 27.18 dB (+2.14 dB↑)</b></span>
       </div>
     </header>
@@ -74,7 +74,7 @@
       <p>
         이 구조를 미분기하학의 <strong>1차 제트 번들(\(J^1 = \mathrm{DC} \oplus \mathrm{AC}\), 평균 함수값 DC와 1차 공간 미분 AC의 직합)</strong>로 정식화하면, 임의의 선형 RAW 잠재 벡터 \(\mathbf{z}_0(y,x) \in \mathbb{R}^{16}\)은 단 한 번 오프라인으로 보정된 아핀 프로브 \((\psi_{\mathrm{DC}}, \phi_{\mathrm{DC}})\)를 통해 <strong>패치 평균 색상 \(\bar{\mathbf{c}}_0\)</strong>와 <strong>순수 구조 잔차 \(\mathbf{z}_{\mathrm{AC}}\)</strong>로 정확히 분해됩니다:
       </p>
-      <div class="math-block">
+      <div class="formula">
         $$\bar{\mathbf{c}}_0(y,x) = \psi_{\mathrm{DC}}\!\left(\mathbf{z}_0(y,x)\right) = W_{\mathrm{dec}}\,\mathbf{z}_0(y,x) + \mathbf{b}_{\mathrm{dec}} \in \mathbb{R}^3$$
         $$\mathbf{z}_{\mathrm{AC}}(y,x) = \mathbf{z}_0(y,x) - \phi_{\mathrm{DC}}\!\left(\bar{\mathbf{c}}_0(y,x)\right) \in \mathbb{R}^{16}, \qquad \phi_{\mathrm{DC}}(\bar{\mathbf{c}}) = W_{\mathrm{enc}}\,\bar{\mathbf{c}} + \mathbf{b}_{\mathrm{enc}}$$
       </div>
@@ -108,7 +108,7 @@
           하지만 마지막 <strong>감마 톤 매핑 \(f_\gamma(c) = c^{1/\gamma}\) (\(\gamma \approx 2.0 \implies \sqrt{c}\))</strong>는 위로 볼록(Concave, \(f''(c) \lt 0\))한 비선형 곡선입니다!
           확률론의 <strong>젠센 부등식(Jensen's Inequality)</strong>에 의해 위로 볼록한 함수에서는 항상 다음 불등식이 성립합니다:
         </p>
-        <div class="math-block">
+        <div class="formula">
           $$\mathbb{E}\!\left[f_{\mathrm{ISP}}(\mathbf{x})\right] \;\lt\; f_{\mathrm{ISP}}\!\left(\mathbb{E}[\mathbf{x}]\right) = f_{\mathrm{ISP}}(\bar{\mathbf{c}}_0)$$
         </div>
         <p>
@@ -119,7 +119,7 @@
         <p>
           이를 해결하기 위해 \(f_{\mathrm{ISP}}(\mathbf{c})\)를 평균 \(\bar{\mathbf{c}}_0\) 주변에서 2차 테일러 전개한 뒤 기댓값을 취하면:
         </p>
-        <div class="math-block">
+        <div class="formula">
           $$\mathbb{E}\!\left[f_{\mathrm{ISP}}(\bar{\mathbf{c}}_0 + \Delta\mathbf{c})\right] \approx f_{\mathrm{ISP}}(\bar{\mathbf{c}}_0) + \underbrace{f'_{\mathrm{ISP}}(\bar{\mathbf{c}}_0)\,\mathbb{E}[\Delta\mathbf{c}]}_{=0} + \frac{1}{2}\,f''_{\mathrm{ISP}}(\bar{\mathbf{c}}_0)\,\boldsymbol{\sigma}_{\mathrm{AC}}^2$$
         </div>
         <p>
@@ -130,7 +130,7 @@
           <li>2차 분산 항 일치: \(\frac{1}{2}(w_- + w_+)\,\boldsymbol{\delta}^2 = \frac{1}{2}\,\boldsymbol{\sigma}_{\mathrm{AC}}^2 \implies (w_- + w_+)\,\boldsymbol{\delta}^2 = \boldsymbol{\sigma}_{\mathrm{AC}}^2\)</li>
           <li>수치해석학의 <strong>심슨 1/3 공식(Simpson's Rule) 및 3점 가우스-르장드르 구적법</strong>에서 3차 다항식까지 오차 없이 적분하는 최적 중심 가중치는 \(w_0 = \frac{4}{6},\; w_- = w_+ = \frac{1}{6}\) (즉 <strong>\(1 : 4 : 1\) 비율</strong>)이며, 이를 대입하면 \(\frac{2}{6}\boldsymbol{\delta}^2 = \boldsymbol{\sigma}_{\mathrm{AC}}^2 \implies \boldsymbol{\delta} = \sqrt{1.5}\,\boldsymbol{\sigma}_{\mathrm{AC}} \approx 1.2247\,\boldsymbol{\sigma}_{\mathrm{AC}}\)가 정확히 유도됩니다!</li>
         </ul>
-        <div class="math-block">
+        <div class="formula">
           $$\bar{\mathbf{c}}_4 = \frac{1}{6}\,f_{\mathrm{ISP}}(\bar{\mathbf{c}}_0 - \sqrt{1.5}\,\boldsymbol{\sigma}_{\mathrm{AC}}) + \frac{4}{6}\,f_{\mathrm{ISP}}(\bar{\mathbf{c}}_0) + \frac{1}{6}\,f_{\mathrm{ISP}}(\bar{\mathbf{c}}_0 + \sqrt{1.5}\,\boldsymbol{\sigma}_{\mathrm{AC}})$$
         </div>
         <p style="margin-bottom:0">
@@ -145,7 +145,7 @@
             패치 평균 색상(DC)이 \(\bar{\mathbf{c}}_0 \to \bar{\mathbf{c}}_4\)로 이동할 때, 패치 내부의 <strong>고주파 에지 구조(\(\mathbf{z}_{\mathrm{AC}}\))</strong>는 어떻게 변환되어야 할까요?
             미적분학의 연쇄법칙(Chain Rule)에 따라, 패치 내부의 미세한 색상 진동 \(\Delta\mathbf{c}\)는 비선형 ISP 함수 \(f_{\mathrm{ISP}}: \mathbb{R}^3 \to \mathbb{R}^3\)를 통과한 뒤 그 지점의 <strong>1차 도함수 행렬(야코비안 \(J_{3\times 3} = \frac{\partial f_{\mathrm{ISP}}}{\partial \mathbf{c}}\))</strong>만큼 증폭되고 회전합니다:
           </p>
-          <div class="math-block">
+          <div class="formula">
             $$J_{3\times 3}(y,x) = \underbrace{\mathrm{diag}\!\left(\frac{f_\gamma(\mathbf{c}_{3,+}) - f_\gamma(\mathbf{c}_{3,-})}{2\,\boldsymbol{\delta}_3}\right)}_{J_4:\text{ Gamma Secant Slope}} \cdot \underbrace{M_{\mathrm{CCM}}}_{J_3} \cdot \underbrace{\mathrm{diag}(w_R, w_G, w_B)}_{J_2} \cdot \underbrace{(g\,I_3)}_{J_1} \in \mathbb{R}^{3\times 3}$$
           </div>
           <p style="margin-bottom:0">
@@ -162,7 +162,7 @@
           <p>
             따라서 16차원 구조 벡터 \(\mathbf{z}_{\mathrm{AC}} \in \mathbb{R}^{16}\)의 각 채널 \(c \in \{0\dots 15\}\)가 \(3\times 3\) 야코비안 행렬 \(J_{3\times 3} \in \mathbb{R}^{3\times 3}\)의 9개 모든 원소(\(\partial R_{\mathrm{out}}/\partial R_{\mathrm{in}}, \partial R_{\mathrm{out}}/\partial G_{\mathrm{in}}, \dots\))와 교차 작용할 수 있도록 <strong>크로네커 외적(Kronecker Outer Product)</strong>을 취합니다:
           </p>
-          <div class="math-block">
+          <div class="formula">
             $$\boldsymbol{\xi}(y,x) = \mathbf{z}_{\mathrm{AC}}(y,x) \otimes \mathrm{vec}\!\left(J_{3\times 3}(y,x)\right) = \mathrm{vec}\!\left(\mathbf{z}_{\mathrm{AC}}(y,x)\,\mathrm{vec}(J_{3\times 3})^\top\right) \in \mathbb{R}^{144}$$
           </div>
           <p style="margin-bottom:0">
@@ -612,8 +612,8 @@
         ['원시 패치 평균 c̄₀', `(${c0[0].toFixed(3)}, ${c0[1].toFixed(3)}, ${c0[2].toFixed(3)})`],
         ['단순 점 대입 f(c̄₀)', `(${fZero[0].toFixed(3)}, ${fZero[1].toFixed(3)}, ${fZero[2].toFixed(3)})`],
         ['1:4:1 심슨 구적 c̄₄', `(${c4Simp[0].toFixed(3)}, ${c4Simp[1].toFixed(3)}, ${c4Simp[2].toFixed(3)})`],
-        ['보정된 Jensen Gap', `${(meanGap * 1000).toFixed(2)} × 10⁻³ (감마 할선 J₄ = ${j4Diag[0].toFixed(2)}, ${j4Diag[1].toFixed(2)}, ${j4Diag[2].toFixed(2)})`]
-      ].map(([k, v]) => `<div><span>${k}</span><b>${v}</b></div>`).join('');
+        ['보정된 Jensen Gap', `${(meanGap * 1000).toFixed(2)} × 10⁻³ (J₄ = ${j4Diag[0].toFixed(2)}, ${j4Diag[1].toFixed(2)}, ${j4Diag[2].toFixed(2)})`]
+      ].map(([k, v]) => SB.stat({ label: k, value: v })).join('');
     }
   }
 

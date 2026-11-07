@@ -28,7 +28,7 @@
       <div class="meta-bar">
         <span>Analytical Core <b>0-Net (Zero Neural Weights · Pure Matrix &amp; Quadrature)</b></span>
         <span>Quadrature Gain <b>1:4:1 Simpson (+3.6 to +7.5 dB Patch DC PSNR)</b></span>
-        <span>Chromatic Fidelity <b>10 Cameras · 180 Points \(R^2 = 0.9978\) (MAE 0.0055)</b></span>
+        <span>Chromatic Fidelity <b>10 Cameras · 180 Points R² = 0.9978 (MAE 0.0055)</b></span>
         <span>Final Fidelity <b>4-Step Refiner (96K) Mean 27.18 dB (+2.14 dB Gain)</b></span>
       </div>
     </header>
@@ -51,7 +51,7 @@
         </ul>
       </div>
 
-      <div class="math-block">
+      <div class="formula">
         $$\bar{\mathbf{c}}_0(y,x) = \psi_{\mathrm{DC}}\!\left(\mathbf{z}_0(y,x)\right) = W_{\mathrm{dec}}\,\mathbf{z}_0(y,x) + \mathbf{b}_{\mathrm{dec}} \in \mathbb{R}^3$$
         $$\mathbf{z}_{\mathrm{AC}}(y,x) = \mathbf{z}_0(y,x) - \phi_{\mathrm{DC}}\!\left(\bar{\mathbf{c}}_0(y,x)\right) \in \mathbb{R}^{16}, \qquad \phi_{\mathrm{DC}}(\bar{\mathbf{c}}) = W_{\mathrm{enc}}\,\bar{\mathbf{c}} + \mathbf{b}_{\mathrm{enc}}$$
       </div>
@@ -70,7 +70,7 @@
           Because gamma tone mapping \(f_\gamma(c) = c^{1/\gamma}\) is concave (\(f''(c) \lt 0\)), evaluating \(f_{\mathrm{ISP}}\) only at the patch mean \(\bar{\mathbf{c}}_0\) suffers from <strong>Jensen's Inequality bias</strong> (\(\mathbb{E}[f_{\mathrm{ISP}}(\mathbf{x})] \lt f_{\mathrm{ISP}}(\bar{\mathbf{c}}_0)\)).
           Evaluating three symmetric quadrature nodes \(\mathbf{c}_- = \bar{\mathbf{c}}_0 - \boldsymbol{\delta}\), \(\mathbf{c}_0 = \bar{\mathbf{c}}_0\), and \(\mathbf{c}_+ = \bar{\mathbf{c}}_0 + \boldsymbol{\delta}\) with \(\boldsymbol{\delta} = \sqrt{1.5}\,\boldsymbol{\sigma}_{\mathrm{AC}}\) and weights \(\frac{1}{6} : \frac{4}{6} : \frac{1}{6}\) (\(1:4:1\)) matches the second-order Taylor expansion \(\frac{1}{2}f''(\bar{\mathbf{c}}_0)\boldsymbol{\sigma}_{\mathrm{AC}}^2\) exactly:
         </p>
-        <div class="math-block">
+        <div class="formula">
           $$\bar{\mathbf{c}}_4 = \frac{1}{6}\,f_{\mathrm{ISP}}(\bar{\mathbf{c}}_0 - \sqrt{1.5}\,\boldsymbol{\sigma}_{\mathrm{AC}}) + \frac{4}{6}\,f_{\mathrm{ISP}}(\bar{\mathbf{c}}_0) + \frac{1}{6}\,f_{\mathrm{ISP}}(\bar{\mathbf{c}}_0 + \sqrt{1.5}\,\boldsymbol{\sigma}_{\mathrm{AC}})$$
         </div>
       </div>
@@ -81,7 +81,7 @@
           <p>
             By the chain rule, intra-patch high-frequency variations transform under the composite \(3\times 3\) Jacobian matrix:
           </p>
-          <div class="math-block">
+          <div class="formula">
             $$J_{3\times 3}(y,x) = J_4(\mathbf{c}_{3,\pm})\,M_{\mathrm{CCM}}\,\mathrm{diag}(w_R, w_G, w_B)\,(g\,I_3) \in \mathbb{R}^{3\times 3}$$
           </div>
         </div>
@@ -90,7 +90,7 @@
           <p>
             Because all 16 VAE channels entangle RGB colors and spatial frequencies, we take the Kronecker outer product between \(\mathbf{z}_{\mathrm{AC}} \in \mathbb{R}^{16}\) and \(\mathrm{vec}(J_{3\times 3}) \in \mathbb{R}^9\):
           </p>
-          <div class="math-block">
+          <div class="formula">
             $$\boldsymbol{\xi}(y,x) = \mathbf{z}_{\mathrm{AC}}(y,x) \otimes \mathrm{vec}\!\left(J_{3\times 3}(y,x)\right) \in \mathbb{R}^{144}$$
           </div>
         </div>
@@ -330,7 +330,7 @@
         ['Raw Patch Mean c0', `(${c0[0].toFixed(3)}, ${c0[1].toFixed(3)}, ${c0[2].toFixed(3)})`],
         ['Naive Point Eval f(c0)', `(${fZero[0].toFixed(3)}, ${fZero[1].toFixed(3)}, ${fZero[2].toFixed(3)})`],
         ['1:4:1 Simpson c4', `(${c4Simp[0].toFixed(3)}, ${c4Simp[1].toFixed(3)}, ${c4Simp[2].toFixed(3)})`]
-      ].map(([k, v]) => `<div><span>${k}</span><b>${v}</b></div>`).join('');
+      ].map(([k, v]) => SB.stat({ label: k, value: v })).join('');
     }
   }
   drawSim();

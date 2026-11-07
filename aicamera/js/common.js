@@ -323,6 +323,7 @@
       };
       inp.addEventListener("input", () => update(true));
       update(false);
+      wrap.set = (v) => { inp.value = String(v); update(false); };
       return wrap;
     }
     const el = typeof id === "string" ? document.getElementById(id) : id;
@@ -342,6 +343,7 @@
     get.el = el;
     return get;
   };
+  SB.slider = SB.range;
 
   SB.seg = function (id, onChange) {
     if (typeof id === "object" && id !== null && !(id instanceof Element)) {
@@ -663,7 +665,7 @@
 
     const foot = document.createElement("footer");
     foot.className = "sb-foot";
-    foot.innerHTML = `AICAMERA 인터랙티브 아키텍처 가이드북 · <code>docs/build_spec_portal.py</code> 로 생성 · build 2026-11-07 13:16 · commit <code>00aad4a</code><br>모든 벤치마크 수치는 저장소 JSON 정본에서, ISP·3A 기본값은 C99 헤더에서 빌드 시 자동 추출 및 검증됩니다.`;
+    foot.innerHTML = `AICAMERA 인터랙티브 아키텍처 가이드북 · <code>docs/build_spec_portal.py</code> 로 생성 · build 2026-11-07 18:17 · commit <code>9738d9b</code><br>모든 벤치마크 수치는 저장소 JSON 정본에서, ISP·3A 기본값은 C99 헤더에서 빌드 시 자동 추출 및 검증됩니다.`;
     body.appendChild(foot);
 
     try {

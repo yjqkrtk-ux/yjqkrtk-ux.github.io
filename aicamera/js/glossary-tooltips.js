@@ -63,7 +63,7 @@
     aliases.sort((a, b) => b.length - a.length);
     if (!aliases.length) return { count: 0 };
     const pattern = new RegExp(aliases.map(escape).join("|"), "gi");
-    const excluded = "a, button, input, select, textarea, label, output, script, style, pre, code, svg, canvas, math, .katex, .formula, .eq, .sim-controls, .sim-readout, .sim-view, .gl-item, .gl-list, [contenteditable], [data-no-glossary], [role=button], .gl-term, h1, h2, h3, h4";
+    const excluded = "a, button, input, select, textarea, label, output, script, style, pre, code, svg, canvas, math, .katex, .formula, .eq, .math-block, .meta-bar, .hero-badges, .ch-card, .sim-controls, .sim-readout, .sim-stats, .sim-view, .gl-item, .gl-list, .badge, .src, [contenteditable], [data-no-glossary], [role=button], .gl-term, h1, h2, h3, h4";
     const walker = document.createTreeWalker(main, NodeFilter.SHOW_TEXT, {
       acceptNode(node) {
         return node.parentElement.closest(excluded) || /\$\$|\\[([]/.test(node.data)

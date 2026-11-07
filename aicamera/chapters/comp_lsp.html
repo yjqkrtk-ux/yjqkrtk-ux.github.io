@@ -82,9 +82,9 @@
         즉, \(\mathbf{z}_0\)에서 현재 평균 색상 \(\bar{\mathbf{c}}_0\)에 해당하는 잠재 성분 \(\phi_{\mathrm{DC}}(\bar{\mathbf{c}}_0)\)를 빼버리면 순수한 고주파 에지 구조 \(\mathbf{z}_{\mathrm{AC}}\)만 남고, 여기에 우리가 원하는 새로운 색상 \(\bar{\mathbf{c}}_{\mathrm{new}}\)와 스케일링된 에지 변화를 다시 끼워 넣을 수 있습니다!
       </p>
 
-      <h3>함수 종류별 추상화 분류 체계: 선형 · 비선형 · 주변 정보를 활용하는 공간 커널 함수류의 잠재 계산 형태</h3>
+      <h3>함수 종류별 추상화 분류 체계 (“잠재 공간판 HDRNet”): 선형 · 비선형 · 공간 커널 함수류의 단일 대수적 통합</h3>
       <p>
-        개별 카메라 ISP 블록(BLC, WB, CCM, Gamma, 샤프닝, 디노이징 등)을 하나씩 따로 취급하는 대신, 임의의 영상처리 연산자 \(\mathcal{O}: \mathbf{x} \mapsto \mathbf{y}\)를 수학적 성질에 따라 <strong>① 선형/아핀 점 함수류(Pointwise Linear)</strong>, <strong>② 비선형 점 함수류(Pointwise Non-Linear)</strong>, <strong>③ 주변 정보를 활용하는 공간 커널 함수류(Spatial Neighborhood Kernel)</strong>의 <strong>3대 추상 함수 패밀리</strong>로 분류하면, 16채널 잠재 공간(\(\mathbf{z} \in \mathbb{R}^{\frac{H}{8}\times\frac{W}{8}\times 16} = \mathcal{S}_{\mathrm{DC}}^3 \oplus \mathcal{S}_{\mathrm{AC}}^{13}\))에서 각 함수를 어떤 형태로 계산해야 하는지 완벽한 일반 공식이 도출됩니다:
+        픽셀 도메인에서 <strong>HDRNet</strong>(Gharbi et al., SIGGRAPH 2017)이 “3D Bilateral Grid 슬라이싱”이라는 <strong>단 하나의 통합 컨셉</strong>으로 글로벌 톤 매핑, 로컬 콘트라스트, 엣지 보존 필터링을 모두 근사했던 것처럼, <strong>White-Box Computational LSP</strong>는 16채널 잠재 공간(\(\mathbf{z} \in \mathbb{R}^{\frac{H}{8}\times\frac{W}{8}\times 16} = \mathcal{S}_{\mathrm{DC}}^3 \oplus \mathcal{S}_{\mathrm{AC}}^{13}\))에서 <strong>“1차 제트 번들 분해(\(\mathrm{DC}\oplus\mathrm{AC}\)) + 구적법/야코비안/스텐실”이라는 단 하나의 통합 컨셉으로 모든 종류의 ISP 연산군을 픽셀 디코딩 없이 수행하는 잠재 공간판 HDRNet</strong>입니다. 임의의 영상처리 연산자 \(\mathcal{O}: \mathbf{x} \mapsto \mathbf{y}\)는 수학적 성질에 따라 <strong>① 선형/아핀 점 함수류(Pointwise Linear)</strong>, <strong>② 비선형 점 함수류(Pointwise Non-Linear)</strong>, <strong>③ 주변 정보를 활용하는 공간 커널 함수류(Spatial Neighborhood Kernel)</strong>의 3대 추상 함수 패밀리로 분류되며, 각각의 잠재 공간 계산 형태는 다음과 같습니다:
       </p>
 
       <div class="table-wrap">

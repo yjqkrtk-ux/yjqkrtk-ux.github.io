@@ -21,9 +21,9 @@
       <div class="eyebrow">CHAPTER 05 · WHITE-BOX COMPUTATIONAL LATENT SIGNAL PROCESSING</div>
       <h1>White-Box Computational LSP: Analytical ISP Directly Inside 16-Channel Latent Space</h1>
       <p class="lead">
-        In Chapters 02 (LSP) and 04 (Universal CFA), we compressed sensor data into latent space to break the MIPI CSI-2 bus bottleneck.
-        This chapter answers the next fundamental question: <strong>"Once a sensor frame is encoded into a 16-channel latent tensor \(\mathbf{z}_0 \in \mathbb{R}^{\frac{H}{8}\times\frac{W}{8}\times 16}\), can we execute black-level compensation, digital gain, white balance, \(3\times 3\) color correction (CCM), and nonlinear gamma tone mapping directly inside latent space using closed-form mathematics — without decoding to pixels or retraining neural weights?"</strong>
-        We walk through the Latent Color Subspace theory, <strong>1:4:1 Simpson / Gauss-Legendre quadrature</strong>, <strong>\(3\times 3\) Secant Jacobians</strong>, <strong>144-D Kronecker outer products (\(\otimes\))</strong>, and the <strong>4-Step Residual Manifold Refiner</strong>.
+        Modern generative vision foundation models (<code>FLUX.1</code>, <code>TAEF1</code>, <code>Stable Diffusion 3.5</code>) compress each \(8\times 8\) RGB patch (\(8\times 8\times 3 = 192\) scalars) into a 16-channel latent tensor \(\mathbf{z}_0 \in \mathbb{R}^{\frac{H}{8}\times\frac{W}{8}\times 16}\), and Pach et al. (<em>The Latent Color Subspace</em>, ICML 2026) recently discovered that uniform color patches inside <code>FLUX.1</code> span an emergent 3D chromatic DC subspace \(\mathcal{S}_{\mathrm{DC}}^3\) complementary to a 13D spatial edge fiber \(\mathcal{S}_{\mathrm{AC}}^{13}\) (\(\mathbb{R}^{16} = \mathcal{S}_{\mathrm{DC}}^3 \oplus \mathcal{S}_{\mathrm{AC}}^{13}\)).
+        This chapter answers the next fundamental question: <strong>"Once a sensor Bayer RAW frame is encoded into a 16-channel latent tensor \(\mathbf{z}_0 \in \mathbb{R}^{\frac{H}{8}\times\frac{W}{8}\times 16}\), can we execute black-level compensation, digital gain, white balance, \(3\times 3\) color correction (CCM), nonlinear gamma tone mapping, and spatial neighborhood kernels directly inside latent space using closed-form mathematics — without decoding to pixels or retraining neural weights?"</strong>
+        We walk through the Latent Color Subspace theory, <strong>1:4:1 Simpson / Gauss-Legendre quadrature</strong>, <strong>\(3\times 3\) Secant Jacobians</strong>, <strong>144-D Kronecker outer products (\(\otimes\))</strong>, the <strong>4-Step Residual Manifold Refiner</strong>, and an interactive in-browser latent laboratory.
       </p>
       <div class="meta-bar">
         <span>Analytical Core <b>0-Net (Zero Neural Weights · Pure Matrix &amp; Quadrature)</b></span>
@@ -41,14 +41,26 @@
       </p>
 
       <div class="callout info">
-        <div class="callout-title">Theoretical Foundation: "The Latent Color Subspace: Emergent Order in High-Dimensional Chaos"</div>
+        <div class="callout-title">Theoretical Foundation: "The Latent Color Subspace: Emergent Order in High-Dimensional Chaos" (Pach et al., ICML 2026)</div>
         <p>
-          Although \(\mathbb{R}^{16}\) appears entangled, it self-organizes into two nearly orthogonal subspaces (implementation: <a class="src" href="../../../comp_lsp/src/jet_basis.py" title="comp_lsp/src/jet_basis.py (line 150)" target="_blank" rel="noopener">jet_basis.py:150</a>):
+          Although \(\mathbb{R}^{16}\) appears entangled, it self-organizes into two nearly orthogonal subspaces (\(\mathbb{R}^{16} = \mathcal{S}_{\mathrm{DC}}^3 \oplus \mathcal{S}_{\mathrm{AC}}^{13}\), implementation: <a class="src" href="../../../comp_lsp/src/jet_basis.py" title="comp_lsp/src/jet_basis.py (line 150)" target="_blank" rel="noopener">jet_basis.py:150</a>):
         </p>
         <ul>
-          <li><strong>1. 3-D Chromatic DC Base Manifold (\(\mathbb{R}^3\))</strong>: Captures the \(8\times 8\) patch mean RGB color \(\bar{\mathbf{c}} = (\bar{R}, \bar{G}, \bar{B})^\top \in [0,1]^3\).</li>
-          <li><strong>2. 16-D Structural AC Fiber (\(\mathbb{R}^{16}\))</strong>: Captures intra-patch edges, textures, and local contrast (\(\boldsymbol{\sigma}_{\mathrm{AC}} \in \mathbb{R}^3\)) via the residual vector \(\mathbf{z}_{\mathrm{AC}}\).</li>
+          <li><strong>1. 3-D Chromatic DC Base Manifold (\(\mathcal{S}_{\mathrm{DC}}^3\))</strong>: Captures the \(8\times 8\) patch mean RGB color \(\bar{\mathbf{c}} = (\bar{R}, \bar{G}, \bar{B})^\top \in [0,1]^3\).</li>
+          <li><strong>2. 13-D Structural AC Fiber (\(\mathcal{S}_{\mathrm{AC}}^{13}\))</strong>: Captures intra-patch edges, textures, and local contrast (\(\boldsymbol{\sigma}_{\mathrm{AC}} \in \mathbb{R}^3\)) via the residual vector \(\mathbf{z}_{\mathrm{AC}}\).</li>
         </ul>
+      </div>
+
+      <div class="callout ok">
+        <div class="callout-title">Intuitive Summary: The Latent Color Subspace &amp; Why Jacobian Translation Is Essential</div>
+        <p>
+          <strong>1. Why 16 Channels? (192 pixels \(\to 16\text{-D} = \mathcal{S}_{\mathrm{DC}}^3 \oplus \mathcal{S}_{\mathrm{AC}}^{13}\)):</strong>
+          Pach et al. (ICML 2026) showed that within the 16-D latent vector \(\mathbf{z}_0 \in \mathbb{R}^{16}\) compressing an \(8\times 8\times 3 = 192\)-value patch, <strong>3 dimensions encode the patch-mean color (DC, \(\bar{\mathbf{c}}_0\))</strong> while the remaining <strong>13 dimensions encode intra-patch spatial edges and textures (AC, \(\Delta\mathbf{x}(u,v)\))</strong> (\(\mathbf{z}_0 = P_{\mathrm{DC}}\mathbf{z}_0 + \mathbf{z}_{\mathrm{AC}}\)).
+        </p>
+        <p style="margin-bottom:0">
+          <strong>2. Why Flat DC Shifts Fail on Camera RAWs &amp; Why Jacobian Translation Is Required:</strong>
+          Because silicon Bayer sensors are strongly green-dominant, not only is the patch average \(\bar{\mathbf{c}}_0\) green-biased, but <strong>the intra-patch spatial edges \(\Delta\mathbf{x}\) inside the 13-D AC fiber also have strong green contrast (\(\Delta G\)) and weak red/blue contrast (\(\Delta R, \Delta B\))</strong>. By first-order Taylor expansion \(f_{\mathrm{ISP}}(\bar{\mathbf{c}}_0 + \Delta\mathbf{x}) \approx \bar{\mathbf{c}}_{\mathrm{new}} + J_{3\times 3}\Delta\mathbf{x}\), we integrate the 3-D DC mean via <strong>3-Point Simpson (<code>1:4:1</code>) Quadrature</strong> and multiply the 13-D AC edge fiber by the instantaneous <strong>\(3\times 3\) Secant Jacobian matrix \(J_{3\times 3}\)</strong> (whose diagonal entries amplify Gain × WB × Gamma shadow slopes and whose off-diagonal entries apply \(3\times 3\) CCM cross-channel edge mixing).
+        </p>
       </div>
 
       <div class="formula">

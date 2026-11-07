@@ -21,9 +21,9 @@
       <div class="eyebrow">CHAPTER 05 · WHITE-BOX COMPUTATIONAL LATENT SIGNAL PROCESSING</div>
       <h1>White-Box Computational LSP: 픽셀로 풀지 않고 잠재 공간에서 직접 수행하는 수학적 ISP</h1>
       <p class="lead">
-        앞선 2장(LSP)과 4장(Universal CFA)에서는 센서 데이터를 잠재 공간으로 압축 전송하여 MIPI 버스 병목을 해소했습니다.
-        그렇다면 <strong>“이미 16채널 잠재 텐서 \(\mathbf{z}_0 \in \mathbb{R}^{\frac{H}{8}\times\frac{W}{8}\times 16}\)로 압축된 상태에서, 거대한 VAE 디코더로 다시 픽셀을 풀거나 신경망을 재학습하지 않고도 노출·화이트밸런스·3×3 색보정(CCM)·감마 곡선을 실시간 수학 공식만으로 직접 조작할 수 없을까?”</strong>
-        이 장에서는 고차원 잠재 혼돈 속의 선형 색상 부분공간 이론부터 <strong>1:4:1 심슨 구적법</strong>, <strong>3×3 할선 야코비안(Secant Jacobian)</strong>, <strong>144차원 크로네커 외적(\(\otimes\))</strong>, 그리고 <strong>4-Step 잔차 매니폴드 리파이너</strong>까지 White-Box Computational LSP의 모든 원리와 코드를 하나씩 쉽게 풀어 설명합니다.
+        최신 생성형 비전 파운데이션 모델(<code>FLUX.1</code>, <code>TAEF1</code>, <code>Stable Diffusion 3.5</code>)은 \(8\times 8\) 픽셀 패치(\(8\times 8\times 3 = 192\)개 스칼라)를 16채널 잠재 텐서 \(\mathbf{z}_0 \in \mathbb{R}^{\frac{H}{8}\times\frac{W}{8}\times 16}\)으로 압축하며, 최근 Pach et al. (<em>The Latent Color Subspace</em>, ICML 2026)은 이 16차원 공간 안에서 균일한 색상 패치들이 3차원 평균색 부분공간 \(\mathcal{S}_{\mathrm{DC}}^3\)과 13차원 공간 엣지 파이버 \(\mathcal{S}_{\mathrm{AC}}^{13}\)으로 분리(\(\mathbb{R}^{16} = \mathcal{S}_{\mathrm{DC}}^3 \oplus \mathcal{S}_{\mathrm{AC}}^{13}\))된다는 자발적 기하학 질서를 발견했습니다.
+        그렇다면 <strong>“카메라 센서 Bayer RAW가 16채널 잠재 텐서 \(\mathbf{z}_0 \in \mathbb{R}^{\frac{H}{8}\times\frac{W}{8}\times 16}\)로 인코딩된 상태에서, 거대한 VAE 디코더로 다시 픽셀을 풀거나 신경망을 재학습하지 않고도 노출·화이트밸런스·3×3 색보정(CCM)·감마 곡선·공간 샤프닝/디노이징을 실시간 수학 공식만으로 직접 조작할 수 없을까?”</strong>
+        이 장에서는 고차원 잠재 혼돈 속의 선형 색상 부분공간 이론부터 <strong>1:4:1 심슨 구적법</strong>, <strong>3×3 할선 야코비안(Secant Jacobian)</strong>, <strong>144차원 크로네커 외적(\(\otimes\))</strong>, 그리고 <strong>4-Step 잔차 매니폴드 리파이너</strong>까지 White-Box Computational LSP의 모든 원리와 해설, 그리고 실시간 잠재 연산 시뮬레이터를 하나씩 쉽게 풀어 설명합니다.
       </p>
       <div class="meta-bar">
         <span>해석적 코어 <b>0-Net (신경망 가중치 0개 · 순수 행렬/구적법)</b></span>
@@ -60,14 +60,26 @@
       </div>
 
       <div class="callout info">
-        <div class="callout-title">이론적 돌파구: “The Latent Color Subspace: Emergent Order in High-Dimensional Chaos”</div>
+        <div class="callout-title">이론적 돌파구: “The Latent Color Subspace: Emergent Order in High-Dimensional Chaos” (Pach et al., ICML 2026)</div>
         <p>
-          사전 학습된 16채널 VAE의 잠재 공간 \(\mathbb{R}^{16}\)은 겉보기에 16개 채널이 복잡하게 얽힌 비선형 혼돈(Chaos)처럼 보이지만, 실제로는 <strong>두 개의 직교에 가까운 기하학적 부분공간(Subspace)으로 자발적 질서(Emergent Order)</strong>를 형성합니다 (구현: <a class="src" href="../../comp_lsp/src/jet_basis.py" title="comp_lsp/src/jet_basis.py (line 150)" target="_blank" rel="noopener">jet_basis.py:150</a>):
+          사전 학습된 16채널 VAE(<code>FLUX.1</code>, \(f=8, C=16\))의 잠재 공간 \(\mathbb{R}^{16}\)은 겉보기에 16개 채널이 복잡하게 얽힌 비선형 혼돈(Chaos)처럼 보이지만, 실제로는 <strong>두 개의 직교에 가까운 기하학적 부분공간(Subspace)으로 자발적 질서(Emergent Order)</strong>를 형성합니다 (\(\mathbb{R}^{16} = \mathcal{S}_{\mathrm{DC}}^3 \oplus \mathcal{S}_{\mathrm{AC}}^{13}\), 구현: <a class="src" href="../../comp_lsp/src/jet_basis.py" title="comp_lsp/src/jet_basis.py (line 150)" target="_blank" rel="noopener">jet_basis.py:150</a>):
         </p>
         <ul>
-          <li><strong>① 3차원 색도 DC 기본 매니폴드 (Chromatic DC Base Manifold, \(\mathbb{R}^3\))</strong>: \(8\times 8\) 패치의 평균 색상 \(\bar{\mathbf{c}} = (\bar{R}, \bar{G}, \bar{B})^\top \in [0,1]^3\)이 놓이는 완만한 곡면입니다. 균일한 색상 패치들을 인코딩해 보면 16차원 공간 전체에 흩어지는 것이 아니라 매끄러운 3차원 부분공간을 따라 정렬됩니다.</li>
-          <li><strong>② 고주파 구조 AC 파이버 (Structural AC Fiber, \(\mathbb{R}^{16}\))</strong>: 패치 내부의 엣지, 텍스처, 미세 대비(표준편차 \(\boldsymbol{\sigma}_{\mathrm{AC}} \in \mathbb{R}^3\))를 담고 있는 잔차 벡터 \(\mathbf{z}_{\mathrm{AC}}\)입니다.</li>
+          <li><strong>① 3차원 색도 DC 기본 매니폴드 (Chromatic DC Base Manifold, \(\mathcal{S}_{\mathrm{DC}}^3\))</strong>: \(8\times 8\) 패치의 평균 색상 \(\bar{\mathbf{c}} = (\bar{R}, \bar{G}, \bar{B})^\top \in [0,1]^3\)이 놓이는 완만한 곡면입니다. 균일한 색상 패치들을 인코딩해 보면 16차원 공간 전체에 흩어지는 것이 아니라 매끄러운 3차원 부분공간을 따라 정렬됩니다.</li>
+          <li><strong>② 13차원 고주파 구조 AC 파이버 (Structural AC Fiber, \(\mathcal{S}_{\mathrm{AC}}^{13}\))</strong>: 패치 내부의 엣지, 텍스처, 미세 대비(표준편차 \(\boldsymbol{\sigma}_{\mathrm{AC}} \in \mathbb{R}^3\))를 담고 있는 잔차 벡터 \(\mathbf{z}_{\mathrm{AC}}\)입니다.</li>
         </ul>
+      </div>
+
+      <div class="callout ok">
+        <div class="callout-title">핵심 이론 직관 요약 (Intuitive Summary: The Latent Color Subspace &amp; Jacobian Translation)</div>
+        <p>
+          <strong>1. 왜 16채널인가? (192픽셀 \(\to 16\text{-D} = \mathcal{S}_{\mathrm{DC}}^3 \oplus \mathcal{S}_{\mathrm{AC}}^{13}\)):</strong>
+          Pach et al. (ICML 2026)은 \(8\times 8\times 3 = 192\)개 숫자가 압축된 16차원 잠재 벡터 \(\mathbf{z}_0 \in \mathbb{R}^{16}\) 내부에서 <strong>3개 차원은 패치의 평균 색상(DC, \(\bar{\mathbf{c}}_0\))</strong>을, 나머지 <strong>13개 차원은 패치 내부의 공간적 경계선/결(AC, \(\Delta\mathbf{x}(u,v)\))</strong>을 담당한다는 것을 밝혔습니다 (\(\mathbf{z}_0 = P_{\mathrm{DC}}\mathbf{z}_0 + \mathbf{z}_{\mathrm{AC}}\)).
+        </p>
+        <p style="margin-bottom:0">
+          <strong>2. 왜 단순 DC 색상 이동만으로는 부족하고 Jacobian Translation(야코비안 엣지 변환)이 필수적인가?:</strong>
+          카메라 센서 RAW 영상은 실리콘 Bayer 특성상 녹색 감도가 2배 높아 패치 평균색(\(\bar{\mathbf{c}}_0\))뿐 아니라 <strong>13차원 AC 공간에 들어있는 물체 경계선(\(\Delta\mathbf{x}\))도 녹색 대비(\(\Delta G\))만 크고 빨강/파랑 대비(\(\Delta R, \Delta B\))는 절반으로 죽어 있습니다.</strong> 테일러 1차 전개 \(f_{\mathrm{ISP}}(\bar{\mathbf{c}}_0 + \Delta\mathbf{x}) \approx \bar{\mathbf{c}}_{\mathrm{new}} + J_{3\times 3}\Delta\mathbf{x}\)에 따라, 3차원 DC 평균색은 <strong>1:4:1 심슨 구적법</strong>으로 적분하고 13차원 AC 경계선 성분에는 ISP 함수의 순간 기울기 행렬인 <strong>\(3\times 3\) 야코비안 행렬 \(J_{3\times 3}\) (대각 원소 = Gain × WB × Gamma 기울기 증폭, 비대각 원소 = \(3\times 3\) CCM 색상 교차 혼합)</strong>을 곱해주는 것이 바로 <strong>Jacobian Translation</strong>입니다.
+        </p>
       </div>
 
       <h3>미분기하학의 1차 제트 번들(1st-Order Jet Bundle) 분해</h3>

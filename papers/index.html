@@ -685,13 +685,13 @@
           2. Universal In-Sensor Latent Signal Processing for Heterogeneous CFAs: Phase-Aware Implicit Remosaicing and 16-Channel Single-Stream Latent Unification
         </a>
         <p class="hub-card-desc">
-          Unifies Standard Bayer (2×2), Tetracell (4×4), and Hexadecacell (8×8) high-megapixel sensors onto a single 16-channel host translator (T_B: 16→16) and a 100% CFA-agnostic host decoder (D_rec) on the FLUX.1 / TAEF1 latent manifold via in-sensor phase-aware PixelUnshuffle + SE-ResNet compressors (64 KB INT8 single-stream bus, zero auxiliary subband).
+          Unifies Standard Bayer (1×1), Tetracell (2×2), and Hexadecacell (4×4) high-megapixel sensors onto a single 16-channel host translator (T_B: 16→16) and a 100% CFA-agnostic host decoder (D_rec) on the FLUX.1 / TAEF1 latent manifold via in-sensor phase-aware PixelUnshuffle + SE-ResNet compressors (64 KB INT8 single-stream bus).
         </p>
         <div class="hub-kpis">
-          <span class="hub-kpi">Bayer: 29.43 dB</span>
-          <span class="hub-kpi">Tetracell: 28.82 dB (+6.30 dB vs. 4-Ch)</span>
-          <span class="hub-kpi">Hexadecacell: 27.38 dB (+1.14 dB vs. Dir+MHC)</span>
-          <span class="hub-kpi">100% Single-Stream 16-Ch</span>
+          <span class="hub-kpi">Bayer (1×1): 35.91 dB</span>
+          <span class="hub-kpi">Tetracell (2×2): 34.56 dB (+0.50 dB vs. KLAP)</span>
+          <span class="hub-kpi">Hexadecacell (4×4): 30.27 dB (+0.53 dB vs. KLAP)</span>
+          <span class="hub-kpi">100% Single-Stream 16-Ch (64 KB INT8)</span>
         </div>
         <div>
           <a class="btn active" href="universal_cfa.html">Read Paper II (2-Col Interactive HTML) →</a>
@@ -712,7 +712,7 @@
           <strong>Authors:</strong> Yongjoon Song, Han-sol Lee, Jeisung Lee, Yeolmin Seong &bull; <em>Samsung Electronics, Republic of Korea</em>
         </div>
         <p class="hub-card-desc">
-          Establishes a unified 3-class taxonomy of latent image processing operators—(I) Pointwise Linear/Affine, (II) Pointwise Non-Linear (`1:4:1` Simpson Quadrature + $3	imes 3$ Secant Jacobians), and (III) Spatial Neighborhood Kernels (13D AC Spectral Multipliers + $3	imes 3$ Cross-Cell Bilateral/ODE Stencils)—directly on the H/8 × W/8 × 16 latent grid of genuine hardware sensor Bayer RAWs, boosting 10-camera mean sRGB PSNR from 25.04 dB (0-Net) to 27.18 dB (4-Step Refiner).
+          Generalizes the emergent 16-channel FLUX.1 latent color subspace (Pach et al., ICML 2026) into a 1st-Order Jet Bundle (<code>R<sup>16</sup> = S<sub>DC</sub><sup>3</sup> &oplus; S<sub>AC</sub><sup>13</sup></code>) that executes (I) Pointwise Linear/Affine, (II) Pointwise Non-Linear (<code>1:4:1</code> Simpson Quadrature + 3&times;3 Secant Jacobians), and (III) Spatial Neighborhood Kernels (13D AC Orthonormal Projectors + 3&times;3 Cross-Cell Bilateral/ODE Stencils) directly on the H/8 &times; W/8 &times; 16 latent grid of genuine hardware sensor Bayer RAWs, boosting 10-camera mean sRGB PSNR from 25.04 dB (0-Net) to 27.18 dB (4-Step Refiner).
         </p>
         <div class="hub-kpis">
           <span class="hub-kpi">3-Class Operator Taxonomy (Linear / Non-Linear / Kernel)</span>
@@ -721,7 +721,7 @@
           <span class="hub-kpi">0.93 ms @ 1MP (70.5× Speedup)</span>
         </div>
         <div>
-          <a class="btn active" href="comp_lsp.html">Read Paper III (CVPR 2027 2-Col HTML + Interactive Simulator) →</a>
+          <a class="btn active" href="comp_lsp.html">Read Paper III (2-Col Interactive HTML) →</a>
         </div>
       </article>
     </div>

@@ -1173,49 +1173,80 @@
 
       <h3>5.3 Factorized Ablation Studies</h3>
       <p>
-        <strong>Table 4</strong> isolates the effect of each architectural component across all 10 hardware cameras:
+        <strong>Table 4</strong> isolates four core design factors:
       </p>
       <ul>
-        <li><strong>Refinement Horizon ($N=0$ vs. $N=1$ vs. $N=4$):</strong> Zero-network analytical math (<code>Stage 4: 0-Net</code>) reaches $25.04\text{ dB}$ mean PSNR at $0.93\text{ ms}$. A single pointwise residual step (<code>Stage 5: +1-Step</code>, $25.29\text{ dB}$) yields only $+0.25\text{ dB}$ because large non-linear WB/Gamma jumps induce $8\times 8$ block-boundary ringing under the $32\times 32$ VAE receptive field. Integrating $N=4$ damped cross-cell $3\times 3$ ODE steps (<code>Stage 6: +4-Step</code>) resolves cross-patch boundary ringing and boosts mean PSNR to <strong>$27.18\text{ dB}$</strong> ($+2.14\text{ dB}$ over 0-Net, up to $32.55\text{ dB}$ on Google Pixel Indoor and $30.52\text{ dB}$ on OpenISP).</li>
-        <li><strong>Authentic Native vs. Fixed Global Camera Metadata:</strong> Replacing each camera&rsquo;s native DNG metadata $\Theta_{\text{ISP}}$ with a fixed global parameter set ($g=1.20$, $\mathbf{w}_{\text{WB}}=[1.95, 1.0, 1.45]$, $\gamma=2.0$) degrades final Stage 6 PSNR by $-3.81\text{ dB}$ ($23.37\text{ dB}$ vs. $27.18\text{ dB}$) and increases RGB MAE by $5.86\times$ ($0.0164$ vs. $0.0028$), confirming that explicit white-box metadata conditioning is essential for cross-sensor generalization.</li>
+        <li><strong>0th-Order Scalar Subspace Shift vs. 1st-Order Simpson-Jacobian Jet (Mode B vs. Mode A):</strong> On the cumulative <code>Stages 1&ndash;4</code> benchmark, unprocessed sensor RAW yields $13.38\text{ dB}$ and flat 0th-order scalar subspace steering [4] reaches $22.59\text{ dB}$ ($\text{MSE}_z = 0.190$) because it omits concave gamma quadrature and leaves the 13D AC edge fiber untouched. Introducing <code>1:4:1</code> Simpson quadrature and $144\text{-D}$ Secant Jacobian Kronecker transport improves 0-Net PSNR to $24.30\text{ dB}$ in <strong>Mode B</strong> ($\mathbf{z}_0$-only readout, zero auxiliary metadata) and <strong>$25.16\text{ dB}$ in Mode A</strong> (on-chip sensor patch stats, reducing latent error by $36.8\%$ to $\text{MSE}_z = 0.120$; per-stage breakdown in <strong>Table 6</strong>).</li>
+        <li><strong>Refinement Horizon ($N=0$ vs. $N=1$ vs. $N=4$):</strong> Across all 10 cameras, zero-network analytical math (<code>Stage 4: 0-Net</code>) reaches $25.04\text{ dB}$ mean PSNR at $0.93\text{ ms}$. A single residual step (<code>+1-Step</code>, $25.29\text{ dB}$) yields $+0.25\text{ dB}$ because large non-linear WB/Gamma jumps induce $8\times 8$ block-boundary ringing under the $32\times 32$ VAE receptive field. Integrating $N=4$ damped cross-cell $3\times 3$ ODE steps (<code>Stage 6: +4-Step</code>) resolves cross-patch boundary ringing and boosts mean PSNR to <strong>$27.18\text{ dB}$</strong> ($+2.14\text{ dB}$ over 0-Net, up to $32.55\text{ dB}$ on Google Pixel Indoor).</li>
+        <li><strong>Authentic Native vs. Fixed Global Camera Metadata:</strong> Replacing each camera&rsquo;s native DNG metadata $\Theta_{\text{ISP}}$ with a fixed global parameter set ($g=1.20$, $\mathbf{w}_{\text{WB}}=[1.95, 1.0, 1.45]$, $\gamma=2.0$) degrades final Stage 6 PSNR by $-3.81\text{ dB}$ ($23.37\text{ dB}$ vs. $27.18\text{ dB}$) and increases RGB MAE by $5.86\times$ ($0.0164$ vs. $0.0028$).</li>
       </ul>
 
       <div style="margin: 14px 0; break-inside: avoid;">
-        <h3>Table 4: Factorized Ablation Study Across 10 Hardware Cameras</h3>
+        <h3>Table 4: Factorized Ablation Study (0th-Order Subspace Baseline vs. Mode B/A, Native Metadata, &amp; ODE Horizon)</h3>
         <table>
           <thead>
             <tr>
-              <th>Ablation Variant</th>
+              <th>Ablation Variant / Configuration</th>
               <th>Metadata</th>
               <th>Steps $N$</th>
               <th>PSNR (dB) &uarr;</th>
-              <th>RGB MAE &darr;</th>
+              <th>RGB MAE / $\text{MSE}_z$ &darr;</th>
               <th>1MP Time &darr;</th>
             </tr>
           </thead>
           <tbody>
+            <tr class="section-row">
+              <td colspan="6">Part A: Color-Dojo Cumulative Stages 1&ndash;4 Operator Ablation (vs. Prior Subspace Baseline)</td>
+            </tr>
             <tr>
-              <td>Fixed Metadata + 0-Net</td>
+              <td>Unprocessed Sensor RAW ($\mathbf{z}_0$)</td>
+              <td>&mdash;</td>
+              <td>$0$</td>
+              <td>13.38</td>
+              <td>&mdash;</td>
+              <td>&mdash;</td>
+            </tr>
+            <tr>
+              <td>0th-Order Scalar Subspace Shift [4]</td>
+              <td>Native</td>
+              <td>$0$</td>
+              <td>22.59</td>
+              <td>$\text{MSE}_z = 0.190$</td>
+              <td class="highlight-val">0.62 ms</td>
+            </tr>
+            <tr>
+              <td>Ours Mode B ($\mathbf{z}_0$-Only Simpson + $J_{3\times 3}$)</td>
+              <td>Native</td>
+              <td>$0$</td>
+              <td>24.30 (+1.71)</td>
+              <td>$\text{MSE}_z = 0.134$</td>
+              <td>0.93 ms</td>
+            </tr>
+            <tr class="highlight-row">
+              <td><strong>Ours Mode A (Sensor $\bar{\mathbf{c}}_0$ Simpson + $J_{3\times 3}$)</strong></td>
+              <td><strong>Native</strong></td>
+              <td><strong>$0$</strong></td>
+              <td class="highlight-val">25.16 (+2.57)</td>
+              <td class="highlight-val">$\text{MSE}_z = 0.120$</td>
+              <td class="highlight-val">0.93 ms</td>
+            </tr>
+            <tr class="section-row">
+              <td colspan="6">Part B: 10-Camera Full Pipeline Metadata &amp; Iterative ODE Horizon Ablation</td>
+            </tr>
+            <tr>
+              <td>Fixed Global Metadata + 0-Net</td>
               <td>Fixed Global</td>
               <td>$0$</td>
               <td>23.52</td>
-              <td>0.0202</td>
+              <td>$\text{MAE} = 0.0202$</td>
               <td class="highlight-val">0.93 ms</td>
             </tr>
             <tr>
-              <td>Fixed Metadata + 1-Step</td>
-              <td>Fixed Global</td>
-              <td>$1$</td>
-              <td>23.41</td>
-              <td>0.0193</td>
-              <td>1.65 ms</td>
-            </tr>
-            <tr>
-              <td>Fixed Metadata + 4-Step</td>
+              <td>Fixed Global Metadata + 4-Step ODE</td>
               <td>Fixed Global</td>
               <td>$4$</td>
               <td>23.37</td>
-              <td>0.0164</td>
+              <td>$\text{MAE} = 0.0164$</td>
               <td>3.80 ms</td>
             </tr>
             <tr style="border-top:1.5px solid var(--surface-border);">
@@ -1223,7 +1254,7 @@
               <td><strong>Native DNG</strong></td>
               <td><strong>$0$</strong></td>
               <td class="highlight-val">25.04</td>
-              <td class="highlight-val">0.0079</td>
+              <td class="highlight-val">$\text{MAE} = 0.0079$</td>
               <td class="highlight-val">0.93 ms</td>
             </tr>
             <tr>
@@ -1231,29 +1262,32 @@
               <td><strong>Native DNG</strong></td>
               <td><strong>$1$</strong></td>
               <td class="highlight-val">25.29</td>
-              <td class="highlight-val">0.0040</td>
+              <td class="highlight-val">$\text{MAE} = 0.0040$</td>
               <td>1.65 ms</td>
             </tr>
-            <tr>
+            <tr class="highlight-row">
               <td><strong>Ours (Stage 6: +4-Step ODE)</strong></td>
               <td><strong>Native DNG</strong></td>
               <td><strong>$4$</strong></td>
-              <td class="highlight-val">27.18</td>
-              <td class="highlight-val">0.0028</td>
+              <td class="highlight-val">27.18 (+3.81)</td>
+              <td class="highlight-val">$\text{MAE} = 0.0028$</td>
               <td>3.80 ms</td>
             </tr>
           </tbody>
         </table>
       </div>
 
-      <h3>5.4 Runtime Latency and Limitations</h3>
+      <h3>5.4 Cross-VAE Generalization, Multi-Resolution Latency, Inverse 3A Auto-Tuning, and Limitations</h3>
       <p>
-        On a 1MP image ($1024\times 1024 \to 128\times 128\times 16$ latent grid), <code>Stage 4 (0-Net)</code> executes in $0.93\text{ ms}$ in Halide [11] ($70.5\times$ faster than full-resolution pixel ISP execution at 12MP), and adding the 4-step refiner $\mathcal{R}_{4\text{-step}}$ totals $\sim 3.8\text{ ms}$. As a limitation, extreme highlight saturation where $\bar{\mathbf{c}}_0 + \boldsymbol{\delta} &gt; 1$ clips the Secant chord, and spatial filters wider than $4\times 3\times 3$ latent cells ($&gt;72\text{ px}$ radius) require multiscale latent pooling.
+        <strong>Cross-Backbone Generalization (<code>FLUX.1</code> vs. <code>TAEF1</code>):</strong> To verify that our formulation is not overfitted to a single encoder, we evaluate the exact same 16-channel Jet-Jacobian pipeline on both <code>FLUX.1</code> and the lightweight distilled <code>TAEF1</code> [10] 16-channel autoencoder (<strong>Table 6</strong>). On the full chained ISP benchmark, Comp-LSP improves <code>FLUX.1</code> from $14.33\text{ dB}$ ($\text{MSE}_z=2.376$) to $23.30\text{ dB}$ ($\text{MSE}_z=0.063$, $\text{SSIM}=0.8520$) and <code>TAEF1</code> from $15.10\text{ dB}$ ($\text{MSE}_z=2.454$) to $22.79\text{ dB}$ ($\text{MSE}_z=0.059$, $\text{SSIM}=0.8373$).
+      </p>
+      <p>
+        <strong>Multi-Resolution Latency and $765.2\times$ Faster Inverse 3A Auto-Tuning:</strong> Because Comp-LSP operates on the $1/64$ spatial grid ($\frac{H}{8}\times\frac{W}{8}\times 16$), our fused Halide [11] kernel executes <code>Stage 4 (0-Net)</code> in $0.14\text{ ms}$ at $256\times 256$ ($42.0\times$ faster than full-resolution pixel ISP at $5.87\text{ ms}$), $0.93\text{ ms}$ at $1024\times 1024$ 1MP ($43.0\times$ vs. $39.80\text{ ms}$), and $12.49\text{ ms}$ at $4000\times 3000$ 12MP ($70.5\times$ vs. $880.64\text{ ms}$); adding $\mathcal{R}_{4\text{-step}}$ totals $3.80\text{ ms}$ at 1MP. Furthermore, because every operator in $\mathcal{T}_{\text{LSP}}$ is closed-form and differentiable with respect to $\Theta_{\text{ISP}}$, 40-step Adam inverse auto-tuning of 8 continuous 3A/ISP knobs executes in $198.34\text{ ms}$ ($4.96\text{ ms/step}$) directly in latent space versus $151,766.92\text{ ms}$ ($3,794.17\text{ ms/step}$) when decoding through the VAE at each iteration&mdash;a <strong>$765.2\times$ speedup</strong> that recovers PSNR from $12.89\text{ dB}$ to $24.90\text{ dB}$. As limitations, extreme highlight saturation ($\bar{\mathbf{c}}_0 + \boldsymbol{\delta} &gt; 1$) clips the Secant chord, and spatial filters wider than $4\times 3\times 3$ latent cells ($&gt;72\text{ px}$ radius) require multiscale latent pooling.
       </p>
 
       <h2>6. Conclusion</h2>
       <p>
-        We presented <strong>White-Box Computational Latent Signal Processing (Comp-LSP)</strong>, generalizing the emergent 16-channel latent color subspace of <code>FLUX.1</code> and <code>TAEF1</code> [4, 10] into a unified white-box operator architecture that executes <em>Pointwise Linear</em> ($\mathcal{F}_{\text{lin}}$), <em>Pointwise Non-Linear</em> ($\mathcal{F}_{\text{nonlin}}$), and <em>Two-Scale Spatial Kernel</em> ($\mathcal{F}_{\text{kernel}}$) camera ISP functions directly on the $\frac{H}{8} \times \frac{W}{8} \times 16$ latent grid. By combining <strong>3-Point Simpson (<code>1:4:1</code>) Jet Quadrature</strong>, <strong>$3\times 3$ Secant Jacobians</strong> with $144\text{-D}$ Kronecker AC transport, and a <strong>4-Step Damped Iterative Manifold Refiner ($\mathcal{R}_{4\text{-step}}$)</strong> conditioned on authentic DNG metadata, our framework eliminates raw Bayer green bias ($R^2 = 0.9978$, final $\text{MAE} = 0.0028$) and boosts 10-camera mean PSNR from $25.04\text{ dB}$ (0-Net) to <strong>$27.18\text{ dB}$ (4-Step)</strong> while executing in $0.93\text{--}3.8\text{ ms}$ at $1/64$ spatial resolution.
+        We presented <strong>White-Box Computational Latent Signal Processing (Comp-LSP)</strong>, establishing the 16-channel latent-space counterpart to <strong>HDRNet</strong> [14]: a unified white-box operator architecture that executes <em>Pointwise Linear</em> ($\mathcal{F}_{\text{lin}}$), <em>Pointwise Non-Linear</em> ($\mathcal{F}_{\text{nonlin}}$), and <em>Two-Scale Spatial Kernel</em> ($\mathcal{F}_{\text{kernel}}$) camera ISP functions directly on the $\frac{H}{8} \times \frac{W}{8} \times 16$ latent grid of frozen 16-channel VAEs (<code>FLUX.1</code> and <code>TAEF1</code>). By combining <strong>3-Point Simpson (<code>1:4:1</code>) Jet Quadrature</strong>, <strong>$3\times 3$ Secant Jacobians</strong> with $144\text{-D}$ Kronecker AC transport, 13D orthonormal Legendre spatial kernel projectors, and a <strong>4-Step Damped Iterative Manifold Refiner ($\mathcal{R}_{4\text{-step}}$)</strong> conditioned on authentic DNG metadata, our framework eliminates raw Bayer green bias ($R^2 = 0.9978$, final $\text{MAE} = 0.0028$), boosts 10-camera mean PSNR from $25.04\text{ dB}$ (0-Net) to <strong>$27.18\text{ dB}$ (4-Step)</strong> in $0.93\text{--}3.8\text{ ms}$ at $1/64$ spatial resolution, and accelerates differentiable inverse 3A auto-tuning by $765.2\times$.
       </p>
 
       <h2>References</h2>
@@ -1292,7 +1326,7 @@
           $$Q_3(\bar{c}_0, \delta) = w\,\phi(\bar{c}_0 - \delta) + w_0\,\phi(\bar{c}_0) + w\,\phi(\bar{c}_0 + \delta) = (w_0 + 2w)\phi(\bar{c}_0) + w\delta^2\phi''(\bar{c}_0) + \frac{w\delta^4}{12}\phi^{(4)}(\bar{c}_0) + O(\delta^6). \qquad (8)$$
         </div>
         <p>
-          Matching the 0th-order, 2nd-order, and uniform sub-patch 4th-order moments ($\mathbb{E}[\Delta X^4] = \frac{9}{5}\sigma_{\text{AC}}^4$, scaled by $2\times 2$ sub-patch pooling to $\kappa = \sqrt{1.5}$) yields $w_0 + 2w = 1$ and $w\kappa^2 = \frac{1}{2}$, which at $\kappa = \sqrt{1.5}$ uniquely determines $(w, w_0, w) = (\tfrac{1}{6}, \tfrac{4}{6}, \tfrac{1}{6})$, improving $8\times 8$ patch DC color PSNR by $+3.6\text{ to }+7.5\text{ dB}$ (<strong>Fig. 1C</strong>).
+          Matching the 0th-order, 2nd-order, and uniform sub-patch 4th-order moments ($\mathbb{E}[\Delta X^4] = \frac{9}{5}\sigma_{\text{AC}}^4$, scaled by $2\times 2$ sub-patch pooling to $\kappa = \sqrt{1.5}$) imposes the linear constraints $w_0 + 2w = 1$ and $w\kappa^2 = \frac{1}{2}$. Setting $\kappa = \sqrt{1.5}$ uniquely determines Simpson&rsquo;s weights $(w, w_0, w) = (\tfrac{1}{6}, \tfrac{4}{6}, \tfrac{1}{6})$ and improves $8\times 8$ patch DC color PSNR by $+3.6\text{ to }+7.5\text{ dB}$ (<strong>Fig. 1b</strong>, <strong>Table 6</strong>).
         </p>
 
         <h3>Appendix B: Complete 10-Camera Fixed Global Metadata Ablation</h3>
@@ -1486,6 +1520,156 @@
               <td class="highlight-val">+1.88</td>
               <td class="highlight-val">+3.81 dB</td>
               <td class="highlight-val">5.86&times; lower</td>
+            </tr>
+          </tbody>
+        </table>
+
+        <h3>Appendix C: Stage-by-Stage Subspace Ablation, 3-Point Simpson Quadrature, Cross-VAE Generalization, and Multi-Resolution Runtime Scaling</h3>
+        <p>
+          <strong>Table 6</strong> provides the complete stage-by-stage breakdown comparing 0th-Order Scalar Subspace Steering [4] against Comp-LSP (Mode B and Mode A), the 5-scene patch DC PSNR quadrature ablation, cross-VAE generalization between <code>FLUX.1</code> and <code>TAEF1</code>, and multi-resolution execution latency across $256\times 256$, $1024\times 1024$ (1MP), and $4000\times 3000$ (12MP).
+        </p>
+        <h3>Table 6: Supplementary Experiment C &mdash; Stage-by-Stage Subspace Ablation, Simpson Quadrature, Cross-VAE Generalization, and Multi-Resolution Latency</h3>
+        <table>
+          <thead>
+            <tr>
+              <th>Sub-Experiment / Metric</th>
+              <th>Unprocessed / 1-Pt</th>
+              <th>0th-Order Scalar [4]</th>
+              <th>Ours Mode B ($\mathbf{z}_0$-Only)</th>
+              <th>Ours Mode A (Sensor $\bar{\mathbf{c}}_0$)</th>
+              <th>Ours + Refiner</th>
+              <th>Oracle Ceiling / Speedup</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr class="section-row">
+              <td colspan="7">(a) Cumulative Stage-by-Stage PSNR (dB &uarr;) &amp; Latent MSE (&darr;) on Color-Dojo Hardware Benchmark (<code>FLUX.1</code>)</td>
+            </tr>
+            <tr>
+              <td>Stage 1: +BLC &amp; Digital Gain</td>
+              <td>27.76 dB</td>
+              <td>28.96 dB ($\text{MSE}_z=0.062$)</td>
+              <td>29.46 dB</td>
+              <td class="highlight-val">30.18 dB ($\text{MSE}_z=0.043$)</td>
+              <td class="highlight-val">30.46 dB</td>
+              <td>33.00 dB</td>
+            </tr>
+            <tr>
+              <td>Stage 2: +White Balance</td>
+              <td>18.57 dB</td>
+              <td>24.04 dB ($\text{MSE}_z=0.159$)</td>
+              <td>25.81 dB</td>
+              <td class="highlight-val">26.83 dB ($\text{MSE}_z=0.090$)</td>
+              <td class="highlight-val">27.55 dB</td>
+              <td>31.49 dB</td>
+            </tr>
+            <tr>
+              <td>Stage 3: +$3\times 3$ CCM</td>
+              <td>19.10 dB</td>
+              <td>23.56 dB ($\text{MSE}_z=0.174$)</td>
+              <td>25.55 dB</td>
+              <td class="highlight-val">26.50 dB ($\text{MSE}_z=0.088$)</td>
+              <td class="highlight-val">27.13 dB</td>
+              <td>30.97 dB</td>
+            </tr>
+            <tr class="highlight-row">
+              <td><strong>Stage 4: +Gamma Tone Curve</strong></td>
+              <td>13.38 dB</td>
+              <td>22.59 dB ($\text{MSE}_z=0.190$)</td>
+              <td>24.30 dB</td>
+              <td class="highlight-val">25.16 dB ($\text{MSE}_z=0.120$)</td>
+              <td class="highlight-val">26.68 dB</td>
+              <td>31.29 dB</td>
+            </tr>
+            <tr class="section-row">
+              <td colspan="7">(b) $8\times 8$ Patch DC Color PSNR (dB &uarr;): 1-Point Evaluation $f_{\text{ISP}}(\bar{\mathbf{c}}_0)$ vs. 3-Point Simpson (<code>1:4:1</code>) Jet Quadrature</td>
+            </tr>
+            <tr>
+              <td>OpenISP Full / OpenISP Crop</td>
+              <td>25.69 / 29.84 dB</td>
+              <td>&mdash;</td>
+              <td>26.94 (+1.26) / 31.98 (+2.14)</td>
+              <td class="highlight-val">29.28 (+3.60) / 34.54 (+4.71)</td>
+              <td>&mdash;</td>
+              <td>Exact $8\times 8$ Mean</td>
+            </tr>
+            <tr>
+              <td>Nikon D700 / Canon EOS 40D</td>
+              <td>39.27 / 35.66 dB</td>
+              <td>&mdash;</td>
+              <td>40.67 (+1.41) / 36.78 (+1.12)</td>
+              <td class="highlight-val">46.11 (+6.85) / 40.30 (+4.64)</td>
+              <td>&mdash;</td>
+              <td>Exact $8\times 8$ Mean</td>
+            </tr>
+            <tr>
+              <td>Google Pixel Daylight</td>
+              <td>43.53 dB</td>
+              <td>&mdash;</td>
+              <td>45.86 (+2.33 dB)</td>
+              <td class="highlight-val">51.00 (+7.47 dB)</td>
+              <td>&mdash;</td>
+              <td>Exact $8\times 8$ Mean</td>
+            </tr>
+            <tr class="section-row">
+              <td colspan="7">(c) Cross-VAE Backbone Generalization on 9-Stage Chained ISP (<code>FLUX.1</code> vs. Distilled <code>TAEF1</code> 16-Channel Autoencoders)</td>
+            </tr>
+            <tr>
+              <td><code>FLUX.1</code> 16-Ch VAE (PSNR &uarr; / SSIM &uarr; / $\text{MSE}_z$ &darr;)</td>
+              <td>14.33 / 0.5877 / 2.376</td>
+              <td>19.66 / 0.8054 / 0.142</td>
+              <td>20.52 / 0.7725 / 0.138</td>
+              <td>&mdash;</td>
+              <td class="highlight-val">23.30 / 0.8520 / 0.063</td>
+              <td>29.35 dB</td>
+            </tr>
+            <tr>
+              <td><code>TAEF1</code> 16-Ch VAE (PSNR &uarr; / SSIM &uarr; / $\text{MSE}_z$ &darr;)</td>
+              <td>15.10 / 0.4892 / 2.454</td>
+              <td>21.23 / 0.8098 / 0.105</td>
+              <td>21.39 / 0.7910 / 0.104</td>
+              <td>&mdash;</td>
+              <td class="highlight-val">22.79 / 0.8373 / 0.059</td>
+              <td>26.39 dB</td>
+            </tr>
+            <tr class="section-row">
+              <td colspan="7">(d) Multi-Resolution Execution Latency (&darr;) &amp; Differentiable Inverse 3A Auto-Tuning Speedup (&uarr;)</td>
+            </tr>
+            <tr>
+              <td>$256\times 256$ ($\to 32\times 32\times 16$ Latent)</td>
+              <td>Pixel ISP: 5.87 ms</td>
+              <td>&mdash;</td>
+              <td>PyTorch LSP: 2.02 ms</td>
+              <td class="highlight-val">Halide LSP: 0.14 ms</td>
+              <td>&mdash;</td>
+              <td class="highlight-val">42.0&times; Speedup</td>
+            </tr>
+            <tr>
+              <td>$1024\times 1024$ 1MP ($\to 128\times 128\times 16$ Latent)</td>
+              <td>Pixel ISP: 39.80 ms</td>
+              <td>&mdash;</td>
+              <td>PyTorch LSP: 14.20 ms</td>
+              <td class="highlight-val">Halide LSP: 0.93 ms</td>
+              <td class="highlight-val">3.80 ms (4-Step)</td>
+              <td class="highlight-val">43.0&times; Speedup</td>
+            </tr>
+            <tr>
+              <td>$4000\times 3000$ 12MP ($\to 500\times 375\times 16$ Latent)</td>
+              <td>Pixel ISP: 880.64 ms</td>
+              <td>&mdash;</td>
+              <td>PyTorch LSP: 336.05 ms</td>
+              <td class="highlight-val">Halide LSP: 12.49 ms</td>
+              <td>&mdash;</td>
+              <td class="highlight-val">70.5&times; Speedup</td>
+            </tr>
+            <tr class="highlight-row">
+              <td><strong>40-Step Adam Inverse 3A Auto-Tuning</strong></td>
+              <td>Pixel-Decoded: 151,767 ms</td>
+              <td>&mdash;</td>
+              <td>&mdash;</td>
+              <td class="highlight-val">Latent Auto-Tune: 198.34 ms</td>
+              <td class="highlight-val">PSNR: $12.89\to 24.90$ dB</td>
+              <td class="highlight-val">765.2&times; Speedup</td>
             </tr>
           </tbody>
         </table>

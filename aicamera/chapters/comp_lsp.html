@@ -165,8 +165,8 @@
       </div>
 
       <figure class="diagram" id="fig-clsp-geometry">
-        <img src="../assets/img/fig6_latent_geometry_linear_vs_srgb.webp" alt="FLUX.1 16채널 잠재 공간 기하학: 선형 RGB 대 sRGB 활성화 곡선, 색도 평면 궤적, 1:4:1 심슨 구적법 이득 및 16차원 노름 추적" style="width:100%;height:auto;border-radius:8px;display:block">
-        <figcaption><b>그림 5-1 (논문 Fig. 1).</b> 16채널 FLUX.1 VAE 잠재 기하학 및 단계별 ISP 궤적 검증 (출처: <a class="src" href="../../comp_lsp/results/latent_geometry_and_color_dojo_metrics.json" title="comp_lsp/results/latent_geometry_and_color_dojo_metrics.json" target="_blank" rel="noopener">latent_geometry_and_color_dojo_metrics.json</a>). <b>(a)</b> 입력 휘도 \(Y \in [0,1]\)에 따른 상위 4개 잠재 채널(\(c_1, c_6, c_{12}, c_7\))의 응답 곡선. 선형 RGB(점선)와 감마가 적용된 sRGB \(Y^{1/2.2}\)(실선) 사이에 강한 곡률 차이가 존재하며, 729개 색상 격자 피팅 시 평면 선형 모델(\(R^2 = 0.9101\)) 대비 3차 다항 매니폴드(\(R^2 = 0.9797\))가 잠재 곡면을 정밀하게 설명합니다. <b>(b)</b> 잠재 DC 색도 평면(\(u_{\mathrm{DC},R}\) 대 \(u_{\mathrm{DC},G}\))에서의 궤적. 초록색으로 치우친 원시 센서 영역(\(G \gt R\), 연녹색 음영)에서 출발한 4대 카메라의 잠재 벡터가 화이트밸런스(<code>2:+WB</code>) 단계에서 정확히 무채색 대각선(\(R = G\)) 위로 수렴합니다. <b>(c)</b> \(8\times 8\) 패치 내 비선형 감마 적분 시 단순 평균점 대입 \(f(\bar{\mathbf{c}}_0)\)(회색) 대비 <b>1:4:1 심슨 구적법</b>(파란색/초록색)이 <b>+3.6 ~ +7.5 dB</b>의 패치 DC PSNR 이득을 달성합니다. <b>(d)</b> 0단계(RAW)부터 4단계(sRGB)까지 16차원 잠재 거리 \(\|\mathbf{z}_k - \mathbf{z}_{\mathrm{black}}\|_2\)에서 우리의 Zero-Net 야코비안 제트(점선)가 실제 픽셀 ISP 후 재인코딩한 정답 \(\mathcal{E}(\mathbf{x}_k)\)(실선)를 오차 없이 추종합니다.</figcaption>
+        <img src="../assets/img/fig6_latent_geometry_linear_vs_srgb.webp" alt="FLUX.1 16채널 잠재 공간 기하학 3대 기둥 검증: 3D 곡면 DC 매니폴드 및 색도 궤적, 1:4:1 심슨 구적법 이득, 단일 스테이지 PSNR 및 13D 르장드르 AC 사영기" style="width:100%;height:auto;border-radius:8px;display:block">
+        <figcaption><b>그림 5-1 (논문 Fig. 1).</b> 16채널 <code>FLUX.1</code> VAE 잠재 기하학의 3대 핵심 원리 실증 요약 (출처: <a class="src" href="../../comp_lsp/results/latent_geometry_and_color_dojo_metrics.json" title="comp_lsp/results/latent_geometry_and_color_dojo_metrics.json" target="_blank" rel="noopener">latent_geometry_and_color_dojo_metrics.json</a>). <b>(a) Class I — 곡면 DC 매니폴드 및 Stage 0→6 색도 궤적:</b> 729개 색상 격자 피팅 시 평면 선형 모델(\(R^2 = 0.9101\)) 대비 3차 다항 매니폴드(\(R^2 = 0.9797\))가 잠재 곡면을 정밀하게 포착하며, 초록색으로 치우친 원시 센서 영역(Stage 0)에서 출발한 4대 카메라의 잠재 궤적이 Stage 1–6을 거쳐 무채색 대각선 위로 정확히 수렴합니다. <b>(b) Class II — 비선형 구적법 (Stage 4):</b> 오목한 감마 곡선 통과 시 발생하는 젠센 부등식 오차를 3점 심슨 구적법(<code>1:4:1</code>)으로 제거하여 패치 DC PSNR을 <b>+3.6 ~ +7.5 dB</b> 향상시킵니다. <b>(c) Class I–III 연산자 정확도 및 13D 르장드르 AC 사영기 (Stage 5):</b> 단일 스테이지 0-Net PSNR이 Stage 1–5 전체에서 <b>25.93 ~ 32.20 dB</b>를 달성하며, 13차원 직교정규 사영기 \(P_{\mathrm{AC}} = \Pi_x^{(3)} \oplus \Pi_y^{(3)} \oplus \Pi_{\mathrm{curv}}^{(7)}\)가 패치 \((7,8)\)의 수평·수직 기울기와 라플라시안 곡률을 분리(\(w_{\mathrm{edge}} = 0.981\))합니다.</figcaption>
       </figure>
     </section>
 
@@ -258,15 +258,15 @@
          SECTION 5.3: 엔드투엔드 아키텍처 & Algorithm 1 실행 체인
          ===================================================================== -->
     <section id="clsp-arch">
-      <h2>5.3 엔드투엔드 아키텍처 &amp; Algorithm 1 실행 체인 (Stage 0 → Stage 1–4A → Stage 4B–5)</h2>
+      <h2>5.3 엔드투엔드 아키텍처 &amp; Algorithm 1 실행 체인 (Stage 0 → Stage 1–5 → Stage 6)</h2>
       <p>
-        아래 <strong>그림 5-2</strong>는 센서 Bayer RAW에서 출발하여 16채널 잠재 공간 내부에서 5단계 해석적 ISP(\(\mathcal{T}_{\mathrm{LSP}}\))와 4단계 잔차 리파이너(\(\mathcal{R}_{4\text{-step}}\))를 거쳐 최종 sRGB 영상을 복원하기까지의 전체 아키텍처와 텐서 차원을 보여줍니다.
-        다이어그램의 색상 코드는 <strong>파란색(Frozen 16채널 VAE \(\mathcal{E}_{\mathrm{VAE}}, \mathcal{D}_{\mathrm{sRGB}}\))</strong>, <strong>연녹색(학습 가중치 0개인 White-Box 해석적 ISP \(\mathcal{T}_{\mathrm{LSP}}\))</strong>, <strong>주황색(경량 학습 모듈 \(\mathcal{A}_{1\times 1}\) 1.7K 및 \(\mathcal{R}_{4\text{-step}}\) 96K)</strong>으로 구분되어 있습니다.
+        아래 <strong>그림 5-2</strong>는 센서 Bayer RAW에서 출발하여 16채널 잠재 공간 내부에서 Class I–III 해석적 ISP(\(\mathcal{T}_{\mathrm{LSP}}\), Stage 1–5)와 4단계 잔차 리파이너(\(\mathcal{R}_{4\text{-step}}\), Stage 6)를 거쳐 최종 sRGB 영상을 복원하기까지의 전체 아키텍처와 텐서 차원을 보여줍니다.
+        다이어그램의 색상 코드는 <strong>파란색(Frozen 16채널 VAE \(\mathcal{E}_{\mathrm{VAE}}, \mathcal{D}_{\mathrm{sRGB}}\))</strong>, <strong>연녹색(학습 가중치 0개인 White-Box 해석적 ISP \(\mathcal{T}_{\mathrm{LSP}}\): Stage 1–4 점별 연산 + Stage 5 공간 커널)</strong>, <strong>주황색(경량 학습 모듈 \(\mathcal{A}_{1\times 1}\) 1.7K 및 \(\mathcal{R}_{4\text{-step}}\) 96K)</strong>으로 구분되어 있습니다.
       </p>
 
       <figure class="diagram" id="fig-clsp-algo-chain">
         <img src="../assets/img/fig10_algorithm_chain_dataflow.webp" alt="White-Box Computational LSP 엔드투엔드 아키텍처 및 Algorithm 1 실행 데이터플로 다이어그램" style="width:100%;height:auto;border-radius:8px;display:block">
-        <figcaption><b>그림 5-2 (논문 Fig. 3).</b> White-Box Computational LSP 엔드투엔드 아키텍처 및 Algorithm 1 데이터플로 (출처: <a class="src" href="../../comp_lsp/paper/generate_algorithm_chain_fig.py" title="comp_lsp/paper/generate_algorithm_chain_fig.py (line 50)" target="_blank" rel="noopener">generate_algorithm_chain_fig.py:50</a>). <b>(a) Stage 0 (\(\mathcal{E}_{\mathrm{raw}}\))</b>: Bayer RAW를 디모자이킹한 뒤 동결된 16채널 VAE 인코더 \(\mathcal{E}_{\mathrm{VAE}}\)와 \(1\times 1\) 선형 어댑터 \(\mathcal{A}_{1\times 1}\)(1.7K params)에 통과시켜 \(\mathbf{z}_0 \in \mathbb{R}^{\frac{H}{8}\times\frac{W}{8}\times 16}\)을 생성합니다. <b>(b) Stage 1–4A (\(\mathcal{T}_{\mathrm{LSP}}\))</b>: 신경망 가중치 없이(0-Net) 1차 제트 분해(Step 1A) → 구적 반폭 \(\boldsymbol{\delta}\) 산출(Step 1B) → 1:4:1 심슨 3점 구적법(Step 2) → 3×3 할선 야코비안 합성(Step 3) → 144차원 크로네커 재조립(Step 4A)을 순차 실행합니다. <b>(c) Stage 4B &amp; 5</b>: 4-Step 잔차 매니폴드 리파이너 \(\mathcal{R}_{4\text{-step}}\)(96K params, <code>×4</code> 반복)가 패치 경계 고차 잔차를 정제한 뒤 동결된 \(\mathcal{D}_{\mathrm{sRGB}}\)로 최종 영상을 복원합니다.</figcaption>
+        <figcaption><b>그림 5-2 (논문 Fig. 3).</b> White-Box Computational LSP 엔드투엔드 아키텍처 및 Algorithm 1 데이터플로 (출처: <a class="src" href="../../comp_lsp/paper/generate_algorithm_chain_fig.py" title="comp_lsp/paper/generate_algorithm_chain_fig.py (line 47)" target="_blank" rel="noopener">generate_algorithm_chain_fig.py:47</a>). <b>(a) 상단 전체 파이프라인:</b> Stage 0 (\(\mathcal{E}_{\mathrm{raw}}\), 31.59 dB) → Stage 1–4 (Class I 선형 &amp; Class II 비선형, 25.04 dB) → Stage 5 (Class III 공간 커널 NR 32.20 dB · EEH 30.02 dB · LTM 28.53 dB) → Stage 6 (4-Step ODE 리파이너 27.18 dB + \(\mathcal{D}_{\mathrm{sRGB}}\)). <b>(b)–(c) 내부 대수 실행 체인 (패치 \(y=7, x=8\)):</b> 1차 제트 분해(Step 1A) → 구적 반폭 \(\boldsymbol{\delta}\) 산출(Step 1B) → 1:4:1 심슨 3점 구적법(Step 2) → 3×3 할선 야코비안 합성(Step 3) → 230-D 크로네커 사영(Stage 4) 및 13D 르장드르 주파수 사영기(\(\Pi_x + \Pi_y + \Pi_{\mathrm{curv}} = P_{\mathrm{AC}}\), Stage 5)를 순차 실행합니다.</figcaption>
       </figure>
 
       <h3>하드웨어 배포에 따른 두 가지 구적 통계 경로: Mode A vs. Mode B</h3>
@@ -311,7 +311,7 @@
             <tr>
               <td><strong>Step 1A · 1st-Order Jet Split</strong></td>
               <td class="mono">\(\mathbf{z}_0 \to \bar{\mathbf{c}}_0 \in \mathbb{R}^3,\; \mathbf{z}_{\mathrm{AC}} \in \mathbb{R}^{16}\)</td>
-              <td>\(\bar{\mathbf{c}}_0 = \psi_{\mathrm{DC}}(\mathbf{z}_0),\; \mathbf{z}_{\mathrm{AC}} = \mathbf{z}_0 - \phi_{\mathrm{DC}}(\bar{\mathbf{c}}_0)\)</td>
+              <td>\(\bar{\mathbf{c}}_0 = \psi_{\mathrm{DC}}(\mathbf{z}_0),\; \mathbf{z}_{\mathrm{AC}} = P_{\mathrm{AC}}(\mathbf{z}_0 - \mathbf{z}_{\mathrm{black}})\)</td>
               <td><a class="src" href="../../comp_lsp/src/jet_basis.py" title="comp_lsp/src/jet_basis.py (line 150)" target="_blank" rel="noopener">jet_basis.py:150</a> · <code>decompose_jet</code></td>
             </tr>
             <tr>
@@ -321,34 +321,34 @@
               <td><a class="src" href="../../comp_lsp/src/jet_basis.py" title="comp_lsp/src/jet_basis.py (line 150)" target="_blank" rel="noopener">jet_basis.py:150</a> · <code>predict_patch_std</code></td>
             </tr>
             <tr>
-              <td><strong>Step 2 · 1:4:1 Simpson DC</strong></td>
+              <td><strong>Step 2 · 1:4:1 Simpson DC (Stage 1–4)</strong></td>
               <td class="mono">\((\mathbf{c}_-, \mathbf{c}_0, \mathbf{c}_+) \to \bar{\mathbf{c}}_4 \in \mathbb{R}^3\)</td>
               <td>\(\bar{\mathbf{c}}_4 = \frac{1}{6}\!\left(f_{\mathrm{ISP}}(\mathbf{c}_-) + 4\,f_{\mathrm{ISP}}(\mathbf{c}_0) + f_{\mathrm{ISP}}(\mathbf{c}_+)\right)\)</td>
               <td><a class="src" href="../../comp_lsp/src/latent_isp_ops.py" title="comp_lsp/src/latent_isp_ops.py (line 217)" target="_blank" rel="noopener">latent_isp_ops.py:217</a> · <code>_quadrature_dc_and_gamma_secant</code></td>
             </tr>
             <tr>
-              <td><strong>Step 3 · 3×3 Secant Jacobian</strong></td>
+              <td><strong>Step 3 · 3×3 Secant Jacobian (Stage 1–4)</strong></td>
               <td class="mono">\((\mathbf{c}_{3,\pm}, \Theta_{\mathrm{ISP}}) \to J_{3\times 3} \in \mathbb{R}^{3\times 3}\)</td>
               <td>\(J_{3\times 3} = J_4(\mathbf{c}_{3,\pm})\,M_{\mathrm{CCM}}\,\mathrm{diag}(\mathbf{w}_{\mathrm{wb}})\,g\)</td>
               <td><a class="src" href="../../comp_lsp/src/latent_isp_ops.py" title="comp_lsp/src/latent_isp_ops.py (line 217)" target="_blank" rel="noopener">latent_isp_ops.py:217</a> · <code>run_pipeline</code></td>
             </tr>
             <tr>
-              <td><strong>Step 4A · 144-D Kronecker Update</strong></td>
+              <td><strong>Step 4A · 230-D Kronecker Update (Stage 4)</strong></td>
               <td class="mono">\((\mathbf{z}_0, \Delta\bar{\mathbf{c}}, \mathbf{z}_{\mathrm{AC}}, J_{3\times 3}) \to \mathbf{z}_4 \in \mathbb{R}^{16}\)</td>
-              <td>\(\mathbf{z}_4 = \mathbf{z}_0 + \phi_{\mathrm{DC}}(\bar{\mathbf{c}}_4 - \bar{\mathbf{c}}_0) + \Phi_{\mathrm{AC}}(\mathbf{z}_{\mathrm{AC}} \otimes \mathrm{vec}(J_{3\times 3}))\)</td>
-              <td><a class="src" href="../../comp_lsp/src/jet_basis.py" title="comp_lsp/src/jet_basis.py (line 150)" target="_blank" rel="noopener">jet_basis.py:150</a> · <code>transport_ac_kronecker</code></td>
+              <td>\(\mathbf{z}_4 = \mathbf{z}_0 + \tilde{\boldsymbol{\phi}}(\bar{\mathbf{c}}_0, \bar{\mathbf{c}}_4, \mathbf{z}_0, \mathbf{z}_{\mathrm{AC}}, J_{3\times 3})\,W_{\mathrm{trans}}\)</td>
+              <td><a class="src" href="../../comp_lsp/src/latent_isp_ops.py" title="comp_lsp/src/latent_isp_ops.py (line 217)" target="_blank" rel="noopener">latent_isp_ops.py:217</a> · <code>_apply_calibrated_transport</code></td>
             </tr>
             <tr>
-              <td><strong>Step 4B · 4-Step Refiner</strong></td>
-              <td class="mono">\((\mathbf{z}_4, \mathbf{z}_0, \bar{\mathbf{c}}_0, \bar{\mathbf{c}}_4, \Theta_{\mathrm{ISP}}) \to \hat{\mathbf{z}} \in \mathbb{R}^{16}\)</td>
-              <td>\(\mathbf{z}^{(k)} = \mathbf{z}^{(k-1)} + \alpha_k\,g_\theta(\mathbf{z}^{(k-1)}, \mathbf{z}_0, \bar{\mathbf{c}}_0, \bar{\mathbf{c}}_4, \Theta_{\mathrm{ISP}})\) (\(k=1\dots 4\))</td>
+              <td><strong>Step 4B · 13D Legendre Spatial Kernels (Stage 5)</strong></td>
+              <td class="mono">\((\mathbf{z}_4, \mathbf{z}_{\mathrm{AC}}) \to \mathbf{z}_5 \in \mathbb{R}^{16}\)</td>
+              <td>\(\mathbf{z}_5 = \mathbf{z}_4 + \left(\Delta g_x\Pi_x + \Delta g_y\Pi_y + \Delta g_{\mathrm{curv}}\Pi_{\mathrm{curv}}\right)\mathbf{z}_{\mathrm{AC}}\)</td>
+              <td><a class="src" href="../../comp_lsp/src/latent_isp_ops.py" title="comp_lsp/src/latent_isp_ops.py (line 217)" target="_blank" rel="noopener">latent_isp_ops.py:217</a> · <code>apply_latent_eeh / apply_latent_nr</code></td>
+            </tr>
+            <tr>
+              <td><strong>Stage 6 · 4-Step ODE Refiner &amp; Decode</strong></td>
+              <td class="mono">\((\mathbf{z}_5, \mathbf{z}_0, \bar{\mathbf{c}}_0, \bar{\mathbf{c}}_4) \to \hat{\mathbf{z}} \to \hat{\mathbf{x}}_{\mathrm{sRGB}}\)</td>
+              <td>\(\mathbf{z}^{(k)} = \mathbf{z}^{(k-1)} + \alpha_k\,g_\theta(\dots),\;\; \hat{\mathbf{x}}_{\mathrm{sRGB}} = \mathcal{D}_{\mathrm{sRGB}}(\hat{\mathbf{z}})\)</td>
               <td><a class="src" href="../../comp_lsp/src/one_step_refiner.py" title="comp_lsp/src/one_step_refiner.py (line 282)" target="_blank" rel="noopener">one_step_refiner.py:282</a> · <code>NStepManifoldRefiner16Ch</code></td>
-            </tr>
-            <tr>
-              <td><strong>Stage 5 · sRGB VAE Decode</strong></td>
-              <td class="mono">\(\hat{\mathbf{z}} \in \mathbb{R}^{\frac{H}{8}\times\frac{W}{8}\times 16} \to \hat{\mathbf{x}}_{\mathrm{sRGB}} \in \mathbb{R}^{H\times W\times 3}\)</td>
-              <td>\(\hat{\mathbf{x}}_{\mathrm{sRGB}} = \mathrm{clamp}(\mathcal{D}_{\mathrm{sRGB}}(\hat{\mathbf{z}}), 0, 1)\)</td>
-              <td><a class="src" href="../../comp_lsp/src/one_step_refiner.py" title="comp_lsp/src/one_step_refiner.py (line 282)" target="_blank" rel="noopener">one_step_refiner.py:282</a> · <code>Standard16ChVAEWrapper.decode</code></td>
             </tr>
           </tbody>
         </table>
@@ -359,22 +359,23 @@
          SECTION 5.4: 블록별 시각적·색도 진화 (실제 카메라 3대 비교)
          ===================================================================== -->
     <section id="clsp-flow">
-      <h2>5.4 블록별 잠재 텐서 진화 &amp; 실제 하드웨어 카메라 3대 단계별 검증</h2>
+      <h2>5.4 7단계(Stage 0–6) 잠재 텐서 진화 &amp; 실제 하드웨어 카메라 3대 단계별 검증</h2>
       <p>
-        각 ISP 블록(\(\text{Block 0} \to \text{Block 5}\))을 하나씩 통과할 때마다 16채널 잠재 텐서 \(\mathbf{z}_k\)를 디코딩해 보면, 블랙박스가 아니라 <strong>각 물리적 연산자의 효과가 잠재 공간에서 그대로 재현됨</strong>을 눈으로 확인할 수 있습니다:
+        각 ISP 스테이지(\(\text{Stage 0} \to \text{Stage 6}\))를 하나씩 통과할 때마다 16채널 잠재 텐서 \(\mathbf{z}_k\)를 디코딩해 보면, 블랙박스가 아니라 <strong>선형·비선형·공간 커널 연산자의 물리적 효과가 잠재 공간에서 그대로 재현됨</strong>을 눈으로 확인할 수 있습니다:
       </p>
       <ol class="steps">
-        <li><strong>Col 0 · Linear RAW (\(\mathbf{z}_0\))</strong>: 베이어 컬러 필터의 녹색 픽셀(Gr, Gb) 감도가 높아 전체 영상이 어둡고 초록색으로 강하게 치우쳐 있습니다 (Nikon D700 기준 <code>R/G = 0.60, B/G = 0.63</code>, \(\|\mathbf{z}_0\|_2 = 3.42\)).</li>
-        <li><strong>Col 1 · BLC &amp; Digital Gain (\(\mathbf{z}_1\))</strong>: 암전류 오프셋 \(\mathbf{b}\)를 차감하고 디지털 게인 \(g\)를 곱해 선형 다이내믹 레인지를 확장합니다 (\(J_1 = g\,I_3\)).</li>
-        <li><strong>Col 2 · White Balance (\(\mathbf{z}_2\))</strong>: 채널별 이득 \(\mathbf{w}_{\mathrm{wb}} = (w_R, 1.0, w_B)^\top\)이 잠재 DC 축과 AC 파이버에 동시 적용되어 초록색 캐스트가 즉시 사라지고 자연스러운 색 균형(<code>R/G = 1.18, B/G = 0.92</code>)을 회복합니다.</li>
-        <li><strong>Col 3 · 3×3 Color Correction Matrix (\(\mathbf{z}_3\))</strong>: 비대각 음수 성분을 포함한 \(M_{\mathrm{CCM}}\) 행렬이 교차 채널 색 번짐을 제거하여 붉은 사암 절벽과 푸른 하늘의 채도를 분리합니다 (<code>R/G = 1.37</code>).</li>
-        <li><strong>Col 4 · Gamma 0-Net (\(\mathbf{z}_4\))</strong>: 신경망 가중치 0개 상태에서 `1:4:1` 심슨 구적법과 `144-D` 크로네커 야코비안만으로 암부 휘도를 끌어올려 즉시 <strong>24.19 ~ 26.06 dB</strong>의 sRGB 영상을 완성합니다.</li>
-        <li><strong>Col 5 · 4-Step Manifold Refiner (\(\mathbf{z}^{(4)}\))</strong>: 96K 파라미터의 경량 리파이너를 4회 반복 적용하여 \(8\times 8\) 패치 경계의 미세 위상 오차를 제거하고 <strong>26.19 ~ 28.17 dB (+1.07 ~ +2.11 dB 향상)</strong>의 최종 화질을 달성합니다.</li>
+        <li><strong>Stage 0 · Linear RAW (\(\mathbf{z}_0\), 31.59 dB)</strong>: 베이어 컬러 필터의 녹색 픽셀(Gr, Gb) 감도가 높아 전체 영상이 어둡고 초록색으로 강하게 치우쳐 있습니다 (Nikon D700 기준 <code>R/G = 0.60, B/G = 0.63</code>, \(\|\mathbf{z}_0\|_2 = 3.42\)).</li>
+        <li><strong>Stage 1 · BLC &amp; Digital Gain (\(\mathbf{z}_1\), 30.47 dB)</strong>: 암전류 오프셋 \(\mathbf{b}\)를 차감하고 디지털 게인 \(g\)를 곱해 선형 다이내믹 레인지를 확장합니다 (\(J_1 = g\,I_3\)).</li>
+        <li><strong>Stage 2 · White Balance (\(\mathbf{z}_2\), 25.93 dB)</strong>: 채널별 이득 \(\mathbf{w}_{\mathrm{wb}} = (w_R, 1.0, w_B)^\top\)이 잠재 DC 축과 AC 파이버에 동시 적용되어 초록색 캐스트가 즉시 사라지고 자연스러운 색 균형(<code>R/G = 1.18, B/G = 0.92</code>)을 회복합니다.</li>
+        <li><strong>Stage 3 · 3×3 Color Correction Matrix (\(\mathbf{z}_3\), 29.01 dB)</strong>: 비대각 음수 성분을 포함한 \(M_{\mathrm{CCM}}\) 행렬이 교차 채널 색 번짐을 제거하여 붉은 사암 절벽과 푸른 하늘의 채도를 분리합니다 (<code>R/G = 1.37</code>).</li>
+        <li><strong>Stage 4 · Gamma 0-Net (\(\mathbf{z}_4\), 단일 29.22 dB / 누적 25.04 dB)</strong>: 신경망 가중치 0개 상태에서 `1:4:1` 심슨 구적법과 `230-D` 크로네커 야코비안만으로 암부 휘도를 끌어올려 즉시 <strong>24.19 ~ 26.06 dB</strong>의 sRGB 영상을 완성합니다.</li>
+        <li><strong>Stage 5 · Spatial Kernels NR + EEH (\(\mathbf{z}_5\), NR 32.20 dB · EEH 30.02 dB · LTM 28.53 dB)</strong>: 13차원 직교정규 르장드르 사영기(\(\Pi_x + \Pi_y + \Pi_{\mathrm{curv}} = P_{\mathrm{AC}}\))와 코어링 게이트 \(w_{\mathrm{edge}}\)가 평탄 영역 노이즈를 억제하고 경계선 선명도를 강화합니다 (\(\|\mathbf{z}_5\|_2 = 1.83\)).</li>
+        <li><strong>Stage 6 · 4-Step Manifold ODE Refiner (\(\mathbf{z}^{(4)}\), 평균 27.18 dB)</strong>: 96K 파라미터의 경량 리파이너를 4회 반복 적용하여 \(8\times 8\) 패치 경계의 미세 위상 오차를 제거하고 <strong>26.19 ~ 28.17 dB (평균 +2.14 dB 향상)</strong>의 최종 화질을 달성합니다.</li>
       </ol>
 
       <figure class="diagram" id="fig-clsp-block-flow">
-        <img src="../assets/img/fig8_pipeline_block_by_block_flow.webp" alt="블록별 16채널 잠재 ISP 연산자 수식, 3대 하드웨어 카메라 단계별 시각적 진화 및 16채널 잠재 바코드" style="width:100%;height:auto;border-radius:8px;display:block">
-        <figcaption><b>그림 5-3 (논문 Fig. 2).</b> 블록별 16채널 잠재 ISP 파이프라인 및 3대 실제 하드웨어 카메라(MIT-FiveK Nikon D700 12-bit BGGR, Canon EOS 40D 14-bit RGGB, Official OpenISP 10-bit RGGB)의 단계별 복원 결과 (출처: <a class="src" href="../../comp_lsp/paper/generate_pipeline_block_by_block_fig.py" title="comp_lsp/paper/generate_pipeline_block_by_block_fig.py (line 84)" target="_blank" rel="noopener">generate_pipeline_block_by_block_fig.py:84</a>). 각 셀 우측의 수평 막대는 디코딩된 영상의 평균 R/G/B 비율을 나타내며, 마지막 <code>Col 5</code> 썸네일은 좌측 절반(GT 픽셀 ISP)과 우측 절반(제안하는 잠재 ISP)을 분할 비교합니다. 하단 <b>(c)</b>는 Nikon D700 패치 \((7,8)\)의 16개 잠재 채널 활성화(\(c_0 \dots c_{15}\))가 단계별로 재분포되는 모습을 보여줍니다.</figcaption>
+        <img src="../assets/img/fig8_pipeline_block_by_block_flow.webp" alt="7단계(Stage 0–6) 16채널 잠재 ISP 연산자 수식, 3대 하드웨어 카메라 단계별 시각적 진화 및 16채널 잠재 바코드" style="width:100%;height:auto;border-radius:8px;display:block">
+        <figcaption><b>그림 5-3 (논문 Fig. 2).</b> 7단계(Stage 0–6) 통합 16채널 잠재 ISP 파이프라인 및 3대 실제 하드웨어 카메라(MIT-FiveK Nikon D700 12-bit BGGR, Canon EOS 40D 14-bit RGGB, Official OpenISP 10-bit RGGB)의 단계별 복원 결과 (출처: <a class="src" href="../../comp_lsp/paper/generate_pipeline_block_by_block_fig.py" title="comp_lsp/paper/generate_pipeline_block_by_block_fig.py (line 75)" target="_blank" rel="noopener">generate_pipeline_block_by_block_fig.py:75</a>). Stage 1–3(Class I 선형), Stage 4(Class II 비선형 감마), Stage 5(Class III 공간 커널 NR+EEH), Stage 6(4-Step ODE 리파이너)을 순차 통과하며, 하단 <b>(c)</b>는 Nikon D700 패치 \((7,8)\)의 16개 잠재 채널 활성화(\(c_0 \dots c_{15}\))가 7단계에 걸쳐 재분포되는 모습을 보여줍니다.</figcaption>
       </figure>
     </section>
 
@@ -431,7 +432,7 @@
 
       <figure class="diagram" id="fig-clsp-patch-verify">
         <img src="../assets/img/fig9_step_by_step_math_and_consistency.webp" alt="패치 (7,8)의 3×3 할선 야코비안 행렬, 16채널 잠재 벡터 정합, 10대 카메라 180포인트 색도 일관성 및 PSNR 비교" style="width:100%;height:auto;border-radius:8px;display:block">
-        <figcaption><b>그림 5-4 (논문 Fig. 4).</b> 패치 수준(\(y=7, x=8\)) 잠재 ISP 수학적 검증 및 10대 하드웨어 카메라 벤치마크 (출처: <a class="src" href="../../comp_lsp/paper/generate_fig4_patch_verification_svg.py" title="comp_lsp/paper/generate_fig4_patch_verification_svg.py (line 31)" target="_blank" rel="noopener">generate_fig4_patch_verification_svg.py:31</a>). <b>(a)</b> 패치 \((7,8)\)에서 계산된 \(3\times 3\) 할선 야코비안 행렬 \(J_{3\times 3}\)과 수치 텔레메트리 카드. <b>(b)</b> 16개 잠재 채널(\(c_0 \dots c_{15}\))에서 원시 입력 \(\mathbf{z}_0\)(회색 점선)가 0-Net(파란색, 25.44 dB)과 4-Step Refiner(주황색, 26.51 dB)를 거치며 실제 오라클 잠재 벡터 \(\mathbf{z}_{\mathrm{gt}} = \mathcal{E}_{\mathrm{VAE}}(\mathbf{x}_{\mathrm{gt}})\)(남색 사각형)에 정밀하게 포개집니다. <b>(c)</b> 10대 카메라 × 6단계 = 180개 R/G/B 평균 포인트가 \(1:1\) 대각선 위에 정렬되어 <b>\(R^2 = 0.9978\), MAE = 0.0055</b>의 색도 일관성을 입증합니다. <b>(d)</b> 10대 카메라 전체에서 0-Net(평균 25.04 dB) → +1-Step(25.29 dB) → +4-Step Refiner(<b>27.18 dB, 평균 +2.14 dB 향상</b>)의 일관된 성능 향상을 달성합니다.</figcaption>
+        <figcaption><b>그림 5-4 (논문 Fig. 4).</b> 패치 수준(\(y=7, x=8\)) 잠재 ISP 수학적 검증 및 10대 하드웨어 카메라 벤치마크 (출처: <a class="src" href="../../comp_lsp/paper/generate_fig4_patch_verification_svg.py" title="comp_lsp/paper/generate_fig4_patch_verification_svg.py (line 34)" target="_blank" rel="noopener">generate_fig4_patch_verification_svg.py:34</a>). <b>(a)</b> 패치 \((7,8)\)에서 계산된 \(3\times 3\) 할선 야코비안 행렬 \(J_{3\times 3}\)과 수치 텔레메트리 카드. <b>(b)</b> 16개 잠재 채널(\(c_0 \dots c_{15}\))에서 원시 입력 \(\mathbf{z}_0\)(회색 점선)가 0-Net(파란색, 25.44 dB)과 4-Step Refiner(주황색, 26.51 dB)를 거치며 실제 오라클 잠재 벡터 \(\mathbf{z}_{\mathrm{gt}} = \mathcal{E}_{\mathrm{VAE}}(\mathbf{x}_{\mathrm{gt}})\)(남색 사각형)에 정밀하게 포개집니다. <b>(c)</b> 10대 카메라 × 6단계 = 180개 R/G/B 평균 포인트가 \(1:1\) 대각선 위에 정렬되어 <b>\(R^2 = 0.9978\), MAE = 0.0055</b>의 색도 일관성을 입증합니다. <b>(d)</b> 10대 카메라 전체에서 0-Net(평균 25.04 dB) → +1-Step(25.29 dB) → +4-Step Refiner(<b>27.18 dB, 평균 +2.14 dB 향상</b>)의 일관된 성능 향상을 달성합니다.</figcaption>
       </figure>
 
       <h3>10대 실제 하드웨어 카메라 RAW 벤치마크 상세 표 (단일 스테이지 연산자 정확도 &amp; 전체 결합 ISP)</h3>

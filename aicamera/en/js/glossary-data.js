@@ -488,7 +488,7 @@ window.BOOK_GLOSSARY = {
       "ko": "4-Step Manifold Refiner",
       "en": "4-Step Iterative Residual ODE Refiner",
       "abbr": "Residual ODE Refiner",
-      "def": "Lightweight 4-step damped residual 3×3 conv ODE refiner (Stage 6, 96K params) that resolves 32×32 encoder receptive-field boundary phase artifacts, boosting 10-camera mean PSNR from 25.04 dB (0-Net Math) to 27.18 dB.",
+      "def": "Lightweight 4-step damped residual isotropic (1×1 + analytical 3×3 Laplacian) ODE refiner (Stage 6, 27.3K params, trained on 201 held-out DNGs) that resolves 32×32 encoder receptive-field boundary phase artifacts without texture hallucination, boosting 10-camera unseen mean PSNR from 24.46 dB (0-Net Math) to 25.05 dB (up to 30.77 dB).",
       "chapters": [
         "comp_lsp"
       ]

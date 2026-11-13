@@ -898,12 +898,12 @@
           <strong>Authors:</strong> Yongjoon Song, Han-sol Lee, Jeisung Lee, Yeolmin Seong &bull; <em>Samsung Electronics, Republic of Korea</em>
         </div>
         <p class="hub-card-desc">
-          Generalizes the emergent 16-channel FLUX.1 latent color subspace (Pach et al., ICML 2026) into a 1st-Order Jet Bundle (<code>R<sup>16</sup> = S<sub>DC</sub><sup>3</sup> &oplus; S<sub>AC</sub><sup>13</sup></code>) that executes (I) Pointwise Linear/Affine, (II) Pointwise Non-Linear (<code>1:4:1</code> Simpson Quadrature + 3&times;3 Secant Jacobians), and (III) Spatial Neighborhood Kernels (13D AC Orthonormal Projectors + 3&times;3 Cross-Cell Bilateral/ODE Stencils) directly on the H/8 &times; W/8 &times; 16 latent grid of genuine hardware sensor Bayer RAWs, boosting 10-camera mean sRGB PSNR from 25.04 dB (0-Net) to 27.18 dB (4-Step Refiner).
+          Generalizes the emergent 16-channel FLUX.1 latent color subspace (Pach et al., ICML 2026) into a 1st-Order Jet Bundle (<code>R<sup>16</sup> = S<sub>DC</sub><sup>3</sup> &oplus; S<sub>AC</sub><sup>13</sup></code>) that executes (I) Pointwise Linear/Affine, (II) Pointwise Non-Linear (<code>1:4:1</code> Simpson Quadrature + 3&times;3 Secant Jacobians), and (III) Spatial Neighborhood Kernels (13D AC Orthonormal Projectors + 3&times;3 Cross-Cell Bilateral/ODE Stencils) directly on the H/8 &times; W/8 &times; 16 latent grid of genuine hardware sensor Bayer RAWs. Trained on 201 strictly held-out real camera DNGs (0% overlap), it boosts Zero-Shot 10-camera mean sRGB PSNR from 24.46 dB (0-Net) to 25.05 dB (4-Step Refiner, up to 30.77 dB).
         </p>
         <div class="hub-kpis">
           <span class="hub-kpi">3-Class Operator Taxonomy (Linear / Non-Linear / Kernel)</span>
-          <span class="hub-kpi">10-Camera RGB R² = 0.9978</span>
-          <span class="hub-kpi">25.04 → 27.18 dB (4-Step Refiner)</span>
+          <span class="hub-kpi">201-DNG Zero-Shot R² = 0.9950</span>
+          <span class="hub-kpi">24.46 → 25.05 dB (up to 30.77 dB)</span>
           <span class="hub-kpi">0.93 ms @ 1MP (70.5× Speedup)</span>
         </div>
         <div>

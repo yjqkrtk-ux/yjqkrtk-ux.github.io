@@ -15,10 +15,6 @@
 <script defer src="js/glossary-tooltips.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/three@0.147.0/build/three.min.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/three@0.147.0/examples/js/controls/OrbitControls.js"></script>
-<style>
-  .chain { overflow-x: auto; }
-  .chain svg { min-width: 820px; }
-</style>
 <script>
   // Legacy portal hash redirect (#lsp, #isp/isp-3a, #ucfa, #notes, #overview)
   (function () {
@@ -82,7 +78,7 @@
         <rect width="182" height="145" rx="12" class="f-acc-soft"/>
         <rect x="14" y="20" width="154" height="46" rx="8" class="f-elev"/>
         <text x="91" y="41" text-anchor="middle" class="t" style="font-weight:700">Stage A (.rpk)</text>
-        <text x="91" y="57" text-anchor="middle" class="t-mono">5.9K params · 2.59 ms</text>
+        <text x="91" y="57" text-anchor="middle" class="t-mono">5.9K/9.59K · 2.59 ms</text>
         <rect x="14" y="78" width="154" height="46" rx="8" class="f-elev"/>
         <text x="91" y="99" text-anchor="middle" class="t" style="font-size:11px;font-weight:600">PixelUnshuffle Compress</text>
         <text x="91" y="115" text-anchor="middle" class="t-mono">SRAM &lt; 2 MB</text>
@@ -130,9 +126,9 @@
         <text x="102" y="118" text-anchor="middle" class="t-dim">ControlNet · Bilateral Grid</text>
         <text x="102" y="140" text-anchor="middle" class="t-mono">Ch.02 · Ch.03 · Ch.05</text>
       </g>
-      <text x="575" y="252" text-anchor="middle" class="t-dim">Unified research platform spanning classical pixel pipelines (Ch.03 Software ISP) and split latent inference (Ch.02 LSP · Ch.04 Universal CFA)</text>
+      <text x="575" y="252" text-anchor="middle" class="t-dim">Unified platform spanning pixel pipelines (Ch.03 Software ISP) and latent signal processing (Ch.02 LSP · Ch.04 SE-Universal-CFA · Ch.05 Comp-LSP)</text>
     </svg>
-    <figcaption><b>Figure 0-1.</b> Two pillars of AICAMERA: (Top) Latent Signal Processing (LSP/UCFA), splitting the encoder across in-sensor and host NPUs to break the MIPI bus bottleneck; and (Bottom) Software ISP, accelerating the 10-stage C99 reference pipeline via Halide kernel fusion and DMA-BUF zero-copy.</figcaption>
+    <figcaption><b>Figure 0-1.</b> Four pillars of AICAMERA: (Top) Latent Signal Processing (LSP / 16-Ch SE-Universal-CFA / White-Box Comp-LSP), splitting the encoder across in-sensor and host NPUs or executing analytical ISP operators directly on 16-channel latents; and (Bottom) Software ISP, accelerating the 10-stage C99 reference pipeline via Halide kernel fusion and DMA-BUF zero-copy.</figcaption>
   </figure>
 </section>
 
@@ -142,10 +138,10 @@
   <div class="numbers">
     <div><b>64 KB (48×↓)</b><span>SA8 MIPI bus payload — cuts extraction latency from 52.91 ms to 2.90 ms vs. uncompressed 3072 KB</span></div>
     <div><b>30.0 FPS</b><span>Camera-synchronized live preview — reaches the 30 FPS sensor ceiling with 22.90 ms serial latency (43.7 FPS pipelined)</span></div>
-    <div><b>5,924 params</b><span>In-sensor Stage A (SA8) parameter count on IMX500 — satisfies the &lt;2 MB SRAM budget at 0.122 GMACs</span></div>
+    <div><b>5,924 / 9.59K</b><span>In-sensor Stage A (SA8) Conv2d weights (5,924) / exported graph params (9.59K) — 0.122 GMACs within &lt;2 MB SRAM</span></div>
     <div><b>128.78 ms (×3.68)</b><span>12.3MP 10-stage ISP Halide fused CPU latency — 3.68× speedup over sequential C99 (474.04 ms)</span></div>
     <div><b>13.8× Saved</b><span>Per-frame 12MP DRAM traffic reduction via kernel fusion — shrunk from 811 MB to 59 MB</span></div>
-    <div><b>2×2 · 4×4 · 8×8</b><span>Unifies Bayer, Tetracell, and Hexadecacell clustered CFAs into a single frozen host translator (Stage B)</span></div>
+    <div><b>16-Ch · 64 KB</b><span>16-Ch SE-Universal-CFA — Unifies Bayer (1×1), Tetracell (2×2), and Hexadecacell (4×4) onto a shared FLUX.1 / TAEF1 host (35.91–40.69 dB)</span></div>
   </div>
 </section>
 
@@ -167,7 +163,7 @@
         <a href="chapters/overview.html#s-sw-stack">01 .rpk/.hef Compile</a>
         <a href="chapters/overview.html#s-agent-flow">01 Agents &amp; MCP</a>
         <a href="chapters/overview.html#sim-devops">01 Compile Simulator</a>
-        <a href="chapters/notes.html#notes-audit">05 Consistency Audit</a>
+        <a href="chapters/notes.html#notes-audit">06 Consistency Audit</a>
       </div>
     </div>
     <div class="path">
@@ -186,7 +182,7 @@
       <p>Follow the 10-stage C99 ISP math, 3A feedback loop, Verified Lifting, Halide tile fusion, and Vulkan DMA-BUF zero-copy.</p>
       <div class="steps">
         <a href="chapters/isp.html#isp-sim-sec">03 10-Stage Simulator</a>
-        <a href="chapters/isp.html#isp-raw">03 RAW/RGB Math</a>
+        <a href="chapters/isp.html#isp-stages">03 RAW/RGB Math</a>
         <a href="chapters/isp.html#isp-3a">03 3A Control</a>
         <a href="chapters/isp.html#isp-tiers">03 Halide Fusion</a>
         <a href="chapters/isp.html#isp-vl">03 Verified Lifting</a>
@@ -194,13 +190,13 @@
     </div>
     <div class="path">
       <h3>Sensor CFA · Edge Vision AI</h3>
-      <p>Examine phase-decomposed compression for clustered CFAs (Tetracell/Hexadecacell) and IMX500+Hailo-8 dual-NPU tracking &amp; segmentation.</p>
+      <p>Examine 16-Ch phase-decomposed compression for clustered CFAs (Tetracell/Hexadecacell) and IMX500+Hailo-8 dual-NPU tracking &amp; segmentation.</p>
       <div class="steps">
         <a href="chapters/ucfa.html#ucfa-intro">04 Clustered CFA</a>
         <a href="chapters/ucfa.html#ucfa-sim-cfa">04 PixelUnshuffle</a>
         <a href="chapters/ucfa.html#ucfa-arch">04 Phase Compressor</a>
         <a href="chapters/isp.html#isp-ai">03 Dual-NPU AI</a>
-        <a href="chapters/notes.html#glossary-sec">05 Glossary</a>
+        <a href="chapters/notes.html#glossary-sec">06 Glossary</a>
       </div>
     </div>
   </div>
@@ -213,7 +209,7 @@
     <div><b>Click Diagrams</b>Click any node in the architecture SVGs to inspect hardware constraints and source code locations.</div>
     <div><b>Manipulate Simulators</b>Push sliders and stage toggles to their limits to observe regime shifts and image quality trade-offs live.</div>
     <div><b>Trace Source Code</b>Blue <code>file:line</code> chips are build-verified links pointing directly to canonical repository files.</div>
-    <div><b>Verify Consistency</b>Chapter 5 transparently documents 23 audit items comparing prose claims against actual C/PyTorch code and JSONs.</div>
+    <div><b>Verify Consistency</b>Chapter 06 transparently documents 26 audit items comparing prose claims against actual C/PyTorch code and JSONs.</div>
   </div>
 </section>
 

@@ -3,7 +3,7 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>이종 엣지 카메라와 시스템 병목 · AICAMERA Guidebook</title>
+<title>Ch.01 — 이종 엣지 카메라와 시스템 병목 · AICAMERA Guidebook</title>
 <meta name="description" content="MIPI CSI-2 직렬화 병목, IMX500 센서 NPU와 Hailo-8 호스트 NPU의 메모리·대역폭 계층, Dual-NPU 크로스 컴파일(.rpk/.hef) 및 에이전트 기반 개발 워크플로.">
 <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/katex@0.16.11/dist/katex.min.css">
 <script defer src="https://cdn.jsdelivr.net/npm/katex@0.16.11/dist/katex.min.js"></script>
@@ -17,13 +17,13 @@
 <body data-chapter="overview" data-root="../">
 <main class="chapter">
   <header class="chapter-hero">
-    <div class="eyebrow">Chapter 01 · System Architecture, Dual-NPU SW Stack &amp; Agent Flow</div>
+    <div class="eyebrow">Chapter 01 · System Architecture, 4 Research Pillars &amp; Agent Flow</div>
     <h1>이종 엣지 카메라와 시스템 병목</h1>
-    <p class="lead">현대 엣지 카메라 시스템에서 뉴럴 ISP와 생성형 비전 모델을 실시간으로 구동할 때 가장 먼저 마주치는 벽은 연산기(NPU)의 TOPS 부족이 아니라 <strong>칩 간 데이터 이동과 메모리 대역폭</strong>입니다. 이 장에서는 왜 센서–호스트 경계에서 신호 표현을 바꿔야 하는지, 본 저장소의 3대 연구 트랙(<strong>LSP · Software ISP · Universal CFA</strong>)이 이 문제를 어떻게 해결하는지, 그리고 <strong>IMX500(<code>.rpk</code>) · Hailo-8(<code>.hef</code>) 크로스 컴파일 파이프라인과 Antigravity 에이전트 워크플로</strong>가 어떻게 동작하는지 살펴봅니다.</p>
+    <p class="lead">현대 엣지 카메라 시스템에서 뉴럴 ISP와 생성형 비전 모델을 실시간으로 구동할 때 가장 먼저 마주치는 벽은 연산기(NPU)의 TOPS 부족이 아니라 <strong>칩 간 데이터 이동과 메모리 대역폭</strong>입니다. 이 장에서는 왜 센서–호스트 경계에서 신호 표현을 바꿔야 하는지, 본 저장소의 4대 연구 트랙(<strong>LSP · Software ISP · Universal CFA · Comp-LSP 2.0</strong>)이 이 문제를 어떻게 해결하는지, 그리고 <strong>IMX500(<code>.rpk</code>) · Hailo-8(<code>.hef</code>) 크로스 컴파일 파이프라인과 Antigravity 에이전트 워크플로</strong>가 어떻게 동작하는지 살펴봅니다.</p>
     <ul class="objectives">
       <li>비압축 프레임 전송 시 발생하는 MIPI CSI-2 DMA 직렬화 지연(52.91 ms)과 메모리 경합이 전체 처리량(14.9 FPS)을 제한하는 메커니즘을 수식과 시뮬레이터로 확인한다.</li>
       <li>Sony IMX500(센서 NPU, <code>.rpk</code>) → MIPI CSI-2 → Raspberry Pi 5(CPU/Vulkan GPU) + Hailo-8(호스트 NPU, <code>.hef</code>) → Workstation(RTX 5060 Ti)으로 이어지는 하드웨어 토폴로지와 메모리 제약을 이해한다.</li>
-      <li>픽셀 도메인 최적화(Software ISP · Halide 커널 융합)와 잠재 도메인 분할 추론(LSP · Universal CFA)의 구조적 차이를 비교한다.</li>
+      <li>픽셀 도메인 최적화(Software ISP · Halide 커널 융합), 센서–호스트 잠재 분할 추론(LSP · 16채널 Universal CFA), 그리고 16채널 화이트박스 잠재 신호 처리(Comp-LSP 2.0)의 구조적 차이를 비교한다.</li>
       <li>4-Tier Python 가상환경 격리 구조 위에서 PyTorch 모델을 IMX500 <code>.rpk</code>(NCHW→NHWC 전치, 실측 프레임 MCT 양자화)와 Hailo-8 <code>.hef</code>(ONNX 패치, 실분포 텐서 PTQ)로 변환하는 SW 스택을 마스터한다.</li>
       <li>FastMCP 서버(<code>aicamera_mcp_server.py</code>), 원격 브리지(<code>rpi_remote.py</code>), 7개 슬래시 스킬 및 10개 전문 역할로 구성된 닫힌 루프 에이전트 워크플로를 익힌다.</li>
     </ul>
@@ -62,7 +62,7 @@
         <text x="32" y="172" class="t-acc">② 센서–호스트 비대칭 분할 (LSP SA8) — 48× 페이로드 축소로 30 FPS 상한 달성</text>
         <rect x="32" y="186" width="190" height="62" rx="8" class="f-elev"/>
         <text x="127" y="210" text-anchor="middle" class="t" style="font-weight:700">IMX500 + Stage A (.rpk)</text>
-        <text x="127" y="230" text-anchor="middle" class="t-mono">5,924 params · cap 2.59 ms</text>
+        <text x="127" y="230" text-anchor="middle" class="t-mono">5,924 / 9.59K · cap 2.59 ms</text>
         <line x1="224" y1="217" x2="368" y2="217" stroke="var(--ok)" stroke-width="2.5" marker-end="url(#oa2)"/>
         <text x="296" y="205" text-anchor="middle" class="t" style="fill:var(--ok);font-weight:700">64 KB (2.90 ms)</text>
         <text x="296" y="236" text-anchor="middle" class="t-mono">48× 대역폭 압축</text>
@@ -118,16 +118,16 @@
 
   <!-- ============================================================ 02 -->
   <section id="s-projects">
-    <h2>3대 연구 트랙 아키텍처 비교 (LSP · Software ISP · Universal CFA)</h2>
-    <p>이 저장소는 이종 엣지 카메라의 병목을 서로 다른 층위에서 돌파하는 세 가지 연구 프로젝트로 구성됩니다. 각 프로젝트는 동일한 하드웨어 테스트베드와 원격 제어 체인을 공유하지만, <strong>센서에서 무엇을 내보내고 호스트에서 어떻게 복원하는가</strong>에서 뚜렷한 차이를 가집니다.</p>
+    <h2>4대 연구 트랙 아키텍처 비교 (LSP · Software ISP · Universal CFA · Comp-LSP 2.0)</h2>
+    <p>이 저장소는 이종 엣지 카메라의 병목을 서로 다른 층위에서 돌파하는 네 가지 연구 프로젝트로 구성됩니다. 각 프로젝트는 동일한 하드웨어 테스트베드와 원격 제어 체인을 공유하지만, <strong>센서에서 무엇을 내보내고 호스트에서 어떻게 연산·복원하는가</strong>에서 뚜렷한 차이를 가집니다.</p>
 
-    <div class="grid-3">
+    <div class="grid-2">
       <article class="card">
         <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:8px">
           <span class="eyebrow">Project 1 · lsp/</span><span class="badge b-measured">HW 실측</span>
         </div>
         <h3>Latent Signal Processing</h3>
-        <p>인코더를 센서 NPU(Stage A, <code>.rpk</code>)와 호스트 NPU(Stage B, <code>.hef</code>)로 분할해 64 KB 텐서 <code>r</code>만 전송하고, 표준 SD VAE 잠재 공간 <code>ẑ</code>로 실시간 프리뷰(30.0 FPS)와 ZSL 생성형 캡처를 동시에 구동합니다.</p>
+        <p>인코더를 센서 NPU(Stage A, <code>.rpk</code>, 5,924 Conv2d / 9.59K 그래프 params)와 호스트 NPU(Stage B, <code>.hef</code>)로 비대칭 분할해 64 KB 텐서 <code>r</code>만 전송하고, 표준 SD VAE 잠재 공간 <code>ẑ</code>로 실시간 프리뷰(30.0 FPS)와 ZSL 생성형 캡처를 동시에 구동합니다.</p>
         <p class="note">정본: <a class="src" href="../../lsp/README.md" title="lsp/README.md" target="_blank" rel="noopener">lsp/README.md</a> · <a href="lsp.html"><b>Chapter 02 이동 →</b></a></p>
       </article>
       <article class="card">
@@ -135,15 +135,15 @@
           <span class="eyebrow">Project 2 · hdrnet/</span><span class="badge b-measured">HW 실측</span>
         </div>
         <h3>Software ISP &amp; Halide</h3>
-        <p>10단계 C99 레퍼런스 ISP + 3A 제어 루프를 구현하고, Verified Lifting과 Halide 커널 융합(Tier 3 CPU NEON · Tier 4 Vulkan DMA-BUF)으로 12MP 프레임당 DRAM 트래픽을 13.8× 줄여 128.78 ms에 처리합니다.</p>
+        <p>10단계 C99 레퍼런스 ISP + 3A 제어 루프를 구현하고, Verified Lifting과 Halide 커널 융합(Tier 3 CPU NEON · Tier 4 Vulkan DMA-BUF)으로 12.3MP 프레임당 DRAM 트래픽을 13.8×(811.4 → 58.8 MB) 줄여 128.78 ms(3.68× 가속)에 처리합니다.</p>
         <p class="note">정본: <a class="src" href="../../hdrnet/README.md" title="hdrnet/README.md" target="_blank" rel="noopener">hdrnet/README.md</a> · <a href="isp.html"><b>Chapter 03 이동 →</b></a></p>
       </article>
       <article class="card">
         <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:8px">
-          <span class="eyebrow">Project 3 · universal_cfa/</span><span class="badge b-sim">시뮬레이션</span>
+          <span class="eyebrow">Project 3 · universal_cfa/</span><span class="badge b-sim">16-Ch 단일 스트림</span>
         </div>
-        <h3>Universal CFA</h3>
-        <p>고화소 모바일 센서의 군집형 CFA(Bayer 2×2 · Tetracell 4×4 · Hexadecacell 8×8)에서 별도 리모자이킹 하드웨어 없이 위상 인식 <code>PixelUnshuffle</code> 압축기만으로 단일 고정 호스트 번역기(\(\mathcal{T}_B\))에 직결합니다.</p>
+        <h3>Universal CFA (<code>SE-Universal-CFA</code>)</h3>
+        <p>고화소 모바일 센서의 군집형 CFA(Bayer 1×1 · Tetracell 2×2 · Hexadecacell 4×4)에서 리모자이킹과 RAW 전송 없이 <code>PixelUnshuffle(p)</code> + <code>SE-ResBlock</code> 압축기만으로 단일 16채널 <code>FLUX.1</code> / <code>TAEF1</code> 버스 텐서(<code>64 KB</code> INT8, 48× 축소)와 센서 불변 호스트 번역기(\(\mathcal{T}_B: 16\to 16\))에 직결합니다.</p>
         <svg viewBox="0 0 272 68" role="img" aria-label="센서 마이크로렌즈 단면 및 Bayer·Tetracell·Hexadecacell CFA 격자 요약" style="margin:6px 0;border-radius:6px;background:var(--surface)">
           <!-- Mini Sensor Cross-Section -->
           <path d="M18,20 Q27,10 36,20 Q45,10 54,20 Q63,10 72,20 Z" fill="rgba(56,182,245,0.3)" stroke="var(--accent)" stroke-width="1.2"/>
@@ -178,20 +178,28 @@
         </svg>
         <p class="note">정본: <a class="src" href="../../universal_cfa/README.md" title="universal_cfa/README.md" target="_blank" rel="noopener">universal_cfa/README.md</a> · <a href="ucfa.html"><b>Chapter 04 이동 →</b></a></p>
       </article>
+      <article class="card">
+        <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:8px">
+          <span class="eyebrow">Project 4 · comp_lsp/</span><span class="badge b-comp">화이트박스 수리</span>
+        </div>
+        <h3>White-Box Comp-LSP 2.0</h3>
+        <p>16채널 VAE(<code>FLUX.1</code> / <code>TAEF1</code>, \(\mathbf{z}_0 \in \mathcal{S}_{\mathrm{DC}}^3 \oplus \mathcal{S}_{\mathrm{AC}}^{13}\)) 잠재 공간 위에서 7단계 물리 ISP(BLC · WB · 3×3 CCM · <code>1:4:1</code> 심슨 구적법 감마 &amp; 할선 야코비안 · 공간 커널 · 4단계 리파이너)를 픽셀 복원 없이 직접 실행해 10대 카메라 평균 <strong>27.18 dB</strong> 및 Halide SIMD <strong>70.5×</strong> 가속을 달성합니다.</p>
+        <p class="note">정본: <a class="src" href="../../comp_lsp/README.md" title="comp_lsp/README.md" target="_blank" rel="noopener">comp_lsp/README.md</a> · <a href="comp_lsp.html"><b>Chapter 05 이동 →</b></a></p>
+      </article>
     </div>
 
     <div class="table-wrap">
       <table>
         <thead>
-          <tr><th>비교 항목</th><th>Project 1: LSP (<code>lsp/</code>)</th><th>Project 2: Software ISP (<code>hdrnet/</code>)</th><th>Project 3: Universal CFA (<code>universal_cfa/</code>)</th></tr>
+          <tr><th>비교 항목</th><th>Project 1: LSP (<code>lsp/</code>)</th><th>Project 2: Software ISP (<code>hdrnet/</code>)</th><th>Project 3: Universal CFA (<code>universal_cfa/</code>)</th><th>Project 4: Comp-LSP 2.0 (<code>comp_lsp/</code>)</th></tr>
         </thead>
         <tbody>
-          <tr><td><b>센서 입력 도메인</b></td><td>IMX500 온칩 ISP 출력 RGB (512×512×3)</td><td>10-bit Bayer RGGB RAW (3MP / 12.3MP uint16)</td><td>1채널 합성 CFA RAW (Bayer · 4×4 · 8×8, 512×512×1)</td></tr>
-          <tr><td><b>센서 NPU (.rpk) 역할</b></td><td>Stage A 압축기 (<code>EncoderStageA</code>, 5,924 params)</td><td>센서 내 얼굴 검출 (SSD MobileNetV2 / BlazeFace)</td><td>CFA별 위상 인식 압축 + 암묵적 리모자이킹 (5.4K~19.1K)</td></tr>
-          <tr><td><b>MIPI 전송 데이터</b></td><td>메타데이터 텐서 \(r \in \mathbb{R}^{64\times 64\times 4}\) (64 KB)</td><td>비압축 Bayer RAW 프레임 (12MP 기준 ~24.6 MB)</td><td>메타데이터 텐서 \(r \in \mathbb{R}^{64\times 64\times 4}\) (64 KB)</td></tr>
-          <tr><td><b>호스트 NPU (.hef) 역할</b></td><td>Stage B 번역기 (0.97 ms) + TAESD_ft 디코더 (16.44 ms)</td><td>HDRnet Bilateral Grid 계수 추론 + YOLOv5n 인물 분할</td><td>100% 동결된 단일 Stage B 번역기 (\(\mathcal{T}_B\), 재학습 없음)</td></tr>
-          <tr><td><b>호스트 CPU / GPU 역할</b></td><td>MJPEG 뷰파인더 서빙 + ZSL 캡처 트리거</td><td>Halide 4-Tier 10단계 ISP + 3A EMA 제어 + ZAP 추적</td><td><code>DemosaicPixelShuffleDecoder</code> / One-Pass 확산</td></tr>
-          <tr><td><b>핵심 병목 해결</b></td><td>MIPI 버스 직렬화 지연 52.91 ms → 2.90 ms (18.2× 단축)</td><td>단계 간 DRAM 왕복 1,197 MB → 87 MB (13.8× 절감)</td><td>고화소 군집형 CFA의 하드웨어 리모자이킹 블록 제거</td></tr>
+          <tr><td><b>센서 입력 도메인</b></td><td>IMX500 온칩 ISP 출력 RGB (512×512×3)</td><td>10-bit Bayer RGGB RAW (3MP / 12.3MP uint16)</td><td>1채널 군집형 CFA RAW (Bayer 1×1 · Tetra 2×2 · Hexa 4×4)</td><td>10대 카메라 14-bit Bayer RAW → 16-Ch 잠재 \(\mathbf{z}_0\)</td></tr>
+          <tr><td><b>센서 NPU (.rpk) 역할</b></td><td>Stage A 압축기 (<code>EncoderStageA</code>, 5,924 Conv2d / 9.59K params)</td><td>센서 내 얼굴 검출 (SSD MobileNetV2 / BlazeFace)</td><td>위상 인식 SE 압축 + 암묵적 리모자이킹 (16.3K~17.1K ch16)</td><td>16-Ch 잠재 인코더 (\(\mathcal{S}_{\mathrm{DC}}^3 \oplus \mathcal{S}_{\mathrm{AC}}^{13}\) 분해)</td></tr>
+          <tr><td><b>MIPI 전송 데이터</b></td><td>메타데이터 텐서 \(r \in \mathbb{R}^{64\times 64\times 4}\) (64 KB)</td><td>비압축 Bayer RAW 프레임 (12MP 기준 ~24.6 MB)</td><td>단일 버스 텐서 \(r \in \mathbb{R}^{16\times 64\times 64}\) (64 KB INT8)</td><td>16채널 잠재 텐서 \(\mathbf{z}_0 \in \mathbb{R}^{\frac{H}{8}\times\frac{W}{8}\times 16}\) (64 KB INT8)</td></tr>
+          <tr><td><b>호스트 NPU (.hef) 역할</b></td><td>Stage B 번역기 (0.97 ms) + TAESD_ft 디코더 (16.44 ms)</td><td>HDRnet Bilateral Grid 계수 추론 + YOLOv5n 인물 분할</td><td>100% 센서 불변 통합 번역기 (\(\mathcal{T}_B: 16\to 16\), 1.52M)</td><td>96K 4단계 잔차 ODE 다양체 리파이너 (\(\mathcal{R}_{4\text{-step}}\), 27.18 dB)</td></tr>
+          <tr><td><b>호스트 CPU / GPU 역할</b></td><td>MJPEG 뷰파인더 서빙 + ZSL 캡처 트리거</td><td>Halide 4-Tier 10단계 ISP + 3A EMA 제어 + ZAP 추적</td><td>16-Ch <code>TAEF1</code> + <code>DemosaicPixelShuffleDecoder</code> / ZSL</td><td>Class I–III 화이트박스 연산자 (Halide SIMD 0.93 ms @ 1MP)</td></tr>
+          <tr><td><b>핵심 병목 해결</b></td><td>MIPI 버스 직렬화 지연 52.91 ms → 2.90 ms (18.2× 단축)</td><td>단계 간 DRAM 왕복 811.4 MB → 58.8 MB (13.8× 절감, 128.78 ms · 3.68×)</td><td>군집형 CFA 리모자이킹·RAW 재전송 제거 (35.91~40.69 dB)</td><td>잠재 공간 물리 ISP 투명성 · 12MP 70.5× SIMD · 역방향 3A 765.2×</td></tr>
         </tbody>
       </table>
     </div>
@@ -269,7 +277,7 @@
         <div class="stat"><span class="k">피크 활성화 + 가중치 SRAM</span><span class="v" id="o-sr-mem">—</span></div>
         <div class="stat"><span class="k">IMX500 배포 가능 여부</span><span class="v" id="o-sr-ok" style="font-size:15px">—</span></div>
       </div>
-      <div class="sim-note">해볼 것: 정본 설정(<code>SA8, C_mid=16, k=4, 512×512</code>)에서 파라미터 수는 정확히 <b>5,924개</b>, 연산량은 <b>0.122 GMACs</b>입니다(<a class="src" href="../../lsp/src/train/models/encoder.py" title="lsp/src/train/models/encoder.py (line 44)" target="_blank" rel="noopener">encoder.py:44</a>). 입력 해상도를 <b>1024</b>로 올리거나 은닉 채널을 <b>64</b>로 키우면 첫 층의 피크 활성화 버퍼 때문에 2.0 MB SRAM 한계를 초과하는 것을 볼 수 있습니다.</div>
+      <div class="sim-note">해볼 것: 정본 설정(<code>SA8, C_mid=16, k=4, 512×512</code>)에서 합성곱 가중치 파라미터 수는 정확히 <b>5,924개</b>(내보낸 그래프 기준 <b>9.59K</b>), 연산량은 <b>0.122 GMACs</b>입니다(<a class="src" href="../../lsp/src/train/models/encoder.py" title="lsp/src/train/models/encoder.py (line 44)" target="_blank" rel="noopener">encoder.py:44</a>). 입력 해상도를 <b>1024</b>로 올리거나 은닉 채널을 <b>64</b>로 키우면 첫 층의 피크 활성화 버퍼 때문에 2.0 MB SRAM 한계를 초과하는 것을 볼 수 있습니다.</div>
     </div>
   </section>
 
@@ -569,7 +577,7 @@
           <rect width="432" height="134" rx="12" class="f-surface"/>
           <text x="216" y="26" text-anchor="middle" class="t-ok">4. Single-Source-of-Truth &amp; 회귀 검증 게이트</text>
           <text x="216" y="50" text-anchor="middle" class="t-mono">rpi_table1_bench_results.json · 3way_isp_results.json</text>
-          <text x="216" y="72" text-anchor="middle" class="t-dim" style="font-size:11px">pytest (LSP 7-워크플로 · Verified Lifting · Universal CFA)</text>
+          <text x="216" y="72" text-anchor="middle" class="t-dim" style="font-size:11px">pytest (LSP · Lifting · Universal CFA · Comp-LSP)</text>
           <text x="216" y="94" text-anchor="middle" class="t-mono">docs/build_spec_portal.py (자동 링크·수식·수치 검증)</text>
           <text x="216" y="114" text-anchor="middle" class="t-dim">드리프트 없을 때만 문서·대시보드·슬라이드 갱신 승인</text>
         </g>
@@ -625,7 +633,7 @@
     <!-- ==================== Simulator 3: Dual-NPU Compile & Agent Drift Gate ==================== -->
     <div class="sim" id="sim-devops">
       <div class="sim-head">
-        <span class="badge">SIMULATOR 03</span>
+        <span class="sim-tag">SIMULATOR</span>
         <h3>Dual-NPU 크로스 컴파일 &amp; 에이전트 벤치마크 드리프트 게이트</h3>
       </div>
       <div class="sim-controls">
@@ -676,10 +684,11 @@ python tools/rpi_remote.py start      # LSP 실시간 뷰파인더 (:5000)
 python tools/rpi_remote.py start-isp  # 4-Tier SW ISP 데모 (:5001)
 python tools/rpi_remote.py bench      # 물리 하드웨어 벤치마크 실행
 
-# 3대 트랙 전체 파이프라인 회귀 테스트 (Workstation WSL2)
+# 4대 트랙 전체 파이프라인 회귀 테스트 (Workstation WSL2)
 ~/py311_train/bin/pytest lsp/tests/test_pipeline_workflows.py
 ~/py311_train/bin/pytest hdrnet/verified_lifting/tests/test_lifting.py
 ~/py311_train/bin/pytest universal_cfa/tests/ -o testpaths=universal_cfa/tests
+PYTHONPATH=. ~/py311_train/bin/pytest comp_lsp/tests/ -o testpaths=comp_lsp/tests
 
 # 인터랙티브 가이드북 재생성 및 정합성 자기 검증
 ~/py311_train/bin/python docs/build_spec_portal.py</code></pre>
@@ -696,6 +705,7 @@ python tools/rpi_remote.py bench      # 물리 하드웨어 벤치마크 실행
               <tr><td>IMX500 / Hailo-8 크로스 컴파일러</td><td><a class="src" href="../../lsp/src/server/convert_v2_imx500.py" title="lsp/src/server/convert_v2_imx500.py" target="_blank" rel="noopener">convert_v2_imx500.py</a> · <a class="src" href="../../lsp/src/server/compile_all_imx500.py" title="lsp/src/server/compile_all_imx500.py" target="_blank" rel="noopener">compile_all_imx500.py</a> · <a class="src" href="../../lsp/src/server/compile_all_stgb_hef.py" title="lsp/src/server/compile_all_stgb_hef.py" target="_blank" rel="noopener">compile_all_stgb_hef.py</a> · <a class="src" href="../../lsp/src/server/compile_taesd_hef.py" title="lsp/src/server/compile_taesd_hef.py" target="_blank" rel="noopener">compile_taesd_hef.py</a></td></tr>
               <tr><td>Software ISP · Verified Lifting</td><td><a class="src" href="../../hdrnet/README.md" title="hdrnet/README.md" target="_blank" rel="noopener">hdrnet/README.md</a> · <a class="src" href="../../hdrnet/verified_lifting/README.md" title="hdrnet/verified_lifting/README.md" target="_blank" rel="noopener">hdrnet/verified_lifting/README.md</a> · <a class="src" href="../../hdrnet/c_src/build_openisp_halide.py" title="hdrnet/c_src/build_openisp_halide.py" target="_blank" rel="noopener">build_openisp_halide.py</a></td></tr>
               <tr><td>Universal CFA 제안서·벤치마크</td><td><a class="src" href="../../universal_cfa/README.md" title="universal_cfa/README.md" target="_blank" rel="noopener">universal_cfa/README.md</a> · <a class="src" href="../../universal_cfa/docs/architecture_proposal.md" title="universal_cfa/docs/architecture_proposal.md" target="_blank" rel="noopener">architecture_proposal.md</a></td></tr>
+              <tr><td>Comp-LSP 2.0 화이트박스 잠재 ISP</td><td><a class="src" href="../../comp_lsp/README.md" title="comp_lsp/README.md" target="_blank" rel="noopener">comp_lsp/README.md</a> · <a class="src" href="../../comp_lsp/tests/test_comp_lsp_pipeline.py" title="comp_lsp/tests/test_comp_lsp_pipeline.py" target="_blank" rel="noopener">test_comp_lsp_pipeline.py</a></td></tr>
               <tr><td>MCP 서버 · 원격 브리지 · 역할 규칙</td><td><a class="src" href="../../tools/aicamera_mcp_server.py" title="tools/aicamera_mcp_server.py" target="_blank" rel="noopener">tools/aicamera_mcp_server.py</a> · <a class="src" href="../../tools/rpi_remote.py" title="tools/rpi_remote.py" target="_blank" rel="noopener">tools/rpi_remote.py</a> · <a class="src" href="../../.agents/rules/specialist_roles.md" title=".agents/rules/specialist_roles.md" target="_blank" rel="noopener">specialist_roles.md</a> · <a class="src" href="../../.agents/rules/project_rules.md" title=".agents/rules/project_rules.md" target="_blank" rel="noopener">.agents/rules/project_rules.md</a></td></tr>
             </tbody>
           </table>
@@ -706,14 +716,14 @@ python tools/rpi_remote.py bench      # 물리 하드웨어 벤치마크 실행
     <div class="card">
       <h3>저장소 디렉토리 트리</h3>
 <pre class="tree">aicamera/
-├── README.md                  # 모노레포 랜딩 페이지 및 3대 트랙 요약
+├── README.md                  # 모노레포 랜딩 페이지 및 4대 트랙 요약
 ├── GEMINI.md                  # 에이전트 마스터 컨텍스트 및 운영 규칙
 ├── .agents/                   # Antigravity 에이전트 커스터마이징
 │   ├── rules/                 # project_rules.md, specialist_roles.md (10개 전문 역할)
 │   └── skills/                # /bench, /train, /hp-sweep, /demo, /design, /verify-figures, /patent
 ├── docs/                      # 인터랙티브 가이드북 (build_spec_portal.py 생성)
 │   ├── index.html             # 가이드북 홈 (3D 하드웨어 파이프라인 + 로드맵)
-│   ├── chapters/              # Ch.01~05 심층 챕터 및 인터랙티브 시뮬레이터
+│   ├── chapters/              # Ch.01~06 심층 챕터 및 인터랙티브 시뮬레이터
 │   ├── imx500_calib_frames/   # IMX500 MCT INT8 PTQ용 실측 실내 카메라 캘리브레이션 프레임
 │   └── aicamera_architecture_spec.html
 ├── lsp/                       # [Project 1] Latent Signal Processing
@@ -728,9 +738,12 @@ python tools/rpi_remote.py bench      # 물리 하드웨어 벤치마크 실행
 │   ├── verified_lifting/      # C99 → Halide 자동 리프팅 및 수치 parity 검증기
 │   ├── src/  scripts/         # Dual-NPU 엣지 AI (ZAP 추적, 인물 분할) &amp; sw_isp_demo.py
 │   └── benchmarks/            # 12MP 6-엔진 벤치마크 JSON 정본
-├── universal_cfa/             # [Project 3] Universal CFA (Bayer / Tetracell / Hexadeca)
-│   ├── src/                   # PixelUnshuffle 위상 압축기, 고정 번역기, CFA 물리 모델
-│   └── experiments/           # 리모자이킹 기준선 대비 정량 평가 JSON
+├── universal_cfa/             # [Project 3] 16-Ch SE-Universal-CFA (Bayer / Tetracell / Hexadeca)
+│   ├── src/                   # PixelUnshuffle + SE 위상 압축기, 통합 번역기(16→16), TAEF1 디코더
+│   └── experiments/           # 64 KB INT8 단일 스트림 vs 리모자이킹 기준선 정량 평가 JSON
+├── comp_lsp/                  # [Project 4] White-Box Computational LSP 2.0 (16-Ch FLUX.1 / TAEF1)
+│   ├── src/                   # Class I–III 수리 잠재 연산자, 1:4:1 구적법, Halide SIMD, 4-Step Refiner
+│   └── tests/                 # 단위 분할·쌍직교 불변량 및 10대 카메라 RAW 파이프라인 회귀 검증
 └── tools/                     # aicamera_mcp_server.py (FastMCP), rpi_remote.py (SSH 브리지)</pre>
     </div>
   </section>
@@ -740,9 +753,10 @@ python tools/rpi_remote.py bench      # 물리 하드웨어 벤치마크 실행
     <h2>핵심 정리</h2>
     <ol>
       <li>엣지 카메라에서 고해상도 비압축 프레임을 그대로 전송하면 <strong>MIPI CSI-2 DMA 직렬화 지연(52.91 ms @ 512²)</strong>이 지배적 병목이 되어 호스트 NPU 성능과 무관하게 프레임레이트가 14.9 FPS에 묶인다.</li>
-      <li><strong>LSP(Project 1)</strong>는 인코더를 센서 NPU(Stage A, 5,924 params)와 호스트 NPU(Stage B, 595K params)로 비대칭 분할해 버스 페이로드를 <strong>48×(64 KB, 2.90 ms)</strong> 줄이고 30.0 FPS 실시간 뷰파인더와 ZSL 생성형 캡처를 달성한다.</li>
-      <li><strong>Software ISP(Project 2)</strong>는 10단계 C99 파이프라인을 Halide 단일 커널로 융합(Tier 3)하고 VideoCore VII DMA-BUF 제로카피(Tier 4)를 적용해 12MP 프레임당 DRAM 트래픽을 <strong>13.8×(811 → 59 MB)</strong> 절감한다.</li>
-      <li><strong>Universal CFA(Project 3)</strong>는 Bayer(2×2)·Tetracell(4×4)·Hexadecacell(8×8) 군집형 CFA를 센서 내 위상 인식 <code>PixelUnshuffle</code> 압축기로 처리해 단일 고정 호스트 번역기(\(\mathcal{T}_B\))를 공유한다.</li>
+      <li><strong>LSP(Project 1)</strong>는 인코더를 센서 NPU(Stage A, 5,924 Conv2d / 9.59K 그래프 params)와 호스트 NPU(Stage B, 595K params)로 비대칭 분할해 버스 페이로드를 <strong>48×(64 KB, 2.90 ms)</strong> 줄이고 30.0 FPS 실시간 뷰파인더와 ZSL 생성형 캡처를 달성한다.</li>
+      <li><strong>Software ISP(Project 2)</strong>는 10단계 C99 파이프라인을 Halide 단일 커널로 융합(Tier 3, 128.78 ms · 3.68× 가속)하고 VideoCore VII DMA-BUF 제로카피(Tier 4)를 적용해 12.3MP 프레임당 DRAM 트래픽을 <strong>13.8×(811.4 → 58.8 MB)</strong> 절감한다.</li>
+      <li><strong>Universal CFA(Project 3)</strong>는 Bayer(1×1)·Tetracell(2×2)·Hexadecacell(4×4) 군집형 CFA를 센서 내 위상 인식 <code>PixelUnshuffle</code> + <code>SE-ResBlock</code> 압축기로 처리해 단일 16채널 버스 텐서(<code>64 KB</code> INT8)와 센서 불변 <code>FLUX.1</code> / <code>TAEF1</code> 호스트 파이프라인(35.91~40.69 dB)을 공유한다.</li>
+      <li><strong>Comp-LSP 2.0(Project 4)</strong>은 16채널 VAE 잠재 공간(\(\mathcal{S}_{\mathrm{DC}}^3 \oplus \mathcal{S}_{\mathrm{AC}}^{13}\)) 위에서 7단계 물리 ISP를 Class I–III 화이트박스 수리 연산자와 4단계 다양체 리파이너로 직접 실행해 10대 카메라 평균 <strong>27.18 dB</strong>, 12MP Halide SIMD <strong>70.5×</strong> 가속, 미분가능 역방향 3A <strong>765.2×</strong> 가속을 달성한다.</li>
       <li><strong>Dual-NPU SW 스택 &amp; 에이전트 워크플로</strong>는 4-Tier Python 가상환경 격리(<code>py311_train</code>, <code>venv</code>, <code>py310</code>, RPi 5) 위에서 NCHW→NHWC 커널 전치와 실분포 캘리브레이션으로 <code>.rpk</code>/<code>.hef</code>를 컴파일하고, FastMCP 서버(<a class="src" href="../../tools/aicamera_mcp_server.py" title="tools/aicamera_mcp_server.py" target="_blank" rel="noopener">tools/aicamera_mcp_server.py</a>)와 원격 브리지(<a class="src" href="../../tools/rpi_remote.py" title="tools/rpi_remote.py" target="_blank" rel="noopener">tools/rpi_remote.py</a>)를 통해 물리 벤치마크 및 드리프트 감시를 자동화한다.</li>
     </ol>
   </section>
@@ -1029,14 +1043,14 @@ python tools/rpi_remote.py bench      # 물리 하드웨어 벤치마크 실행
     },
     halide: {
       venv: "WSL2 clang/Halide → RPi 5 Cortex-A76 / V3D",
-      art: "libopenisp_halide.so (128.78 ms @ 12MP)",
-      basePsnr: 42.80,
+      art: "libopenisp_halide.so (128.78 ms @ 12MP · 3.68×)",
+      basePsnr: 43.53,
       baseMs: 128.78,
       baseFps: 7.8,
       stages: [
         { t: "1. C99 10-Stage ISP", s: "openisp_ref.c", env: "C99 레퍼런스" },
         { t: "2. Verified Lifting", s: "Stencil IR → Halide", env: "PSNR ≥ 40 dB 검증" },
-        { t: "3. 타일 스케줄 융합", s: "256×128 Strip + SIMD", env: "DRAM 13.8× 절감" },
+        { t: "3. 타일 스케줄 융합", s: "811.4 → 58.8 MB", env: "DRAM 13.8× 절감" },
         { t: "4. AOT 크로스 컴파일", s: "build_openisp_halide.py", env: "libopenisp_halide.so" },
         { t: "5. DMA-BUF 제로카피", s: "V3D Vulkan / ARM NEON", env: "12MP 128.78 ms" },
       ],

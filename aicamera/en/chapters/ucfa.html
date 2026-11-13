@@ -19,21 +19,22 @@
 <body data-chapter="ucfa" data-root="../">
 
 <main class="chapter">
-    <header class="ch-header">
+    <header class="chapter-hero">
       <div class="eyebrow">CHAPTER 04 · UNIVERSAL CFA (universal_cfa/ · SIMULATION TRACK)</div>
       <h1>Universal CFA — Phase-Aware In-Sensor Compression &amp; Frozen Host Translator</h1>
       <p class="lead">
         To overcome the photon-collection limits of sub-micron pixels, modern 50MP–200MP mobile image sensors replace the classic \(2\times 2\) Bayer pattern with
         <strong>Tetracell (\(4\times 4\) period)</strong> and <strong>Hexadecacell (\(8\times 8\) period)</strong> Color Filter Arrays (CFAs) that group identical color filters into \(2\times 2\) or \(4\times 4\) clusters.
-        The <strong>Universal CFA (`SE-Universal-CFA`)</strong> research track bypasses costly remosaicing and full RAW transmission: a sensor-specific
-        <strong>phase-aware SE-ResNet compressor (\(\mathcal{E}_A^{\mathrm{CFA}}\))</strong> maps the 1-channel CFA mosaic directly into a single 16-channel bus tensor \(r \in \mathbb{R}^{16\times 64\times 64}\) (`64 KB` INT8)
-        shared across a <strong>sensor-invariant unified host translator (\(\mathcal{T}_B: 16\to 16\))</strong> and <strong>16-channel `FLUX.1` / `TAEF1` decoder (\(\mathcal{D}_{\mathrm{rec}}\))</strong>.
+        The <strong>Universal CFA (<code>SE-Universal-CFA</code>)</strong> research track bypasses costly remosaicing and full RAW transmission: a sensor-specific
+        <strong>phase-aware SE-ResNet compressor (\(\mathcal{E}_A^{\mathrm{CFA}}\))</strong> maps the 1-channel CFA mosaic directly into a single 16-channel bus tensor \(r \in \mathbb{R}^{16\times 64\times 64}\) (<code>64 KB</code> INT8)
+        shared across a <strong>sensor-invariant unified host translator (\(\mathcal{T}_B: 16\to 16\))</strong> and <strong>16-channel <code>FLUX.1</code> / <code>TAEF1</code> decoder (\(\mathcal{D}_{\mathrm{rec}}\))</strong>.
       </p>
       <div class="meta-bar">
         <span>Supported CFAs <b>Bayer (2×2) · Tetracell (4×4) · Hexadecacell (8×8)</b></span>
         <span>Sensor Stack <b>3D Stacked BSI CMOS + In-Sensor NPU</b></span>
         <span>Core Operator <b>PixelUnshuffle(r) + SE-ResBlock</b></span>
         <span>Host Pipeline <b>Unified Single-Stream 16-Ch FLUX.1 / TAEF1</b></span>
+        <span>Paper <a class="src" href="../../../universal_cfa/paper/universal_cfa_paper.html" title="universal_cfa/paper/universal_cfa_paper.html" target="_blank" rel="noopener">📄 Paper II (Universal CFA HTML)</a></span>
       </div>
     </header>
 
@@ -118,13 +119,13 @@
       <h2>4.3 Unified 16-Channel Host Translator (\(\mathcal{T}_B: 16\to 16\)) &amp; Sensor-Specific Phase Compressors (\(\mathcal{E}_A^{\mathrm{CFA}}\))</h2>
       <p>
         Retraining and recompiling a large host-SoC translator (\(\mathcal{T}_B\)) and downstream decoders/diffusion models every time a smartphone or edge product line swaps camera sensor modules (Bayer, Tetracell, Hexadecacell) incurs prohibitive engineering cost.
-        `SE-Universal-CFA` keeps the <strong>host's 16-channel translator (\(\mathcal{T}_B: 16\to 16\)) and decoder (\(\mathcal{D}_{\mathrm{rec}}\)) 100% sensor-invariant (shared)</strong>,
+        <code>SE-Universal-CFA</code> keeps the <strong>host's 16-channel translator (\(\mathcal{T}_B: 16\to 16\)) and decoder (\(\mathcal{D}_{\mathrm{rec}}\)) 100% sensor-invariant (shared)</strong>,
         adapting only the lightweight in-sensor phase-aware compressor \(\mathcal{E}_A^{\mathrm{CFA}}\) to the sensor's period \(r\):
       </p>
       <div class="formula">
         $$r = \mathcal{E}_A^{\mathrm{CFA}}\!\big(y_{\mathrm{CFA}}\big) \in \mathbb{R}^{16\times 64\times 64}, \qquad
           \hat{z} = r + \mathcal{T}_B(r) \in \mathbb{R}^{16\times 64\times 64}$$
-        <div class="f-Note">Whereas LSP Stage A in Chapter 02 takes 3-channel RGB (\(512\times 512\times 3\)) from the on-chip ISP, Universal CFA's \(\mathcal{E}_A^{\mathrm{CFA}}\) ingests the <strong>1-channel CFA mosaic (\(512\times 512\times 1\))</strong> prior to any on-chip demosaicing or remosaicing, projecting directly into the same <strong>16-channel `FLUX.1` / `TAEF1` latent space</strong> used across `HDRNet` and `Comp-LSP`.</div>
+        <div class="f-Note">Whereas LSP Stage A in Chapter 02 takes 3-channel RGB (\(512\times 512\times 3\)) from the on-chip ISP, Universal CFA's \(\mathcal{E}_A^{\mathrm{CFA}}\) ingests the <strong>1-channel CFA mosaic (\(512\times 512\times 1\))</strong> prior to any on-chip demosaicing or remosaicing, projecting directly into the same <strong>16-channel <code>FLUX.1</code> / <code>TAEF1</code> latent space</strong> used across <code>HDRNet</code> and <code>Comp-LSP</code>.</div>
       </div>
 
       <figure class="figure" id="fig-ucfa-arch">
@@ -267,12 +268,12 @@
 
       <div class="tbl-wrap">
         <table class="tbl">
-          <thead><tr><th>Model Class</th><th>Internal Architecture (16-Ch Single Stream)</th><th>Parameters (`ch16` / `ch64`)</th><th>INT8 SRAM (IMX500 Verified)</th></tr></thead>
+          <thead><tr><th>Model Class</th><th>Internal Architecture (16-Ch Single Stream)</th><th>Parameters (<code>ch16</code> / <code>ch64</code>)</th><th>INT8 SRAM (IMX500 Verified)</th></tr></thead>
           <tbody>
             <tr><td><code>BayerPhaseCompressor</code></td><td><code>PixelUnshuffle(2)</code> (4ch @ 256²) + SE-ResBlocks → <code>16×64²</code></td><td>17,128 (ch16) / 582,480 (ch64)</td><td>16.7&nbsp;KB / 568.8&nbsp;KB</td></tr>
             <tr><td><code>TetracellPhaseCompressor</code></td><td><code>PixelUnshuffle(4)</code> (16ch @ 128²) + SE-ResBlocks → <code>16×64²</code></td><td>16,536 (ch16) / 572,144 (ch64)</td><td>16.1&nbsp;KB / 558.7&nbsp;KB</td></tr>
             <tr><td><code>HexadecaPhaseCompressor</code></td><td><code>PixelUnshuffle(8)</code> (64ch @ 64²) + 80ch SE-ResBlocks → <code>16×64²</code></td><td>16,340 (ch16) / 413,680 (ch64)</td><td>16.0&nbsp;KB / 404.0&nbsp;KB</td></tr>
-            <tr><td><code>UnifiedLatentTranslator</code></td><td><code>16 → 96 → 16</code> 8× Residual ConvNet ($z = r + \mathcal{T}_B(r)$)</td><td>1,524,208 (1.52M)</td><td>Host NPU (100% Shared)</td></tr>
+            <tr><td><code>UnifiedLatentTranslator</code></td><td><code>16 → 96 → 16</code> 8× Residual ConvNet (\(z = r + \mathcal{T}_B(r)\))</td><td>1,524,208 (1.52M)</td><td>Host NPU (100% Shared)</td></tr>
             <tr><td><code>DemosaicPixelShuffleDecoder</code></td><td>16-Ch <code>TAEF1</code> Trunk + 3× <code>SE-PixelShuffle</code> Residual Pyramid</td><td>2,512,995 (2.51M)</td><td>Host NPU (100% CFA-Agnostic)</td></tr>
           </tbody>
         </table>
@@ -319,11 +320,11 @@
       <figure class="diagram" id="fig-ucfa-visual">
         <div class="grid-2" style="align-items:center">
           <div>
-            <img src="../../assets/img/candy_full_comparison.webp" alt="Tetracell full-image reconstruction comparison (Ground Truth vs Preview vs Generative Capture)" style="width:100%;height:auto;border-radius:8px;display:block;margin-bottom:8px">
-            <img src="../../assets/img/candy_zoom_comparison.webp" alt="Tetracell high-frequency text crop zoom comparison (false-color suppression and edge recovery)" style="width:100%;height:auto;border-radius:8px;display:block">
+            <img class="paper-fig-img" src="../../assets/img/candy_full_comparison.webp" alt="Tetracell full-image reconstruction comparison (Ground Truth vs Preview vs Generative Capture)" style="margin-bottom:8px">
+            <img class="paper-fig-img" src="../../assets/img/candy_zoom_comparison.webp" alt="Tetracell high-frequency text crop zoom comparison (false-color suppression and edge recovery)">
           </div>
           <div>
-            <img src="../../assets/img/01952_tetracell_zsl_capture.webp" alt="One-Pass ZSL diffusion capture generated from an in-sensor 64 KB Tetracell latent tensor" style="width:100%;max-height:310px;object-fit:cover;border-radius:8px;display:block">
+            <img class="paper-fig-img" src="../../assets/img/01952_tetracell_zsl_capture.webp" alt="One-Pass ZSL diffusion capture generated from an in-sensor 64 KB Tetracell latent tensor" style="max-height:310px;object-fit:cover">
           </div>
         </div>
         <figcaption><b>Figure 4-3.</b> Visual reconstruction comparison on Tetracell (\(4\times 4\)) clustered CFA inputs. (Top-left &amp; Bottom-left) Full-frame and zoomed high-frequency text crops (Ground Truth · lightweight remosaicing artifacts · Universal CFA latent reconstruction); (Right) One-Pass ZSL latent diffusion capture reconstructed purely from the 64 KB bus tensor \(r\) without re-transmitting RAW.</figcaption>
@@ -355,13 +356,13 @@
     </section>
 
     <section class="keypoints" id="summary">
-      <h3>Key Takeaways · Chapter 04</h3>
-      <ul>
+      <h2>Key Takeaways · Chapter 04</h2>
+      <ol>
         <li><strong>Phase Scrambling in Clustered CFAs</strong>: Applying standard strided convolutions directly to Tetracell (\(4\times 4\)) and Hexadecacell (\(8\times 8\)) mosaics scans different color clusters at different spatial shifts, breaking phase alignment.</li>
-        <li><strong>PixelUnshuffle(\(r\)) + SE-ResBlock Phase Decomposition</strong>: Unshuffling the input mosaic by its fundamental period \(r \in \{2, 4, 8\}\) into \(r^2\) homogeneous phase planes followed by `SE-ResBlock` layers maps every CFA family into a unified 16-channel bus tensor \(r \in \mathbb{R}^{16\times 64\times 64}\) (`64 KB` INT8).</li>
-        <li><strong>100% Sensor-Invariant 16-Channel Host Pipeline</strong>: Even when the camera sensor module changes, the host's 16-channel translator (\(\mathcal{T}_B: 16\to 16\)) and `TAEF1` + `SE-PixelShuffle` decoder (\(\mathcal{D}_{\mathrm{rec}}\)) share <strong>100% identical frozen weights</strong>.</li>
-        <li><strong>`FLUX.1` / `TAEF1` 16-Channel Latent Alignment &amp; High-Fidelity Reconstruction</strong>: Achieves <strong>35.91 dB</strong> on Bayer ($1\times 1$), <strong>34.56 dB</strong> on Tetracell ($2\times 2$), and <strong>30.27 dB</strong> on Hexadecacell ($4\times 4$) on `BJDD_CVPR21` (and <strong>33.71 / 33.21 / 31.29 dB</strong> on `Kodak24`), outperforming <code>KLAP Unified</code> (34.06 / 29.74 dB) on both Tetracell and Hexadecacell.</li>
-      </ul>
+        <li><strong>PixelUnshuffle(\(r\)) + SE-ResBlock Phase Decomposition</strong>: Unshuffling the input mosaic by its fundamental period \(r \in \{2, 4, 8\}\) into \(r^2\) homogeneous phase planes followed by <code>SE-ResBlock</code> layers maps every CFA family into a unified 16-channel bus tensor \(r \in \mathbb{R}^{16\times 64\times 64}\) (<code>64 KB</code> INT8).</li>
+        <li><strong>100% Sensor-Invariant 16-Channel Host Pipeline</strong>: Even when the camera sensor module changes, the host's 16-channel translator (\(\mathcal{T}_B: 16\to 16\)) and <code>TAEF1</code> + <code>SE-PixelShuffle</code> decoder (\(\mathcal{D}_{\mathrm{rec}}\)) share <strong>100% identical frozen weights</strong>.</li>
+        <li><strong><code>FLUX.1</code> / <code>TAEF1</code> 16-Channel Latent Alignment &amp; High-Fidelity Reconstruction</strong>: Achieves <strong>35.91 dB</strong> on Bayer (\(1\times 1\)), <strong>34.56 dB</strong> on Tetracell (\(2\times 2\)), and <strong>30.27 dB</strong> on Hexadecacell (\(4\times 4\)) on <code>BJDD_CVPR21</code> (and <strong>33.71 / 33.21 / 31.29 dB</strong> on <code>Kodak24</code>), outperforming <code>KLAP Unified</code> (34.06 / 29.74 dB) on both Tetracell and Hexadecacell.</li>
+      </ol>
     </section>
 </main>
 <script>
@@ -370,7 +371,7 @@
   const UCFA_NODES = {
     bayer: {
       t: 'BayerPhaseCompressor (E_A^Bayer · 1×1 Single · Period p=2)',
-      h: '<p>Decomposes a <code>1×512×512</code> Bayer RGGB mosaic via <code>PixelUnshuffle(2)</code> into <code>4×256×256</code> phase planes, then passes them through an SE-ResBlock pyramid to emit a unified <code>16×64×64</code> bus tensor <code>r</code> (`64 KB` INT8). 17,128 params (ch16) / 582,480 params (ch64, `568.8 KB` INT8; source: <code>phase_aware_compressor.py</code>).</p>'
+      h: '<p>Decomposes a <code>1×512×512</code> Bayer RGGB mosaic via <code>PixelUnshuffle(2)</code> into <code>4×256×256</code> phase planes, then passes them through an SE-ResBlock pyramid to emit a unified <code>16×64×64</code> bus tensor <code>r</code> (<code>64 KB</code> INT8). 17,128 params (ch16) / 582,480 params (ch64, <code>568.8 KB</code> INT8; source: <code>phase_aware_compressor.py</code>).</p>'
     },
     tetra: {
       t: 'TetracellPhaseCompressor (E_A^Tetra · 2×2 Cluster · Period p=4)',
@@ -664,7 +665,7 @@
       }
     }
 
-    const macMap = { '2': '0.18 G / 15,092 params', '4': '0.14 G / 14,500 params', '8': '0.08 G / 19,092 params' };
+    const macMap = { '2': '0.18 G / 17,128 params', '4': '0.14 G / 16,536 params', '8': '0.08 G / 16,340 params' };
     if(phaseStats){
       phaseStats.innerHTML = [
         SB.stat({ label: 'CFA Fundamental Period (r×r)', value: r + '×' + r + ' (' + (r * r) + ' phase channels)' }),

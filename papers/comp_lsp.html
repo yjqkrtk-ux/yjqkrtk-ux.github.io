@@ -6,6 +6,17 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>White-Box Computational Latent Signal Processing (Comp-LSP) — Research Paper</title>
 
+  <script>
+    (function() {
+      try {
+        var t = localStorage.getItem('sb-theme');
+        if (t === 'light' || t === 'dark') {
+          document.documentElement.setAttribute('data-theme', t);
+        }
+      } catch (e) {}
+    })();
+  </script>
+
   <!-- Fonts -->
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -14,15 +25,15 @@
     rel="stylesheet">
 
   <!-- KaTeX for Math rendering -->
-  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/katex@0.16.10/dist/katex.min.css">
-  <script defer src="https://cdn.jsdelivr.net/npm/katex@0.16.10/dist/katex.min.js"></script>
-  <script defer src="https://cdn.jsdelivr.net/npm/katex@0.16.10/dist/contrib/auto-render.min.js"
-    onload="renderMathInElement(document.body, {delimiters: [{left: '$$', right: '$$', display: true}, {left: '$', right: '$', display: false}]});"></script>
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/katex@0.16.11/dist/katex.min.css">
+  <script defer src="https://cdn.jsdelivr.net/npm/katex@0.16.11/dist/katex.min.js"></script>
+  <script defer src="https://cdn.jsdelivr.net/npm/katex@0.16.11/dist/contrib/auto-render.min.js"></script>
 
   <style>
     :root,
     [data-theme="light"] {
       --bg: #f6f8fa;
+      --bg-soft: #eef2f6;
       --surface: #ffffff;
       --surface-alt: #f0f3f6;
       --surface-border: #d0d7de;
@@ -30,9 +41,9 @@
       --text-bright: #0d1117;
       --text-muted: #57606a;
       --accent: #0969da;
-      --accent-glow: rgba(9, 105, 218, 0.08);
+      --accent-glow: color-mix(in srgb, var(--accent) 9%, transparent);
       --green: #1a7f37;
-      --green-bg: rgba(26, 127, 55, 0.10);
+      --green-bg: color-mix(in srgb, var(--green) 10%, transparent);
       --orange: #bc4c00;
       --purple: #8250df;
       --font-body: 'Newsreader', Georgia, serif;
@@ -42,6 +53,7 @@
 
     [data-theme="dark"] {
       --bg: #0d1117;
+      --bg-soft: #161b22;
       --surface: #161b22;
       --surface-alt: #1f242d;
       --surface-border: #30363d;
@@ -49,9 +61,9 @@
       --text-bright: #f0f6fc;
       --text-muted: #8b949e;
       --accent: #58a6ff;
-      --accent-glow: rgba(88, 166, 255, 0.15);
+      --accent-glow: color-mix(in srgb, var(--accent) 15%, transparent);
       --green: #3fb950;
-      --green-bg: rgba(63, 185, 80, 0.14);
+      --green-bg: color-mix(in srgb, var(--green) 14%, transparent);
       --orange: #f0883e;
       --purple: #bc8cff;
     }
@@ -164,7 +176,7 @@
       background: var(--surface);
       border: 1px solid var(--surface-border);
       border-radius: 12px;
-      box-shadow: 0 14px 40px rgba(0, 0, 0, 0.25);
+      box-shadow: 0 12px 36px color-mix(in srgb, var(--text-bright) 10%, transparent);
     }
 
     /* Unified Paper Header */
@@ -247,17 +259,6 @@
       font-family: var(--font-ui);
     }
 
-    @media (max-width: 980px) {
-      .kpi-strip,
-      .kpi-grid {
-        grid-template-columns: repeat(2, minmax(0, 1fr));
-      }
-      .paper-container {
-        padding: 28px 22px;
-        margin: 16px 12px 60px;
-      }
-    }
-
     .kpi-card {
       background: var(--bg);
       border: 1px solid var(--surface-border);
@@ -299,6 +300,10 @@
       line-height: 1.68;
     }
 
+    .abstract-box p:last-of-type {
+      margin-bottom: 0;
+    }
+
     .abstract-title,
     .abstract-box > strong:first-child {
       font-family: var(--font-ui);
@@ -328,7 +333,7 @@
     .paper-body.two-col,
     .two-col,
     .two-column-layout {
-      column-count: 2 !important;
+      column-count: 2;
       column-gap: 32px;
       column-rule: 1px solid var(--surface-border);
       column-fill: balance;
@@ -337,16 +342,42 @@
 
     .paper-body.one-col,
     .one-col {
-      column-count: 1 !important;
+      column-count: 1;
       text-align: justify;
     }
 
     @media (max-width: 980px) {
+      .kpi-strip,
+      .kpi-grid {
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+      }
+      .paper-container {
+        padding: 28px 22px;
+        margin: 16px 12px 60px;
+      }
       .paper-body.two-col,
       .two-col,
       .two-column-layout {
         column-gap: 20px;
         font-size: 14.5px;
+      }
+    }
+
+    @media (max-width: 820px) {
+      .paper-body.two-col,
+      .two-col,
+      .two-column-layout {
+        column-count: 1;
+      }
+    }
+
+    @media (max-width: 560px) {
+      .kpi-strip,
+      .kpi-grid {
+        grid-template-columns: 1fr;
+      }
+      .paper-container {
+        padding: 20px 16px 48px;
       }
     }
 
@@ -455,10 +486,33 @@
       line-height: 1.5;
     }
 
-    .table-container {
+    .table-container,
+    .table-card,
+    .table-scroll {
       margin: 18px 0;
       overflow-x: auto;
+      max-width: 100%;
+      -webkit-overflow-scrolling: touch;
       break-inside: avoid;
+    }
+
+    .table-caption {
+      font-family: var(--font-ui);
+      font-size: 13px;
+      font-weight: 700;
+      color: var(--text-bright);
+      margin-bottom: 8px;
+      line-height: 1.45;
+      text-align: left;
+    }
+
+    .table-footnote {
+      font-family: var(--font-ui);
+      font-size: 11.5px;
+      color: var(--text-muted);
+      margin-top: 6px;
+      line-height: 1.45;
+      text-align: left;
     }
 
     table,
@@ -472,7 +526,6 @@
       background: var(--bg);
       border: 1px solid var(--surface-border);
       border-radius: 8px;
-      overflow: hidden;
     }
 
     th,
@@ -486,9 +539,15 @@
 
     th,
     table.academic-table th {
-      background: rgba(88, 166, 255, 0.10);
+      background: color-mix(in srgb, var(--accent) 10%, var(--surface));
       color: var(--text-bright);
       font-weight: 600;
+    }
+
+    tr.baseline-row td,
+    table.academic-table tr.baseline-row td {
+      color: var(--text-muted);
+      background: var(--bg-soft);
     }
 
     tr.highlight-row td,
@@ -498,15 +557,32 @@
     }
 
     tr.section-row td {
-      background: rgba(188, 140, 255, 0.10);
+      background: color-mix(in srgb, var(--purple) 11%, var(--surface));
       color: var(--purple);
       font-weight: 700;
       text-align: left;
     }
 
+    tr.summary-row td,
+    table.academic-table tr.summary-row td {
+      border-top: 2px solid var(--accent);
+      font-weight: 700;
+    }
+
+    tr.subtotal-row td,
+    table.academic-table tr.subtotal-row td {
+      border-top: 1.5px solid var(--surface-border);
+      font-weight: 700;
+    }
+
     .highlight-val {
       color: var(--green);
       font-weight: 700;
+    }
+
+    .dim-note {
+      font-size: 11px;
+      opacity: 0.82;
     }
 
     .metric-pill {
@@ -519,17 +595,17 @@
     }
 
     .pill-green {
-      background: rgba(63, 185, 80, 0.18);
+      background: color-mix(in srgb, var(--green) 16%, transparent);
       color: var(--green);
     }
 
     .pill-orange {
-      background: rgba(240, 136, 62, 0.18);
+      background: color-mix(in srgb, var(--orange) 16%, transparent);
       color: var(--orange);
     }
 
     .pill-purple {
-      background: rgba(188, 140, 255, 0.18);
+      background: color-mix(in srgb, var(--purple) 16%, transparent);
       color: var(--purple);
     }
 
@@ -540,6 +616,86 @@
       padding: 2px 6px;
       border-radius: 4px;
       border: 1px solid var(--surface-border);
+    }
+
+    /* Reusable Academic Algorithm Box */
+    .algo-box {
+      background: var(--bg);
+      border-top: 2.5px solid var(--text-bright);
+      border-bottom: 2.5px solid var(--text-bright);
+      padding: 14px 18px;
+      margin: 20px 0;
+      font-family: var(--font-body);
+      text-align: left;
+      overflow-x: auto;
+      max-width: 100%;
+      -webkit-overflow-scrolling: touch;
+      break-inside: avoid;
+    }
+
+    .algo-head {
+      font-family: var(--font-ui);
+      font-size: 14px;
+      font-weight: 700;
+      color: var(--text-bright);
+      padding-bottom: 8px;
+      border-bottom: 1px solid var(--surface-border);
+      margin-bottom: 10px;
+      line-height: 1.45;
+    }
+
+    .algo-sub {
+      font-size: 13.2px;
+      line-height: 1.68;
+      color: var(--text);
+      margin-bottom: 6px;
+    }
+
+    .algo-body {
+      border-top: 1px solid var(--surface-border);
+      padding-top: 8px;
+      font-size: 13.2px;
+      line-height: 1.78;
+      color: var(--text);
+    }
+
+    .algo-line {
+      white-space: normal;
+    }
+
+    .algo-line.algo-phase {
+      margin-top: 4px;
+      font-weight: 600;
+    }
+
+    .algo-line.algo-phase:first-child {
+      margin-top: 0;
+    }
+
+    .algo-ln {
+      font-family: var(--font-mono);
+      font-size: 11.5px;
+      color: var(--text-muted);
+      display: inline-block;
+      width: 28px;
+      font-weight: 400;
+    }
+
+    .algo-indent {
+      padding-left: 24px;
+    }
+
+    .algo-phase-bright { color: var(--text-bright); }
+    .algo-phase-accent { color: var(--accent); }
+    .algo-phase-green { color: var(--green); }
+    .algo-phase-purple { color: var(--purple); }
+    .algo-phase-orange { color: var(--orange); }
+    .algo-comment { color: var(--text-muted); font-size: 12px; font-weight: 400; }
+
+    .appendix-section {
+      margin-top: 36px;
+      padding-top: 28px;
+      border-top: 2.5px solid var(--surface-border);
     }
 
     .reference-list {
@@ -554,9 +710,26 @@
     }
 
     @media print {
+      html,
+      html[data-theme="dark"] {
+        --bg: #ffffff;
+        --bg-soft: #f8fafc;
+        --surface: #ffffff;
+        --surface-alt: #f8fafc;
+        --surface-border: #cbd5e1;
+        --text: #111827;
+        --text-bright: #000000;
+        --text-muted: #4b5563;
+        --accent: #1d4ed8;
+        --accent-glow: rgba(29, 78, 216, 0.08);
+        --green: #15803d;
+        --green-bg: rgba(21, 128, 61, 0.08);
+        --orange: #c2410c;
+        --purple: #6d28d9;
+      }
       body {
         background: #ffffff;
-        color: #000000;
+        color: #111827;
         font-size: 10pt;
       }
       .top-bar {
@@ -570,9 +743,10 @@
         width: 100%;
         max-width: 100%;
       }
-      .paper-body.two-col {
-        column-count: 2;
-        column-gap: 20px;
+      .paper-body.two-col,
+      .two-col,
+      .two-column-layout {
+        column-count: 1 !important;
       }
     }
 
@@ -594,7 +768,7 @@
     <div class="top-bar-right">
       <button class="btn active" id="btn-2col" type="button" onclick="setPaperCols(2)">2-Col</button>
       <button class="btn" id="btn-1col" type="button" onclick="setPaperCols(1)">1-Col</button>
-      <button class="btn" id="btn-theme" type="button" onclick="togglePaperTheme()">☀️ Light</button>
+      <button class="btn" id="btn-theme" type="button" title="Toggle Light / Dark theme" onclick="togglePaperTheme()">☀️ Theme: Light</button>
       <button class="btn" type="button" onclick="window.print()">🖨️ Print / PDF</button>
     </div>
   </div>
@@ -636,7 +810,7 @@
 
     <div class="abstract-box">
       <div class="abstract-title">Abstract</div>
-      <p style="margin-bottom:0;">
+      <p>
         Modern generative vision models standardize on <strong>16-channel Variational Autoencoders (VAEs)</strong> with $8\times$ spatial compression ($f=8, C=16$, e.g., <code>FLUX.1</code> and <code>TAEF1</code>), mapping each $8\times 8\times 3$ image patch ($192$ scalars) into a 16-dimensional latent vector ($64\times$ spatial grid contraction). Recently, Pach et al. (<em>The Latent Color Subspace</em>, ICML 2026) [4] revealed that uniform color patches in <code>FLUX.1</code> span an emergent 3D chromatic DC subspace $\mathcal{S}_{\text{DC}}^3 \subset \mathbb{R}^{16}$ complementary to a 13D spatial structure fiber $\mathcal{S}_{\text{AC}}^{13}$ ($\mathbb{R}^{16} = \mathcal{S}_{\text{DC}}^3 \oplus \mathcal{S}_{\text{AC}}^{13}$), enabling training-free sRGB palette steering. However, existing latent color-subspace methods operate strictly on flat 0th-order sRGB DC shifts ($\mathbf{z}' = \mathbf{z} + W_{\text{DC}}^+\Delta\mathbf{c}$) without modeling linear sensor Bayer RAWs, concave gamma quadrature, or 13D AC spatial edge transport, whereas generative latent ISPs rely on slow multi-step diffusion networks ($&gt;500\text{ ms}$) and controllable pixel-domain neural ISPs (<code>ParamISP</code>, <code>CtrlISP</code>) execute at full $H\times W$ resolution. We introduce <strong>White-Box Computational Latent Signal Processing (Comp-LSP)</strong>. Generalizing the latent color subspace into a <strong>1st-Order Jet Bundle ($\mathbb{R}^{16} = \mathcal{S}_{\text{DC}}^3 \oplus \mathcal{S}_{\text{AC}}^{13}$) coupled with Local Quadrature, Jacobian-Kronecker Edge Transport, and Cross-Cell Stencils</strong>, Comp-LSP executes three canonical camera ISP function families directly on the $\frac{H}{8} \times \frac{W}{8} \times 16$ latent grid while keeping the sRGB decoder 100% frozen ($\Delta\theta_{\text{dec}} = 0$): <strong>(I) Pointwise Linear Operators</strong> (<code>BLC</code>, <code>Gain</code>, <code>WB</code>, $3\times 3$ <code>CCM</code>) via exact 1-point DC evaluation and constant analytical Jacobians; <strong>(II) Pointwise Non-Linear Operators</strong> (<code>Gamma</code> $x^{1/\gamma}$, <code>S-Curves</code>, <code>LUTs</code>) via <strong>3-Point Simpson (<code>1:4:1</code>) Jet Quadrature</strong> ($+3.6\text{--}7.5\text{ dB}$ patch DC gain) and <strong>$3\times 3$ Secant Jacobians</strong> with $144\text{-D}$ Kronecker AC transport; and <strong>(III) Spatial Kernel Operators</strong> (<code>EEH Sharpening</code>, <code>Bilateral Denoising</code>, and $32\times 32$ <code>Receptive-Field Alignment</code>) via 13D orthonormal AC spectral projectors and a <strong>4-Step Damped Iterative Manifold Refiner ($\mathcal{R}_{4\text{-step}}$, $96\text{K}$ params)</strong>. Evaluated across <strong>10 genuine hardware sensor Bayer RAWs</strong> with authentic DNG metadata, Comp-LSP eliminates raw Bayer green bias ($R^2 = 0.9978$, $\text{MAE} = 0.0055$) and boosts 10-camera mean sRGB PSNR from <strong>$25.04\text{ dB}$ (0-Net Math)</strong> and <strong>$25.29\text{ dB}$ (+1-Step Refiner)</strong> to <strong>$27.18\text{ dB}$ (+4-Step Refiner, $+3.81\text{ dB}$ over fixed metadata)</strong> at $0.93\text{--}3.8\text{ ms}$ on a $1/64$ grid.
       </p>
       <div class="keywords">
@@ -682,8 +856,8 @@
         <strong>Universal Pixel-Domain Grids and Controllable Neural ISPs.</strong> In pixel-domain imaging, Gharbi et al. (<code>HDRNet</code>) [14] unified tone and color operators through bilateral-grid affine slicing, while controllable neural ISPs including <code>ParamISP</code> [1], <code>CtrlISP</code> [2], and <code>NILUT</code> [7] condition CNNs or implicit 3D LUTs on camera parameters. Complementarily, <code>RAW-Adapter</code> [8] and <code>ReRAW</code> [9] adapt vision backbones to sensor RAW inputs. Unlike these approaches that require <em>full-resolution $H\times W$ pixel-grid execution</em>, Comp-LSP establishes a <em>$1/64$-grid 16-channel latent operator algebra</em> that reduces spatial grid volume by $64\times$.
       </p>
 
-      <div class="span-all">
-        <h3>Table 1: Factorized Novelty Comparison Against Prior Streams in Pixel Operator Grids, Controllable Pixel ISPs, Generative Latent ISPs, and Latent Color Subspaces</h3>
+      <div class="table-container span-all">
+        <div class="table-caption">Table 1: Factorized Novelty Comparison Against Prior Streams in Pixel Operator Grids, Controllable Pixel ISPs, Generative Latent ISPs, and Latent Color Subspaces</div>
         <table>
           <thead>
             <tr>
@@ -811,8 +985,8 @@
         </li>
       </ul>
 
-      <div class="span-all">
-        <h3>Table 2: Unified Taxonomy of Function Families and Their Closed-Form Computation Rules in 16-Channel Latent Space ($\mathbf{z} \in \mathbb{R}^{(H/8)\times(W/8)\times 16}$)</h3>
+      <div class="table-container span-all">
+        <div class="table-caption">Table 2: Unified Taxonomy of Function Families and Their Closed-Form Computation Rules in 16-Channel Latent Space ($\mathbf{z} \in \mathbb{R}^{(H/8)\times(W/8)\times 16}$)</div>
         <table>
           <thead>
             <tr>
@@ -864,7 +1038,7 @@
       </div>
 
       <div class="span-all figure-card">
-        <img src="figures/comp_fig8_pipeline_block_by_block_flow.webp" alt="Unified 7-Stage Latent Pipeline and Step-by-Step Visual Evolution">
+        <img src="figures/comp_fig8_pipeline_block_by_block_flow.webp" alt="Unified 7-Stage Latent Pipeline and Step-by-Step Visual Evolution" loading="lazy" decoding="async">
         <div class="figure-caption">
           <strong>Fig. 2. Unified 7-Stage Latent Pipeline Diagram (<code>Stages 0&ndash;6</code>) &amp; Step-by-Step Visual Evolution Across Three Genuine Hardware Camera Captures (<code>Nikon D700</code>, <code>Canon EOS 40D</code>, and Official <code>OpenISP test.RAW</code>).</strong> <strong>(Row 1)</strong> All 7 sequential pipeline stages spanning Classes I&ndash;III (<code>Stage 0: RAW Enc</code> &rarr; <code>Stage 1: BLC/Gain [Class I]</code> &rarr; <code>Stage 2: White Bal. [Class I]</code> &rarr; <code>Stage 3: 3&times;3 CCM [Class I]</code> &rarr; <code>Stage 4: Gamma 0-Net [Class II]</code> &rarr; <code>Stage 5: Spatial Kernels NR+EEH [Class III]</code> &rarr; <code>Stage 6: 4-Step ODE Refiner &amp; Frozen Decoder</code>); <strong>(Rows 2&ndash;4)</strong> Decoded image $\mathcal{D}_{\text{sRGB}}(\mathbf{z}_k)$, PSNR vs. stage Ground Truth, and R/G/B level bars; <strong>(Row 5)</strong> 16-channel latent activation barcode $\mathbf{z}_k \in \mathbb{R}^{16}$ ($\|\mathbf{z}_0\|_2 \dots \|\mathbf{z}_6\|_2$) at patch $(y=7,x=8)$.
         </div>
@@ -908,7 +1082,7 @@
         In <strong>Fig. 3b</strong>, the <strong>diagonal entries</strong> ($J_{RR}=+2.697, J_{GG}=+1.226, J_{BB}=+2.219$) amplify weak raw red/blue edges by the compounded Gain $\times$ WB ($w_R=2.129, w_B=1.547$) $\times$ Gamma shadow slope, while the <strong>off-diagonal entries</strong> ($J_{RG}=-0.342, J_{GB}=-0.412$) perform cross-channel $3\times 3$ CCM edge decontamination.
       </p>
       <p>
-        <strong>Step 4 &mdash; Coupled 16-Ch Reconstruction (<code>0-Net</code>) &amp; 4-Step Damped Iterative Refiner ($\mathcal{R}_{4\text{-step}}$):</strong> Assembling the degree-3 polynomial DC shift $\Delta\bar{\mathbf{c}}$, spatial neighbor gradients $(\partial_x\Delta\bar{\mathbf{c}}, \partial_y\Delta\bar{\mathbf{c}})$, and the Kronecker product $\mathbf{z}_{\text{AC}} \otimes \operatorname{vec}(J_{3\times 3} - I_3)$ into $\boldsymbol{\phi}(\mathbf{z}_0, \bar{\mathbf{c}}_0, \bar{\mathbf{c}}_{\text{new}}, J_{3\times 3}) \in \mathbb{R}^{230}$ yields the zero-network latent $\mathbf{z}_{\text{comp}} = \mathbf{z}_0 + W_{\text{trans}}^T \boldsymbol{\phi}$ (<code>Stage 4: 0-Net</code>, mean $25.04\text{ dB}$, $0.93\text{ ms}$ in Halide [11]). Finally, because VAE encoders have overlapping $32\times 32$-pixel receptive fields across adjacent $8\times 8$ cells, a single unconstrained pointwise jump (<code>Stage 5: +1-Step</code>, $25.29\text{ dB}$) can produce $8\times 8$ block-boundary ringing under large WB/Gamma shifts. Our <strong>4-Step Damped Iterative Refiner</strong> (<code>Stage 6: +4-Step</code>) integrates $N=4$ damped Euler steps ($\Delta t = 1/4$) with $3\times 3$ cross-patch spatial convolutions and step-phase FiLM conditioning $\tau_k = (k+0.5)/4$:
+        <strong>Step 4 &mdash; Coupled 16-Ch Reconstruction (<code>0-Net</code>) &amp; 4-Step Damped Iterative Refiner ($\mathcal{R}_{4\text{-step}}$):</strong> Assembling the degree-3 polynomial DC shift $\Delta\bar{\mathbf{c}}$, spatial neighbor gradients $(\partial_x\Delta\bar{\mathbf{c}}, \partial_y\Delta\bar{\mathbf{c}})$, and the Kronecker product $\mathbf{z}_{\text{AC}} \otimes \operatorname{vec}(J_{3\times 3} - I_3)$ into $\boldsymbol{\phi}(\mathbf{z}_0, \bar{\mathbf{c}}_0, \bar{\mathbf{c}}_{\text{new}}, J_{3\times 3}) \in \mathbb{R}^{230}$ yields the zero-network latent $\mathbf{z}_{\text{comp}} = \mathbf{z}_0 + W_{\text{trans}}^T \boldsymbol{\phi}$ (<code>Stage 4: 0-Net</code>, mean $25.04\text{ dB}$, $0.93\text{ ms}$ in Halide [11]). Finally, because VAE encoders have overlapping $32\times 32$-pixel receptive fields across adjacent $8\times 8$ cells, a single unconstrained pointwise jump (<code>Stage 6: +1-Step ODE</code>, $25.29\text{ dB}$) can produce $8\times 8$ block-boundary ringing under large WB/Gamma shifts. Our <strong>4-Step Damped Iterative Refiner</strong> (<code>Stage 6: +4-Step</code>) integrates $N=4$ damped Euler steps ($\Delta t = 1/4$) with $3\times 3$ cross-patch spatial convolutions and step-phase FiLM conditioning $\tau_k = (k+0.5)/4$:
       </p>
       <div class="equation">
         $$\mathbf{z}^{(0)} = \mathbf{z}_{\text{comp}}, \qquad \mathbf{z}^{(k+1)} = \mathbf{z}^{(k)} + \frac{g(\Theta_{\text{ISP}})}{4}\,\mathcal{F}_\theta\!\left(\mathbf{z}^{(k)},\, \mathbf{z}_0,\, \bar{\mathbf{c}}_0,\, \bar{\mathbf{c}}_{\text{new}},\, \nabla_{3\times 3}\mathbf{z}^{(k)},\, \tau_k\right), \quad k = 0, 1, 2, 3, \qquad (5)$$
@@ -931,45 +1105,43 @@
         <li><strong>2. Inter-Patch $3\times 3$ Stencil ($\text{LTM}$ Local Tone Mapping, $r \ge 8\text{ px}$):</strong> Pooling the $3\times 3$ neighborhood patch luminance around $(7,8)$, $\mathbf{Y}_{\mathcal{N}_{3\times 3}}(7,8) = \bigl[\begin{smallmatrix} 0.777 & 0.790 & 0.874 \\ 0.300 & \mathbf{0.437} & 0.866 \\ 0.387 & 0.357 & 0.859 \end{smallmatrix}\bigr]$, yields neighborhood base luminance $Y_{\text{base}}(7,8) = 0.6273$ and inter-patch discrete Laplacian $\Delta_{3\times 3} Y = \bar{Y}_0(7,8) - Y_{\text{base}} = -0.1901$, modulating the spatially varying exposure gain $G_{\text{LTM}}(7,8) = 1 + \beta_{\text{sh}}(1-Y_{\text{base}})^2 - \beta_{\text{hi}}Y_{\text{base}}^2 = 0.9833$ ($28.53\text{ dB}$ 10-cam mean PSNR).</li>
       </ul>
 
-      <div class="span-all" style="background:var(--bg); border-top:2.5px solid var(--text-bright); border-bottom:2.5px solid var(--text-bright); padding:14px 18px; margin:20px 0; font-family:var(--font-body); text-align:left !important;">
-        <div style="font-family:var(--font-ui); font-size:14px; font-weight:700; color:var(--text-bright); padding-bottom:8px; border-bottom:1px solid var(--surface-border); margin-bottom:10px;">
+      <div class="span-all algo-box">
+        <div class="algo-head">
           Algorithm 1: End-to-End 16-Channel White-Box Computational Latent ISP ($\mathcal{E}_{\text{raw}} \to \mathcal{T}_{\text{LSP}} \to \mathcal{R}_{4\text{-step}} \to \mathcal{D}_{\text{sRGB}}$)
         </div>
-        <div style="font-size:13.2px; line-height:1.78; color:var(--text);">
-          <div><strong>Input:</strong> Sensor Bayer RAW $\mathbf{I}_{\text{Bayer}} \in \mathbb{R}^{B\times 1\times H\times W}$; Native DNG metadata $\Theta_{\text{ISP}} = (\mathbf{b},\, g,\, \mathbf{w}_{\text{WB}},\, \operatorname{CCM}_{3\times 3},\, \gamma)$; Frozen 16-Ch VAE ($\mathcal{E}_{\text{VAE}}, \mathcal{D}_{\text{sRGB}}$: <code>FLUX.1 AutoencoderKL</code> or <code>TAEF1</code>, $f=8, C=16$) + $1\times 1$ Adapter $\mathcal{A}_{1\times 1}$; Calibrated matrices $(\Psi,\, W_{\text{z2c,nb}},\, W_{\text{trans}})$; Steps $N = 4$.</div>
-          <div style="margin-bottom:6px;"><strong>Output:</strong> Refined sRGB latent $\hat{\mathbf{z}}_{\text{sRGB}} \in \mathbb{R}^{B\times 16\times (H/8)\times (W/8)}$ and final decoded sRGB image $\hat{\mathbf{x}}_{\text{sRGB}} \in \mathbb{R}^{B\times 3\times H\times W}$.</div>
-          <div style="border-top:1px solid var(--surface-border); padding-top:8px; font-family:var(--font-body);">
-            <div><span style="font-family:var(--font-mono); font-size:11.5px; color:var(--text-muted); display:inline-block; width:28px;">1:</span><span style="color:var(--text-bright); font-weight:600;">&#9655; Stage 0: Sensor Bayer RAW Encoding via Frozen 16-Ch VAE Encoder $\mathcal{E}_{\text{VAE}}$ + $1\times 1$ Linear Adapter $\mathcal{A}_{1\times 1}$ ($\mathcal{E}_{\text{raw}}$)</span></div>
-            <div><span style="font-family:var(--font-mono); font-size:11.5px; color:var(--text-muted); display:inline-block; width:28px;">2:</span>$\mathbf{I}_{\text{lin}} \leftarrow \operatorname{Malvar}_{5\times 5}(\mathbf{I}_{\text{Bayer}}) \in \mathbb{R}^{B\times 3\times H\times W}, \quad \mathbf{z}_{\text{base}} \leftarrow \mathcal{E}_{\text{VAE}}(\mathbf{I}_{\text{lin}}), \quad \mathbf{z}_0 \leftarrow \mathbf{z}_{\text{base}} + \mathcal{A}_{1\times 1}(\mathbf{z}_{\text{base}}) \in \mathbb{R}^{B\times 16\times h\times w} \;\;(h=H/8, w=W/8)$</div>
-            <div style="margin-top:4px;"><span style="font-family:var(--font-mono); font-size:11.5px; color:var(--text-muted); display:inline-block; width:28px;">3:</span><span style="color:var(--accent); font-weight:600;">&#9655; Step 1: Subspace Readout of Patch Mean Color $\bar{\mathbf{c}}_0$ &amp; Intra-Patch AC Spread $\boldsymbol{\delta}$</span></div>
-            <div><span style="font-family:var(--font-mono); font-size:11.5px; color:var(--text-muted); display:inline-block; width:28px;">4:</span>$\bar{\mathbf{c}}_0 \leftarrow \operatorname{clip}\!\big(\boldsymbol{\phi}_{\text{nb}}(\mathbf{z}_0)\, W_{\text{z2c,nb}},\; 0,\; 1\big) \in \mathbb{R}^{B\times 3\times h\times w}$</div>
-            <div><span style="font-family:var(--font-mono); font-size:11.5px; color:var(--text-muted); display:inline-block; width:28px;">5:</span>$\mathbf{u}_{\text{jet}} \leftarrow \Psi(\mathbf{z}_0 - \mathbf{z}_{\text{black}}) + \mathbf{b}_{\text{jet}}$, $\quad \boldsymbol{\sigma}_{\text{AC}} \leftarrow \sqrt{\tfrac{1}{64}(\mathbf{u}_{\partial x}^2 + \mathbf{u}_{\partial y}^2 + \mathbf{u}_{\partial xx}^2 + \mathbf{u}_{\partial yy}^2)}$, $\quad \boldsymbol{\delta} \leftarrow \sqrt{1.5}\,\boldsymbol{\sigma}_{\text{AC}}$</div>
-            <div style="margin-top:4px;"><span style="font-family:var(--font-mono); font-size:11.5px; color:var(--text-muted); display:inline-block; width:28px;">6:</span><span style="color:var(--green); font-weight:600;">&#9655; Step 2: 3-Point Simpson / Gauss-Lobatto Quadrature (<code>1:4:1</code>) on $1/64$ Grid for Non-Linear DC Color $\bar{\mathbf{c}}_{\text{new}}$</span></div>
-            <div><span style="font-family:var(--font-mono); font-size:11.5px; color:var(--text-muted); display:inline-block; width:28px;">7:</span>$\mathbf{c}_- \leftarrow \operatorname{clip}(\bar{\mathbf{c}}_0 - \boldsymbol{\delta}, 0, 1)$, $\quad \mathbf{c}_0 \leftarrow \bar{\mathbf{c}}_0$, $\quad \mathbf{c}_+ \leftarrow \operatorname{clip}(\bar{\mathbf{c}}_0 + \boldsymbol{\delta}, 0, 1)$</div>
-            <div><span style="font-family:var(--font-mono); font-size:11.5px; color:var(--text-muted); display:inline-block; width:28px;">8:</span>$\bar{\mathbf{c}}_{\text{new}} \leftarrow \tfrac{1}{6}\,f_{\text{ISP}}(\mathbf{c}_-, \Theta_{\text{ISP}}) + \tfrac{4}{6}\,f_{\text{ISP}}(\mathbf{c}_0, \Theta_{\text{ISP}}) + \tfrac{1}{6}\,f_{\text{ISP}}(\mathbf{c}_+, \Theta_{\text{ISP}}) \in \mathbb{R}^{B\times 3\times h\times w}$</div>
-            <div style="margin-top:4px;"><span style="font-family:var(--font-mono); font-size:11.5px; color:var(--text-muted); display:inline-block; width:28px;">9:</span><span style="color:var(--purple); font-weight:600;">&#9655; Step 3: $3\times 3$ Secant Jacobian Matrix $J_{3\times 3}$ via Column-by-Column Axis Perturbations</span></div>
-            <div><span style="font-family:var(--font-mono); font-size:11.5px; color:var(--text-muted); display:inline-block; width:28px;">10:</span><strong>for</strong> each input color axis $b \in \{1\text{ (R)},\, 2\text{ (G)},\, 3\text{ (B)}\}$ <strong>do</strong></div>
-            <div style="padding-left:24px;"><span style="font-family:var(--font-mono); font-size:11.5px; color:var(--text-muted); display:inline-block; width:28px;">11:</span>$\mathbf{c}_b^{+} \leftarrow \operatorname{clip}(\bar{\mathbf{c}}_0 + \delta_b\mathbf{e}_b, 0, 1)$, $\quad \mathbf{c}_b^{-} \leftarrow \operatorname{clip}(\bar{\mathbf{c}}_0 - \delta_b\mathbf{e}_b, 0, 1)$ <span style="color:var(--text-muted); font-size:12px;">&#9655; Perturb only channel $b$</span></div>
-            <div style="padding-left:24px;"><span style="font-family:var(--font-mono); font-size:11.5px; color:var(--text-muted); display:inline-block; width:28px;">12:</span>$J_{\text{raw}}[:, b] \leftarrow \big(f_{\text{ISP}}(\mathbf{c}_b^{+}, \Theta_{\text{ISP}}) - f_{\text{ISP}}(\mathbf{c}_b^{-}, \Theta_{\text{ISP}})\big) \,/\, \max(\mathbf{c}_{b,b}^{+} - \mathbf{c}_{b,b}^{-},\, \epsilon) \in \mathbb{R}^{B\times 3\times h\times w}$</div>
-            <div><span style="font-family:var(--font-mono); font-size:11.5px; color:var(--text-muted); display:inline-block; width:28px;">13:</span><strong>end for</strong></div>
-            <div><span style="font-family:var(--font-mono); font-size:11.5px; color:var(--text-muted); display:inline-block; width:28px;">14:</span>$J_{3\times 3} \leftarrow 0.85\, J_{\text{raw}} + 0.15\, \operatorname{AvgPool}_{3\times 3}(J_{\text{raw}}) \in \mathbb{R}^{B\times 3\times 3\times h\times w}$</div>
-            <div style="margin-top:4px;"><span style="font-family:var(--font-mono); font-size:11.5px; color:var(--text-muted); display:inline-block; width:28px;">15:</span><span style="color:var(--orange); font-weight:600;">&#9655; Stages 1&ndash;4 (Classes I &amp; II): 144-D Kronecker AC Transport &amp; Zero-Network Projection (<code>Stage 4: 0-Net</code>, $\mathbf{z}_4$)</span></div>
-            <div><span style="font-family:var(--font-mono); font-size:11.5px; color:var(--text-muted); display:inline-block; width:28px;">16:</span>$\mathbf{z}_{\text{AC}} \leftarrow \tau_z\tanh\!\big((\mathbf{z}_0 - \operatorname{AvgPool}_{3\times 3}(\mathbf{z}_0))/\tau_z\big) \in \mathbb{R}^{N\times 16}$, $\quad \mathbf{dJ}_9 \leftarrow \tau_J\tanh\!\big(\operatorname{vec}(J_{3\times 3} - I_3)/\tau_J\big) \in \mathbb{R}^{N\times 9}$</div>
-            <div><span style="font-family:var(--font-mono); font-size:11.5px; color:var(--text-muted); display:inline-block; width:28px;">17:</span>$\boldsymbol{\phi} \leftarrow \big[\,\Delta\operatorname{poly}_3(\bar{\mathbf{c}})\; (38\text{D})\;\,\|\,\; \mathbf{z}_{\text{AC}} \otimes \mathbf{dJ}_9\; (144\text{D})\;\,\|\,\; \mathbf{z}_0 \otimes \Delta\bar{\mathbf{c}}\; (48\text{D})\,\big] \in \mathbb{R}^{N\times 230}$</div>
-            <div><span style="font-family:var(--font-mono); font-size:11.5px; color:var(--text-muted); display:inline-block; width:28px;">18:</span>$\mathbf{z}_4 \leftarrow \mathbf{z}_0 + \operatorname{Reshape}(\tilde{\boldsymbol{\phi}}\, W_{\text{trans}}) \in \mathbb{R}^{B\times 16\times h\times w}$ <span style="color:var(--text-muted); font-size:12px;">&#9655; Stage 4 0-Net ($25.04\text{ dB}$ mean, $0.93\text{ ms}$ Halide)</span></div>
-            <div style="margin-top:4px;"><span style="font-family:var(--font-mono); font-size:11.5px; color:var(--text-muted); display:inline-block; width:28px;">19:</span><span style="color:var(--green); font-weight:600;">&#9655; Stage 5 (Class III Spatial Kernels): 13D Orthonormal Legendre AC Projectors ($\Pi_x + \Pi_y + \Pi_{\text{curv}} = P_{\text{AC}}$, $\mathbf{z}_5$)</span></div>
-            <div><span style="font-family:var(--font-mono); font-size:11.5px; color:var(--text-muted); display:inline-block; width:28px;">20:</span>$\mathbf{z}_5 \leftarrow \mathbf{z}_4 + \sum_{k\in\{x,y,\text{curv}\}} \Delta g_k(w_{\text{edge}})\,\Pi_k\mathbf{z}_{\text{AC}}$ <span style="color:var(--text-muted); font-size:12px;">&#9655; Bilateral NR ($32.20\text{ dB}$) &amp; Laplacian EEH ($30.02\text{ dB}$)</span></div>
-            <div style="margin-top:4px;"><span style="font-family:var(--font-mono); font-size:11.5px; color:var(--text-muted); display:inline-block; width:28px;">21:</span><span style="color:var(--accent); font-weight:600;">&#9655; Stage 6: 4-Step Iterative ODE Refiner $\mathcal{R}_{4\text{-step}}$ (96K params) &amp; Frozen 16-Ch sRGB Decoder $\mathcal{D}_{\text{sRGB}}$ ($\Delta\theta_{\text{dec}}=0$)</span></div>
-            <div><span style="font-family:var(--font-mono); font-size:11.5px; color:var(--text-muted); display:inline-block; width:28px;">22:</span>Initialize $\mathbf{z}^{(0)} \leftarrow \mathbf{z}_5$; $\;$ <strong>for</strong> $k = 0$ <strong>to</strong> $N - 1$ <strong>do</strong> $\;\tau_k \leftarrow (k + 0.5) / N$</div>
-            <div style="padding-left:24px;"><span style="font-family:var(--font-mono); font-size:11.5px; color:var(--text-muted); display:inline-block; width:28px;">23:</span>$\mathbf{z}^{(k+1)} \leftarrow \mathbf{z}^{(k)} + \tfrac{g(\Theta_{\text{ISP}})}{N}\,\mathcal{F}_\theta\!\big(\mathbf{z}^{(k)},\, \mathbf{z}_5,\, \mathbf{z}_0,\, \bar{\mathbf{c}}_0,\, \bar{\mathbf{c}}_{\text{new}},\, \nabla_{3\times 3}\mathbf{z}^{(k)},\, \Theta_{\text{ISP}},\, \tau_k\big)$</div>
-            <div><span style="font-family:var(--font-mono); font-size:11.5px; color:var(--text-muted); display:inline-block; width:28px;">24:</span><strong>end for</strong>; $\quad \hat{\mathbf{z}}_{\text{sRGB}} \leftarrow \mathbf{z}^{(N)}$, $\quad \hat{\mathbf{x}}_{\text{sRGB}} \leftarrow \mathcal{D}_{\text{sRGB}}(\hat{\mathbf{z}}_{\text{sRGB}}) \in \mathbb{R}^{B\times 3\times H\times W}$</div>
-            <div><span style="font-family:var(--font-mono); font-size:11.5px; color:var(--text-muted); display:inline-block; width:28px;">25:</span><strong>return</strong> $\hat{\mathbf{z}}_{\text{sRGB}},\, \hat{\mathbf{x}}_{\text{sRGB}}$ <span style="color:var(--text-muted); font-size:12px;">&#9655; Final Refined Latent &amp; Decoded sRGB ($27.18\text{ dB}$ mean across 10 cameras)</span></div>
-          </div>
+        <div class="algo-sub"><strong>Input:</strong> Sensor Bayer RAW $\mathbf{I}_{\text{Bayer}} \in \mathbb{R}^{B\times 1\times H\times W}$; Native DNG metadata $\Theta_{\text{ISP}} = (\mathbf{b},\, g,\, \mathbf{w}_{\text{WB}},\, \operatorname{CCM}_{3\times 3},\, \gamma)$; Frozen 16-Ch VAE ($\mathcal{E}_{\text{VAE}}, \mathcal{D}_{\text{sRGB}}$: <code>FLUX.1 AutoencoderKL</code> or <code>TAEF1</code>, $f=8, C=16$) + $1\times 1$ Adapter $\mathcal{A}_{1\times 1}$; Calibrated matrices $(\Psi,\, W_{\text{z2c,nb}},\, W_{\text{trans}})$; Steps $N = 4$.</div>
+        <div class="algo-sub"><strong>Output:</strong> Refined sRGB latent $\hat{\mathbf{z}}_{\text{sRGB}} \in \mathbb{R}^{B\times 16\times (H/8)\times (W/8)}$ and final decoded sRGB image $\hat{\mathbf{x}}_{\text{sRGB}} \in \mathbb{R}^{B\times 3\times H\times W}$.</div>
+        <div class="algo-body">
+          <div class="algo-line algo-phase algo-phase-bright"><span class="algo-ln">1:</span>&#9655; Stage 0: Sensor Bayer RAW Encoding via Frozen 16-Ch VAE Encoder $\mathcal{E}_{\text{VAE}}$ + $1\times 1$ Linear Adapter $\mathcal{A}_{1\times 1}$ ($\mathcal{E}_{\text{raw}}$)</div>
+          <div class="algo-line"><span class="algo-ln">2:</span>$\mathbf{I}_{\text{lin}} \leftarrow \operatorname{Malvar}_{5\times 5}(\mathbf{I}_{\text{Bayer}}) \in \mathbb{R}^{B\times 3\times H\times W}, \quad \mathbf{z}_{\text{base}} \leftarrow \mathcal{E}_{\text{VAE}}(\mathbf{I}_{\text{lin}}), \quad \mathbf{z}_0 \leftarrow \mathbf{z}_{\text{base}} + \mathcal{A}_{1\times 1}(\mathbf{z}_{\text{base}}) \in \mathbb{R}^{B\times 16\times h\times w} \;\;(h=H/8, w=W/8)$</div>
+          <div class="algo-line algo-phase algo-phase-accent"><span class="algo-ln">3:</span>&#9655; Step 1: Subspace Readout of Patch Mean Color $\bar{\mathbf{c}}_0$ &amp; Intra-Patch AC Spread $\boldsymbol{\delta}$</div>
+          <div class="algo-line"><span class="algo-ln">4:</span>$\bar{\mathbf{c}}_0 \leftarrow \operatorname{clip}\!\big(\boldsymbol{\phi}_{\text{nb}}(\mathbf{z}_0)\, W_{\text{z2c,nb}},\; 0,\; 1\big) \in \mathbb{R}^{B\times 3\times h\times w}$</div>
+          <div class="algo-line"><span class="algo-ln">5:</span>$\mathbf{u}_{\text{jet}} \leftarrow \Psi(\mathbf{z}_0 - \mathbf{z}_{\text{black}}) + \mathbf{b}_{\text{jet}}$, $\quad \boldsymbol{\sigma}_{\text{AC}} \leftarrow \sqrt{\tfrac{1}{64}(\mathbf{u}_{\partial x}^2 + \mathbf{u}_{\partial y}^2 + \mathbf{u}_{\partial xx}^2 + \mathbf{u}_{\partial yy}^2)}$, $\quad \boldsymbol{\delta} \leftarrow \sqrt{1.5}\,\boldsymbol{\sigma}_{\text{AC}}$</div>
+          <div class="algo-line algo-phase algo-phase-green"><span class="algo-ln">6:</span>&#9655; Step 2: 3-Point Simpson / Gauss-Lobatto Quadrature (<code>1:4:1</code>) on $1/64$ Grid for Non-Linear DC Color $\bar{\mathbf{c}}_{\text{new}}$</div>
+          <div class="algo-line"><span class="algo-ln">7:</span>$\mathbf{c}_- \leftarrow \operatorname{clip}(\bar{\mathbf{c}}_0 - \boldsymbol{\delta}, 0, 1)$, $\quad \mathbf{c}_0 \leftarrow \bar{\mathbf{c}}_0$, $\quad \mathbf{c}_+ \leftarrow \operatorname{clip}(\bar{\mathbf{c}}_0 + \boldsymbol{\delta}, 0, 1)$</div>
+          <div class="algo-line"><span class="algo-ln">8:</span>$\bar{\mathbf{c}}_{\text{new}} \leftarrow \tfrac{1}{6}\,f_{\text{ISP}}(\mathbf{c}_-, \Theta_{\text{ISP}}) + \tfrac{4}{6}\,f_{\text{ISP}}(\mathbf{c}_0, \Theta_{\text{ISP}}) + \tfrac{1}{6}\,f_{\text{ISP}}(\mathbf{c}_+, \Theta_{\text{ISP}}) \in \mathbb{R}^{B\times 3\times h\times w}$</div>
+          <div class="algo-line algo-phase algo-phase-purple"><span class="algo-ln">9:</span>&#9655; Step 3: $3\times 3$ Secant Jacobian Matrix $J_{3\times 3}$ via Column-by-Column Axis Perturbations</div>
+          <div class="algo-line"><span class="algo-ln">10:</span><strong>for</strong> each input color axis $b \in \{1\text{ (R)},\, 2\text{ (G)},\, 3\text{ (B)}\}$ <strong>do</strong></div>
+          <div class="algo-line algo-indent"><span class="algo-ln">11:</span>$\mathbf{c}_b^{+} \leftarrow \operatorname{clip}(\bar{\mathbf{c}}_0 + \delta_b\mathbf{e}_b, 0, 1)$, $\quad \mathbf{c}_b^{-} \leftarrow \operatorname{clip}(\bar{\mathbf{c}}_0 - \delta_b\mathbf{e}_b, 0, 1)$ <span class="algo-comment">&#9655; Perturb only channel $b$</span></div>
+          <div class="algo-line algo-indent"><span class="algo-ln">12:</span>$J_{\text{raw}}[:, b] \leftarrow \big(f_{\text{ISP}}(\mathbf{c}_b^{+}, \Theta_{\text{ISP}}) - f_{\text{ISP}}(\mathbf{c}_b^{-}, \Theta_{\text{ISP}})\big) \,/\, \max(\mathbf{c}_{b,b}^{+} - \mathbf{c}_{b,b}^{-},\, \epsilon) \in \mathbb{R}^{B\times 3\times h\times w}$</div>
+          <div class="algo-line"><span class="algo-ln">13:</span><strong>end for</strong></div>
+          <div class="algo-line"><span class="algo-ln">14:</span>$J_{3\times 3} \leftarrow 0.85\, J_{\text{raw}} + 0.15\, \operatorname{AvgPool}_{3\times 3}(J_{\text{raw}}) \in \mathbb{R}^{B\times 3\times 3\times h\times w}$</div>
+          <div class="algo-line algo-phase algo-phase-orange"><span class="algo-ln">15:</span>&#9655; Stages 1&ndash;4 (Classes I &amp; II): 144-D Kronecker AC Transport &amp; Zero-Network Projection (<code>Stage 4: 0-Net</code>, $\mathbf{z}_4$)</div>
+          <div class="algo-line"><span class="algo-ln">16:</span>$\mathbf{z}_{\text{AC}} \leftarrow \tau_z\tanh\!\big((\mathbf{z}_0 - \operatorname{AvgPool}_{3\times 3}(\mathbf{z}_0))/\tau_z\big) \in \mathbb{R}^{N\times 16}$, $\quad \mathbf{dJ}_9 \leftarrow \tau_J\tanh\!\big(\operatorname{vec}(J_{3\times 3} - I_3)/\tau_J\big) \in \mathbb{R}^{N\times 9}$</div>
+          <div class="algo-line"><span class="algo-ln">17:</span>$\boldsymbol{\phi} \leftarrow \big[\,\Delta\operatorname{poly}_3(\bar{\mathbf{c}})\; (38\text{D})\;\,\|\,\; \mathbf{z}_{\text{AC}} \otimes \mathbf{dJ}_9\; (144\text{D})\;\,\|\,\; \mathbf{z}_0 \otimes \Delta\bar{\mathbf{c}}\; (48\text{D})\,\big] \in \mathbb{R}^{N\times 230}$</div>
+          <div class="algo-line"><span class="algo-ln">18:</span>$\mathbf{z}_4 \leftarrow \mathbf{z}_0 + \operatorname{Reshape}(\tilde{\boldsymbol{\phi}}\, W_{\text{trans}}) \in \mathbb{R}^{B\times 16\times h\times w}$ <span class="algo-comment">&#9655; Stage 4 0-Net ($25.04\text{ dB}$ mean, $0.93\text{ ms}$ Halide)</span></div>
+          <div class="algo-line algo-phase algo-phase-green"><span class="algo-ln">19:</span>&#9655; Stage 5 (Class III Spatial Kernels): 13D Orthonormal Legendre AC Projectors ($\Pi_x + \Pi_y + \Pi_{\text{curv}} = P_{\text{AC}}$, $\mathbf{z}_5$)</div>
+          <div class="algo-line"><span class="algo-ln">20:</span>$\mathbf{z}_5 \leftarrow \mathbf{z}_4 + \sum_{k\in\{x,y,\text{curv}\}} \Delta g_k(w_{\text{edge}})\,\Pi_k\mathbf{z}_{\text{AC}}$ <span class="algo-comment">&#9655; Bilateral NR ($32.20\text{ dB}$) &amp; Laplacian EEH ($30.02\text{ dB}$)</span></div>
+          <div class="algo-line algo-phase algo-phase-accent"><span class="algo-ln">21:</span>&#9655; Stage 6: 4-Step Iterative ODE Refiner $\mathcal{R}_{4\text{-step}}$ (96K params) &amp; Frozen 16-Ch sRGB Decoder $\mathcal{D}_{\text{sRGB}}$ ($\Delta\theta_{\text{dec}}=0$)</div>
+          <div class="algo-line"><span class="algo-ln">22:</span>Initialize $\mathbf{z}^{(0)} \leftarrow \mathbf{z}_5$; $\;$ <strong>for</strong> $k = 0$ <strong>to</strong> $N - 1$ <strong>do</strong> $\;\tau_k \leftarrow (k + 0.5) / N$</div>
+          <div class="algo-line algo-indent"><span class="algo-ln">23:</span>$\mathbf{z}^{(k+1)} \leftarrow \mathbf{z}^{(k)} + \tfrac{g(\Theta_{\text{ISP}})}{N}\,\mathcal{F}_\theta\!\big(\mathbf{z}^{(k)},\, \mathbf{z}_5,\, \mathbf{z}_0,\, \bar{\mathbf{c}}_0,\, \bar{\mathbf{c}}_{\text{new}},\, \nabla_{3\times 3}\mathbf{z}^{(k)},\, \Theta_{\text{ISP}},\, \tau_k\big)$</div>
+          <div class="algo-line"><span class="algo-ln">24:</span><strong>end for</strong>; $\quad \hat{\mathbf{z}}_{\text{sRGB}} \leftarrow \mathbf{z}^{(N)}$, $\quad \hat{\mathbf{x}}_{\text{sRGB}} \leftarrow \mathcal{D}_{\text{sRGB}}(\hat{\mathbf{z}}_{\text{sRGB}}) \in \mathbb{R}^{B\times 3\times H\times W}$</div>
+          <div class="algo-line"><span class="algo-ln">25:</span><strong>return</strong> $\hat{\mathbf{z}}_{\text{sRGB}},\, \hat{\mathbf{x}}_{\text{sRGB}}$ <span class="algo-comment">&#9655; Final Refined Latent &amp; Decoded sRGB ($27.18\text{ dB}$ mean across 10 cameras)</span></div>
         </div>
       </div>
 
       <div class="span-all figure-card">
-        <img src="figures/comp_fig10_algorithm_chain_dataflow.webp" alt="End-to-End 7-Stage Architecture and Algorithm 1 Execution Chain in 16-Channel Latent Space">
+        <img src="figures/comp_fig10_algorithm_chain_dataflow.webp" alt="End-to-End 7-Stage Architecture and Algorithm 1 Execution Chain in 16-Channel Latent Space" loading="lazy" decoding="async">
         <div class="figure-caption">
           <strong>Fig. 3. End-to-End 7-Stage Architecture (<code>Stages 0&ndash;6</code>) &amp; Algorithm 1 Execution Chain Inside the 16-Channel Latent Space ($h=H/8, w=W/8$, Sec. 4).</strong> <strong>(a)</strong> Complete architectural dataflow from <code>Stage 0: RAW Encoder</code> ($\mathcal{E}_{\text{raw}}$) through <code>Stages 1&ndash;5: White-Box 16-Ch Latent ISP</code> ($\mathcal{T}_{\text{LSP}}$ spanning Classes I&ndash;III, Eqs. 3, 4, 6) and <code>Stage 6: 4-Step ODE Refiner</code> ($\mathcal{R}_{4\text{-step}}$, Eq. 5) to the 100% frozen sRGB VAE Decoder ($\mathcal{D}_{\text{sRGB}}$, $27.18\text{ dB}$); <strong>(b)</strong> <strong>Stages 1&ndash;4 (Class I &amp; II)</strong> column-by-column construction of the $3\times 3$ Secant Jacobian $J_{3\times 3}$ at <code>Nikon D700</code> patch $(7,8)$ via axis perturbations $b \in \{R, G, B\}$; <strong>(c)</strong> <strong>Stage 4</strong> $144$-D Kronecker outer product $\mathbf{z}_{\text{AC}} \otimes \operatorname{vec}(J_{3\times 3} - I_3)$ with $230$-D ridge projection $W_{\text{trans}}$ and <strong>Stage 5 (Class III Spatial Kernels)</strong> 13D orthonormal Legendre AC projectors ($\Pi_x + \Pi_y + \Pi_{\text{curv}} = P_{\text{AC}}$).
         </div>
@@ -987,14 +1159,14 @@
       </p>
 
       <div class="span-all figure-card">
-        <img src="figures/comp_fig9_step_by_step_math_and_consistency.webp" alt="Multi-Database Qualitative Comparison Matrix and Patch-Level Latent Verification">
+        <img src="figures/comp_fig9_step_by_step_math_and_consistency.webp" alt="Multi-Database Qualitative Comparison Matrix and Patch-Level Latent Verification" loading="lazy" decoding="async">
         <div class="figure-caption">
-          <strong>Fig. 4. Multi-Database Qualitative Comparison Matrix and Patch-Level Latent Verification (Sec. 5).</strong> <strong>(a)</strong> Unoccluded $4\times 8$ qualitative comparison matrix across three independent hardware RAW databases&mdash;<strong>DB 1: OpenISP 10-bit RGGB</strong> (<code>OpenISP Chart</code> $28.56\to 30.52\text{ dB}$, <code>OpenISP Detail</code> $26.06\to 28.17\text{ dB}$), <strong>DB 2: MIT-Adobe FiveK 12/14-bit DSLRs</strong> (<code>Nikon D700</code> $25.44\to 26.51\text{ dB}$, <code>FiveK DSLR</code> $25.63\to 26.92\text{ dB}$, <code>Canon 1Ds II</code> $22.66\to 24.24\text{ dB}$, <code>Canon 40D</code> $24.19\to 26.19\text{ dB}$), and <strong>DB 3: Google HDR+ 14-bit Mobile</strong> (<code>Pixel Daylight</code> $28.60\to 30.14\text{ dB}$, <code>Pixel Indoor</code> $29.10\to 32.55\text{ dB}$), comparing <code>Input RAW (Stage 0)</code>, <code>Ours (0-Net, Stage 4, 0.93 ms)</code>, <code>Ours (+4-Step, Stage 6 ODE)</code>, and <code>Pixel-ISP GT (Reference)</code>; <strong>(b)</strong> 16-channel latent vector match ($c_0 \dots c_{15}$) at patch $(7,8)$ of <code>Nikon D700</code> across <code>Stage 0 RAW</code>, <code>Stage 4 0-Net</code>, <code>Stage 5 Kernel</code>, <code>Stage 6 4-Step ODE</code>, and oracle latent $\mathcal{E}_{\text{VAE}}(\mathbf{x}_{\text{gt}})$; <strong>(c)</strong> Cross-scene mean RGB consistency across all 10 hardware cameras $\times$ <code>Stages 0&ndash;6</code> ($210$ RGB points, $R^2 = 0.9978$, MAE $= 0.0055$).
+          <strong>Fig. 4. Multi-Database Qualitative Comparison Matrix and Patch-Level Latent Verification (Sec. 5).</strong> <strong>(a)</strong> Unoccluded $4\times 8$ qualitative comparison matrix across three independent hardware RAW databases&mdash;<strong>DB 1: OpenISP 10-bit RGGB</strong> (<code>OpenISP Chart</code> $23.91\to 30.52\text{ dB}$, <code>OpenISP Detail</code> $26.06\to 28.17\text{ dB}$), <strong>DB 2: MIT-Adobe FiveK 12/14-bit DSLRs</strong> (<code>Nikon D700</code> $25.44\to 26.51\text{ dB}$, <code>FiveK DSLR</code> $25.58\to 26.92\text{ dB}$, <code>Canon 1Ds II</code> $24.11\to 24.24\text{ dB}$, <code>Canon 40D</code> $24.19\to 26.19\text{ dB}$), and <strong>DB 3: Google HDR+ 14-bit Mobile</strong> (<code>Pixel Daylight</code> $27.19\to 30.14\text{ dB}$, <code>Pixel Indoor</code> $30.19\to 32.55\text{ dB}$), comparing <code>Input RAW (Stage 0)</code>, <code>Ours (0-Net, Stage 4, 0.93 ms)</code>, <code>Ours (+4-Step, Stage 6 ODE)</code>, and <code>Pixel-ISP GT (Reference)</code>; <strong>(b)</strong> 16-channel latent vector match ($c_0 \dots c_{15}$) at patch $(7,8)$ of <code>Nikon D700</code> across <code>Stage 0 RAW</code>, <code>Stage 4 0-Net</code>, <code>Stage 5 Kernel</code>, <code>Stage 6 4-Step ODE</code>, and oracle latent $\mathcal{E}_{\text{VAE}}(\mathbf{x}_{\text{gt}})$; <strong>(c)</strong> Cross-scene mean RGB consistency across all 10 hardware cameras $\times$ <code>Stages 0&ndash;6</code> ($210$ RGB points, $R^2 = 0.9978$, MAE $= 0.0055$).
         </div>
       </div>
 
-      <div class="span-all">
-        <h3>Table 3: Complete 10-Camera Hardware Sensor RAW Evaluation Using Authentic Native DNG WB/CCM Metadata (Columns 3&ndash;8: Single-Stage Operator PSNR vs. $\mathbf{x}_{\text{gt},k} = f_k(\mathbf{x}_0)$; Columns 9&ndash;12: Full Combined ISP PSNR &amp; MAE)</h3>
+      <div class="table-container span-all">
+        <div class="table-caption">Table 3: Complete 10-Camera Hardware Sensor RAW Evaluation Using Authentic Native DNG WB/CCM Metadata (Columns 3&ndash;8: Single-Stage Operator PSNR vs. $\mathbf{x}_{\text{gt},k} = f_k(\mathbf{x}_0)$; Columns 9&ndash;12: Full Combined ISP PSNR &amp; MAE)</div>
         <table>
           <thead>
             <tr>
@@ -1153,7 +1325,7 @@
               <td class="highlight-val">32.55 (+2.36)</td>
               <td>0.0007</td>
             </tr>
-            <tr style="border-top:2px solid var(--accent); font-weight:700;">
+            <tr class="summary-row">
               <td><strong>10-Camera Mean</strong></td>
               <td>&mdash;</td>
               <td class="highlight-val">30.47</td>
@@ -1177,12 +1349,12 @@
       </p>
       <ul>
         <li><strong>0th-Order Scalar Subspace Shift vs. 1st-Order Simpson-Jacobian Jet (Mode B vs. Mode A):</strong> On the cumulative <code>Stages 1&ndash;4</code> benchmark, unprocessed sensor RAW yields $13.38\text{ dB}$ and flat 0th-order scalar subspace steering [4] reaches $22.59\text{ dB}$ ($\text{MSE}_z = 0.190$) because it omits concave gamma quadrature and leaves the 13D AC edge fiber untouched. Introducing <code>1:4:1</code> Simpson quadrature and $144\text{-D}$ Secant Jacobian Kronecker transport improves 0-Net PSNR to $24.30\text{ dB}$ in <strong>Mode B</strong> ($\mathbf{z}_0$-only readout, zero auxiliary metadata) and <strong>$25.16\text{ dB}$ in Mode A</strong> (on-chip sensor patch stats, reducing latent error by $36.8\%$ to $\text{MSE}_z = 0.120$; per-stage breakdown in <strong>Table 6</strong>).</li>
-        <li><strong>Refinement Horizon ($N=0$ vs. $N=1$ vs. $N=4$):</strong> Across all 10 cameras, zero-network analytical math (<code>Stage 4: 0-Net</code>) reaches $25.04\text{ dB}$ mean PSNR at $0.93\text{ ms}$. A single residual step (<code>+1-Step</code>, $25.29\text{ dB}$) yields $+0.25\text{ dB}$ because large non-linear WB/Gamma jumps induce $8\times 8$ block-boundary ringing under the $32\times 32$ VAE receptive field. Integrating $N=4$ damped cross-cell $3\times 3$ ODE steps (<code>Stage 6: +4-Step</code>) resolves cross-patch boundary ringing and boosts mean PSNR to <strong>$27.18\text{ dB}$</strong> ($+2.14\text{ dB}$ over 0-Net, up to $32.55\text{ dB}$ on Google Pixel Indoor).</li>
+        <li><strong>Refinement Horizon ($N=0$ vs. $N=1$ vs. $N=4$):</strong> Across all 10 cameras, zero-network analytical math (<code>Stage 4: 0-Net</code>) reaches $25.04\text{ dB}$ mean PSNR at $0.93\text{ ms}$. A single residual step (<code>Stage 6: +1-Step ODE</code>, $25.29\text{ dB}$) yields $+0.25\text{ dB}$ because large non-linear WB/Gamma jumps induce $8\times 8$ block-boundary ringing under the $32\times 32$ VAE receptive field. Integrating $N=4$ damped cross-cell $3\times 3$ ODE steps (<code>Stage 6: +4-Step</code>) resolves cross-patch boundary ringing and boosts mean PSNR to <strong>$27.18\text{ dB}$</strong> ($+2.14\text{ dB}$ over 0-Net, up to $32.55\text{ dB}$ on Google Pixel Indoor).</li>
         <li><strong>Authentic Native vs. Fixed Global Camera Metadata:</strong> Replacing each camera&rsquo;s native DNG metadata $\Theta_{\text{ISP}}$ with a fixed global parameter set ($g=1.20$, $\mathbf{w}_{\text{WB}}=[1.95, 1.0, 1.45]$, $\gamma=2.0$) degrades final Stage 6 PSNR by $-3.81\text{ dB}$ ($23.37\text{ dB}$ vs. $27.18\text{ dB}$) and increases RGB MAE by $5.86\times$ ($0.0164$ vs. $0.0028$).</li>
       </ul>
 
-      <div style="margin: 14px 0; break-inside: avoid;">
-        <h3>Table 4: Factorized Ablation Study (0th-Order Subspace Baseline vs. Mode B/A, Native Metadata, &amp; ODE Horizon)</h3>
+      <div class="table-container span-all">
+        <div class="table-caption">Table 4: Factorized Ablation Study (0th-Order Subspace Baseline vs. Mode B/A, Native Metadata, &amp; ODE Horizon)</div>
         <table>
           <thead>
             <tr>
@@ -1249,7 +1421,7 @@
               <td>$\text{MAE} = 0.0164$</td>
               <td>3.80 ms</td>
             </tr>
-            <tr style="border-top:1.5px solid var(--surface-border);">
+            <tr class="subtotal-row">
               <td><strong>Ours (Stage 4: 0-Net Math)</strong></td>
               <td><strong>Native DNG</strong></td>
               <td><strong>$0$</strong></td>
@@ -1308,8 +1480,7 @@
         <li>M. Gharbi, J. Chen, J. T. Barron, S. W. Hasinoff, and F. Durand, &ldquo;Deep bilateral learning for real-time image enhancement (HDRNet),&rdquo; <em>ACM Trans. Graph. (SIGGRAPH)</em>, vol. 36, no. 4, pp. 118:1&ndash;118:12, 2017.</li>
       </ol>
 
-      <!-- BEGIN_SECTION_7_INTERACTIVE_SIMULATOR -->
-      <div class="span-all" id="paper-appendix" style="margin-top: 36px; padding-top: 28px; border-top: 2.5px solid var(--surface-border);">
+      <div class="span-all appendix-section" id="paper-appendix">
         <h2>Appendix: Supplementary Information</h2>
 
         <h3>Appendix A: Derivation of 3-Point Simpson (<code>1:4:1</code>) Jet Quadrature and $O(\delta^4)$ Error Bound</h3>
@@ -1334,388 +1505,437 @@
           <strong>Table 5</strong> reports the complete per-camera breakdown of Experiment B (Fixed Global Metadata: $g=1.20\times$, $\mathbf{w}_{\text{WB}}=[1.95, 1.0, 1.45]$, $\gamma=2.0$ applied identically across all 10 cameras) compared against Experiment A (Authentic Native DNG Metadata in <strong>Table 3</strong>). When camera-specific white-balance gains and $3\times 3$ CCM matrices are replaced by a fixed global preset, scenes with strong tungsten or daylight chromaticity shifts (e.g., <code>Google Pixel Indoor</code> with native $w_B = 2.633$ and <code>Canon EOS 5D</code> with native $w_R = 2.724$) suffer severe color cast errors, dropping 10-camera mean Stage 6 PSNR from $27.18\text{ dB}$ to $23.37\text{ dB}$ and increasing RGB MAE from $0.0028$ to $0.0164$.
         </p>
 
-        <h3>Table 5: Supplementary Experiment B &mdash; Complete 10-Camera Evaluation Under Fixed Global ISP Metadata ($g=1.20\times$, $\mathbf{w}_{\text{WB}}=[1.950, 1.000, 1.450]$, $\gamma=2.0$)</h3>
-        <table>
-          <thead>
-            <tr>
-              <th>Hardware Camera Sensor / Scene</th>
-              <th>Fixed Global WB $[R, G, B]$</th>
-              <th>Only BLC &uarr;</th>
-              <th>Only WB &uarr;</th>
-              <th>Only CCM &uarr;</th>
-              <th>Only $\gamma$ &uarr;</th>
-              <th>Only EEH &uarr;</th>
-              <th>Only NR &uarr;</th>
-              <th>Full 0-Net &uarr;</th>
-              <th>Full +1S &uarr;</th>
-              <th>Full +4S &uarr;</th>
-              <th>Full MAE &darr;</th>
-            </tr>
-          </thead>
-          <tbody>
-            <tr>
-              <td>1. <strong>OpenISP 10-bit Full</strong> (<code>test.RAW</code>)</td>
-              <td>$1.20\times$ / $[1.950, 1.0, 1.450]$</td>
-              <td>28.39</td>
-              <td>23.96</td>
-              <td>28.53</td>
-              <td>30.34</td>
-              <td>33.12</td>
-              <td>35.38</td>
-              <td>22.37</td>
-              <td>22.44</td>
-              <td>24.74</td>
-              <td>0.0061</td>
-            </tr>
-            <tr>
-              <td>2. <strong>OpenISP 10-bit Crop</strong> (<code>test.RAW</code>)</td>
-              <td>$1.20\times$ / $[1.950, 1.0, 1.450]$</td>
-              <td>28.34</td>
-              <td>25.59</td>
-              <td>27.49</td>
-              <td>30.29</td>
-              <td>29.76</td>
-              <td>31.68</td>
-              <td>24.92</td>
-              <td>24.98</td>
-              <td>24.25</td>
-              <td>0.0055</td>
-            </tr>
-            <tr>
-              <td>3. <strong>Nikon D700</strong> (12-bit BGGR <code>.DNG</code>)</td>
-              <td>$1.20\times$ / $[1.950, 1.0, 1.450]$</td>
-              <td>28.29</td>
-              <td>27.16</td>
-              <td>30.47</td>
-              <td>30.12</td>
-              <td>30.77</td>
-              <td>33.31</td>
-              <td>25.05</td>
-              <td>24.80</td>
-              <td>25.25</td>
-              <td>0.0082</td>
-            </tr>
-            <tr>
-              <td>4. <strong>FiveK DSLR</strong> (14-bit RGGB <code>.DNG</code>)</td>
-              <td>$1.20\times$ / $[1.950, 1.0, 1.450]$</td>
-              <td>29.12</td>
-              <td>23.26</td>
-              <td>30.30</td>
-              <td>29.62</td>
-              <td>31.05</td>
-              <td>33.34</td>
-              <td>23.52</td>
-              <td>22.81</td>
-              <td>22.59</td>
-              <td>0.0116</td>
-            </tr>
-            <tr>
-              <td>5. <strong>Canon EOS 5D</strong> (14-bit RGGB <code>.DNG</code>)</td>
-              <td>$1.20\times$ / $[1.950, 1.0, 1.450]$</td>
-              <td>24.42</td>
-              <td>23.67</td>
-              <td>26.14</td>
-              <td>25.97</td>
-              <td>25.42</td>
-              <td>27.91</td>
-              <td>20.24</td>
-              <td>20.08</td>
-              <td>19.68</td>
-              <td>0.0195</td>
-            </tr>
-            <tr>
-              <td>6. <strong>Canon 1Ds MkII</strong> (12-bit RGGB <code>.DNG</code>)</td>
-              <td>$1.20\times$ / $[1.950, 1.0, 1.450]$</td>
-              <td>26.57</td>
-              <td>25.64</td>
-              <td>28.02</td>
-              <td>27.55</td>
-              <td>27.79</td>
-              <td>30.36</td>
-              <td>23.67</td>
-              <td>23.68</td>
-              <td>23.16</td>
-              <td>0.0069</td>
-            </tr>
-            <tr>
-              <td>7. <strong>Canon EOS 40D #1</strong> (14-bit RGGB <code>.DNG</code>)</td>
-              <td>$1.20\times$ / $[1.950, 1.0, 1.450]$</td>
-              <td>26.37</td>
-              <td>25.82</td>
-              <td>28.33</td>
-              <td>29.15</td>
-              <td>28.53</td>
-              <td>30.86</td>
-              <td>24.27</td>
-              <td>24.03</td>
-              <td>23.38</td>
-              <td>0.0107</td>
-            </tr>
-            <tr>
-              <td>8. <strong>Canon EOS 40D #2</strong> (14-bit RGGB <code>.DNG</code>)</td>
-              <td>$1.20\times$ / $[1.950, 1.0, 1.388]$</td>
-              <td>25.19</td>
-              <td>23.89</td>
-              <td>26.73</td>
-              <td>26.60</td>
-              <td>26.57</td>
-              <td>29.14</td>
-              <td>22.20</td>
-              <td>21.86</td>
-              <td>21.98</td>
-              <td>0.0117</td>
-            </tr>
-            <tr>
-              <td>9. <strong>Google Pixel Daylight</strong> (14-bit <code>.DNG</code>)</td>
-              <td>$1.20\times$ / $[1.950, 1.0, 1.450]$</td>
-              <td>27.54</td>
-              <td>26.90</td>
-              <td>30.35</td>
-              <td>30.11</td>
-              <td>31.45</td>
-              <td>33.56</td>
-              <td>24.72</td>
-              <td>24.91</td>
-              <td>24.69</td>
-              <td>0.0400</td>
-            </tr>
-            <tr>
-              <td>10. <strong>Google Pixel Indoor</strong> (14-bit <code>.DNG</code>)</td>
-              <td>$1.20\times$ / $[1.950, 1.0, 1.450]$</td>
-              <td>31.52</td>
-              <td>27.39</td>
-              <td>33.26</td>
-              <td>32.44</td>
-              <td>35.75</td>
-              <td>36.51</td>
-              <td>24.20</td>
-              <td>24.51</td>
-              <td>23.93</td>
-              <td>0.0436</td>
-            </tr>
-            <tr style="border-top:2px solid var(--surface-border); font-weight:700;">
-              <td><strong>10-Camera Mean (Fixed Global)</strong></td>
-              <td>&mdash;</td>
-              <td>27.57</td>
-              <td>25.33</td>
-              <td>28.96</td>
-              <td>29.22</td>
-              <td>30.02</td>
-              <td>32.20</td>
-              <td>23.52</td>
-              <td>23.41</td>
-              <td>23.37</td>
-              <td>0.0164</td>
-            </tr>
-            <tr style="border-top:2px solid var(--accent); font-weight:700;">
-              <td><strong>Gain of Native Metadata (Table 3)</strong></td>
-              <td>&mdash;</td>
-              <td class="highlight-val">+2.90</td>
-              <td class="highlight-val">+0.60</td>
-              <td class="highlight-val">+0.05</td>
-              <td>+0.00</td>
-              <td>+0.00</td>
-              <td>+0.00</td>
-              <td class="highlight-val">+1.52</td>
-              <td class="highlight-val">+1.88</td>
-              <td class="highlight-val">+3.81 dB</td>
-              <td class="highlight-val">5.86&times; lower</td>
-            </tr>
-          </tbody>
-        </table>
+        <div class="table-container span-all">
+          <div class="table-caption">Table 5: Supplementary Experiment B &mdash; Complete 10-Camera Evaluation Under Fixed Global ISP Metadata ($g=1.20\times$, $\mathbf{w}_{\text{WB}}=[1.950, 1.000, 1.450]$, $\gamma=2.0$)</div>
+          <table>
+            <thead>
+              <tr>
+                <th>Hardware Camera Sensor / Scene</th>
+                <th>Fixed Global WB $[R, G, B]$</th>
+                <th>Only BLC &uarr;</th>
+                <th>Only WB &uarr;</th>
+                <th>Only CCM &uarr;</th>
+                <th>Only $\gamma$ &uarr;</th>
+                <th>Only EEH &uarr;</th>
+                <th>Only NR &uarr;</th>
+                <th>Full 0-Net &uarr;</th>
+                <th>Full +1S &uarr;</th>
+                <th>Full +4S &uarr;</th>
+                <th>Full MAE &darr;</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr>
+                <td>1. <strong>OpenISP 10-bit Full</strong> (<code>test.RAW</code>)</td>
+                <td>$1.20\times$ / $[1.950, 1.0, 1.450]$</td>
+                <td>28.39</td>
+                <td>23.96</td>
+                <td>28.53</td>
+                <td>30.34</td>
+                <td>33.12</td>
+                <td>35.38</td>
+                <td>22.37</td>
+                <td>22.44</td>
+                <td>24.74</td>
+                <td>0.0061</td>
+              </tr>
+              <tr>
+                <td>2. <strong>OpenISP 10-bit Crop</strong> (<code>test.RAW</code>)</td>
+                <td>$1.20\times$ / $[1.950, 1.0, 1.450]$</td>
+                <td>28.34</td>
+                <td>25.59</td>
+                <td>27.49</td>
+                <td>30.29</td>
+                <td>29.76</td>
+                <td>31.68</td>
+                <td>24.92</td>
+                <td>24.98</td>
+                <td>24.25</td>
+                <td>0.0055</td>
+              </tr>
+              <tr>
+                <td>3. <strong>Nikon D700</strong> (12-bit BGGR <code>.DNG</code>)</td>
+                <td>$1.20\times$ / $[1.950, 1.0, 1.450]$</td>
+                <td>28.29</td>
+                <td>27.16</td>
+                <td>30.47</td>
+                <td>30.12</td>
+                <td>30.77</td>
+                <td>33.31</td>
+                <td>25.05</td>
+                <td>24.80</td>
+                <td>25.25</td>
+                <td>0.0082</td>
+              </tr>
+              <tr>
+                <td>4. <strong>FiveK DSLR</strong> (14-bit RGGB <code>.DNG</code>)</td>
+                <td>$1.20\times$ / $[1.950, 1.0, 1.450]$</td>
+                <td>29.12</td>
+                <td>23.26</td>
+                <td>30.30</td>
+                <td>29.62</td>
+                <td>31.05</td>
+                <td>33.34</td>
+                <td>23.52</td>
+                <td>22.81</td>
+                <td>22.59</td>
+                <td>0.0116</td>
+              </tr>
+              <tr>
+                <td>5. <strong>Canon EOS 5D</strong> (14-bit RGGB <code>.DNG</code>)</td>
+                <td>$1.20\times$ / $[1.950, 1.0, 1.450]$</td>
+                <td>24.42</td>
+                <td>23.67</td>
+                <td>26.14</td>
+                <td>25.97</td>
+                <td>25.42</td>
+                <td>27.91</td>
+                <td>20.24</td>
+                <td>20.08</td>
+                <td>19.68</td>
+                <td>0.0195</td>
+              </tr>
+              <tr>
+                <td>6. <strong>Canon 1Ds MkII</strong> (12-bit RGGB <code>.DNG</code>)</td>
+                <td>$1.20\times$ / $[1.950, 1.0, 1.450]$</td>
+                <td>26.57</td>
+                <td>25.64</td>
+                <td>28.02</td>
+                <td>27.55</td>
+                <td>27.79</td>
+                <td>30.36</td>
+                <td>23.67</td>
+                <td>23.68</td>
+                <td>23.16</td>
+                <td>0.0069</td>
+              </tr>
+              <tr>
+                <td>7. <strong>Canon EOS 40D #1</strong> (14-bit RGGB <code>.DNG</code>)</td>
+                <td>$1.20\times$ / $[1.950, 1.0, 1.450]$</td>
+                <td>26.37</td>
+                <td>25.82</td>
+                <td>28.33</td>
+                <td>29.15</td>
+                <td>28.53</td>
+                <td>30.86</td>
+                <td>24.27</td>
+                <td>24.03</td>
+                <td>23.38</td>
+                <td>0.0107</td>
+              </tr>
+              <tr>
+                <td>8. <strong>Canon EOS 40D #2</strong> (14-bit RGGB <code>.DNG</code>)</td>
+                <td>$1.20\times$ / $[1.950, 1.0, 1.388]$</td>
+                <td>25.19</td>
+                <td>23.89</td>
+                <td>26.73</td>
+                <td>26.60</td>
+                <td>26.57</td>
+                <td>29.14</td>
+                <td>22.20</td>
+                <td>21.86</td>
+                <td>21.98</td>
+                <td>0.0117</td>
+              </tr>
+              <tr>
+                <td>9. <strong>Google Pixel Daylight</strong> (14-bit <code>.DNG</code>)</td>
+                <td>$1.20\times$ / $[1.950, 1.0, 1.450]$</td>
+                <td>27.54</td>
+                <td>26.90</td>
+                <td>30.35</td>
+                <td>30.11</td>
+                <td>31.45</td>
+                <td>33.56</td>
+                <td>24.72</td>
+                <td>24.91</td>
+                <td>24.69</td>
+                <td>0.0400</td>
+              </tr>
+              <tr>
+                <td>10. <strong>Google Pixel Indoor</strong> (14-bit <code>.DNG</code>)</td>
+                <td>$1.20\times$ / $[1.950, 1.0, 1.450]$</td>
+                <td>31.52</td>
+                <td>27.39</td>
+                <td>33.26</td>
+                <td>32.44</td>
+                <td>35.75</td>
+                <td>36.51</td>
+                <td>24.20</td>
+                <td>24.51</td>
+                <td>23.93</td>
+                <td>0.0436</td>
+              </tr>
+              <tr class="subtotal-row">
+                <td><strong>10-Camera Mean (Fixed Global)</strong></td>
+                <td>&mdash;</td>
+                <td>27.57</td>
+                <td>25.33</td>
+                <td>28.96</td>
+                <td>29.22</td>
+                <td>30.02</td>
+                <td>32.20</td>
+                <td>23.52</td>
+                <td>23.41</td>
+                <td>23.37</td>
+                <td>0.0164</td>
+              </tr>
+              <tr class="summary-row">
+                <td><strong>Gain of Native Metadata (Table 3)</strong></td>
+                <td>&mdash;</td>
+                <td class="highlight-val">+2.90</td>
+                <td class="highlight-val">+0.60</td>
+                <td class="highlight-val">+0.05</td>
+                <td>+0.00</td>
+                <td>+0.00</td>
+                <td>+0.00</td>
+                <td class="highlight-val">+1.52</td>
+                <td class="highlight-val">+1.88</td>
+                <td class="highlight-val">+3.81 dB</td>
+                <td class="highlight-val">5.86&times; lower</td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
 
         <h3>Appendix C: Stage-by-Stage Subspace Ablation, 3-Point Simpson Quadrature, Cross-VAE Generalization, and Multi-Resolution Runtime Scaling</h3>
         <p>
           <strong>Table 6</strong> provides the complete stage-by-stage breakdown comparing 0th-Order Scalar Subspace Steering [4] against Comp-LSP (Mode B and Mode A), the 5-scene patch DC PSNR quadrature ablation, cross-VAE generalization between <code>FLUX.1</code> and <code>TAEF1</code>, and multi-resolution execution latency across $256\times 256$, $1024\times 1024$ (1MP), and $4000\times 3000$ (12MP).
         </p>
-        <h3>Table 6: Supplementary Experiment C &mdash; Stage-by-Stage Subspace Ablation, Simpson Quadrature, Cross-VAE Generalization, and Multi-Resolution Latency</h3>
-        <table>
-          <thead>
-            <tr>
-              <th>Sub-Experiment / Metric</th>
-              <th>Unprocessed / 1-Pt</th>
-              <th>0th-Order Scalar [4]</th>
-              <th>Ours Mode B ($\mathbf{z}_0$-Only)</th>
-              <th>Ours Mode A (Sensor $\bar{\mathbf{c}}_0$)</th>
-              <th>Ours + Refiner</th>
-              <th>Oracle Ceiling / Speedup</th>
-            </tr>
-          </thead>
-          <tbody>
-            <tr class="section-row">
-              <td colspan="7">(a) Cumulative Stage-by-Stage PSNR (dB &uarr;) &amp; Latent MSE (&darr;) on Color-Dojo Hardware Benchmark (<code>FLUX.1</code>)</td>
-            </tr>
-            <tr>
-              <td>Stage 1: +BLC &amp; Digital Gain</td>
-              <td>27.76 dB</td>
-              <td>28.96 dB ($\text{MSE}_z=0.062$)</td>
-              <td>29.46 dB</td>
-              <td class="highlight-val">30.18 dB ($\text{MSE}_z=0.043$)</td>
-              <td class="highlight-val">30.46 dB</td>
-              <td>33.00 dB</td>
-            </tr>
-            <tr>
-              <td>Stage 2: +White Balance</td>
-              <td>18.57 dB</td>
-              <td>24.04 dB ($\text{MSE}_z=0.159$)</td>
-              <td>25.81 dB</td>
-              <td class="highlight-val">26.83 dB ($\text{MSE}_z=0.090$)</td>
-              <td class="highlight-val">27.55 dB</td>
-              <td>31.49 dB</td>
-            </tr>
-            <tr>
-              <td>Stage 3: +$3\times 3$ CCM</td>
-              <td>19.10 dB</td>
-              <td>23.56 dB ($\text{MSE}_z=0.174$)</td>
-              <td>25.55 dB</td>
-              <td class="highlight-val">26.50 dB ($\text{MSE}_z=0.088$)</td>
-              <td class="highlight-val">27.13 dB</td>
-              <td>30.97 dB</td>
-            </tr>
-            <tr class="highlight-row">
-              <td><strong>Stage 4: +Gamma Tone Curve</strong></td>
-              <td>13.38 dB</td>
-              <td>22.59 dB ($\text{MSE}_z=0.190$)</td>
-              <td>24.30 dB</td>
-              <td class="highlight-val">25.16 dB ($\text{MSE}_z=0.120$)</td>
-              <td class="highlight-val">26.68 dB</td>
-              <td>31.29 dB</td>
-            </tr>
-            <tr class="section-row">
-              <td colspan="7">(b) $8\times 8$ Patch DC Color PSNR (dB &uarr;): 1-Point Evaluation $f_{\text{ISP}}(\bar{\mathbf{c}}_0)$ vs. 3-Point Simpson (<code>1:4:1</code>) Jet Quadrature</td>
-            </tr>
-            <tr>
-              <td>OpenISP Full / OpenISP Crop</td>
-              <td>25.69 / 29.84 dB</td>
-              <td>&mdash;</td>
-              <td>26.94 (+1.26) / 31.98 (+2.14)</td>
-              <td class="highlight-val">29.28 (+3.60) / 34.54 (+4.71)</td>
-              <td>&mdash;</td>
-              <td>Exact $8\times 8$ Mean</td>
-            </tr>
-            <tr>
-              <td>Nikon D700 / Canon EOS 40D</td>
-              <td>39.27 / 35.66 dB</td>
-              <td>&mdash;</td>
-              <td>40.67 (+1.41) / 36.78 (+1.12)</td>
-              <td class="highlight-val">46.11 (+6.85) / 40.30 (+4.64)</td>
-              <td>&mdash;</td>
-              <td>Exact $8\times 8$ Mean</td>
-            </tr>
-            <tr>
-              <td>Google Pixel Daylight</td>
-              <td>43.53 dB</td>
-              <td>&mdash;</td>
-              <td>45.86 (+2.33 dB)</td>
-              <td class="highlight-val">51.00 (+7.47 dB)</td>
-              <td>&mdash;</td>
-              <td>Exact $8\times 8$ Mean</td>
-            </tr>
-            <tr class="section-row">
-              <td colspan="7">(c) Cross-VAE Backbone Generalization on 9-Stage Chained ISP (<code>FLUX.1</code> vs. Distilled <code>TAEF1</code> 16-Channel Autoencoders)</td>
-            </tr>
-            <tr>
-              <td><code>FLUX.1</code> 16-Ch VAE (PSNR &uarr; / SSIM &uarr; / $\text{MSE}_z$ &darr;)</td>
-              <td>14.33 / 0.5877 / 2.376</td>
-              <td>19.66 / 0.8054 / 0.142</td>
-              <td>20.52 / 0.7725 / 0.138</td>
-              <td>&mdash;</td>
-              <td class="highlight-val">23.30 / 0.8520 / 0.063</td>
-              <td>29.35 dB</td>
-            </tr>
-            <tr>
-              <td><code>TAEF1</code> 16-Ch VAE (PSNR &uarr; / SSIM &uarr; / $\text{MSE}_z$ &darr;)</td>
-              <td>15.10 / 0.4892 / 2.454</td>
-              <td>21.23 / 0.8098 / 0.105</td>
-              <td>21.39 / 0.7910 / 0.104</td>
-              <td>&mdash;</td>
-              <td class="highlight-val">22.79 / 0.8373 / 0.059</td>
-              <td>26.39 dB</td>
-            </tr>
-            <tr class="section-row">
-              <td colspan="7">(d) Multi-Resolution Execution Latency (&darr;) &amp; Differentiable Inverse 3A Auto-Tuning Speedup (&uarr;)</td>
-            </tr>
-            <tr>
-              <td>$256\times 256$ ($\to 32\times 32\times 16$ Latent)</td>
-              <td>Pixel ISP: 5.87 ms</td>
-              <td>&mdash;</td>
-              <td>PyTorch LSP: 2.02 ms</td>
-              <td class="highlight-val">Halide LSP: 0.14 ms</td>
-              <td>&mdash;</td>
-              <td class="highlight-val">42.0&times; Speedup</td>
-            </tr>
-            <tr>
-              <td>$1024\times 1024$ 1MP ($\to 128\times 128\times 16$ Latent)</td>
-              <td>Pixel ISP: 39.80 ms</td>
-              <td>&mdash;</td>
-              <td>PyTorch LSP: 14.20 ms</td>
-              <td class="highlight-val">Halide LSP: 0.93 ms</td>
-              <td class="highlight-val">3.80 ms (4-Step)</td>
-              <td class="highlight-val">43.0&times; Speedup</td>
-            </tr>
-            <tr>
-              <td>$4000\times 3000$ 12MP ($\to 500\times 375\times 16$ Latent)</td>
-              <td>Pixel ISP: 880.64 ms</td>
-              <td>&mdash;</td>
-              <td>PyTorch LSP: 336.05 ms</td>
-              <td class="highlight-val">Halide LSP: 12.49 ms</td>
-              <td>&mdash;</td>
-              <td class="highlight-val">70.5&times; Speedup</td>
-            </tr>
-            <tr class="highlight-row">
-              <td><strong>40-Step Adam Inverse 3A Auto-Tuning</strong></td>
-              <td>Pixel-Decoded: 151,767 ms</td>
-              <td>&mdash;</td>
-              <td>&mdash;</td>
-              <td class="highlight-val">Latent Auto-Tune: 198.34 ms</td>
-              <td class="highlight-val">PSNR: $12.89\to 24.90$ dB</td>
-              <td class="highlight-val">765.2&times; Speedup</td>
-            </tr>
-          </tbody>
-        </table>
+
+        <div class="table-container span-all">
+          <div class="table-caption">Table 6: Supplementary Experiment C &mdash; Stage-by-Stage Subspace Ablation, Simpson Quadrature, Cross-VAE Generalization, and Multi-Resolution Latency</div>
+          <table>
+            <thead>
+              <tr>
+                <th>Sub-Experiment / Metric</th>
+                <th>Unprocessed / 1-Pt</th>
+                <th>0th-Order Scalar [4]</th>
+                <th>Ours Mode B ($\mathbf{z}_0$-Only)</th>
+                <th>Ours Mode A (Sensor $\bar{\mathbf{c}}_0$)</th>
+                <th>Ours + Refiner</th>
+                <th>Oracle Ceiling / Speedup</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr class="section-row">
+                <td colspan="7">(a) Cumulative Stage-by-Stage PSNR (dB &uarr;) &amp; Latent MSE (&darr;) on Color-Dojo Hardware Benchmark (<code>FLUX.1</code>)</td>
+              </tr>
+              <tr>
+                <td>Stage 1: +BLC &amp; Digital Gain</td>
+                <td>27.76 dB</td>
+                <td>28.96 dB ($\text{MSE}_z=0.062$)</td>
+                <td>29.46 dB</td>
+                <td class="highlight-val">30.18 dB ($\text{MSE}_z=0.043$)</td>
+                <td class="highlight-val">30.46 dB</td>
+                <td>33.00 dB</td>
+              </tr>
+              <tr>
+                <td>Stage 2: +White Balance</td>
+                <td>18.57 dB</td>
+                <td>24.04 dB ($\text{MSE}_z=0.159$)</td>
+                <td>25.81 dB</td>
+                <td class="highlight-val">26.83 dB ($\text{MSE}_z=0.090$)</td>
+                <td class="highlight-val">27.55 dB</td>
+                <td>31.49 dB</td>
+              </tr>
+              <tr>
+                <td>Stage 3: +$3\times 3$ CCM</td>
+                <td>19.10 dB</td>
+                <td>23.56 dB ($\text{MSE}_z=0.174$)</td>
+                <td>25.55 dB</td>
+                <td class="highlight-val">26.50 dB ($\text{MSE}_z=0.088$)</td>
+                <td class="highlight-val">27.13 dB</td>
+                <td>30.97 dB</td>
+              </tr>
+              <tr class="highlight-row">
+                <td><strong>Stage 4: +Gamma Tone Curve</strong></td>
+                <td>13.38 dB</td>
+                <td>22.59 dB ($\text{MSE}_z=0.190$)</td>
+                <td>24.30 dB</td>
+                <td class="highlight-val">25.16 dB ($\text{MSE}_z=0.120$)</td>
+                <td class="highlight-val">26.68 dB</td>
+                <td>31.29 dB</td>
+              </tr>
+              <tr class="section-row">
+                <td colspan="7">(b) $8\times 8$ Patch DC Color PSNR (dB &uarr;): 1-Point Evaluation $f_{\text{ISP}}(\bar{\mathbf{c}}_0)$ vs. 3-Point Simpson (<code>1:4:1</code>) Jet Quadrature</td>
+              </tr>
+              <tr>
+                <td>OpenISP Full / OpenISP Crop</td>
+                <td>25.69 / 29.84 dB</td>
+                <td>&mdash;</td>
+                <td>26.94 (+1.26) / 31.98 (+2.14)</td>
+                <td class="highlight-val">29.28 (+3.60) / 34.54 (+4.71)</td>
+                <td>&mdash;</td>
+                <td>Exact $8\times 8$ Mean</td>
+              </tr>
+              <tr>
+                <td>Nikon D700 / Canon EOS 40D</td>
+                <td>39.27 / 35.66 dB</td>
+                <td>&mdash;</td>
+                <td>40.67 (+1.41) / 36.78 (+1.12)</td>
+                <td class="highlight-val">46.11 (+6.85) / 40.30 (+4.64)</td>
+                <td>&mdash;</td>
+                <td>Exact $8\times 8$ Mean</td>
+              </tr>
+              <tr>
+                <td>Google Pixel Daylight</td>
+                <td>43.53 dB</td>
+                <td>&mdash;</td>
+                <td>45.86 (+2.33 dB)</td>
+                <td class="highlight-val">51.00 (+7.47 dB)</td>
+                <td>&mdash;</td>
+                <td>Exact $8\times 8$ Mean</td>
+              </tr>
+              <tr class="section-row">
+                <td colspan="7">(c) Cross-VAE Backbone Generalization on 9-Stage Chained ISP (<code>FLUX.1</code> vs. Distilled <code>TAEF1</code> 16-Channel Autoencoders)</td>
+              </tr>
+              <tr>
+                <td><code>FLUX.1</code> 16-Ch VAE (PSNR &uarr; / SSIM &uarr; / $\text{MSE}_z$ &darr;)</td>
+                <td>14.33 / 0.5877 / 2.376</td>
+                <td>19.66 / 0.8054 / 0.142</td>
+                <td>20.52 / 0.7725 / 0.138</td>
+                <td>&mdash;</td>
+                <td class="highlight-val">23.30 / 0.8520 / 0.063</td>
+                <td>29.35 dB</td>
+              </tr>
+              <tr>
+                <td><code>TAEF1</code> 16-Ch VAE (PSNR &uarr; / SSIM &uarr; / $\text{MSE}_z$ &darr;)</td>
+                <td>15.10 / 0.4892 / 2.454</td>
+                <td>21.23 / 0.8098 / 0.105</td>
+                <td>21.39 / 0.7910 / 0.104</td>
+                <td>&mdash;</td>
+                <td class="highlight-val">22.79 / 0.8373 / 0.059</td>
+                <td>26.39 dB</td>
+              </tr>
+              <tr class="section-row">
+                <td colspan="7">(d) Multi-Resolution Execution Latency (&darr;) &amp; Differentiable Inverse 3A Auto-Tuning Speedup (&uarr;)</td>
+              </tr>
+              <tr>
+                <td>$256\times 256$ ($\to 32\times 32\times 16$ Latent)</td>
+                <td>Pixel ISP: 5.87 ms</td>
+                <td>&mdash;</td>
+                <td>PyTorch LSP: 2.02 ms</td>
+                <td class="highlight-val">Halide LSP: 0.14 ms</td>
+                <td>&mdash;</td>
+                <td class="highlight-val">42.0&times; Speedup</td>
+              </tr>
+              <tr>
+                <td>$1024\times 1024$ 1MP ($\to 128\times 128\times 16$ Latent)</td>
+                <td>Pixel ISP: 39.80 ms</td>
+                <td>&mdash;</td>
+                <td>PyTorch LSP: 14.20 ms</td>
+                <td class="highlight-val">Halide LSP: 0.93 ms</td>
+                <td class="highlight-val">3.80 ms (4-Step)</td>
+                <td class="highlight-val">43.0&times; Speedup</td>
+              </tr>
+              <tr>
+                <td>$4000\times 3000$ 12MP ($\to 500\times 375\times 16$ Latent)</td>
+                <td>Pixel ISP: 880.64 ms</td>
+                <td>&mdash;</td>
+                <td>PyTorch LSP: 336.05 ms</td>
+                <td class="highlight-val">Halide LSP: 12.49 ms</td>
+                <td>&mdash;</td>
+                <td class="highlight-val">70.5&times; Speedup</td>
+              </tr>
+              <tr class="highlight-row">
+                <td><strong>40-Step Adam Inverse 3A Auto-Tuning</strong></td>
+                <td>Pixel-Decoded: 151,767 ms</td>
+                <td>&mdash;</td>
+                <td>&mdash;</td>
+                <td class="highlight-val">Latent Auto-Tune: 198.34 ms</td>
+                <td class="highlight-val">PSNR: $12.89\to 24.90$ dB</td>
+                <td class="highlight-val">765.2&times; Speedup</td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
       </div>
-      <!-- END_SECTION_7_INTERACTIVE_SIMULATOR -->
     </div>
   </div>
 
   <script>
-    function setPaperCols(n) {
-      const body = document.getElementById('paper-body') || document.getElementById('main-paper-body');
-      const b1 = document.getElementById('btn-1col');
-      const b2 = document.getElementById('btn-2col');
-      if (!body) return;
-      if (n === 2) {
-        body.classList.add('two-col');
-        body.classList.remove('one-col');
-        body.style.columnCount = '2';
-        if (b2) b2.classList.add('active');
-        if (b1) b1.classList.remove('active');
-      } else {
-        body.classList.remove('two-col');
-        body.classList.remove('two-column-layout');
-        body.classList.add('one-col');
-        body.style.columnCount = '1';
-        if (b1) b1.classList.add('active');
-        if (b2) b2.classList.remove('active');
+    function syncThemeButton() {
+      var root = document.documentElement;
+      var btn = document.getElementById('btn-theme');
+      if (!btn) return;
+      var isDark = root.getAttribute('data-theme') === 'dark';
+      btn.textContent = isDark ? '🌙 Theme: Dark' : '☀️ Theme: Light';
+      btn.setAttribute('title', 'Toggle Light / Dark theme');
+    }
+
+    function setPaperCols(n, persist) {
+      var body = document.getElementById('paper-body') || document.getElementById('main-paper-body');
+      var b1 = document.getElementById('btn-1col');
+      var b2 = document.getElementById('btn-2col');
+      var cols = (Number(n) === 1) ? 1 : 2;
+      if (body) {
+        if (cols === 2) {
+          body.classList.add('two-col');
+          body.classList.remove('one-col');
+        } else {
+          body.classList.remove('two-col');
+          body.classList.remove('two-column-layout');
+          body.classList.add('one-col');
+        }
+      }
+      if (b2) b2.classList.toggle('active', cols === 2);
+      if (b1) b1.classList.toggle('active', cols === 1);
+      if (persist !== false) {
+        try {
+          localStorage.setItem('sb-paper-cols', String(cols));
+        } catch (e) {}
       }
     }
 
     function togglePaperTheme() {
-      const root = document.documentElement;
-      const btn = document.getElementById('btn-theme');
-      if (root.getAttribute('data-theme') === 'dark') {
-        root.setAttribute('data-theme', 'light');
-        if (btn) btn.textContent = '☀️ Light';
-      } else {
-        root.setAttribute('data-theme', 'dark');
-        if (btn) btn.textContent = '🌙 Dark';
-      }
+      var root = document.documentElement;
+      var next = root.getAttribute('data-theme') === 'dark' ? 'light' : 'dark';
+      root.setAttribute('data-theme', next);
+      try {
+        localStorage.setItem('sb-theme', next);
+      } catch (e) {}
+      syncThemeButton();
     }
+
+    var _paperMathRendered = false;
+    function renderPaperMath() {
+      if (_paperMathRendered || typeof window.renderMathInElement !== 'function') return;
+      _paperMathRendered = true;
+      window.renderMathInElement(document.body, {
+        delimiters: [
+          {left: '$$', right: '$$', display: true},
+          {left: '\\[', right: '\\]', display: true},
+          {left: '$', right: '$', display: false},
+          {left: '\\(', right: '\\)', display: false}
+        ],
+        ignoredTags: ['script', 'noscript', 'style', 'textarea', 'pre', 'code', 'svg'],
+        strict: false,
+        throwOnError: false
+      });
+    }
+
+    function initPaperPortal() {
+      syncThemeButton();
+      var savedCols = '2';
+      try {
+        var c = localStorage.getItem('sb-paper-cols');
+        if (c === '1' || c === '2') savedCols = c;
+      } catch (e) {}
+      setPaperCols(Number(savedCols), false);
+      renderPaperMath();
+    }
+
+    if (document.readyState === 'loading') {
+      document.addEventListener('DOMContentLoaded', initPaperPortal);
+    } else {
+      initPaperPortal();
+    }
+    window.addEventListener('load', renderPaperMath);
 
     // Legacy aliases for backward compatibility
     window.setCols = setPaperCols;
     window.toggleCols = function() {
-      const body = document.getElementById('paper-body') || document.getElementById('main-paper-body');
+      var body = document.getElementById('paper-body') || document.getElementById('main-paper-body');
       setPaperCols(body && body.classList.contains('one-col') ? 2 : 1);
     };
     window.toggleLayout = window.toggleCols;

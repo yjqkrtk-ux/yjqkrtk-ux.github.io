@@ -19,21 +19,22 @@
 <body data-chapter="ucfa" data-root="../">
 
 <main class="chapter">
-    <header class="ch-header">
+    <header class="chapter-hero">
       <div class="eyebrow">CHAPTER 04 · UNIVERSAL CFA (universal_cfa/ · SIMULATION TRACK)</div>
       <h1>Universal CFA — 위상 인식 인센서 압축과 고정 호스트 번역기</h1>
       <p class="lead">
         최신 50MP ~ 200MP 모바일 이미지 센서는 서브미크론 픽셀의 수광량 한계를 극복하기 위해 \(2\times 2\) Bayer 대신
         같은 색 필터를 \(2\times 2\) 또는 \(4\times 4\)씩 묶어 배치하는 <strong>Tetracell (\(4\times 4\) 주기)</strong> 및 <strong>Hexadecacell (\(8\times 8\) 주기)</strong> 컬러 필터 배열(CFA)을 채택합니다.
-        <strong>Universal CFA (`SE-Universal-CFA`)</strong> 연구 트랙은 고비용 리모자이킹(Remosaicing)과 RAW 전송을 생략하고,
-        센서별 <strong>위상 인식 SE-ResNet 압축기(\(\mathcal{E}_A^{\mathrm{CFA}}\))</strong>가 1채널 CFA 모자이크를 곧바로 호스트의 <strong>센서 불변 통합 번역기(\(\mathcal{T}_B: 16\to 16\))</strong>와 <strong>16채널 `FLUX.1` / `TAEF1` 디코더(\(\mathcal{D}_{\mathrm{rec}}\))</strong>가 공유하는
-        단일 16채널 버스 텐서 \(r \in \mathbb{R}^{16\times 64\times 64}\) (`64 KB` INT8)로 매핑하는 아키텍처를 탐구합니다.
+        <strong>Universal CFA (<code>SE-Universal-CFA</code>)</strong> 연구 트랙은 고비용 리모자이킹(Remosaicing)과 RAW 전송을 생략하고,
+        센서별 <strong>위상 인식 SE-ResNet 압축기(\(\mathcal{E}_A^{\mathrm{CFA}}\))</strong>가 1채널 CFA 모자이크를 곧바로 호스트의 <strong>센서 불변 통합 번역기(\(\mathcal{T}_B: 16\to 16\))</strong>와 <strong>16채널 <code>FLUX.1</code> / <code>TAEF1</code> 디코더(\(\mathcal{D}_{\mathrm{rec}}\))</strong>가 공유하는
+        단일 16채널 버스 텐서 \(r \in \mathbb{R}^{16\times 64\times 64}\) (<code>64 KB</code> INT8)로 매핑하는 아키텍처를 탐구합니다.
       </p>
       <div class="meta-bar">
         <span>지원 CFA <b>Bayer (2×2) · Tetracell (4×4) · Hexadecacell (8×8)</b></span>
         <span>센서 구조 <b>3D 적층형 BSI CMOS + 인센서 NPU</b></span>
         <span>핵심 연산자 <b>PixelUnshuffle(r) + SE-ResBlock</b></span>
         <span>호스트 파이프라인 <b>16-Ch FLUX.1 / TAEF1 단일 스트림 통합</b></span>
+        <span>논문 <a class="src" href="../../universal_cfa/paper/universal_cfa_paper.html" title="universal_cfa/paper/universal_cfa_paper.html" target="_blank" rel="noopener">📄 Paper II (Universal CFA HTML)</a></span>
       </div>
     </header>
 
@@ -118,13 +119,13 @@
       <h2>4.3 단일 16채널 호스트 번역기(\(\mathcal{T}_B: 16\to 16\))와 센서별 위상 인식 압축기(\(\mathcal{E}_A^{\mathrm{CFA}}\))</h2>
       <p>
         스마트폰이나 엣지 제품군에서 카메라 센서 모듈(Bayer, Tetracell, Hexadecacell)이 바뀔 때마다 호스트 SoC의 대규모 번역기(\(\mathcal{T}_B\))와 다운스트림 디코더/확산 모델을 재학습·재컴파일하는 것은 막대한 엔지니어링 비용을 초래합니다.
-        `SE-Universal-CFA`는 <strong>호스트의 16채널 번역기(\(\mathcal{T}_B: 16\to 16\))와 디코더(\(\mathcal{D}_{\mathrm{rec}}\))를 100% 센서 불변(Shared)으로 통합</strong>하고,
+        <code>SE-Universal-CFA</code>는 <strong>호스트의 16채널 번역기(\(\mathcal{T}_B: 16\to 16\))와 디코더(\(\mathcal{D}_{\mathrm{rec}}\))를 100% 센서 불변(Shared)으로 통합</strong>하고,
         센서 다이 내부의 위상 인식 압축기 \(\mathcal{E}_A^{\mathrm{CFA}}\)만 해당 CFA의 주기 \(r\)에 맞춰 배치합니다:
       </p>
       <div class="formula">
         $$r = \mathcal{E}_A^{\mathrm{CFA}}\!\big(y_{\mathrm{CFA}}\big) \in \mathbb{R}^{16\times 64\times 64}, \qquad
           \hat{z} = r + \mathcal{T}_B(r) \in \mathbb{R}^{16\times 64\times 64}$$
-        <div class="f-Note">Ch.02의 LSP Stage A는 온칩 ISP가 만든 3채널 RGB(\(512\times 512\times 3\))를 입력받지만, Universal CFA의 \(\mathcal{E}_A^{\mathrm{CFA}}\)는 온칩 디모자이킹/리모자이킹 이전의 <strong>1채널 CFA 모자이크(\(512\times 512\times 1\))</strong>를 직접 입력받아 `HDRNet` / `Comp-LSP`와 동일한 <strong>16채널 `FLUX.1` / `TAEF1` 잠재 공간</strong>으로 직행합니다.</div>
+        <div class="f-Note">Ch.02의 LSP Stage A는 온칩 ISP가 만든 3채널 RGB(\(512\times 512\times 3\))를 입력받지만, Universal CFA의 \(\mathcal{E}_A^{\mathrm{CFA}}\)는 온칩 디모자이킹/리모자이킹 이전의 <strong>1채널 CFA 모자이크(\(512\times 512\times 1\))</strong>를 직접 입력받아 <code>HDRNet</code> / <code>Comp-LSP</code>와 동일한 <strong>16채널 <code>FLUX.1</code> / <code>TAEF1</code> 잠재 공간</strong>으로 직행합니다.</div>
       </div>
 
       <figure class="figure" id="fig-ucfa-arch">
@@ -267,12 +268,12 @@
 
       <div class="tbl-wrap">
         <table class="tbl">
-          <thead><tr><th>모델 클래스</th><th>내부 아키텍처 구성 (16채널 단일 스트림)</th><th>파라미터 수 (`ch16` / `ch64`)</th><th>INT8 SRAM (IMX500 검증)</th></tr></thead>
+          <thead><tr><th>모델 클래스</th><th>내부 아키텍처 구성 (16채널 단일 스트림)</th><th>파라미터 수 (<code>ch16</code> / <code>ch64</code>)</th><th>INT8 SRAM (IMX500 검증)</th></tr></thead>
           <tbody>
             <tr><td><code>BayerPhaseCompressor</code></td><td><code>PixelUnshuffle(2)</code> (4ch @ 256²) + SE-ResBlocks → <code>16×64²</code></td><td>17,128 (ch16) / 582,480 (ch64)</td><td>16.7&nbsp;KB / 568.8&nbsp;KB</td></tr>
             <tr><td><code>TetracellPhaseCompressor</code></td><td><code>PixelUnshuffle(4)</code> (16ch @ 128²) + SE-ResBlocks → <code>16×64²</code></td><td>16,536 (ch16) / 572,144 (ch64)</td><td>16.1&nbsp;KB / 558.7&nbsp;KB</td></tr>
             <tr><td><code>HexadecaPhaseCompressor</code></td><td><code>PixelUnshuffle(8)</code> (64ch @ 64²) + 80ch SE-ResBlocks → <code>16×64²</code></td><td>16,340 (ch16) / 413,680 (ch64)</td><td>16.0&nbsp;KB / 404.0&nbsp;KB</td></tr>
-            <tr><td><code>UnifiedLatentTranslator</code></td><td><code>16 → 96 → 16</code> 8× Residual ConvNet ($z = r + \mathcal{T}_B(r)$)</td><td>1,524,208 (1.52M)</td><td>Host NPU (100% Shared)</td></tr>
+            <tr><td><code>UnifiedLatentTranslator</code></td><td><code>16 → 96 → 16</code> 8× Residual ConvNet (\(z = r + \mathcal{T}_B(r)\))</td><td>1,524,208 (1.52M)</td><td>Host NPU (100% Shared)</td></tr>
             <tr><td><code>DemosaicPixelShuffleDecoder</code></td><td>16-Ch <code>TAEF1</code> Trunk + 3× <code>SE-PixelShuffle</code> Residual Pyramid</td><td>2,512,995 (2.51M)</td><td>Host NPU (100% CFA-Agnostic)</td></tr>
           </tbody>
         </table>
@@ -319,11 +320,11 @@
       <figure class="diagram" id="fig-ucfa-visual">
         <div class="grid-2" style="align-items:center">
           <div>
-            <img src="../assets/img/candy_full_comparison.webp" alt="Tetracell 전체 영상 복원 비교 (Ground Truth vs 프리뷰 vs 생성형 캡처)" style="width:100%;height:auto;border-radius:8px;display:block;margin-bottom:8px">
-            <img src="../assets/img/candy_zoom_comparison.webp" alt="Tetracell 고주파 텍스트 크롭 확대 비교 (의사색 억제 및 에지 복원)" style="width:100%;height:auto;border-radius:8px;display:block">
+            <img class="paper-fig-img" src="../assets/img/candy_full_comparison.webp" alt="Tetracell 전체 영상 복원 비교 (Ground Truth vs 프리뷰 vs 생성형 캡처)" style="margin-bottom:8px">
+            <img class="paper-fig-img" src="../assets/img/candy_zoom_comparison.webp" alt="Tetracell 고주파 텍스트 크롭 확대 비교 (의사색 억제 및 에지 복원)">
           </div>
           <div>
-            <img src="../assets/img/01952_tetracell_zsl_capture.webp" alt="Tetracell 인센서 64KB 잠재 텐서로부터 생성된 One-Pass ZSL 확산 캡처 결과" style="width:100%;max-height:310px;object-fit:cover;border-radius:8px;display:block">
+            <img class="paper-fig-img" src="../assets/img/01952_tetracell_zsl_capture.webp" alt="Tetracell 인센서 64KB 잠재 텐서로부터 생성된 One-Pass ZSL 확산 캡처 결과" style="max-height:310px;object-fit:cover">
           </div>
         </div>
         <figcaption><b>그림 4-3.</b> Tetracell(\(4\times 4\)) 군집형 CFA 입력에 대한 시각적 복원 결과 비교. (좌상·좌하) 전체 영상 및 고주파 텍스트 영역 확대 비교(원본 Ground Truth · 경량 리모자이킹 아티팩트 · Universal CFA 잠재 복원), (우) 원본 RAW 재전송 없이 64 KB 버스 텐서 \(r\)만으로 복원한 One-Pass ZSL 잠재 확산 캡처 영상.</figcaption>
@@ -355,13 +356,13 @@
     </section>
 
     <section class="keypoints" id="summary">
-      <h3>핵심 정리 · Chapter 04</h3>
-      <ul>
+      <h2>핵심 정리 · Chapter 04</h2>
+      <ol>
         <li><strong>군집형 CFA의 위상 문제</strong>: Tetracell(\(4\times 4\))과 Hexadecacell(\(8\times 8\))에 일반 스트라이드 합성곱을 적용하면 위치마다 서로 다른 색상 클러스터를 스캔하여 위상 정렬이 깨집니다.</li>
-        <li><strong>PixelUnshuffle(\(r\)) + SE-ResBlock 위상 분해</strong>: 주기 \(r \in \{2, 4, 8\}\)로 입력 모자이크를 \(r^2\)개 채널로 언셔플한 뒤 `SE-ResBlock`을 적용해 모든 CFA 센서를 단일 16채널 버스 텐서 \(r \in \mathbb{R}^{16\times 64\times 64}\) (`64 KB` INT8)로 매핑합니다.</li>
-        <li><strong>100% 센서 불변 16채널 호스트 파이프라인</strong>: 센서 모듈이 바뀌어도 호스트의 16채널 번역기(\(\mathcal{T}_B: 16\to 16\))와 `TAEF1` + `SE-PixelShuffle` 디코더(\(\mathcal{D}_{\mathrm{rec}}\))는 <strong>100% 동일 가중치</strong>로 공유됩니다.</li>
-        <li><strong>`FLUX.1` / `TAEF1` 16채널 잠재 정렬 및 고충실도 복원</strong>: `BJDD_CVPR21`에서 Bayer ($1\times 1$) <strong>35.91 dB</strong>, Tetracell ($2\times 2$) <strong>34.56 dB</strong>, Hexadecacell ($4\times 4$) <strong>30.27 dB</strong> (`Kodak24`에서 <strong>33.71 / 33.21 / 31.29 dB</strong>)를 달성하여 Tetracell과 Hexadecacell 모두에서 <code>KLAP Unified</code>(34.06 / 29.74 dB)를 능가합니다.</li>
-      </ul>
+        <li><strong>PixelUnshuffle(\(r\)) + SE-ResBlock 위상 분해</strong>: 주기 \(r \in \{2, 4, 8\}\)로 입력 모자이크를 \(r^2\)개 채널로 언셔플한 뒤 <code>SE-ResBlock</code>을 적용해 모든 CFA 센서를 단일 16채널 버스 텐서 \(r \in \mathbb{R}^{16\times 64\times 64}\) (<code>64 KB</code> INT8)로 매핑합니다.</li>
+        <li><strong>100% 센서 불변 16채널 호스트 파이프라인</strong>: 센서 모듈이 바뀌어도 호스트의 16채널 번역기(\(\mathcal{T}_B: 16\to 16\))와 <code>TAEF1</code> + <code>SE-PixelShuffle</code> 디코더(\(\mathcal{D}_{\mathrm{rec}}\))는 <strong>100% 동일 가중치</strong>로 공유됩니다.</li>
+        <li><strong><code>FLUX.1</code> / <code>TAEF1</code> 16채널 잠재 정렬 및 고충실도 복원</strong>: <code>BJDD_CVPR21</code>에서 Bayer (\(1\times 1\)) <strong>35.91 dB</strong>, Tetracell (\(2\times 2\)) <strong>34.56 dB</strong>, Hexadecacell (\(4\times 4\)) <strong>30.27 dB</strong> (<code>Kodak24</code>에서 <strong>33.71 / 33.21 / 31.29 dB</strong>)를 달성하여 Tetracell과 Hexadecacell 모두에서 <code>KLAP Unified</code>(34.06 / 29.74 dB)를 능가합니다.</li>
+      </ol>
     </section>
 </main>
 <script>
@@ -370,7 +371,7 @@
   const UCFA_NODES = {
     bayer: {
       t: 'BayerPhaseCompressor (E_A^Bayer · 1×1 단색 · 주기 p=2)',
-      h: '<p>입력 <code>1×512×512</code> Bayer RGGB 모자이크를 <code>PixelUnshuffle(2)</code>로 <code>4×256×256</code> 위상 평면으로 분리한 뒤, SE-ResBlock 피라미드를 거쳐 단일 <code>16×64×64</code> 버스 텐서 <code>r</code> (`64 KB` INT8)을 생성합니다. 파라미터 17,128개(ch16) / 582,480개(ch64, `568.8 KB` INT8, 정본: <code>phase_aware_compressor.py</code>).</p>'
+      h: '<p>입력 <code>1×512×512</code> Bayer RGGB 모자이크를 <code>PixelUnshuffle(2)</code>로 <code>4×256×256</code> 위상 평면으로 분리한 뒤, SE-ResBlock 피라미드를 거쳐 단일 <code>16×64×64</code> 버스 텐서 <code>r</code> (<code>64 KB</code> INT8)을 생성합니다. 파라미터 17,128개(ch16) / 582,480개(ch64, <code>568.8 KB</code> INT8, 정본: <code>phase_aware_compressor.py</code>).</p>'
     },
     tetra: {
       t: 'TetracellPhaseCompressor (E_A^Tetra · 2×2 클러스터 · 주기 p=4)',
@@ -664,7 +665,7 @@
       }
     }
 
-    const macMap = { '2': '0.18 G / 15,092 params', '4': '0.14 G / 14,500 params', '8': '0.08 G / 19,092 params' };
+    const macMap = { '2': '0.18 G / 17,128 params', '4': '0.14 G / 16,536 params', '8': '0.08 G / 16,340 params' };
     if(phaseStats){
       phaseStats.innerHTML = [
         SB.stat({ label: 'CFA 기본 주기 (r×r)', value: r + '×' + r + ' (' + (r * r) + ' 위상 채널)' }),

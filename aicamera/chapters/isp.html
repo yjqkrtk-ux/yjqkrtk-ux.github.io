@@ -17,19 +17,19 @@
 <body data-chapter="isp" data-root="../">
 
 <main class="chapter">
-    <header class="ch-header">
+    <header class="chapter-hero">
       <div class="eyebrow">CHAPTER 03 · SOFTWARE ISP &amp; HALIDE/NPU OPTIMIZATION (hdrnet/)</div>
       <h1>Software ISP — C99 레퍼런스에서 융합 Halide &amp; 엣지 AI까지</h1>
       <p class="lead">
         센서가 출력한 <code>uint16</code> Bayer RGGB RAW 배열은 그 자체로는 어둡고 초록빛이 도는 모자이크 격자일 뿐입니다.
         이 챕터에서는 ① 10단계 C99 레퍼런스 OpenISP 파이프라인과 3A 자동 제어의 정확한 수학적 명세를 해부하고,
-        ② 단계마다 DRAM을 왕복하며 <strong>1,257.8 MB/frame</strong>을 소모하던 파이프라인을 <strong>Verified Lifting</strong>과 <strong>Halide 커널 융합 + DMA-BUF Zero-Copy</strong>로
-        <strong>91.3 MB/frame (13.8× 절감)</strong>까지 압축하는 시스템 최적화 과정을 인터랙티브 시뮬레이터로 실습합니다.
+        ② 12MP 프레임당 단계별 DRAM 왕복으로 <strong>811.4 MB/frame</strong>을 소모하던 파이프라인을 <strong>Verified Lifting</strong>과 <strong>Halide 커널 융합 + DMA-BUF Zero-Copy</strong>로
+        <strong>58.8 MB/frame (13.8× 절감)</strong>까지 압축하는 시스템 최적화 과정(3MP 뷰파인더 <strong>32.76 ms · 30.5 FPS</strong>, 12MP <strong>128.78 ms</strong>)을 인터랙티브 시뮬레이터로 실습합니다.
       </p>
       <div class="meta-bar">
         <span>파이프라인 <b>10-Stage C99 + 3A (AWB·CCM·AE)</b></span>
-        <span>12MP DRAM 절감 <b>1257.8 MB → 91.3 MB (13.8×)</b></span>
-        <span>CPU 가속 <b>493.85 ms → 121.48 ms (4.07×)</b></span>
+        <span>12MP DRAM 절감 <b>811.4 MB → 58.8 MB (13.8×)</b></span>
+        <span>CPU 가속 <b>474.04 ms → 128.78 ms (3.68× · 3MP 30.5 FPS)</b></span>
         <span>엣지 AI <b>IMX500 SSD + Hailo Grid/Seg + ZAP</b></span>
       </div>
     </header>
@@ -60,7 +60,7 @@
         <div class="sim-body">
           <p style="margin-top:0;">
             아래 칩 버튼을 클릭해 <strong>각 ISP 단계를 개별적으로 켜고 끄거나(Toggle)</strong>, 슬라이더로 핵심 레지스터(DPC 임계값, Black Level, LSC, AWB 이득, Gamma, EEH 샤프닝)를 조절해 보세요.
-            왼쪽 캔버스 위에서 마우스를 움직이면 우측에 <strong>픽셀 격자 돋보기(8× 확대)</strong>와 <strong>실시간 RGB/Y 히스토그램</strong>이 갱신됩니다.
+            왼쪽 캔버스 위에서 마우스를 움직이면 우측에 <strong>픽셀 격자 돋보기(7×7 이웃 격자)</strong>와 <strong>실시간 RGB/Y 히스토그램</strong>이 갱신됩니다.
           </p>
           <div class="isp-chips" id="isp-stage-chips"></div>
           <div class="sim-controls" id="isp-sim-ctrl"></div>
@@ -171,13 +171,13 @@
       <h2>3.5 4-Tier 실행 엔진과 Halide 커널 융합 · DMA-BUF Zero-Copy</h2>
       <p>
         12.33 MP (<code>4056×3040</code>) 고해상도 프레임을 C99 레퍼런스처럼 단계마다 메모리에 쓰고 읽으면(Tier 1),
-        한 프레임당 약 <strong>102 B/px (1,257.8 MB)</strong>의 DRAM 트래픽이 발생하여 CPU 캐시가 매 단계 무효화됩니다.
+        6단계 코어 파이프라인 기준 한 프레임당 약 <strong>65.8 B/px (811.4 MB)</strong>의 DRAM 트래픽이 발생하여 CPU 캐시가 매 단계 무효화됩니다.
         이를 해결하기 위해 동일한 수식을 4단계 실행 계층(Tier 1~4)으로 점진 최적화했습니다:
       </p>
       <div class="tier-grid" style="margin:14px 0;">
-        <div class="tier"><b>Tier 1 · C99 Baseline</b><span>단일 스레드 · 단계마다 전체 프레임 DRAM 왕복 (1,257.8 MB)</span><a class="src" href="../../hdrnet/c_src/openisp_procedural.c" title="hdrnet/c_src/openisp_procedural.c (line 522)" target="_blank" rel="noopener">openisp_procedural.c:522</a></div>
-        <div class="tier"><b>Tier 2 · Halide Block-wise</b><span>단계별 개별 Halide 함수 · ARM NEON SIMD 벡터화</span><a class="src" href="../../hdrnet/c_src/openisp_halide_wrapper.c" title="hdrnet/c_src/openisp_halide_wrapper.c" target="_blank" rel="noopener">openisp_halide_wrapper.c</a></div>
-        <div class="tier"><b>Tier 3 · Halide Fused CPU</b><span>전 단계를 단일 타일 루프로 융합 · L2 캐시 상주 (91.3 MB)</span><a class="src" href="../../hdrnet/c_src/build_openisp_halide.py" title="hdrnet/c_src/build_openisp_halide.py" target="_blank" rel="noopener">build_openisp_halide.py</a></div>
+        <div class="tier"><b>Tier 1 · C99 Baseline</b><span>단일 스레드 · 단계마다 전체 프레임 DRAM 왕복 (811.4 MB)</span><a class="src" href="../../hdrnet/c_src/openisp_procedural.c" title="hdrnet/c_src/openisp_procedural.c (line 522)" target="_blank" rel="noopener">openisp_procedural.c:522</a></div>
+        <div class="tier"><b>Tier 2 · Halide Block-wise</b><span>단계별 개별 Halide 함수 · ARM NEON SIMD 벡터화 (298.28 ms)</span><a class="src" href="../../hdrnet/c_src/openisp_halide_wrapper.c" title="hdrnet/c_src/openisp_halide_wrapper.c" target="_blank" rel="noopener">openisp_halide_wrapper.c</a></div>
+        <div class="tier"><b>Tier 3 · Halide Fused CPU</b><span>전 단계를 단일 타일 루프로 융합 · L2 캐시 상주 (58.8 MB · 128.78 ms)</span><a class="src" href="../../hdrnet/c_src/build_openisp_halide.py" title="hdrnet/c_src/build_openisp_halide.py" target="_blank" rel="noopener">build_openisp_halide.py</a></div>
         <div class="tier"><b>Tier 4 · Halide GPU (V3D)</b><span>VideoCore VII Vulkan Compute · Staged / DMA-BUF / FP16</span><a class="src" href="../../hdrnet/c_src/openisp_halide_gpu_wrapper.c" title="hdrnet/c_src/openisp_halide_gpu_wrapper.c" target="_blank" rel="noopener">openisp_halide_gpu_wrapper.c</a></div>
       </div>
 
@@ -198,23 +198,23 @@
       <div class="callout warn">
         <div class="callout-title">12MP 벤치마크 해석 시 주의사항</div>
         <ul>
-          <li><strong>활성 단계 조건</strong>: <a class="src" href="../../hdrnet/scripts/bench_3way_isp.py" title="hdrnet/scripts/bench_3way_isp.py (line 77)" target="_blank" rel="noopener">bench_3way_isp.py:77</a> 벤치마크는 공정한 코어 파이프라인 비교를 위해 <code>DPC · LSC · ANF · EEH</code>를 끈 상태(<strong>BLC · AWB · Demosaic · CCM · Gamma · CSC 6단계</strong>)로 측정되었습니다.</li>
+          <li><strong>활성 단계 조건</strong>: <a class="src" href="../../hdrnet/scripts/bench_3way_isp.py" title="hdrnet/scripts/bench_3way_isp.py (line 77)" target="_blank" rel="noopener">bench_3way_isp.py:77</a> 벤치마크는 공정한 코어 파이프라인 비교를 위해 <code>DPC · LSC · ANF · EEH</code>를 끈 상태(<strong>BLC · AWB · Demosaic · CCM · Gamma · CSC 6단계</strong>)로 측정되었습니다(3MP <code>2028×1520</code> 뷰파인더 모드에서는 Tier 3가 <strong>32.76 ms · 30.5 FPS</strong>로 센서 30 FPS 상한을 포화시킵니다).</li>
           <li><strong>수치 근사 일치</strong>: Halide Tier 2~4는 부동소수점 결합 순서 및 고속 근사 차이로 C 레퍼런스 대비 <strong>PSNR 43.53 dB / MAE 1.29</strong>를 기록합니다(bit-exact가 아닌 수치 동등성).</li>
-          <li><strong>DMA-BUF Zero-Copy 효과</strong>: Tier 4 GPU Staged(289.56 ms)에서 호스트↔GPU 메모리 복사(60.16 ms)를 <code>DMA-BUF</code> 공유로 제거하면 <strong>229.40 ms (2.15×)</strong>로 단축됩니다.</li>
+          <li><strong>DMA-BUF Zero-Copy 효과</strong>: Tier 4 GPU Staged(289.56 ms)에서 호스트↔GPU 메모리 복사(60.16 ms)를 <code>DMA-BUF</code> 공유로 제거하면 <strong>229.40 ms (2.07×)</strong>로 단축됩니다.</li>
         </ul>
       </div>
 
       <div class="sim" id="sim-halide">
         <div class="sim-head">
           <div class="sim-title">SIMULATOR 03 · Halide 타일 커널 융합(Loop Fusion) &amp; DRAM 트래픽 시뮬레이터</div>
-          <span class="badge b-ok">102 B/px → 7.4 B/px</span>
+          <span class="badge b-ok">65.8 B/px → 4.8 B/px</span>
         </div>
         <div class="sim-body">
           <p style="margin-top:0;">
             실행 Tier와 타일 크기(\(T_x \times T_y\))를 선택해 보세요.
-            <strong>비융합(Unfused)</strong> 모드에서는 각 단계가 12MP 전체 프레임을 DRAM에 기록하지만,
+            <strong>비융합(Unfused)</strong> 모드에서는 각 단계가 12MP 전체 프레임을 DRAM에 기록(<strong>811.4 MB</strong>)하지만,
             <strong>단일 커널 융합(Fused)</strong> 모드에서는 타일 하나가 L2 캐시(최대 2 MB) 안에서 6단계를 연속 통과하여
-            외부 DRAM 접근이 <strong>최초 RAW 읽기(2 B/px) + 최종 YUV/RGB 쓰기(5.4 B/px) = 7.4 B/px</strong>로 수축합니다.
+            외부 DRAM 접근이 <strong>최초 RAW 읽기(2.0 B/px) + 최종 출력 쓰기(2.8 B/px) = 4.8 B/px (58.8 MB, 13.8× 절감)</strong>로 수축합니다.
           </p>
           <div class="sim-controls" id="hal-ctrl"></div>
           <canvas id="hal-cv" data-w="920" data-h="230"></canvas>
@@ -324,13 +324,13 @@
     </section>
 
     <section class="keypoints" id="summary">
-      <h3>핵심 정리 · Chapter 03</h3>
-      <ul>
+      <h2>핵심 정리 · Chapter 03</h2>
+      <ol>
         <li><strong>선형 도메인 우선 원칙</strong>: BLC, LSC, ANF, AWB(Stage 2~5)와 Demosaic, CCM(Stage 6~7)은 광자 수에 비례하는 선형 영역에서 수행되어야 색 비율과 주변부 광량 보정이 왜곡되지 않으며, 비선형 Gamma(Stage 8)와 YUV 변환(Stage 9)은 후반부에 배치됩니다.</li>
         <li><strong>적응형 3A 피드백 루프</strong>: Gray-World AWB와 디지털 이득 AE는 평상시 낮은 EMA 계수(\(\alpha=0.15, \beta=0.20\))로 화면 깜빡임을 억제하다가, 급격한 조명 변화(\(|\Delta| \gt 0.3 / 0.4\)) 감지 시 고속 계수(\(0.40 / 0.45\))로 즉시 전환합니다.</li>
-        <li><strong>Halide 커널 융합과 DMA-BUF</strong>: 단계별 DRAM 왕복으로 <strong>1,257.8 MB</strong>를 소모하던 12MP 파이프라인을 단일 타일 루프로 융합(Tier 3)하여 DRAM 트래픽을 <strong>91.3 MB (13.8× 절감)</strong>로 줄이고, CPU 지연을 <strong>493.85 ms → 121.48 ms (4.07× 가속)</strong>로 단축했습니다.</li>
+        <li><strong>Halide 커널 융합과 DMA-BUF</strong>: 단계별 DRAM 왕복으로 <strong>811.4 MB</strong>를 소모하던 12MP 파이프라인을 단일 타일 루프로 융합(Tier 3)하여 DRAM 트래픽을 <strong>58.8 MB (13.8× 절감)</strong>로 줄이고, CPU 지연을 <strong>474.04 ms → 128.78 ms (3.68× 가속, 3MP 뷰파인더 32.76 ms · 30.5 FPS)</strong>로 단축했습니다.</li>
         <li><strong>Dual-NPU 비동기 엣지 AI</strong>: IMX500(센서 내 검출)과 Hailo-8(Bilateral Grid / 분할)을 ISP 루프와 분리된 비동기 스레드로 구동하고 ZAP EMA 뷰포트 추적을 결합해 프레임 드롭 없는 지능형 카메라 UX를 구현합니다.</li>
-      </ul>
+      </ol>
     </section>
 </main>
 <script>
@@ -771,11 +771,11 @@
   let tileSize = 128;
 
   const TIER_SIM = {
-    t1: { name: 'Tier 1 · C99 Unfused', ms: 493.85, dram: 1257.8, bpp: 102.0, fused: false, gpu: false },
-    t2: { name: 'Tier 2 · Halide Block-wise', ms: 162.88, dram: 1257.8, bpp: 102.0, fused: false, gpu: false },
-    t3: { name: 'Tier 3 · Halide Fused CPU', ms: 121.48, dram: 91.3, bpp: 7.4, fused: true, gpu: false },
-    t4s: { name: 'Tier 4 · GPU Staged', ms: 289.56, dram: 165.0, bpp: 13.4, fused: true, gpu: true },
-    t4z: { name: 'Tier 4 · GPU DMA-BUF Zero-Copy', ms: 229.40, dram: 91.3, bpp: 7.4, fused: true, gpu: true }
+    t1: { name: 'Tier 1 · C99 Unfused', ms: 474.04, dram: 811.4, bpp: 65.8, fused: false, gpu: false },
+    t2: { name: 'Tier 2 · Halide Block-wise', ms: 298.28, dram: 811.4, bpp: 65.8, fused: false, gpu: false },
+    t3: { name: 'Tier 3 · Halide Fused CPU', ms: 128.78, dram: 58.8, bpp: 4.8, fused: true, gpu: false },
+    t4s: { name: 'Tier 4 · GPU Staged', ms: 289.56, dram: 117.6, bpp: 9.5, fused: true, gpu: true },
+    t4z: { name: 'Tier 4 · GPU DMA-BUF Zero-Copy', ms: 229.40, dram: 58.8, bpp: 4.8, fused: true, gpu: true }
   };
 
   if(halCtrl){
@@ -848,7 +848,7 @@
     const dy = 148;
     ctx.fillStyle = dk ? 'rgba(255,255,255,0.06)' : 'rgba(15,23,42,0.06)';
     ctx.beginPath(); ctx.roundRect(34, dy, w - 68, 52, 8); ctx.fill();
-    const barW = (t.dram / 1257.8) * (w - 88);
+    const barW = (t.dram / 811.4) * (w - 88);
     ctx.fillStyle = t.fused ? '#10b981' : '#ef4444';
     ctx.beginPath(); ctx.roundRect(44, dy + 12, Math.max(18, barW), 28, 6); ctx.fill();
     ctx.fillStyle = tx;
@@ -858,7 +858,7 @@
 
     if(halStats){
       halStats.innerHTML = [
-        SB.stat({ label: '12MP 프레임 평균 지연', value: t.ms.toFixed(2) + ' ms (' + (493.85 / t.ms).toFixed(2) + '× 가속)' }),
+        SB.stat({ label: '12MP 프레임 평균 지연', value: t.ms.toFixed(2) + ' ms (' + (474.04 / t.ms).toFixed(2) + '× 가속)' }),
         SB.stat({ label: '프레임당 DRAM 트래픽', value: t.dram.toFixed(1) + ' MB (' + t.bpp.toFixed(1) + ' B/px)' }),
         SB.stat({ label: '타일 워킹셋 크기', value: t.fused ? tileKb + ' KB (' + (fitsL2 ? 'RPi5 2MB L2 적중' : 'L2 초과 스필') + ')' : '49,320 KB (L2 초과)' }),
         SB.stat({ label: '수치 동등성 (vs C99)', value: halTier === 't1' ? 'Ref (기준)' : '43.53 dB / MAE 1.29' })
@@ -889,6 +889,7 @@
   }
 
   const zapCvEl = document.getElementById('zap-cv');
+  const zapCanvas = zapCvEl ? SB.canvas(zapCvEl) : null;
   if(zapCvEl){
     zapCvEl.addEventListener('mousemove', e => {
       const r = zapCvEl.getBoundingClientRect();
@@ -898,9 +899,10 @@
   }
 
   function stepZap(){
+    if(!zapCanvas) return;
     vpX = zapAlpha * tgtX + (1 - zapAlpha) * vpX;
     vpY = zapAlpha * tgtY + (1 - zapAlpha) * vpY;
-    const { ctx, w, h } = SB.canvas('#zap-cv');
+    const { ctx, w, h } = zapCanvas;
     ctx.clearRect(0, 0, w, h);
     const dk = SB.isDark();
     const tx = dk ? '#e6edf6' : '#12161f';
@@ -951,9 +953,8 @@
         SB.stat({ label: '출력 종횡비', value: '4:3 고정 크롭' })
       ].join('');
     }
-    requestAnimationFrame(stepZap);
   }
-  requestAnimationFrame(stepZap);
+  if(zapCvEl && zapCanvas) SB.loop(zapCvEl, stepZap);
 
   window.addEventListener('sb:theme', () => { drawIspSim(); draw3aSim(); drawHalSim(); });
 })();

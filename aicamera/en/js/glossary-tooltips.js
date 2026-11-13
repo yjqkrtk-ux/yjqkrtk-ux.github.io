@@ -78,11 +78,19 @@
       const text = node.data, fragment = document.createDocumentFragment();
       let end = 0;
       for (const match of text.matchAll(pattern)) {
-        const label = match[0], start = match.index;
+        const baseLabel = match[0], start = match.index;
+        let label = baseLabel, afterIdx = start + label.length;
         if ((word(label[0]) && word(text[start - 1])) ||
-            (word(label.at(-1)) && word(text[start + label.length])) ||
             (/[\uac00-\ud7a3]/.test(label[0]) && /[\uac00-\ud7a3]/.test(text[start - 1] || ""))) continue;
-        const entry = index.get(norm(label));
+        if (word(label.at(-1)) && word(text[afterIdx])) {
+          const tail = text.slice(afterIdx);
+          const isAllCaps = baseLabel.length <= 4 && baseLabel === baseLabel.toUpperCase();
+          const pm = /^[a-z]/i.test(label.at(-1)) && tail.match(isAllCaps ? /^(es|s)(?![a-z0-9_])/ : /^(es|s)(?![a-z0-9_])/i);
+          if (!pm) continue;
+          label += pm[0];
+          afterIdx += pm[0].length;
+        }
+        const entry = index.get(norm(label)) || index.get(norm(baseLabel));
         if (!entry || seenTerms.has(entry.title)) continue;
         seenTerms.add(entry.title);
         fragment.append(text.slice(end, start));
@@ -92,7 +100,7 @@
         span.textContent = label;
         bindings.set(span, entry);
         fragment.append(span);
-        end = start + label.length;
+        end = afterIdx;
         count++;
       }
       if (end) { fragment.append(text.slice(end)); node.replaceWith(fragment); }
@@ -159,14 +167,18 @@
     return { count };
   }
 
-  function init() {
+  function init(force) {
     const main = document.querySelector("main.chapter");
     const data = window.BOOK_GLOSSARY;
-    if (!main || !data || !Array.isArray(data.terms)) return;
+    if (!main || main.dataset.glossaryReady || !data || !Array.isArray(data.terms)) return;
+    const hasRawMath = /\$\$|\\[([]/.test(main.textContent || "");
+    if (!force && hasRawMath && !document.querySelector(".katex")) return;
+    main.dataset.glossaryReady = "1";
     const index = indexTerms(data.terms);
     annotate(main, index);
   }
-  if (document.readyState === "loading") document.addEventListener("DOMContentLoaded", init, { once: true });
-  else init();
+  if (document.readyState === "loading") document.addEventListener("DOMContentLoaded", () => init(false), { once: true });
+  else init(false);
+  window.addEventListener("load", () => init(true), { once: true });
   window.BookGlossary = { init };
 })();

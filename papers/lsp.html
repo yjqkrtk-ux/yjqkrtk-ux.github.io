@@ -6,6 +6,17 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>From Image Signal Processing to Latent Signal Processing (LSP) — Research Paper</title>
 
+  <script>
+    (function() {
+      try {
+        var t = localStorage.getItem('sb-theme');
+        if (t === 'light' || t === 'dark') {
+          document.documentElement.setAttribute('data-theme', t);
+        }
+      } catch (e) {}
+    })();
+  </script>
+
   <!-- Fonts -->
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -14,15 +25,15 @@
     rel="stylesheet">
 
   <!-- KaTeX for Math rendering -->
-  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/katex@0.16.10/dist/katex.min.css">
-  <script defer src="https://cdn.jsdelivr.net/npm/katex@0.16.10/dist/katex.min.js"></script>
-  <script defer src="https://cdn.jsdelivr.net/npm/katex@0.16.10/dist/contrib/auto-render.min.js"
-    onload="renderMathInElement(document.body, {delimiters: [{left: '$$', right: '$$', display: true}, {left: '$', right: '$', display: false}]});"></script>
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/katex@0.16.11/dist/katex.min.css">
+  <script defer src="https://cdn.jsdelivr.net/npm/katex@0.16.11/dist/katex.min.js"></script>
+  <script defer src="https://cdn.jsdelivr.net/npm/katex@0.16.11/dist/contrib/auto-render.min.js"></script>
 
   <style>
     :root,
     [data-theme="light"] {
       --bg: #f6f8fa;
+      --bg-soft: #eef2f6;
       --surface: #ffffff;
       --surface-alt: #f0f3f6;
       --surface-border: #d0d7de;
@@ -30,9 +41,9 @@
       --text-bright: #0d1117;
       --text-muted: #57606a;
       --accent: #0969da;
-      --accent-glow: rgba(9, 105, 218, 0.08);
+      --accent-glow: color-mix(in srgb, var(--accent) 9%, transparent);
       --green: #1a7f37;
-      --green-bg: rgba(26, 127, 55, 0.10);
+      --green-bg: color-mix(in srgb, var(--green) 10%, transparent);
       --orange: #bc4c00;
       --purple: #8250df;
       --font-body: 'Newsreader', Georgia, serif;
@@ -42,6 +53,7 @@
 
     [data-theme="dark"] {
       --bg: #0d1117;
+      --bg-soft: #161b22;
       --surface: #161b22;
       --surface-alt: #1f242d;
       --surface-border: #30363d;
@@ -49,9 +61,9 @@
       --text-bright: #f0f6fc;
       --text-muted: #8b949e;
       --accent: #58a6ff;
-      --accent-glow: rgba(88, 166, 255, 0.15);
+      --accent-glow: color-mix(in srgb, var(--accent) 15%, transparent);
       --green: #3fb950;
-      --green-bg: rgba(63, 185, 80, 0.14);
+      --green-bg: color-mix(in srgb, var(--green) 14%, transparent);
       --orange: #f0883e;
       --purple: #bc8cff;
     }
@@ -164,7 +176,7 @@
       background: var(--surface);
       border: 1px solid var(--surface-border);
       border-radius: 12px;
-      box-shadow: 0 14px 40px rgba(0, 0, 0, 0.25);
+      box-shadow: 0 12px 36px color-mix(in srgb, var(--text-bright) 10%, transparent);
     }
 
     /* Unified Paper Header */
@@ -247,17 +259,6 @@
       font-family: var(--font-ui);
     }
 
-    @media (max-width: 980px) {
-      .kpi-strip,
-      .kpi-grid {
-        grid-template-columns: repeat(2, minmax(0, 1fr));
-      }
-      .paper-container {
-        padding: 28px 22px;
-        margin: 16px 12px 60px;
-      }
-    }
-
     .kpi-card {
       background: var(--bg);
       border: 1px solid var(--surface-border);
@@ -299,6 +300,10 @@
       line-height: 1.68;
     }
 
+    .abstract-box p:last-of-type {
+      margin-bottom: 0;
+    }
+
     .abstract-title,
     .abstract-box > strong:first-child {
       font-family: var(--font-ui);
@@ -328,7 +333,7 @@
     .paper-body.two-col,
     .two-col,
     .two-column-layout {
-      column-count: 2 !important;
+      column-count: 2;
       column-gap: 32px;
       column-rule: 1px solid var(--surface-border);
       column-fill: balance;
@@ -337,16 +342,42 @@
 
     .paper-body.one-col,
     .one-col {
-      column-count: 1 !important;
+      column-count: 1;
       text-align: justify;
     }
 
     @media (max-width: 980px) {
+      .kpi-strip,
+      .kpi-grid {
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+      }
+      .paper-container {
+        padding: 28px 22px;
+        margin: 16px 12px 60px;
+      }
       .paper-body.two-col,
       .two-col,
       .two-column-layout {
         column-gap: 20px;
         font-size: 14.5px;
+      }
+    }
+
+    @media (max-width: 820px) {
+      .paper-body.two-col,
+      .two-col,
+      .two-column-layout {
+        column-count: 1;
+      }
+    }
+
+    @media (max-width: 560px) {
+      .kpi-strip,
+      .kpi-grid {
+        grid-template-columns: 1fr;
+      }
+      .paper-container {
+        padding: 20px 16px 48px;
       }
     }
 
@@ -455,10 +486,33 @@
       line-height: 1.5;
     }
 
-    .table-container {
+    .table-container,
+    .table-card,
+    .table-scroll {
       margin: 18px 0;
       overflow-x: auto;
+      max-width: 100%;
+      -webkit-overflow-scrolling: touch;
       break-inside: avoid;
+    }
+
+    .table-caption {
+      font-family: var(--font-ui);
+      font-size: 13px;
+      font-weight: 700;
+      color: var(--text-bright);
+      margin-bottom: 8px;
+      line-height: 1.45;
+      text-align: left;
+    }
+
+    .table-footnote {
+      font-family: var(--font-ui);
+      font-size: 11.5px;
+      color: var(--text-muted);
+      margin-top: 6px;
+      line-height: 1.45;
+      text-align: left;
     }
 
     table,
@@ -472,7 +526,6 @@
       background: var(--bg);
       border: 1px solid var(--surface-border);
       border-radius: 8px;
-      overflow: hidden;
     }
 
     th,
@@ -486,9 +539,15 @@
 
     th,
     table.academic-table th {
-      background: rgba(88, 166, 255, 0.10);
+      background: color-mix(in srgb, var(--accent) 10%, var(--surface));
       color: var(--text-bright);
       font-weight: 600;
+    }
+
+    tr.baseline-row td,
+    table.academic-table tr.baseline-row td {
+      color: var(--text-muted);
+      background: var(--bg-soft);
     }
 
     tr.highlight-row td,
@@ -498,15 +557,32 @@
     }
 
     tr.section-row td {
-      background: rgba(188, 140, 255, 0.10);
+      background: color-mix(in srgb, var(--purple) 11%, var(--surface));
       color: var(--purple);
       font-weight: 700;
       text-align: left;
     }
 
+    tr.summary-row td,
+    table.academic-table tr.summary-row td {
+      border-top: 2px solid var(--accent);
+      font-weight: 700;
+    }
+
+    tr.subtotal-row td,
+    table.academic-table tr.subtotal-row td {
+      border-top: 1.5px solid var(--surface-border);
+      font-weight: 700;
+    }
+
     .highlight-val {
       color: var(--green);
       font-weight: 700;
+    }
+
+    .dim-note {
+      font-size: 11px;
+      opacity: 0.82;
     }
 
     .metric-pill {
@@ -519,17 +595,17 @@
     }
 
     .pill-green {
-      background: rgba(63, 185, 80, 0.18);
+      background: color-mix(in srgb, var(--green) 16%, transparent);
       color: var(--green);
     }
 
     .pill-orange {
-      background: rgba(240, 136, 62, 0.18);
+      background: color-mix(in srgb, var(--orange) 16%, transparent);
       color: var(--orange);
     }
 
     .pill-purple {
-      background: rgba(188, 140, 255, 0.18);
+      background: color-mix(in srgb, var(--purple) 16%, transparent);
       color: var(--purple);
     }
 
@@ -540,6 +616,86 @@
       padding: 2px 6px;
       border-radius: 4px;
       border: 1px solid var(--surface-border);
+    }
+
+    /* Reusable Academic Algorithm Box */
+    .algo-box {
+      background: var(--bg);
+      border-top: 2.5px solid var(--text-bright);
+      border-bottom: 2.5px solid var(--text-bright);
+      padding: 14px 18px;
+      margin: 20px 0;
+      font-family: var(--font-body);
+      text-align: left;
+      overflow-x: auto;
+      max-width: 100%;
+      -webkit-overflow-scrolling: touch;
+      break-inside: avoid;
+    }
+
+    .algo-head {
+      font-family: var(--font-ui);
+      font-size: 14px;
+      font-weight: 700;
+      color: var(--text-bright);
+      padding-bottom: 8px;
+      border-bottom: 1px solid var(--surface-border);
+      margin-bottom: 10px;
+      line-height: 1.45;
+    }
+
+    .algo-sub {
+      font-size: 13.2px;
+      line-height: 1.68;
+      color: var(--text);
+      margin-bottom: 6px;
+    }
+
+    .algo-body {
+      border-top: 1px solid var(--surface-border);
+      padding-top: 8px;
+      font-size: 13.2px;
+      line-height: 1.78;
+      color: var(--text);
+    }
+
+    .algo-line {
+      white-space: normal;
+    }
+
+    .algo-line.algo-phase {
+      margin-top: 4px;
+      font-weight: 600;
+    }
+
+    .algo-line.algo-phase:first-child {
+      margin-top: 0;
+    }
+
+    .algo-ln {
+      font-family: var(--font-mono);
+      font-size: 11.5px;
+      color: var(--text-muted);
+      display: inline-block;
+      width: 28px;
+      font-weight: 400;
+    }
+
+    .algo-indent {
+      padding-left: 24px;
+    }
+
+    .algo-phase-bright { color: var(--text-bright); }
+    .algo-phase-accent { color: var(--accent); }
+    .algo-phase-green { color: var(--green); }
+    .algo-phase-purple { color: var(--purple); }
+    .algo-phase-orange { color: var(--orange); }
+    .algo-comment { color: var(--text-muted); font-size: 12px; font-weight: 400; }
+
+    .appendix-section {
+      margin-top: 36px;
+      padding-top: 28px;
+      border-top: 2.5px solid var(--surface-border);
     }
 
     .reference-list {
@@ -554,9 +710,26 @@
     }
 
     @media print {
+      html,
+      html[data-theme="dark"] {
+        --bg: #ffffff;
+        --bg-soft: #f8fafc;
+        --surface: #ffffff;
+        --surface-alt: #f8fafc;
+        --surface-border: #cbd5e1;
+        --text: #111827;
+        --text-bright: #000000;
+        --text-muted: #4b5563;
+        --accent: #1d4ed8;
+        --accent-glow: rgba(29, 78, 216, 0.08);
+        --green: #15803d;
+        --green-bg: rgba(21, 128, 61, 0.08);
+        --orange: #c2410c;
+        --purple: #6d28d9;
+      }
       body {
         background: #ffffff;
-        color: #000000;
+        color: #111827;
         font-size: 10pt;
       }
       .top-bar {
@@ -570,9 +743,10 @@
         width: 100%;
         max-width: 100%;
       }
-      .paper-body.two-col {
-        column-count: 2;
-        column-gap: 20px;
+      .paper-body.two-col,
+      .two-col,
+      .two-column-layout {
+        column-count: 1 !important;
       }
     }
 
@@ -594,7 +768,7 @@
     <div class="top-bar-right">
       <button class="btn active" id="btn-2col" type="button" onclick="setPaperCols(2)">2-Col</button>
       <button class="btn" id="btn-1col" type="button" onclick="setPaperCols(1)">1-Col</button>
-      <button class="btn" id="btn-theme" type="button" onclick="togglePaperTheme()">☀️ Light</button>
+      <button class="btn" id="btn-theme" type="button" title="Toggle Light / Dark theme" onclick="togglePaperTheme()">☀️ Theme: Light</button>
       <button class="btn" type="button" onclick="window.print()">🖨️ Print / PDF</button>
     </div>
   </div>
@@ -629,14 +803,14 @@
       </div>
       <div class="kpi-card">
         <div class="kpi-label">Reconstruction Fidelity</div>
-        <div class="kpi-value">27.31 dB PSNR</div>
-        <div class="kpi-sub">Within 0.6 dB of SD 2.1 VAE Ceiling</div>
+        <div class="kpi-value">24.2 dB PSNR</div>
+        <div class="kpi-sub">Within 0.6 dB of SD-VAE Ceiling</div>
       </div>
     </div>
 
     <div class="abstract-box">
       <div class="abstract-title">Abstract</div>
-      <p style="margin-bottom:0;">
+      <p>
         Physical inter-chip communication presents a fundamental bottleneck in deploying neural Image Signal Processing (ISP) and generative vision models on edge devices. Transmitting uncompressed sensor frames across camera serial buses incurs severe driver serialization and memory contention, bottlenecking throughput regardless of AP compute capacity. We propose transitioning edge cameras <strong>from classical Image Signal Processing (ISP) to Latent Signal Processing (LSP)</strong> via a <strong>Sensor-AP collaborative inference</strong> framework powered by asymmetric split-encoder latent distillation. We bifurcate the neural encoder across the sensor-AP boundary: an ultra-lightweight <em>in-sensor Compressor</em> (Stage A) collapses raw frames into a compact intermediate feature tensor ($48\times$ bus payload reduction), which an on-AP <em>Latent Translator</em> (Stage B) maps directly onto the canonical $64\times 64\times 4$ latent manifold. Standardizing sensing on this public latent representation allows a single hardware-mapped pipeline to concurrently power two disparate downstream applications from the same resident latent: continuous real-time viewfinder preview ($30.0\text{ FPS}$) via a compact fine-tuned decoder, and zero-shutter-lag (ZSL) generative capture via off-the-shelf foundation diffusion models without secondary raw acquisition or encoder re-execution. Physical edge experiments coupling the Raspberry Pi AI Camera and a Hailo-8 NPU with Raspberry Pi 5 confirm that our LSP architecture enables real-time generative imaging.
       </p>
       <div class="keywords">
@@ -660,8 +834,7 @@
 
       <!-- Figure 1 (Full Width Network Architecture & Hardware Demarcation) -->
       <figure class="full-width">
-        <img src="figures/lsp_fig1_network_topology.webp" alt="Deep learning network topology and hardware-demarcated dual-mode pipeline"
-          style="width: 100%; display: block; margin: 0 auto; border-radius: 8px; border: 1px solid var(--surface-border);">
+        <img src="figures/lsp_fig1_network_topology.webp" alt="Deep learning network topology and hardware-demarcated dual-mode pipeline">
         <figcaption><strong>Fig. 1.</strong> Network topology and hardware-demarcated collaborative imaging pipeline. <strong>(Top)</strong> Server GPU domain: offline teacher distillation via $E_{\text{SD}}$ (left) and online foundation generative capture ($X_{\text{gen}}$) conditioned on student latent $z_{\text{pred}}$ and preview Canny prior $C$ (right). <strong>(Bottom)</strong> Edge hardware domain: in-sensor Compressor ($E_A$) on Raspberry Pi AI Camera routes compressed tensor $r$ across MIPI CSI-2 to Hailo-8 NPU, where Latent Translator ($E_B$) reconstructs $z_{\text{pred}}$ to power real-time viewfinder preview ($\hat{X}_H$, $30.0\text{ FPS}$) and zero-shutter-lag capture.</figcaption>
       </figure>
 
@@ -694,18 +867,14 @@
           $$\mathcal{L}_{\text{preview}} = \|\hat{X}_H - X\|_1 + \lambda_{\text{perc}} \mathcal{L}_{\text{perc}}(\hat{X}_H, X)$$
         </div>
         <p>where $\mathcal{L}_{\text{perc}}$ is LPIPS loss ($\lambda_{\text{perc}}=0.5$). When reconstructing from ground-truth teacher latents $z_{\text{teacher}}$, standalone preview decoder $\mathcal{D}_{\text{ft}}$ achieves high fidelity ($24.2\text{ dB}$ PSNR, within $0.6\text{ dB}$ of the $49.5\text{M}$ SD-VAE ceiling), establishing the upper-bound fidelity of the preview path while preserving latent compatibility with frozen downstream diffusion models.</p>
-      </section>
 
-      <!-- Section 2.4 -->
-      <section>
         <h3>2.4 Dual-NPU Serial Execution and Real-Time Deadlines</h3>
         <p>To avoid driver buffering jitter and memory contention, edge camera systems execute deterministically in sequential (serial) photon-to-display loops across in-sensor compression, MIPI bus transmission, AP latent translation, and preview decoding ($\mathcal{D}_{\text{ft}}$). Sustaining non-blocking preview display at $30.0\text{ frames per second}$ without frame drops or driver FIFO queue overflows requires completing this entire serial sequence within the strict $33.33\text{ ms}$ per-frame deadline. As demonstrated in our physical experiments (Section 4), contracting the intermediate bus payload satisfies this real-time budget by eliminating DMA serialization overhead.</p>
       </section>
 
       <!-- Table 1 (Full Width) -->
       <div class="table-container full-width">
-        <div
-          style="font-family: var(--font-ui); font-size: 13px; font-weight: 700; color: var(--text-bright); margin-bottom: 6px;">
+        <div class="table-caption">
           Table 1: Dual-NPU serial edge pipeline performance across processor stages on Raspberry Pi 5 ($512\times 512$ generative camera resolution, steady-state mean over 50 iterations).
         </div>
         <table>
@@ -764,7 +933,7 @@
             </tr>
           </tbody>
         </table>
-        <div style="font-size: 11px; color: var(--text-muted); margin-top: 6px;">
+        <div class="table-footnote">
           * Stage B and TAESD execute sequentially on Hailo-8. SA8 reduces bus payload by <strong>$48.0\times$</strong> (<strong>$64\text{ KB}$</strong>, <strong>$2.90\text{ ms}$</strong> bus latency), sustaining the physical <strong>$30.0\text{ FPS}$</strong> camera ceiling.
         </div>
       </div>
@@ -781,8 +950,7 @@
 
       <!-- Figure 2 (Full Width Preview vs SR Floor) -->
       <figure class="full-width">
-        <img src="figures/lsp_fig2_sr_floor.webp" alt="Visual reconstruction comparison across super-resolution baselines on DIV2K"
-          style="width: 100%; display: block; margin: 0 auto; border-radius: 8px; border: 1px solid var(--surface-border);">
+        <img src="figures/lsp_fig2_sr_floor.webp" alt="Visual reconstruction comparison across super-resolution baselines on DIV2K" loading="lazy" decoding="async">
         <figcaption><strong>Fig. 2.</strong> Qualitative super-resolution comparison under $8\times$ raw decimation ($s_A=8$) on representative crops across 3 diverse DIV2K validation scenes (Scene 205 typography, Scene 799 mechanical edges, Scene 694 ceramic textures) alongside uncompressed autoencoders (TAESD [13], SD 2.1 VAE). Conventional AP super-resolution baselines blur alphanumeric typography and smudge mechanical panel boundaries due to severe raw pixel decimation ($98.4\%$ pixel loss). While monolithic autoencoders (TAESD, SD 2.1 VAE) achieve high fidelity, their substantial memory footprints physically prohibit in-sensor deployment ($>8\text{ MB}$ vs. $<2\text{ MB}$ SRAM), requiring uncompressed raw bus transmission ($3,072\text{ KB}$). In contrast, proposed LSP fits within in-sensor SRAM, closely approaching uncompressed autoencoder fidelity under $64\text{ KB}$ bus payload using only $2.43\text{G}$ MACs Stage B compute on the AP.</figcaption>
       </figure>
 
@@ -809,126 +977,124 @@
             (iii) <strong>SA2 ($s_A=2$)</strong> minimizes in-sensor compute to <strong>$13\text{M}$</strong> MACs ($2.4\text{K}$ params) with sharpest perceptual fidelity (<strong>$0.1599$</strong> LPIPS) when bus bandwidth is abundant.</li>
           <li><strong>Compute Reduction vs. Monolithic VAE:</strong> Compared to the monolithic SD 2.1 VAE encoder ($541.1\text{ G MACs}$, $34.16\text{M}$ params), our split encoder requires only <strong>$2.5\text{ G MACs}$</strong> (<strong>$216\times$</strong> reduction), with sensor compute capped at <strong>$122\text{M}$</strong> MACs ($9.59\text{K}$ params).</li>
         </ul>
-      </section>
 
-      <!-- Table 2 (Full Width) -->
-      <div class="table-container full-width">
-        <div
-          style="font-family: var(--font-ui); font-size: 13px; font-weight: 700; color: var(--text-bright); margin-bottom: 6px;">
-          Table 2: Reconstruction fidelity across partition configurations on DIV2K validation dataset ($100$ held-out val images, $512\times 512$, mean $\pm$ std). To directly verify universal manifold compatibility, quality metrics for split configurations evaluate predicted latents $z_{\text{pred}}$ directly through the frozen, unmodified SD 2.1 VAE decoder. Bold indicates best among proposed split configs.
+        <!-- Table 2 (Full Width) -->
+        <div class="table-container full-width">
+          <div class="table-caption">
+            Table 2: Reconstruction fidelity across partition configurations on DIV2K validation dataset ($100$ held-out val images, $512\times 512$, mean $\pm$ std). To directly verify universal manifold compatibility, quality metrics for split configurations evaluate predicted latents $z_{\text{pred}}$ directly through the frozen, unmodified SD 2.1 VAE decoder. Bold indicates best among proposed split configs.
+          </div>
+          <table>
+            <thead>
+              <tr>
+                <th>Configuration</th>
+                <th>Stage A (Sensor)</th>
+                <th>Bus Payload</th>
+                <th>Stage B (AP)</th>
+                <th>Decoder</th>
+                <th>LPIPS ↓ (mean±std)</th>
+                <th>PSNR ↑ (mean±std)</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr class="baseline-row">
+                <td>Monolithic SD 2.1 VAE</td>
+                <td>—</td>
+                <td>3,072 KB</td>
+                <td>541.1 G <span class="dim-note">(34.16M)</span></td>
+                <td>1,240.1 G <span class="dim-note">(49.49M)</span></td>
+                <td>0.0759 ± 0.0360</td>
+                <td>25.12 ± 3.25 dB</td>
+              </tr>
+              <tr class="baseline-row">
+                <td>Monolithic TAESD [13]</td>
+                <td>—</td>
+                <td>3,072 KB</td>
+                <td>2.64 G <span class="dim-note">(1.13M)</span></td>
+                <td>70.7 G <span class="dim-note">(1.22M)</span></td>
+                <td>0.1395 ± 0.0690</td>
+                <td>22.42 ± 2.43 dB</td>
+              </tr>
+              <tr class="baseline-row">
+                <td><em>Low-Res Bicubic ($s_A=8$)</em></td>
+                <td>—</td>
+                <td>48 KB</td>
+                <td>—</td>
+                <td>0 G <span class="dim-note">(0M)</span></td>
+                <td>0.6396 ± 0.1371</td>
+                <td>21.97 ± 2.70 dB</td>
+              </tr>
+              <tr class="baseline-row">
+                <td><em>Low-Res + SRVGGCompact ($s_A=8$)</em> [17]</td>
+                <td>—</td>
+                <td>48 KB</td>
+                <td>—</td>
+                <td>4.95 G <span class="dim-note">(1.21M)</span></td>
+                <td>0.5036 ± 0.1171</td>
+                <td>20.98 ± 2.52 dB</td>
+              </tr>
+              <tr class="baseline-row">
+                <td><em>Low-Res + Real-ESRGAN ($s_A=8$)</em> [17]</td>
+                <td>—</td>
+                <td>48 KB</td>
+                <td>—</td>
+                <td>73.43 G <span class="dim-note">(16.70M)</span></td>
+                <td>0.4257 ± 0.1056</td>
+                <td>20.69 ± 2.66 dB</td>
+              </tr>
+              <tr class="baseline-row">
+                <td><em>Low-Res + Swin2SR ($s_A=8$)</em> [18]</td>
+                <td>—</td>
+                <td>48 KB</td>
+                <td>—</td>
+                <td>51.12 G <span class="dim-note">(12.24M)</span></td>
+                <td>0.4473 ± 0.1272</td>
+                <td>23.53 ± 3.08 dB</td>
+              </tr>
+              <tr class="baseline-row">
+                <td><em>Low-Res + SAFMN ($s_A=8$)</em> [16]</td>
+                <td>—</td>
+                <td>48 KB</td>
+                <td>—</td>
+                <td>0.96 G <span class="dim-note">(0.24M)</span></td>
+                <td>0.4966 ± 0.1325</td>
+                <td>23.17 ± 3.00 dB</td>
+              </tr>
+              <tr>
+                <td>SA8 ($s_A=8$, Ours)</td>
+                <td>122 M <span class="dim-note">(9.59K)</span></td>
+                <td><strong>64 KB</strong></td>
+                <td><strong>2.43 G <span class="dim-note">(0.60M)</span></strong></td>
+                <td>70.7 G <span class="dim-note">(1.22M)</span></td>
+                <td>0.2926 ± 0.0777</td>
+                <td>22.90 ± 2.58 dB</td>
+              </tr>
+              <tr class="highlight-row">
+                <td><strong>SA4 ($s_A=4$, Ours)</strong></td>
+                <td>67 M <span class="dim-note">(9.1K)</span></td>
+                <td>256 KB</td>
+                <td>12.4 G <span class="dim-note">(1.25M)</span></td>
+                <td>70.7 G <span class="dim-note">(1.22M)</span></td>
+                <td>0.2134 ± 0.0676</td>
+                <td><strong>23.34 ± 2.76 dB</strong></td>
+              </tr>
+              <tr>
+                <td>SA2 ($s_A=2$, Ours)</td>
+                <td><strong>13 M <span class="dim-note">(2.4K)</span></strong></td>
+                <td>1,024 KB</td>
+                <td>52.2 G <span class="dim-note">(1.91M)</span></td>
+                <td>70.7 G <span class="dim-note">(1.22M)</span></td>
+                <td><strong>0.1599 ± 0.0523</strong></td>
+                <td>23.14 ± 2.78 dB</td>
+              </tr>
+            </tbody>
+          </table>
+          <div class="table-footnote">
+            * Stage A, Stage B, and Decoder metrics are reported as MACs (Params). Quality metrics denote sample mean ± standard deviation across the 100 held-out scenes.
+          </div>
         </div>
-        <table>
-          <thead>
-            <tr>
-              <th>Configuration</th>
-              <th>Stage A (Sensor)</th>
-              <th>Bus Payload</th>
-              <th>Stage B (AP)</th>
-              <th>Decoder</th>
-              <th>LPIPS ↓ (mean±std)</th>
-              <th>PSNR ↑ (mean±std)</th>
-            </tr>
-          </thead>
-          <tbody>
-            <tr style="color: var(--text-muted); background: rgba(255, 255, 255, 0.03);">
-              <td>Monolithic SD 2.1 VAE</td>
-              <td>—</td>
-              <td>3,072 KB</td>
-              <td>541.1 G <span style="font-size: 11px; opacity: 0.8;">(34.16M)</span></td>
-              <td>1,240.1 G <span style="font-size: 11px; opacity: 0.8;">(49.49M)</span></td>
-              <td>0.0759 ± 0.0360</td>
-              <td>25.12 ± 3.25 dB</td>
-            </tr>
-            <tr style="color: var(--text-muted); background: rgba(255, 255, 255, 0.03);">
-              <td>Monolithic TAESD [13]</td>
-              <td>—</td>
-              <td>3,072 KB</td>
-              <td>2.64 G <span style="font-size: 11px; opacity: 0.8;">(1.13M)</span></td>
-              <td>70.7 G <span style="font-size: 11px; opacity: 0.8;">(1.22M)</span></td>
-              <td>0.1395 ± 0.0690</td>
-              <td>22.42 ± 2.43 dB</td>
-            </tr>
-            <tr style="color: var(--text-muted); background: rgba(255, 255, 255, 0.02);">
-              <td><em>Low-Res Bicubic ($s_A=8$)</em></td>
-              <td>—</td>
-              <td>48 KB</td>
-              <td>—</td>
-              <td>0 G <span style="font-size: 11px; opacity: 0.8;">(0M)</span></td>
-              <td>0.6396 ± 0.1371</td>
-              <td>21.97 ± 2.70 dB</td>
-            </tr>
-            <tr style="color: var(--text-muted); background: rgba(255, 255, 255, 0.02);">
-              <td><em>Low-Res + SRVGGCompact ($s_A=8$)</em> [17]</td>
-              <td>—</td>
-              <td>48 KB</td>
-              <td>—</td>
-              <td>4.95 G <span style="font-size: 11px; opacity: 0.8;">(1.21M)</span></td>
-              <td>0.5036 ± 0.1171</td>
-              <td>20.98 ± 2.52 dB</td>
-            </tr>
-            <tr style="color: var(--text-muted); background: rgba(255, 255, 255, 0.02);">
-              <td><em>Low-Res + Real-ESRGAN ($s_A=8$)</em> [17]</td>
-              <td>—</td>
-              <td>48 KB</td>
-              <td>—</td>
-              <td>73.43 G <span style="font-size: 11px; opacity: 0.8;">(16.70M)</span></td>
-              <td>0.4257 ± 0.1056</td>
-              <td>20.69 ± 2.66 dB</td>
-            </tr>
-            <tr style="color: var(--text-muted); background: rgba(255, 255, 255, 0.02);">
-              <td><em>Low-Res + Swin2SR ($s_A=8$)</em> [18]</td>
-              <td>—</td>
-              <td>48 KB</td>
-              <td>—</td>
-              <td>51.12 G <span style="font-size: 11px; opacity: 0.8;">(12.24M)</span></td>
-              <td>0.4473 ± 0.1272</td>
-              <td>23.53 ± 3.08 dB</td>
-            </tr>
-            <tr style="color: var(--text-muted); background: rgba(255, 255, 255, 0.02);">
-              <td><em>Low-Res + SAFMN ($s_A=8$)</em> [16]</td>
-              <td>—</td>
-              <td>48 KB</td>
-              <td>—</td>
-              <td>0.96 G <span style="font-size: 11px; opacity: 0.8;">(0.24M)</span></td>
-              <td>0.4966 ± 0.1325</td>
-              <td>23.17 ± 3.00 dB</td>
-            </tr>
-            <tr>
-              <td>SA8 ($s_A=8$, Ours)</td>
-              <td>122 M <span style="font-size: 11px; opacity: 0.8;">(9.59K)</span></td>
-              <td><strong>64 KB</strong></td>
-              <td><strong>2.43 G <span style="font-size: 11px; opacity: 0.8;">(0.60M)</span></strong></td>
-              <td>70.7 G <span style="font-size: 11px; opacity: 0.8;">(1.22M)</span></td>
-              <td>0.2926 ± 0.0777</td>
-              <td>22.90 ± 2.58 dB</td>
-            </tr>
-            <tr class="highlight-row">
-              <td><strong>SA4 ($s_A=4$, Ours)</strong></td>
-              <td>67 M <span style="font-size: 11px; opacity: 0.8;">(9.1K)</span></td>
-              <td>256 KB</td>
-              <td>12.4 G <span style="font-size: 11px; opacity: 0.8;">(1.25M)</span></td>
-              <td>70.7 G <span style="font-size: 11px; opacity: 0.8;">(1.22M)</span></td>
-              <td>0.2134 ± 0.0676</td>
-              <td><strong>23.34 ± 2.76 dB</strong></td>
-            </tr>
-            <tr>
-              <td>SA2 ($s_A=2$, Ours)</td>
-              <td><strong>13 M <span style="font-size: 11px; opacity: 0.8;">(2.4K)</span></strong></td>
-              <td>1,024 KB</td>
-              <td>52.2 G <span style="font-size: 11px; opacity: 0.8;">(1.91M)</span></td>
-              <td>70.7 G <span style="font-size: 11px; opacity: 0.8;">(1.22M)</span></td>
-              <td><strong>0.1599 ± 0.0523</strong></td>
-              <td>23.14 ± 2.78 dB</td>
-            </tr>
-          </tbody>
-        </table>
-        <div style="font-size: 11px; color: var(--text-muted); margin-top: 6px;">
-          * Stage A, Stage B, and Decoder metrics are reported as MACs (Params). Quality metrics denote sample mean ± standard deviation across the 100 held-out scenes.
-        </div>
-      </div>
 
-      <!-- Section 4.5 -->
-      <section>
+        <p><strong>Streaming Stability:</strong> In edge camera systems, serial bus contention directly degrades frame delivery stability. When transferring uncompressed raw frames ($3,072\text{ KB}$), bus contention and driver DMA buffer queuing cause high frame arrival variance ($52.91 \pm 8.7\text{ ms}$), throttling throughput to $14.9\text{ FPS}$ and inducing visible preview stutter. In contrast, proposed SA8 contracts bus payload to $64\text{ KB}$ ($2.90\text{ ms}$ DMA latency). By eliminating buffer queue congestion on our physical Raspberry Pi 5 testbed, inter-frame arrival intervals stabilize to $33.3 \pm 0.6\text{ ms}$, ensuring glitch-free live preview synchronized at the physical $30.0\text{ FPS}$ camera sensor ceiling.</p>
+
         <h3>4.5 Downstream Generative Refinement &amp; Structural Fidelity</h3>
         <p>Because predicted latent $z_{\text{pred}}$ strictly populates the canonical SD 2.1 manifold, foundation models attach seamlessly without retraining. Since generative capture does not require continuous frame rates, resident latent $z_{\text{pred}}$ directly initializes downstream diffusion models conditioned on preview Canny edges ($C$, Fig. 3) dispatched downstream to the workstation GPU with zero raw-frame bus transmission.</p>
 
@@ -937,8 +1103,7 @@
 
       <!-- Figure 3 (Full Width Generative Capture) -->
       <figure class="full-width">
-        <img src="figures/lsp_fig3_capture_controlnet.webp" alt="Downstream generative capture comparison between Edge SR Baseline and Proposed LSP"
-          style="width: 100%; display: block; margin: 0 auto; border-radius: 8px; border: 1px solid var(--surface-border);">
+        <img src="figures/lsp_fig3_capture_controlnet.webp" alt="Downstream generative capture comparison between Edge SR Baseline and Proposed LSP" loading="lazy" decoding="async">
         <figcaption><strong>Fig. 3.</strong> Downstream generative capture comparison on an exemplary DIV2K validation scene (Scene 160, $s_A=8$): Best efficient SR baseline (SAFMN [16]) vs. Proposed LSP. Aggressive raw pixel decimation ($8\times8$) under SAFMN erases the shoreline boundary and severs track rails in the Canny prior, causing ControlNet diffusion to completely erase the alpine lake into a grassy slope and synthesize a floating train carriage. In contrast, LSP preserves essential structural subbands on-sensor, retaining crisp continuous contour guidance for faithful generative synthesis with intact lake, harbor, and grounded rail geometry with zero raw re-transmission.</figcaption>
       </figure>
 
@@ -976,43 +1141,88 @@
   </div>
 
   <script>
-    function setPaperCols(n) {
-      const body = document.getElementById('paper-body') || document.getElementById('main-paper-body');
-      const b1 = document.getElementById('btn-1col');
-      const b2 = document.getElementById('btn-2col');
-      if (!body) return;
-      if (n === 2) {
-        body.classList.add('two-col');
-        body.classList.remove('one-col');
-        body.style.columnCount = '2';
-        if (b2) b2.classList.add('active');
-        if (b1) b1.classList.remove('active');
-      } else {
-        body.classList.remove('two-col');
-        body.classList.remove('two-column-layout');
-        body.classList.add('one-col');
-        body.style.columnCount = '1';
-        if (b1) b1.classList.add('active');
-        if (b2) b2.classList.remove('active');
+    function syncThemeButton() {
+      var root = document.documentElement;
+      var btn = document.getElementById('btn-theme');
+      if (!btn) return;
+      var isDark = root.getAttribute('data-theme') === 'dark';
+      btn.textContent = isDark ? '🌙 Theme: Dark' : '☀️ Theme: Light';
+      btn.setAttribute('title', 'Toggle Light / Dark theme');
+    }
+
+    function setPaperCols(n, persist) {
+      var body = document.getElementById('paper-body') || document.getElementById('main-paper-body');
+      var b1 = document.getElementById('btn-1col');
+      var b2 = document.getElementById('btn-2col');
+      var cols = (Number(n) === 1) ? 1 : 2;
+      if (body) {
+        if (cols === 2) {
+          body.classList.add('two-col');
+          body.classList.remove('one-col');
+        } else {
+          body.classList.remove('two-col');
+          body.classList.remove('two-column-layout');
+          body.classList.add('one-col');
+        }
+      }
+      if (b2) b2.classList.toggle('active', cols === 2);
+      if (b1) b1.classList.toggle('active', cols === 1);
+      if (persist !== false) {
+        try {
+          localStorage.setItem('sb-paper-cols', String(cols));
+        } catch (e) {}
       }
     }
 
     function togglePaperTheme() {
-      const root = document.documentElement;
-      const btn = document.getElementById('btn-theme');
-      if (root.getAttribute('data-theme') === 'dark') {
-        root.setAttribute('data-theme', 'light');
-        if (btn) btn.textContent = '☀️ Light';
-      } else {
-        root.setAttribute('data-theme', 'dark');
-        if (btn) btn.textContent = '🌙 Dark';
-      }
+      var root = document.documentElement;
+      var next = root.getAttribute('data-theme') === 'dark' ? 'light' : 'dark';
+      root.setAttribute('data-theme', next);
+      try {
+        localStorage.setItem('sb-theme', next);
+      } catch (e) {}
+      syncThemeButton();
     }
+
+    var _paperMathRendered = false;
+    function renderPaperMath() {
+      if (_paperMathRendered || typeof window.renderMathInElement !== 'function') return;
+      _paperMathRendered = true;
+      window.renderMathInElement(document.body, {
+        delimiters: [
+          {left: '$$', right: '$$', display: true},
+          {left: '\\[', right: '\\]', display: true},
+          {left: '$', right: '$', display: false},
+          {left: '\\(', right: '\\)', display: false}
+        ],
+        ignoredTags: ['script', 'noscript', 'style', 'textarea', 'pre', 'code', 'svg'],
+        strict: false,
+        throwOnError: false
+      });
+    }
+
+    function initPaperPortal() {
+      syncThemeButton();
+      var savedCols = '2';
+      try {
+        var c = localStorage.getItem('sb-paper-cols');
+        if (c === '1' || c === '2') savedCols = c;
+      } catch (e) {}
+      setPaperCols(Number(savedCols), false);
+      renderPaperMath();
+    }
+
+    if (document.readyState === 'loading') {
+      document.addEventListener('DOMContentLoaded', initPaperPortal);
+    } else {
+      initPaperPortal();
+    }
+    window.addEventListener('load', renderPaperMath);
 
     // Legacy aliases for backward compatibility
     window.setCols = setPaperCols;
     window.toggleCols = function() {
-      const body = document.getElementById('paper-body') || document.getElementById('main-paper-body');
+      var body = document.getElementById('paper-body') || document.getElementById('main-paper-body');
       setPaperCols(body && body.classList.contains('one-col') ? 2 : 1);
     };
     window.toggleLayout = window.toggleCols;

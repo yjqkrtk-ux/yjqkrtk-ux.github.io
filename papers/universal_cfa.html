@@ -6,6 +6,17 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Universal In-Sensor Latent Signal Processing for Heterogeneous CFAs — Research Paper</title>
 
+  <script>
+    (function() {
+      try {
+        var t = localStorage.getItem('sb-theme');
+        if (t === 'light' || t === 'dark') {
+          document.documentElement.setAttribute('data-theme', t);
+        }
+      } catch (e) {}
+    })();
+  </script>
+
   <!-- Fonts -->
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -14,15 +25,15 @@
     rel="stylesheet">
 
   <!-- KaTeX for Math rendering -->
-  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/katex@0.16.10/dist/katex.min.css">
-  <script defer src="https://cdn.jsdelivr.net/npm/katex@0.16.10/dist/katex.min.js"></script>
-  <script defer src="https://cdn.jsdelivr.net/npm/katex@0.16.10/dist/contrib/auto-render.min.js"
-    onload="renderMathInElement(document.body, {delimiters: [{left: '$$', right: '$$', display: true}, {left: '$', right: '$', display: false}]});"></script>
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/katex@0.16.11/dist/katex.min.css">
+  <script defer src="https://cdn.jsdelivr.net/npm/katex@0.16.11/dist/katex.min.js"></script>
+  <script defer src="https://cdn.jsdelivr.net/npm/katex@0.16.11/dist/contrib/auto-render.min.js"></script>
 
   <style>
     :root,
     [data-theme="light"] {
       --bg: #f6f8fa;
+      --bg-soft: #eef2f6;
       --surface: #ffffff;
       --surface-alt: #f0f3f6;
       --surface-border: #d0d7de;
@@ -30,9 +41,9 @@
       --text-bright: #0d1117;
       --text-muted: #57606a;
       --accent: #0969da;
-      --accent-glow: rgba(9, 105, 218, 0.08);
+      --accent-glow: color-mix(in srgb, var(--accent) 9%, transparent);
       --green: #1a7f37;
-      --green-bg: rgba(26, 127, 55, 0.10);
+      --green-bg: color-mix(in srgb, var(--green) 10%, transparent);
       --orange: #bc4c00;
       --purple: #8250df;
       --font-body: 'Newsreader', Georgia, serif;
@@ -42,6 +53,7 @@
 
     [data-theme="dark"] {
       --bg: #0d1117;
+      --bg-soft: #161b22;
       --surface: #161b22;
       --surface-alt: #1f242d;
       --surface-border: #30363d;
@@ -49,9 +61,9 @@
       --text-bright: #f0f6fc;
       --text-muted: #8b949e;
       --accent: #58a6ff;
-      --accent-glow: rgba(88, 166, 255, 0.15);
+      --accent-glow: color-mix(in srgb, var(--accent) 15%, transparent);
       --green: #3fb950;
-      --green-bg: rgba(63, 185, 80, 0.14);
+      --green-bg: color-mix(in srgb, var(--green) 14%, transparent);
       --orange: #f0883e;
       --purple: #bc8cff;
     }
@@ -164,7 +176,7 @@
       background: var(--surface);
       border: 1px solid var(--surface-border);
       border-radius: 12px;
-      box-shadow: 0 14px 40px rgba(0, 0, 0, 0.25);
+      box-shadow: 0 12px 36px color-mix(in srgb, var(--text-bright) 10%, transparent);
     }
 
     /* Unified Paper Header */
@@ -247,17 +259,6 @@
       font-family: var(--font-ui);
     }
 
-    @media (max-width: 980px) {
-      .kpi-strip,
-      .kpi-grid {
-        grid-template-columns: repeat(2, minmax(0, 1fr));
-      }
-      .paper-container {
-        padding: 28px 22px;
-        margin: 16px 12px 60px;
-      }
-    }
-
     .kpi-card {
       background: var(--bg);
       border: 1px solid var(--surface-border);
@@ -299,6 +300,10 @@
       line-height: 1.68;
     }
 
+    .abstract-box p:last-of-type {
+      margin-bottom: 0;
+    }
+
     .abstract-title,
     .abstract-box > strong:first-child {
       font-family: var(--font-ui);
@@ -328,7 +333,7 @@
     .paper-body.two-col,
     .two-col,
     .two-column-layout {
-      column-count: 2 !important;
+      column-count: 2;
       column-gap: 32px;
       column-rule: 1px solid var(--surface-border);
       column-fill: balance;
@@ -337,16 +342,42 @@
 
     .paper-body.one-col,
     .one-col {
-      column-count: 1 !important;
+      column-count: 1;
       text-align: justify;
     }
 
     @media (max-width: 980px) {
+      .kpi-strip,
+      .kpi-grid {
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+      }
+      .paper-container {
+        padding: 28px 22px;
+        margin: 16px 12px 60px;
+      }
       .paper-body.two-col,
       .two-col,
       .two-column-layout {
         column-gap: 20px;
         font-size: 14.5px;
+      }
+    }
+
+    @media (max-width: 820px) {
+      .paper-body.two-col,
+      .two-col,
+      .two-column-layout {
+        column-count: 1;
+      }
+    }
+
+    @media (max-width: 560px) {
+      .kpi-strip,
+      .kpi-grid {
+        grid-template-columns: 1fr;
+      }
+      .paper-container {
+        padding: 20px 16px 48px;
       }
     }
 
@@ -455,10 +486,33 @@
       line-height: 1.5;
     }
 
-    .table-container {
+    .table-container,
+    .table-card,
+    .table-scroll {
       margin: 18px 0;
       overflow-x: auto;
+      max-width: 100%;
+      -webkit-overflow-scrolling: touch;
       break-inside: avoid;
+    }
+
+    .table-caption {
+      font-family: var(--font-ui);
+      font-size: 13px;
+      font-weight: 700;
+      color: var(--text-bright);
+      margin-bottom: 8px;
+      line-height: 1.45;
+      text-align: left;
+    }
+
+    .table-footnote {
+      font-family: var(--font-ui);
+      font-size: 11.5px;
+      color: var(--text-muted);
+      margin-top: 6px;
+      line-height: 1.45;
+      text-align: left;
     }
 
     table,
@@ -472,7 +526,6 @@
       background: var(--bg);
       border: 1px solid var(--surface-border);
       border-radius: 8px;
-      overflow: hidden;
     }
 
     th,
@@ -486,9 +539,15 @@
 
     th,
     table.academic-table th {
-      background: rgba(88, 166, 255, 0.10);
+      background: color-mix(in srgb, var(--accent) 10%, var(--surface));
       color: var(--text-bright);
       font-weight: 600;
+    }
+
+    tr.baseline-row td,
+    table.academic-table tr.baseline-row td {
+      color: var(--text-muted);
+      background: var(--bg-soft);
     }
 
     tr.highlight-row td,
@@ -498,15 +557,32 @@
     }
 
     tr.section-row td {
-      background: rgba(188, 140, 255, 0.10);
+      background: color-mix(in srgb, var(--purple) 11%, var(--surface));
       color: var(--purple);
       font-weight: 700;
       text-align: left;
     }
 
+    tr.summary-row td,
+    table.academic-table tr.summary-row td {
+      border-top: 2px solid var(--accent);
+      font-weight: 700;
+    }
+
+    tr.subtotal-row td,
+    table.academic-table tr.subtotal-row td {
+      border-top: 1.5px solid var(--surface-border);
+      font-weight: 700;
+    }
+
     .highlight-val {
       color: var(--green);
       font-weight: 700;
+    }
+
+    .dim-note {
+      font-size: 11px;
+      opacity: 0.82;
     }
 
     .metric-pill {
@@ -519,17 +595,17 @@
     }
 
     .pill-green {
-      background: rgba(63, 185, 80, 0.18);
+      background: color-mix(in srgb, var(--green) 16%, transparent);
       color: var(--green);
     }
 
     .pill-orange {
-      background: rgba(240, 136, 62, 0.18);
+      background: color-mix(in srgb, var(--orange) 16%, transparent);
       color: var(--orange);
     }
 
     .pill-purple {
-      background: rgba(188, 140, 255, 0.18);
+      background: color-mix(in srgb, var(--purple) 16%, transparent);
       color: var(--purple);
     }
 
@@ -540,6 +616,86 @@
       padding: 2px 6px;
       border-radius: 4px;
       border: 1px solid var(--surface-border);
+    }
+
+    /* Reusable Academic Algorithm Box */
+    .algo-box {
+      background: var(--bg);
+      border-top: 2.5px solid var(--text-bright);
+      border-bottom: 2.5px solid var(--text-bright);
+      padding: 14px 18px;
+      margin: 20px 0;
+      font-family: var(--font-body);
+      text-align: left;
+      overflow-x: auto;
+      max-width: 100%;
+      -webkit-overflow-scrolling: touch;
+      break-inside: avoid;
+    }
+
+    .algo-head {
+      font-family: var(--font-ui);
+      font-size: 14px;
+      font-weight: 700;
+      color: var(--text-bright);
+      padding-bottom: 8px;
+      border-bottom: 1px solid var(--surface-border);
+      margin-bottom: 10px;
+      line-height: 1.45;
+    }
+
+    .algo-sub {
+      font-size: 13.2px;
+      line-height: 1.68;
+      color: var(--text);
+      margin-bottom: 6px;
+    }
+
+    .algo-body {
+      border-top: 1px solid var(--surface-border);
+      padding-top: 8px;
+      font-size: 13.2px;
+      line-height: 1.78;
+      color: var(--text);
+    }
+
+    .algo-line {
+      white-space: normal;
+    }
+
+    .algo-line.algo-phase {
+      margin-top: 4px;
+      font-weight: 600;
+    }
+
+    .algo-line.algo-phase:first-child {
+      margin-top: 0;
+    }
+
+    .algo-ln {
+      font-family: var(--font-mono);
+      font-size: 11.5px;
+      color: var(--text-muted);
+      display: inline-block;
+      width: 28px;
+      font-weight: 400;
+    }
+
+    .algo-indent {
+      padding-left: 24px;
+    }
+
+    .algo-phase-bright { color: var(--text-bright); }
+    .algo-phase-accent { color: var(--accent); }
+    .algo-phase-green { color: var(--green); }
+    .algo-phase-purple { color: var(--purple); }
+    .algo-phase-orange { color: var(--orange); }
+    .algo-comment { color: var(--text-muted); font-size: 12px; font-weight: 400; }
+
+    .appendix-section {
+      margin-top: 36px;
+      padding-top: 28px;
+      border-top: 2.5px solid var(--surface-border);
     }
 
     .reference-list {
@@ -554,9 +710,26 @@
     }
 
     @media print {
+      html,
+      html[data-theme="dark"] {
+        --bg: #ffffff;
+        --bg-soft: #f8fafc;
+        --surface: #ffffff;
+        --surface-alt: #f8fafc;
+        --surface-border: #cbd5e1;
+        --text: #111827;
+        --text-bright: #000000;
+        --text-muted: #4b5563;
+        --accent: #1d4ed8;
+        --accent-glow: rgba(29, 78, 216, 0.08);
+        --green: #15803d;
+        --green-bg: rgba(21, 128, 61, 0.08);
+        --orange: #c2410c;
+        --purple: #6d28d9;
+      }
       body {
         background: #ffffff;
-        color: #000000;
+        color: #111827;
         font-size: 10pt;
       }
       .top-bar {
@@ -570,9 +743,10 @@
         width: 100%;
         max-width: 100%;
       }
-      .paper-body.two-col {
-        column-count: 2;
-        column-gap: 20px;
+      .paper-body.two-col,
+      .two-col,
+      .two-column-layout {
+        column-count: 1 !important;
       }
     }
 
@@ -594,7 +768,7 @@
     <div class="top-bar-right">
       <button class="btn active" id="btn-2col" type="button" onclick="setPaperCols(2)">2-Col</button>
       <button class="btn" id="btn-1col" type="button" onclick="setPaperCols(1)">1-Col</button>
-      <button class="btn" id="btn-theme" type="button" onclick="togglePaperTheme()">☀️ Light</button>
+      <button class="btn" id="btn-theme" type="button" title="Toggle Light / Dark theme" onclick="togglePaperTheme()">☀️ Theme: Light</button>
       <button class="btn" type="button" onclick="window.print()">🖨️ Print / PDF</button>
     </div>
   </div>
@@ -636,8 +810,8 @@
 
     <div class="abstract-box">
       <div class="abstract-title">Abstract</div>
-      <p style="margin-bottom:0;">
-        Modern ultra-high-resolution mobile image sensors ($48\text{ MP–}200\text{ MP}$) rely on clustered Color Filter Arrays (CFAs)—grouping $2\times 2$ (<strong>Tetracell / Quad-Bayer</strong>, $4$-in-$1$, $4\times 4$ RGGB tile period) or $4\times 4$ (<strong>Hexadecacell / $Q\times Q$</strong>, $16$-in-$1$, $8\times 8$ RGGB tile period) adjacent photodiodes under identical color filters compared to classical $1\times 1$ <strong>Bayer</strong> ($2\times 2$ RGGB period)—to preserve low-light signal-to-noise ratio (SNR). However, deploying neural remosaicing and generative imaging on heterogeneous CFA cameras faces two fundamental system bottlenecks: (i) transmitting uncompressed raw mosaics across the MIPI CSI-2 serial bus incurs severe serialization latency ($52.91\text{ ms}$ for $3,072\text{ KB}$ frames, capping throughput at $14.9\text{ FPS}$); and (ii) changing the sensor CFA pattern forces complete retraining or dynamic weight switching on the host Application Processor (AP), as in KLAP (ICCV 2023). We resolve these bottlenecks in a <strong>single-stream architecture</strong> by proposing <strong>Universal In-Sensor Latent Signal Processing (SE-Universal-CFA)</strong> unified on the <strong>16-channel ($f=8, C=16$) <code>FLUX.1</code> / <code>TAEF1</code> latent manifold</strong>. On the sensor NPU (Sony IMX500, $&lt;2\text{ MB}$ SRAM), transpose-equivariant phase-aware <code>PixelUnshuffle(p)</code> ($p \in \{2,4,8\}$) + Squeeze-and-Excitation (<code>SELayer</code>) residual compressors ($\mathcal{E}_A^{\text{CFA}}$, $413.7\text{K–}582.5\text{K}$ INT8 params at <code>base_ch=64</code>; $16.3\text{K–}17.1\text{K}$ at <code>base_ch=16</code>) map heterogeneous $1\times 1$, $2\times 2$, and $4\times 4$ CFA clusters into a single standardized $16\times 64\times 64$ bus tensor $r$ ($64.0\text{ KB}$ INT8, $48\times$ reduction vs. $3,072\text{ KB}$ Raw RGB). On the host AP, a single sensor-invariant <code>UnifiedLatentTranslator</code> ($\mathcal{T}_B: 16 \to 16$) aligns $r$ directly onto the 16-channel <code>FLUX.1</code> / <code>TAEF1</code> latent hub $z \in \mathbb{R}^{16\times 64\times 64}$ ($\cos = 0.9205\text{–}0.9731$), driving a <strong>100% CFA-agnostic</strong> guided 16-channel decoder ($\mathcal{D}_{\text{rec}}$). Evaluated across <code>BJDD_CVPR21</code>, <code>KLAP_ICCV23 CIS</code>, <code>Kodak24</code>, and the 8-scene <code>Remosaic Stress Benchmark</code>, our single-stream 16-channel pipeline achieves <strong>$40.69\text{ dB}$ (Bayer $1\times 1$, MS-SSIM $0.9976$), $36.80\text{ dB}$ (Tetracell $2\times 2$, MS-SSIM $0.9925$), and $31.13\text{ dB}$ (Hexadecacell $4\times 4$, MS-SSIM $0.9745$)</strong> on <code>BJDD_CVPR21</code> ($41.21 / 38.58 / 34.03\text{ dB}$ on <code>Kodak24</code>)—surpassing <strong>KLAP Unified (ICCV 2023)</strong> across all four benchmark suites by <strong>$+2.74\text{ dB}$ ($2\times 2$) and $+1.39\text{ dB}$ ($4\times 4$) on <code>BJDD_CVPR21</code></strong>, <strong>$+3.07\text{ dB}$ ($2\times 2$) and $+1.63\text{ dB}$ ($4\times 4$) on <code>Kodak24</code></strong>, and <strong>$+2.81\text{ dB}$ ($2\times 2$) and $+1.57\text{ dB}$ ($4\times 4$) on <code>KLAP_ICCV23 CIS</code></strong>, while reducing MIPI bus bandwidth by $48\times$.
+      <p>
+        Modern ultra-high-resolution mobile image sensors ($48\text{ MP--}200\text{ MP}$) rely on clustered Color Filter Arrays (CFAs)—grouping $2\times 2$ (<strong>Tetracell / Quad-Bayer</strong>, $4$-in-$1$, $4\times 4$ RGGB tile period) or $4\times 4$ (<strong>Hexadecacell / $Q\times Q$</strong>, $16$-in-$1$, $8\times 8$ RGGB tile period) adjacent photodiodes under identical color filters compared to classical $1\times 1$ <strong>Bayer</strong> ($2\times 2$ RGGB period)—to preserve low-light signal-to-noise ratio (SNR). However, deploying neural remosaicing and generative imaging on heterogeneous CFA cameras faces two fundamental system bottlenecks: (i) transmitting uncompressed raw mosaics across the MIPI CSI-2 serial bus incurs severe serialization latency ($52.91\text{ ms}$ for $3,072\text{ KB}$ frames, capping throughput at $14.9\text{ FPS}$); and (ii) changing the sensor CFA pattern forces complete retraining or dynamic weight switching on the host Application Processor (AP), as in KLAP (ICCV 2023). We resolve these bottlenecks in a <strong>single-stream architecture</strong> by proposing <strong>Universal In-Sensor Latent Signal Processing (SE-Universal-CFA)</strong> unified on the <strong>16-channel ($f=8, C=16$) <code>FLUX.1</code> / <code>TAEF1</code> latent manifold</strong>. On the sensor NPU (Sony IMX500, $&lt;2\text{ MB}$ SRAM), transpose-equivariant phase-aware <code>PixelUnshuffle(p)</code> ($p \in \{2,4,8\}$) + Squeeze-and-Excitation (<code>SELayer</code>) residual compressors ($\mathcal{E}_A^{\text{CFA}}$, $413.7\text{K--}582.5\text{K}$ INT8 params at <code>base_ch=64</code>; $16.3\text{K--}17.1\text{K}$ at <code>base_ch=16</code>) map heterogeneous $1\times 1$, $2\times 2$, and $4\times 4$ CFA clusters into a single standardized $16\times 64\times 64$ bus tensor $r$ ($64.0\text{ KB}$ INT8, $48\times$ reduction vs. $3,072\text{ KB}$ Raw RGB). On the host AP, a single sensor-invariant <code>UnifiedLatentTranslator</code> ($\mathcal{T}_B: 16 \to 16$) aligns $r$ directly onto the 16-channel <code>FLUX.1</code> / <code>TAEF1</code> latent hub $z \in \mathbb{R}^{16\times 64\times 64}$ ($\cos = 0.9205\text{--}0.9731$), driving a <strong>100% CFA-agnostic</strong> guided 16-channel decoder ($\mathcal{D}_{\text{rec}}$). Evaluated across <code>BJDD_CVPR21</code>, <code>KLAP_ICCV23 CIS</code>, <code>Kodak24</code>, and the 8-scene <code>Remosaic Stress Benchmark</code>, our single-stream 16-channel pipeline achieves <strong>$40.69\text{ dB}$ (Bayer $1\times 1$, MS-SSIM $0.9976$), $36.80\text{ dB}$ (Tetracell $2\times 2$, MS-SSIM $0.9925$), and $31.13\text{ dB}$ (Hexadecacell $4\times 4$, MS-SSIM $0.9745$)</strong> on <code>BJDD_CVPR21</code> ($41.21 / 38.58 / 34.03\text{ dB}$ on <code>Kodak24</code>)—surpassing <strong>KLAP Unified (ICCV 2023)</strong> across all four benchmark suites by <strong>$+2.74\text{ dB}$ ($2\times 2$) and $+1.39\text{ dB}$ ($4\times 4$) on <code>BJDD_CVPR21</code></strong>, <strong>$+3.07\text{ dB}$ ($2\times 2$) and $+1.63\text{ dB}$ ($4\times 4$) on <code>Kodak24</code></strong>, and <strong>$+2.81\text{ dB}$ ($2\times 2$) and $+1.57\text{ dB}$ ($4\times 4$) on <code>KLAP_ICCV23 CIS</code></strong>, while reducing MIPI bus bandwidth by $48\times$.
       </p>
       <div class="keywords">
         <strong>Index Terms —</strong> Universal CFA, Bayer ($1\times 1$), Tetracell ($2\times 2$), Hexadecacell ($4\times 4$), In-Sensor Remosaicing, 16-Channel Latent Signal Processing, FLUX.1 / TAEF1, Sony IMX500.
@@ -653,21 +827,21 @@
         Despite substantial progress in deep learning-based restoration—including heavyweight Quad-Bayer ($2\times 2$) networks such as <strong>BJDD (<code>PIPNet</code>, CVPRW 2021)</strong> [2] and <strong>QRISP (ECCV 2022)</strong> [4], and unified multi-pattern demosaicing such as <strong>KLAP (ICCV 2023)</strong> [6]—existing paradigms suffer from two fundamental systems-level limitations on edge camera hardware:
       </p>
       <ol>
-        <li><strong>Inter-Chip Serial Bus Saturation:</strong> Existing neural remosaicing and unified demosaicing models execute monolithically on the host AP. Transmitting uncompressed raw frames ($3,072\text{ KB}$ at $512\times 512$ FP32) across the MIPI CSI-2 serial bus incurs $52.91\text{ ms}$ of driver serialization and DMA contention on our physical Raspberry Pi 5 + Sony IMX500 + Hailo-8 testbed [7], capping throughput at $14.9\text{ FPS}$.</li>
+        <li><strong>Inter-Chip Serial Bus Saturation:</strong> Existing neural remosaicing and unified demosaicing models execute monolithically on the host AP. Transmitting uncompressed raw frames ($3,072\text{ KB}$ at $512\times 512$ FP32) across the MIPI CSI-2 serial bus incurs $52.91\text{ ms}$ of driver serialization and DMA contention on our physical Raspberry Pi 5 + Sony IMX500 + Hailo-8 testbed, capping throughput at $14.9\text{ FPS}$.</li>
         <li><strong>Host-AP Weight Coupling Across Sensors:</strong> While <strong>KLAP (ICCV 2023)</strong> [6] unifies Bayer ($1\times 1$), Quad ($2\times 2$), Nona ($3\times 3$), and $Q\times Q$ ($4\times 4$) demosaicing within a single host architecture via Teacher Knowledge Learning (TKL) and Adaptive Dynamic Pattern (ADP) filters (<code>Dynamic_conv2d</code>), it requires transmitting uncompressed raw frames across the bus and dynamically switching pattern-specific filter weights (<code>mask_{bayer,quad,nano,qxq}</code>) inside every host convolution layer.</li>
       </ol>
       <p>
         We resolve both challenges within a <strong>single-stream LSP topology</strong> unified on the <strong>16-channel ($f=8, C=16$) <code>FLUX.1</code> / <code>TAEF1</code> manifold</strong>:
       </p>
-      <p>
+      <div class="equation">
         $$\text{CFA Raw } y \in \mathbb{R}^{1 \times 512 \times 512} \xrightarrow{\mathcal{E}_A^{\text{CFA}}} r \in \mathbb{R}^{16 \times 64 \times 64} \xrightarrow{\mathcal{T}_B\;(16 \to 16)} z \in \mathbb{R}^{16 \times 64 \times 64} \xrightarrow{\mathcal{D}_{\text{rec}}(z)} \hat{X} \in \mathbb{R}^{3 \times 512 \times 512}.$$
-      </p>
+      </div>
 
       <!-- Figure 1 spanning all columns -->
       <div class="span-all fig-card">
         <img src="figures/ucfa_universal_cfa_architecture.webp" alt="Universal CFA 16-Channel Single-Stream LSP Architecture">
         <div class="caption">
-          <strong>Fig. 1.</strong> System architecture of <strong>Proposed SE-Universal-CFA (16-Channel Single-Stream LSP)</strong>. <strong>Zone 1 (Sony IMX500 In-Sensor NPU, $&lt;2\text{ MB}$ SRAM):</strong> Heterogeneous CFA mosaics (Bayer $1\times 1$, Tetracell $2\times 2$, Hexadecacell $4\times 4$) are unpacked via period-exact <code>PixelUnshuffle(p)</code> ($p \in \{2,4,8\}$) and compressed through transpose-equivariant phase estimation and <code>SE-ResBlock</code> stages into a <strong>single standardized 16-channel bus tensor</strong> $r \in \mathbb{R}^{16\times 64\times 64}$ ($64.0\text{ KB}$ INT8, $48\times$ reduction vs. $3,072\text{ KB}$ Raw RGB). Raw pixels are immediately discarded from sensor SRAM (<strong>No-Raw-Retention</strong>). <strong>Zone 2 (Host AP / Hailo-8 NPU):</strong> A sensor-invariant 16-channel <code>UnifiedLatentTranslator</code> $\mathcal{T}_B$ ($16 \to 16$, $1.52\text{M}$ params) maps $r \to z \in \mathbb{R}^{16\times 64\times 64}$ on the <code>FLUX.1</code> / <code>TAEF1</code> manifold ($\cos = 0.9205\text{–}0.9731$). <strong>Zone 3:</strong> Resident latent $z$ drives a <strong>100% CFA-agnostic</strong> guided 16-channel decoder $\mathcal{D}_{\text{rec}}(z)$ ($35.91 / 34.56 / 30.27\text{ dB}$ on <code>BJDD_CVPR21</code>, surpassing KLAP) and one-pass ZSL generative diffusion.
+          <strong>Fig. 1.</strong> System architecture of <strong>Proposed SE-Universal-CFA (16-Channel Single-Stream LSP)</strong>. <strong>Zone 1 (Sony IMX500 In-Sensor NPU, $&lt;2\text{ MB}$ SRAM):</strong> Heterogeneous CFA mosaics (Bayer $1\times 1$, Tetracell $2\times 2$, Hexadecacell $4\times 4$) are unpacked via period-exact <code>PixelUnshuffle(p)</code> ($p \in \{2,4,8\}$) and compressed through transpose-equivariant phase estimation and <code>SE-ResBlock</code> stages into a <strong>single standardized 16-channel bus tensor</strong> $r \in \mathbb{R}^{16\times 64\times 64}$ ($64.0\text{ KB}$ INT8, $48\times$ reduction vs. $3,072\text{ KB}$ Raw RGB). Raw pixels are immediately discarded from sensor SRAM (<strong>No-Raw-Retention</strong>). <strong>Zone 2 (Host AP / Hailo-8 NPU):</strong> A sensor-invariant 16-channel <code>UnifiedLatentTranslator</code> $\mathcal{T}_B$ ($16 \to 16$, $1.52\text{M}$ params) maps $r \to z \in \mathbb{R}^{16\times 64\times 64}$ on the <code>FLUX.1</code> / <code>TAEF1</code> manifold ($\cos = 0.9205\text{--}0.9731$). <strong>Zone 3:</strong> Resident latent $z$ drives a <strong>100% CFA-agnostic</strong> guided 16-channel decoder $\mathcal{D}_{\text{rec}}(z)$ ($40.69 / 36.80 / 31.13\text{ dB}$ on <code>BJDD_CVPR21</code> at <code>base_ch=64</code> ($35.91 / 34.56 / 30.27\text{ dB}$ at ultra-compact <code>base_ch=16</code>), surpassing KLAP) and one-pass ZSL generative diffusion.
         </div>
       </div>
 
@@ -675,9 +849,9 @@
       <p>
         <strong>KLAP</strong> (<em>"Efficient Unified Demosaicing for Bayer and Non-Bayer Patterned Image Sensors"</em>, ICCV 2023) [6] identifies pattern-sensitive filters via Filter Attribution Integrated Gradients (FAIG) and modulates host convolutions via a 4-dimensional one-hot pattern vector $g \in \{0, 1\}^4$:
       </p>
-      <p>
+      <div class="equation">
         $$W_{\text{KLAP}}(g) = W_{\text{shared}} + \sum_{c \in \{\text{bayer, quad, nona, qxq}\}} g_c \cdot \left(M_c \odot \Delta W_c\right).$$
-      </p>
+      </div>
       <p>
         Unlike KLAP, which executes on the host AP over uncompressed raw inputs ($3,072\text{ KB}$, $14.9\text{ FPS}$) and switches dynamic filters inside every host layer, our <strong>SE-Universal-CFA</strong> encapsulates all CFA-specific phase unshuffling inside the sensor NPU firmware (<code>.rpk</code>), leaving the host translator $\mathcal{T}_B$ ($16 \to 16$) and host decoder $\mathcal{D}_{\text{rec}}$ <strong>100% CFA-agnostic</strong> across all sensor patterns ($1\times 1$ Bayer, $2\times 2$ Tetracell, and $4\times 4$ Hexadecacell).
       </p>
@@ -687,21 +861,23 @@
       <p>
         Because a $q\times q$ homogeneous sub-cluster ($q \in \{1, 2, 4\}$) forms a $2\times 2$ RGGB macro-tile of period $p = 2q \in \{2, 4, 8\}$, we eliminate spatial phase mixing by matching the initial space-to-depth <code>PixelUnshuffle(p)</code> stride (compiled onto the Sony IMX500 NPU as an exact permutation <code>Conv2D(p^2, kernel_size=p, strides=p)</code>) to each sensor's fundamental RGGB tile period $p \in \{2, 4, 8\}$:
       </p>
-      <p>
+      <div class="equation">
         $$u = \text{PixelUnshuffle}_p\!\left(y^{\,1/2.2}\right) \in \mathbb{R}^{p^2 \times \frac{H}{p} \times \frac{W}{p}}, \quad \text{SE}(f) = f \odot \left(2 \cdot \sigma\!\left(W_2 \,\text{LeakyReLU}_{0.1}\!\left(W_1 \,\text{GAP}(f)\right)\right)\right).$$
-      </p>
+      </div>
       <p>
-        Every sensor compressor outputs the exact same single-stream 16-channel bus tensor $r = \mathcal{E}_A^{\text{CFA}}(y) \in \mathbb{R}^{16\times 64\times 64}$ ($64.0\text{ KB}$ INT8 / $256.0\text{ KB}$ FP32 at $512\times 512$, $48.0\times$ reduction vs. $3,072\text{ KB}$ Raw RGB). Verified with the official Sony IMX500 hardware compiler (<code>mct</code> PTQ + <code>imxconv-tf</code>), all three compressors compile cleanly into <code>packerOut.zip</code> binaries occupying only $11\%\text{–}45\%$ of the on-chip memory ceiling.
+        Every sensor compressor outputs the exact same single-stream 16-channel bus tensor $r = \mathcal{E}_A^{\text{CFA}}(y) \in \mathbb{R}^{16\times 64\times 64}$ ($64.0\text{ KB}$ INT8 / $256.0\text{ KB}$ FP32 at $512\times 512$, $48.0\times$ reduction vs. $3,072\text{ KB}$ Raw RGB). Verified with the official Sony IMX500 hardware compiler (<code>mct</code> PTQ + <code>imxconv-tf</code>), all three compressors compile cleanly into <code>packerOut.zip</code> binaries occupying only $11\%\text{--}45\%$ of the on-chip memory ceiling.
       </p>
 
       <h3 class="subsec-title">3.2 Zone 2 &amp; 3: Unified 16-Channel Host Translator ($\mathcal{T}_B: 16 \to 16$) &amp; Guided 16-Channel Decoder ($\mathcal{D}_{\text{rec}}$)</h3>
       <p>
-        <strong>16-Channel Single-Stream Unification (`FLUX.1` / `TAEF1`):</strong> By the Eckart-Young-Mirsky theorem, compressing $8\times 8\times 3 = 192$-dim RGB blocks into $K$ latent channels is bounded by $\text{MSE}_{\min}(K) = \frac{1}{192 N} \sum_{j=K+1}^{192} \sigma_j^2$. Adopting a 16-channel (`FLUX.1` / `TAEF1`, $C=16$) single-stream representation provides $16$ spatial-chromatic degrees of freedom per $8\times 8$ macro-cell while keeping the INT8 bus payload at just $64.0\text{ KB}$ ($48\times$ smaller than $3,072\text{ KB}$ Raw RGB):
+        <strong>16-Channel Single-Stream Unification (<code>FLUX.1</code> / <code>TAEF1</code>):</strong> By the Eckart-Young-Mirsky theorem, compressing $8\times 8\times 3 = 192$-dim RGB blocks into $K$ latent channels is bounded by $\text{MSE}_{\min}(K) = \frac{1}{192 N} \sum_{j=K+1}^{192} \sigma_j^2$. Adopting a 16-channel (<code>FLUX.1</code> / <code>TAEF1</code>, $C=16$) latent diffusion manifold [7], [8] in a single-stream representation provides $16$ spatial-chromatic degrees of freedom per $8\times 8$ macro-cell while keeping the INT8 bus payload at just $64.0\text{ KB}$ ($48\times$ smaller than $3,072\text{ KB}$ Raw RGB):
       </p>
       <ul>
-        <li><strong>Isomorphic 16-Channel Host Translator ($\mathcal{T}_B: 16 \to 16$):</strong> <code>UnifiedLatentTranslator</code> applies 8 residual blocks at width $96$ with a global skip connection $z = r + f_{\theta}(r) \in \mathbb{R}^{16\times 64\times 64}$, aligning all three CFA sensors onto the <code>FLUX.1</code> (`ostris/OpenFLUX.1`) and <code>TAEF1</code> (`madebyollin/taef1`) 16-channel latent manifold ($\cos = 0.9205\text{–}0.9731$).</li>
+        <li><strong>Isomorphic 16-Channel Host Translator ($\mathcal{T}_B: 16 \to 16$):</strong> <code>UnifiedLatentTranslator</code> applies 8 residual blocks at width $96$ with a global skip connection $z = r + f_{\theta}(r) \in \mathbb{R}^{16\times 64\times 64}$, aligning all three CFA sensors onto the <code>FLUX.1</code> (<code>ostris/OpenFLUX.1</code>) and <code>TAEF1</code> (<code>madebyollin/taef1</code>) 16-channel latent manifold [7], [8] ($\cos = 0.9205\text{--}0.9731$).</li>
         <li><strong>100% CFA-Agnostic Single-Stream Guided Decoder ($\mathcal{D}_{\text{rec}}(z)$):</strong> Inspired by <code>HDRNet</code> spatially-guided coefficient modulation, <code>DemosaicPixelShuffleDecoder</code> decodes the 16-channel latent $z \in \mathbb{R}^{16\times 64\times 64}$ into a base reconstruction $X_{\text{base}}(z)$ and fuses it with a 3-stage <code>PixelShuffle(2)</code> latent feature pyramid $F_z = \mathcal{U}_{\text{PS}}(z) \in \mathbb{R}^{24\times 512\times 512}$ ($64\to 128\to 256\to 512$) through a bounded 4-layer $3\times 3$ <code>Conv2d + GELU</code> refinement head:
-        $$\hat{X} = \text{Clamp}_{\text{STE}}\!\left(X_{\text{base}}(z) + \alpha \tanh\!\left(\frac{\mathcal{F}_{\text{fuse}}\!\left([F_z,\, X_{\text{base}}(z)]\right)}{\alpha}\right)\right), \quad \alpha = 0.07.$$
+        <div class="equation">
+          $$\hat{X} = \text{Clamp}_{\text{STE}}\!\left(X_{\text{base}}(z) + \alpha \tanh\!\left(\frac{\mathcal{F}_{\text{fuse}}\!\left([F_z,\, X_{\text{base}}(z)]\right)}{\alpha}\right)\right), \quad \alpha = 0.07.$$
+        </div>
         </li>
       </ul>
 
@@ -711,8 +887,8 @@
       </p>
 
       <!-- Table 1 spanning all columns -->
-      <div class="span-all table-card">
-        <div class="caption"><strong>Table 1.</strong> Quantitative Benchmark on <code>BJDD_CVPR21</code> ($512\times 512$, Tetracell $2\times 2$ &amp; Hexadecacell $4\times 4$): External Pixel-Space Baselines vs. <strong>Proposed SE-Universal-CFA (16-Ch Single-Stream)</strong>.</div>
+      <div class="table-container span-all">
+        <div class="table-caption">Table 1: Quantitative Benchmark on <code>BJDD_CVPR21</code> ($512\times 512$, Tetracell $2\times 2$ &amp; Hexadecacell $4\times 4$): External Pixel-Space Baselines vs. Proposed SE-Universal-CFA (16-Ch Single-Stream).</div>
         <table class="academic-table">
           <thead>
             <tr>
@@ -795,7 +971,7 @@
 
       <!-- Figure 2: BJDD_CVPR21 Neural SOTA & Cross-CFA Unification (3 Rows x 7 Columns) -->
       <div class="span-all fig-card">
-        <img src="figures/ucfa_fig2_bjdd_all_scenes_comparison.webp" alt="BJDD_CVPR21 Neural SOTA and Cross-CFA Sensor Unification">
+        <img src="figures/ucfa_fig2_bjdd_all_scenes_comparison.webp" alt="BJDD_CVPR21 Neural SOTA and Cross-CFA Sensor Unification" loading="lazy" decoding="async">
         <div class="caption">
           <strong>Fig. 2.</strong> Neural SOTA comparison and cross-CFA sensor unification across all 3 official <strong><code>BJDD_CVPR21</code></strong> scenes (3 rows $\times$ 7 columns: <code>01952.bmp</code> candy wrapper typography, <code>01690.bmp</code> farm lease sign, and <code>02243.bmp</code> storefront sign). Columns 3–7 compare published pixel-space neural SOTAs—<strong><code>Official BJDD / PIPNet</code> (CVPRW 2021, $3.48\text{M}$, $2\times 2$-only, $3,072\text{ KB}$)</strong> and <strong><code>KLAP Unified</code> (ICCV 2023, $1.53\text{M}$, $3,072\text{ KB}$)</strong>—against our <strong>Proposed SE-Universal-CFA</strong> across all three physical CFA families (<strong><code>[1×1] Bayer</code></strong>, <strong><code>[2×2] Tetracell</code></strong>, and <strong><code>[4×4] Hexadecacell</code></strong>) reconstructed by the <strong>single shared 100% CFA-agnostic host network</strong> ($\mathcal{T}_B + \mathcal{D}_{\text{rec}}$) at $64.0\text{ KB}$ INT8 bus payload ($48\times$ smaller than $3,072\text{ KB}$ raw).
         </div>
@@ -803,7 +979,7 @@
 
       <!-- Figure 3: 5 Diverse Kodak24 Natural Scenes -->
       <div class="span-all fig-card">
-        <img src="figures/ucfa_fig3_kodak_diverse_scenes.webp" alt="Kodak24 Diverse Natural & Aliasing Scenes Gallery">
+        <img src="figures/ucfa_fig3_kodak_diverse_scenes.webp" alt="Kodak24 Diverse Natural & Aliasing Scenes Gallery" loading="lazy" decoding="async">
         <div class="caption">
           <strong>Fig. 3.</strong> Out-of-distribution natural scene generalization and chromatic zippering suppression on <strong><code>Kodak24</code></strong> (5 scenes $\times$ 7 columns): <code>kodim19.png</code> (Lighthouse picket fence—false-color zippering stress), <code>kodim01.png</code> (Stone masonry &amp; shutters—horizontal Moiré stress), <code>kodim23.png</code> (Macaw parrots—saturated chromatic edges &amp; feather barbs), <code>kodim04.png</code> (Portrait in red hat—eyelashes &amp; skin tones), and <code>kodim05.png</code> (Motocross spokes &amp; decals). Across <code>Kodak24</code>, our 16-channel single-stream pipeline achieves <strong>$41.21\text{ dB}$ ($1\times 1$), $38.58\text{ dB}$ ($2\times 2$), and $34.03\text{ dB}$ ($4\times 4$)</strong>—surpassing <strong>KLAP Unified (ICCV 2023)</strong> ($35.51\text{ dB}$ on $2\times 2$ and $32.40\text{ dB}$ on $4\times 4$) by <strong>$+3.07\text{ dB}$ ($2\times 2$)</strong> and <strong>$+1.63\text{ dB}$ ($4\times 4$)</strong>.
         </div>
@@ -811,15 +987,15 @@
 
       <!-- Figure 4: 4 Hard-Case Remosaic Stress Benchmark Scenes -->
       <div class="span-all fig-card">
-        <img src="figures/ucfa_fig4_stress_benchmark_gallery.webp" alt="Hard-Case Remosaic Stress Benchmark Gallery">
+        <img src="figures/ucfa_fig4_stress_benchmark_gallery.webp" alt="Hard-Case Remosaic Stress Benchmark Gallery" loading="lazy" decoding="async">
         <div class="caption">
           <strong>Fig. 4.</strong> Extreme Nyquist frequency and radial Siemens star evaluation on the <strong><code>Remosaic Stress Benchmark</code> (<code>remosaic_stress_bench</code>)</strong> (4 scenes $\times$ 7 columns): <code>01_iso_siemens_typography.png</code> (ISO 12233 radial Siemens star &amp; micro-typography), <code>03_urban_grating_0780.png</code> (penguin plumage), <code>04_urban_grating_0785.png</code> (branching coral crinoid filaments), and <code>05_urban_grating_0792.png</code> (corrugated ceiling grating). Across the stress benchmark, our 16-channel single-stream model ($31.22\text{ dB}$ on $2\times 2$ and $27.46\text{ dB}$ on $4\times 4$) surpasses <strong>KLAP Unified (ICCV 2023)</strong> ($28.98\text{ dB}$ on $2\times 2$ and $26.37\text{ dB}$ on $4\times 4$).
         </div>
       </div>
 
       <!-- Table 2 spanning all columns -->
-      <div class="span-all table-card">
-        <div class="caption"><strong>Table 2.</strong> Cross-Dataset Generalization Across <code>BJDD_CVPR21</code>, <code>KLAP_ICCV23 CIS</code>, <code>Kodak24</code>, and <code>Remosaic Stress Benchmark</code> (PSNR in dB $\uparrow$).</div>
+      <div class="table-container span-all">
+        <div class="table-caption">Table 2: Cross-Dataset Generalization Across <code>BJDD_CVPR21</code>, <code>KLAP_ICCV23 CIS</code>, <code>Kodak24</code>, and <code>Remosaic Stress Benchmark</code> (PSNR in dB $\uparrow$).</div>
         <table class="academic-table">
           <thead>
             <tr>
@@ -896,47 +1072,104 @@
       <p>
         We presented <strong>SE-Universal-CFA</strong>, a single-stream in-sensor and host-AP collaborative imaging architecture that unifies Standard Bayer ($1\times 1$), Tetracell ($2\times 2$), and Hexadecacell ($4\times 4$) image sensors onto a single 16-channel host translator ($\mathcal{T}_B: 16\to 16$) and a single 100% CFA-agnostic guided decoder ($\mathcal{D}_{\text{rec}}$) aligned with the <code>FLUX.1</code> / <code>TAEF1</code> latent manifold. Transmitting a single standardized bus representation $r \in \mathbb{R}^{16\times 64\times 64}$ ($64.0\text{ KB}$ INT8, $48\times$ reduction vs. Raw RGB), our framework achieves $40.69 / 36.80 / 31.13\text{ dB}$ on <code>BJDD_CVPR21</code> ($41.21 / 38.58 / 34.03\text{ dB}$ on <code>Kodak24</code>)—surpassing <strong>KLAP Unified (ICCV 2023)</strong> across all four benchmark suites while sustaining $30.0\text{ FPS}$ live viewfinder streaming and one-pass ZSL latent generation.
       </p>
+
+      <h2>References</h2>
+      <ol class="reference-list">
+        <li>H. S. Malvar, L.-W. He, and R. Cutler, "High-quality linear interpolation for demosaicing of Bayer-patterned color images," in <em>Proc. IEEE ICASSP</em>, 2004, pp. 485–488.</li>
+        <li>S. M. A. Sharif, R. A. Naqvi, and M. Biswas, "Beyond joint demosaicking and denoising: An image processing pipeline for a pixel-bin image sensor," in <em>Proc. IEEE/CVF CVPRW</em>, 2021, pp. 420–429.</li>
+        <li>S. M. A. Sharif, R. A. Naqvi, and M. Biswas, "SAGAN: Adversarial spatial-asymmetric attention for noisy Nona-Bayer reconstruction," in <em>Proc. BMVC</em>, 2021.</li>
+        <li>X. Jia <em>et al.</em>, "Learning rich information for Quad Bayer remosaicing and denoising," in <em>Proc. ECCV</em>, 2022, pp. 175–191.</li>
+        <li>Y. Wu <em>et al.</em>, "MIPI 2022 challenge on Quad-Bayer re-mosaic: Dataset and report," in <em>Proc. ECCVW</em>, 2022.</li>
+        <li>H. Lee <em>et al.</em>, "Efficient unified demosaicing for Bayer and non-Bayer patterned image sensors," in <em>Proc. IEEE/CVF ICCV</em>, 2023, pp. 12750–12759.</li>
+        <li>M. Pach, J. Bader, Q. Bouniot, S. Belongie, and Z. Akata, "The Latent Color Subspace: Emergent order in high-dimensional chaos," in <em>Proc. ICML</em>, 2026.</li>
+        <li>R. Rombach <em>et al.</em>, "High-resolution image synthesis with latent diffusion models," in <em>Proc. IEEE/CVF CVPR</em>, 2022, pp. 10684–10695.</li>
+      </ol>
     </div>
   </div>
 
   <script>
-    function setPaperCols(n) {
-      const body = document.getElementById('paper-body') || document.getElementById('main-paper-body');
-      const b1 = document.getElementById('btn-1col');
-      const b2 = document.getElementById('btn-2col');
-      if (!body) return;
-      if (n === 2) {
-        body.classList.add('two-col');
-        body.classList.remove('one-col');
-        body.style.columnCount = '2';
-        if (b2) b2.classList.add('active');
-        if (b1) b1.classList.remove('active');
-      } else {
-        body.classList.remove('two-col');
-        body.classList.remove('two-column-layout');
-        body.classList.add('one-col');
-        body.style.columnCount = '1';
-        if (b1) b1.classList.add('active');
-        if (b2) b2.classList.remove('active');
+    function syncThemeButton() {
+      var root = document.documentElement;
+      var btn = document.getElementById('btn-theme');
+      if (!btn) return;
+      var isDark = root.getAttribute('data-theme') === 'dark';
+      btn.textContent = isDark ? '🌙 Theme: Dark' : '☀️ Theme: Light';
+      btn.setAttribute('title', 'Toggle Light / Dark theme');
+    }
+
+    function setPaperCols(n, persist) {
+      var body = document.getElementById('paper-body') || document.getElementById('main-paper-body');
+      var b1 = document.getElementById('btn-1col');
+      var b2 = document.getElementById('btn-2col');
+      var cols = (Number(n) === 1) ? 1 : 2;
+      if (body) {
+        if (cols === 2) {
+          body.classList.add('two-col');
+          body.classList.remove('one-col');
+        } else {
+          body.classList.remove('two-col');
+          body.classList.remove('two-column-layout');
+          body.classList.add('one-col');
+        }
+      }
+      if (b2) b2.classList.toggle('active', cols === 2);
+      if (b1) b1.classList.toggle('active', cols === 1);
+      if (persist !== false) {
+        try {
+          localStorage.setItem('sb-paper-cols', String(cols));
+        } catch (e) {}
       }
     }
 
     function togglePaperTheme() {
-      const root = document.documentElement;
-      const btn = document.getElementById('btn-theme');
-      if (root.getAttribute('data-theme') === 'dark') {
-        root.setAttribute('data-theme', 'light');
-        if (btn) btn.textContent = '☀️ Light';
-      } else {
-        root.setAttribute('data-theme', 'dark');
-        if (btn) btn.textContent = '🌙 Dark';
-      }
+      var root = document.documentElement;
+      var next = root.getAttribute('data-theme') === 'dark' ? 'light' : 'dark';
+      root.setAttribute('data-theme', next);
+      try {
+        localStorage.setItem('sb-theme', next);
+      } catch (e) {}
+      syncThemeButton();
     }
+
+    var _paperMathRendered = false;
+    function renderPaperMath() {
+      if (_paperMathRendered || typeof window.renderMathInElement !== 'function') return;
+      _paperMathRendered = true;
+      window.renderMathInElement(document.body, {
+        delimiters: [
+          {left: '$$', right: '$$', display: true},
+          {left: '\\[', right: '\\]', display: true},
+          {left: '$', right: '$', display: false},
+          {left: '\\(', right: '\\)', display: false}
+        ],
+        ignoredTags: ['script', 'noscript', 'style', 'textarea', 'pre', 'code', 'svg'],
+        strict: false,
+        throwOnError: false
+      });
+    }
+
+    function initPaperPortal() {
+      syncThemeButton();
+      var savedCols = '2';
+      try {
+        var c = localStorage.getItem('sb-paper-cols');
+        if (c === '1' || c === '2') savedCols = c;
+      } catch (e) {}
+      setPaperCols(Number(savedCols), false);
+      renderPaperMath();
+    }
+
+    if (document.readyState === 'loading') {
+      document.addEventListener('DOMContentLoaded', initPaperPortal);
+    } else {
+      initPaperPortal();
+    }
+    window.addEventListener('load', renderPaperMath);
 
     // Legacy aliases for backward compatibility
     window.setCols = setPaperCols;
     window.toggleCols = function() {
-      const body = document.getElementById('paper-body') || document.getElementById('main-paper-body');
+      var body = document.getElementById('paper-body') || document.getElementById('main-paper-body');
       setPaperCols(body && body.classList.contains('one-col') ? 2 : 1);
     };
     window.toggleLayout = window.toggleCols;

@@ -3,7 +3,7 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>Heterogeneous Edge Camera &amp; System Bottlenecks · AICAMERA Guidebook</title>
+<title>Ch.01 — Heterogeneous Edge Camera &amp; System Bottlenecks · AICAMERA Guidebook</title>
 <meta name="description" content="MIPI CSI-2 serialization bottleneck, IMX500 sensor NPU and Hailo-8 host NPU memory/bandwidth hierarchy, Dual-NPU cross-compilation (.rpk/.hef), and agent-driven development workflow.">
 <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/katex@0.16.11/dist/katex.min.css">
 <script defer src="https://cdn.jsdelivr.net/npm/katex@0.16.11/dist/katex.min.js"></script>
@@ -17,13 +17,13 @@
 <body data-chapter="overview" data-root="../">
 <main class="chapter">
   <header class="chapter-hero">
-    <div class="eyebrow">Chapter 01 · System Architecture, Dual-NPU SW Stack &amp; Agent Flow</div>
+    <div class="eyebrow">Chapter 01 · System Architecture, 4 Research Pillars &amp; Agent Flow</div>
     <h1>Heterogeneous Edge Camera &amp; System Bottlenecks</h1>
-    <p class="lead">When running neural ISPs and generative vision models in real time on modern edge camera systems, the first wall you hit is not a lack of NPU TOPS, but <strong>inter-chip data movement and memory bandwidth</strong>. This chapter examines why signal representation must change at the sensor–host boundary, how the repository's three research tracks (<strong>LSP · Software ISP · Universal CFA</strong>) solve this problem, and how the <strong>IMX500(<code>.rpk</code>) · Hailo-8(<code>.hef</code>) cross-compilation pipeline and Antigravity agent workflow</strong> operate.</p>
+    <p class="lead">When running neural ISPs and generative vision models in real time on modern edge camera systems, the first wall you hit is not a lack of NPU TOPS, but <strong>inter-chip data movement and memory bandwidth</strong>. This chapter examines why signal representation must change at the sensor–host boundary, how the repository's four research tracks (<strong>LSP · Software ISP · Universal CFA · Comp-LSP 2.0</strong>) solve this problem, and how the <strong>IMX500(<code>.rpk</code>) · Hailo-8(<code>.hef</code>) cross-compilation pipeline and Antigravity agent workflow</strong> operate.</p>
     <ul class="objectives">
       <li>Verify through equations and an interactive simulator how MIPI CSI-2 DMA serialization latency (52.91 ms) and memory contention during uncompressed frame transfer cap overall throughput (14.9 FPS).</li>
       <li>Understand the hardware topology and memory constraints spanning Sony IMX500 (sensor NPU, <code>.rpk</code>) → MIPI CSI-2 → Raspberry Pi 5 (CPU/Vulkan GPU) + Hailo-8 (host NPU, <code>.hef</code>) → Workstation (RTX 5060 Ti).</li>
-      <li>Compare the structural differences between pixel-domain optimization (Software ISP · Halide kernel fusion) and latent-domain split inference (LSP · Universal CFA).</li>
+      <li>Compare the structural differences across pixel-domain optimization (Software ISP · Halide kernel fusion), sensor–host latent split inference (LSP · 16-Channel Universal CFA), and 16-channel white-box latent signal processing (Comp-LSP 2.0).</li>
       <li>Master the software stack that converts PyTorch models into IMX500 <code>.rpk</code> (NCHW→NHWC transposition, real-frame MCT quantization) and Hailo-8 <code>.hef</code> (ONNX patching, real-distribution tensor PTQ) atop a 4-Tier isolated Python virtual environment hierarchy.</li>
       <li>Learn the closed-loop agent workflow composed of the FastMCP server (<code>aicamera_mcp_server.py</code>), remote bridge (<code>rpi_remote.py</code>), 7 slash skills, and 10 specialist roles.</li>
     </ul>
@@ -62,7 +62,7 @@
         <text x="32" y="172" class="t-acc">② Asymmetric Sensor–Host Split (LSP SA8) — 48× Payload Reduction Hits 30 FPS Cap</text>
         <rect x="32" y="186" width="190" height="62" rx="8" class="f-elev"/>
         <text x="127" y="210" text-anchor="middle" class="t" style="font-weight:700">IMX500 + Stage A (.rpk)</text>
-        <text x="127" y="230" text-anchor="middle" class="t-mono">5,924 params · cap 2.59 ms</text>
+        <text x="127" y="230" text-anchor="middle" class="t-mono">5,924 / 9.59K · cap 2.59 ms</text>
         <line x1="224" y1="217" x2="368" y2="217" stroke="var(--ok)" stroke-width="2.5" marker-end="url(#oa2)"/>
         <text x="296" y="205" text-anchor="middle" class="t" style="fill:var(--ok);font-weight:700">64 KB (2.90 ms)</text>
         <text x="296" y="236" text-anchor="middle" class="t-mono">48× Bandwidth Compression</text>
@@ -118,16 +118,16 @@
 
   <!-- ============================================================ 02 -->
   <section id="s-projects">
-    <h2>Architectural Comparison of the 3 Research Tracks (LSP · Software ISP · Universal CFA)</h2>
-    <p>This repository comprises three research projects that break through heterogeneous edge camera bottlenecks at different layers. All three share the same physical testbed and remote orchestration chain, but differ sharply in <strong>what the sensor emits and how the host reconstructs it</strong>.</p>
+    <h2>Architectural Comparison of the 4 Research Tracks (LSP · Software ISP · Universal CFA · Comp-LSP 2.0)</h2>
+    <p>This repository comprises four research projects that break through heterogeneous edge camera bottlenecks at complementary layers. All four share the same hardware testbed and orchestration chain, while differing sharply in <strong>what the sensor emits and how the host computes and reconstructs it</strong>.</p>
 
-    <div class="grid-3">
+    <div class="grid-2">
       <article class="card">
         <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:8px">
           <span class="eyebrow">Project 1 · lsp/</span><span class="badge b-measured">HW Measured</span>
         </div>
         <h3>Latent Signal Processing</h3>
-        <p>Splits the encoder across the sensor NPU (Stage A, <code>.rpk</code>) and host NPU (Stage B, <code>.hef</code>) to transmit only a 64 KB tensor <code>r</code>, driving both a real-time preview (30.0 FPS) and ZSL generative capture from the standard SD VAE latent space <code>ẑ</code>.</p>
+        <p>Asymmetrically splits the encoder across the sensor NPU (Stage A, <code>.rpk</code>, 5,924 Conv2d / 9.59K graph params) and host NPU (Stage B, <code>.hef</code>) to transmit only a 64 KB tensor <code>r</code>, driving both a real-time preview (30.0 FPS) and ZSL generative capture from the standard SD VAE latent space <code>ẑ</code>.</p>
         <p class="note">Canonical source: <a class="src" href="../../../lsp/README.md" title="lsp/README.md" target="_blank" rel="noopener">lsp/README.md</a> · <a href="lsp.html"><b>Go to Chapter 02 →</b></a></p>
       </article>
       <article class="card">
@@ -135,15 +135,15 @@
           <span class="eyebrow">Project 2 · hdrnet/</span><span class="badge b-measured">HW Measured</span>
         </div>
         <h3>Software ISP &amp; Halide</h3>
-        <p>Implements a 10-stage C99 reference ISP + 3A control loop, and applies Verified Lifting and Halide kernel fusion (Tier 3 CPU NEON · Tier 4 Vulkan DMA-BUF) to cut per-12MP-frame DRAM traffic by 13.8× and process frames in 128.78 ms.</p>
+        <p>Implements a 10-stage C99 reference ISP + 3A control loop, and applies Verified Lifting and Halide kernel fusion (Tier 3 CPU NEON · Tier 4 Vulkan DMA-BUF) to cut per-12.3MP-frame DRAM traffic by 13.8× (811.4 → 58.8 MB) and process frames in 128.78 ms (3.68× speedup).</p>
         <p class="note">Canonical source: <a class="src" href="../../../hdrnet/README.md" title="hdrnet/README.md" target="_blank" rel="noopener">hdrnet/README.md</a> · <a href="isp.html"><b>Go to Chapter 03 →</b></a></p>
       </article>
       <article class="card">
         <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:8px">
-          <span class="eyebrow">Project 3 · universal_cfa/</span><span class="badge b-sim">Simulation</span>
+          <span class="eyebrow">Project 3 · universal_cfa/</span><span class="badge b-sim">16-Ch Single-Stream</span>
         </div>
-        <h3>Universal CFA</h3>
-        <p>Connects high-megapixel mobile sensors with clustered CFAs (Bayer 2×2 · Tetracell 4×4 · Hexadecacell 8×8) directly to a single frozen host translator (\(\mathcal{T}_B\)) using only a phase-aware <code>PixelUnshuffle</code> compressor without dedicated remosaicing hardware.</p>
+        <h3>Universal CFA (<code>SE-Universal-CFA</code>)</h3>
+        <p>Connects high-megapixel mobile sensors with clustered CFAs (Bayer 1×1 · Tetracell 2×2 · Hexadecacell 4×4) directly to a single 16-channel <code>FLUX.1</code> / <code>TAEF1</code> bus tensor (<code>64 KB</code> INT8, 48× reduction) and a sensor-invariant host translator (\(\mathcal{T}_B: 16\to 16\)) via <code>PixelUnshuffle(p)</code> + <code>SE-ResBlock</code> without remosaicing or RAW transfer.</p>
         <svg viewBox="0 0 272 68" role="img" aria-label="Sensor microlens cross-section and Bayer, Tetracell, Hexadecacell CFA grid summary" style="margin:6px 0;border-radius:6px;background:var(--surface)">
           <!-- Mini Sensor Cross-Section -->
           <path d="M18,20 Q27,10 36,20 Q45,10 54,20 Q63,10 72,20 Z" fill="rgba(56,182,245,0.3)" stroke="var(--accent)" stroke-width="1.2"/>
@@ -178,20 +178,28 @@
         </svg>
         <p class="note">Canonical source: <a class="src" href="../../../universal_cfa/README.md" title="universal_cfa/README.md" target="_blank" rel="noopener">universal_cfa/README.md</a> · <a href="ucfa.html"><b>Go to Chapter 04 →</b></a></p>
       </article>
+      <article class="card">
+        <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:8px">
+          <span class="eyebrow">Project 4 · comp_lsp/</span><span class="badge b-comp">White-Box Math</span>
+        </div>
+        <h3>White-Box Comp-LSP 2.0</h3>
+        <p>Executes a 7-stage physical ISP pipeline (BLC · WB · 3×3 CCM · <code>1:4:1</code> Simpson quadrature gamma &amp; Secant Jacobian · spatial kernels · 4-step refiner) directly on 16-channel VAE latents (<code>FLUX.1</code> / <code>TAEF1</code>, \(\mathbf{z}_0 \in \mathcal{S}_{\mathrm{DC}}^3 \oplus \mathcal{S}_{\mathrm{AC}}^{13}\)) without pixel decoding, achieving <strong>27.18 dB</strong> across 10 cameras and a <strong>70.5×</strong> Halide SIMD speedup.</p>
+        <p class="note">Canonical source: <a class="src" href="../../../comp_lsp/README.md" title="comp_lsp/README.md" target="_blank" rel="noopener">comp_lsp/README.md</a> · <a href="comp_lsp.html"><b>Go to Chapter 05 →</b></a></p>
+      </article>
     </div>
 
     <div class="table-wrap">
       <table>
         <thead>
-          <tr><th>Comparison Dimension</th><th>Project 1: LSP (<code>lsp/</code>)</th><th>Project 2: Software ISP (<code>hdrnet/</code>)</th><th>Project 3: Universal CFA (<code>universal_cfa/</code>)</th></tr>
+          <tr><th>Comparison Dimension</th><th>Project 1: LSP (<code>lsp/</code>)</th><th>Project 2: Software ISP (<code>hdrnet/</code>)</th><th>Project 3: Universal CFA (<code>universal_cfa/</code>)</th><th>Project 4: Comp-LSP 2.0 (<code>comp_lsp/</code>)</th></tr>
         </thead>
         <tbody>
-          <tr><td><b>Sensor Input Domain</b></td><td>IMX500 on-chip ISP output RGB (512×512×3)</td><td>10-bit Bayer RGGB RAW (3MP / 12.3MP uint16)</td><td>1-ch synthetic CFA RAW (Bayer · 4×4 · 8×8, 512×512×1)</td></tr>
-          <tr><td><b>Sensor NPU (.rpk) Role</b></td><td>Stage A compressor (<code>EncoderStageA</code>, 5,924 params)</td><td>In-sensor face detection (SSD MobileNetV2 / BlazeFace)</td><td>CFA-specific phase-aware compression + implicit remosaicing (5.4K~19.1K)</td></tr>
-          <tr><td><b>MIPI Payload</b></td><td>Metadata tensor \(r \in \mathbb{R}^{64\times 64\times 4}\) (64 KB)</td><td>Uncompressed Bayer RAW frame (~24.6 MB at 12MP)</td><td>Metadata tensor \(r \in \mathbb{R}^{64\times 64\times 4}\) (64 KB)</td></tr>
-          <tr><td><b>Host NPU (.hef) Role</b></td><td>Stage B translator (0.97 ms) + TAESD_ft decoder (16.44 ms)</td><td>HDRnet Bilateral Grid coeff inference + YOLOv5n person seg</td><td>100% frozen single Stage B translator (\(\mathcal{T}_B\), zero retraining)</td></tr>
-          <tr><td><b>Host CPU / GPU Role</b></td><td>MJPEG viewfinder serving + ZSL capture trigger</td><td>Halide 4-Tier 10-stage ISP + 3A EMA control + ZAP tracking</td><td><code>DemosaicPixelShuffleDecoder</code> / One-Pass diffusion</td></tr>
-          <tr><td><b>Key Bottleneck Solved</b></td><td>MIPI bus serialization latency 52.91 ms → 2.90 ms (18.2× faster)</td><td>Inter-stage DRAM round-trips 1,197 MB → 87 MB (13.8× reduction)</td><td>Eliminates dedicated hardware remosaicing block for clustered CFAs</td></tr>
+          <tr><td><b>Sensor Input Domain</b></td><td>IMX500 on-chip ISP output RGB (512×512×3)</td><td>10-bit Bayer RGGB RAW (3MP / 12.3MP uint16)</td><td>1-ch clustered CFA RAW (Bayer 1×1 · Tetra 2×2 · Hexa 4×4)</td><td>10-camera 14-bit Bayer RAW → 16-Ch latent \(\mathbf{z}_0\)</td></tr>
+          <tr><td><b>Sensor NPU (.rpk) Role</b></td><td>Stage A compressor (<code>EncoderStageA</code>, 5,924 Conv2d / 9.59K params)</td><td>In-sensor face detection (SSD MobileNetV2 / BlazeFace)</td><td>Phase-aware SE compressor + implicit remosaicing (16.3K–17.1K ch16)</td><td>16-Ch latent encoder (\(\mathcal{S}_{\mathrm{DC}}^3 \oplus \mathcal{S}_{\mathrm{AC}}^{13}\) split)</td></tr>
+          <tr><td><b>MIPI Payload</b></td><td>Metadata tensor \(r \in \mathbb{R}^{64\times 64\times 4}\) (64 KB)</td><td>Uncompressed Bayer RAW frame (~24.6 MB at 12MP)</td><td>Single-stream tensor \(r \in \mathbb{R}^{16\times 64\times 64}\) (64 KB INT8)</td><td>16-channel latent \(\mathbf{z}_0 \in \mathbb{R}^{\frac{H}{8}\times\frac{W}{8}\times 16}\) (64 KB INT8)</td></tr>
+          <tr><td><b>Host NPU (.hef) Role</b></td><td>Stage B translator (0.97 ms) + TAESD_ft decoder (16.44 ms)</td><td>HDRnet Bilateral Grid coeff inference + YOLOv5n person seg</td><td>100% sensor-invariant Unified Translator (\(\mathcal{T}_B: 16\to 16\), 1.52M)</td><td>96K 4-step residual ODE manifold refiner (\(\mathcal{R}_{4\text{-step}}\), 27.18 dB)</td></tr>
+          <tr><td><b>Host CPU / GPU Role</b></td><td>MJPEG viewfinder serving + ZSL capture trigger</td><td>Halide 4-Tier 10-stage ISP + 3A EMA control + ZAP tracking</td><td>16-Ch <code>TAEF1</code> + <code>DemosaicPixelShuffleDecoder</code> / ZSL</td><td>Class I–III white-box operators (Halide SIMD 0.93 ms @ 1MP)</td></tr>
+          <tr><td><b>Key Bottleneck Solved</b></td><td>MIPI bus serialization latency 52.91 ms → 2.90 ms (18.2× faster)</td><td>Inter-stage DRAM round-trips 811.4 MB → 58.8 MB (13.8× reduction, 128.78 ms · 3.68×)</td><td>Eliminates clustered CFA remosaicing &amp; RAW transfer (35.91–40.69 dB)</td><td>White-box latent ISP transparency · 12MP 70.5× SIMD · 765.2× inverse 3A</td></tr>
         </tbody>
       </table>
     </div>
@@ -269,7 +277,7 @@
         <div class="stat"><span class="k">Peak Activation + Weight SRAM</span><span class="v" id="o-sr-mem">—</span></div>
         <div class="stat"><span class="k">IMX500 Deployable?</span><span class="v" id="o-sr-ok" style="font-size:15px">—</span></div>
       </div>
-      <div class="sim-note">Try this: Under the canonical configuration (<code>SA8, C_mid=16, k=4, 512×512</code>), the parameter count is exactly <b>5,924</b> and compute is <b>0.122 GMACs</b> (<a class="src" href="../../../lsp/src/train/models/encoder.py" title="lsp/src/train/models/encoder.py (line 44)" target="_blank" rel="noopener">encoder.py:44</a>). Raising input resolution to <b>1024</b> or hidden channels to <b>64</b> exceeds the 2.0 MB SRAM limit due to the first layer's peak activation buffer.</div>
+      <div class="sim-note">Try this: Under the canonical configuration (<code>SA8, C_mid=16, k=4, 512×512</code>), the Conv2d weight count is exactly <b>5,924</b> (<b>9.59K</b> exported graph params) and compute is <b>0.122 GMACs</b> (<a class="src" href="../../../lsp/src/train/models/encoder.py" title="lsp/src/train/models/encoder.py (line 44)" target="_blank" rel="noopener">encoder.py:44</a>). Raising input resolution to <b>1024</b> or hidden channels to <b>64</b> exceeds the 2.0 MB SRAM limit due to the first layer's peak activation buffer.</div>
     </div>
   </section>
 
@@ -569,7 +577,7 @@
           <rect width="432" height="134" rx="12" class="f-surface"/>
           <text x="216" y="26" text-anchor="middle" class="t-ok">4. Single-Source-of-Truth &amp; Regression Gate</text>
           <text x="216" y="50" text-anchor="middle" class="t-mono">rpi_table1_bench_results.json · 3way_isp_results.json</text>
-          <text x="216" y="72" text-anchor="middle" class="t-dim" style="font-size:11px">pytest (LSP 7-Workflow · Verified Lifting · Universal CFA)</text>
+          <text x="216" y="72" text-anchor="middle" class="t-dim" style="font-size:11px">pytest (LSP · Lifting · Universal CFA · Comp-LSP)</text>
           <text x="216" y="94" text-anchor="middle" class="t-mono">docs/build_spec_portal.py (Auto Link · Math · Metric Audit)</text>
           <text x="216" y="114" text-anchor="middle" class="t-dim">Approve Doc · Dashboard · Slide Sync Only on Zero Drift</text>
         </g>
@@ -625,7 +633,7 @@
     <!-- ==================== Simulator 3: Dual-NPU Compile & Agent Drift Gate ==================== -->
     <div class="sim" id="sim-devops">
       <div class="sim-head">
-        <span class="badge">SIMULATOR 03</span>
+        <span class="sim-tag">SIMULATOR</span>
         <h3>Dual-NPU Cross-Compile &amp; Agent Benchmark Drift Gate</h3>
       </div>
       <div class="sim-controls">
@@ -676,10 +684,11 @@ python tools/rpi_remote.py start      # LSP live viewfinder (:5000)
 python tools/rpi_remote.py start-isp  # 4-Tier SW ISP demo (:5001)
 python tools/rpi_remote.py bench      # Run physical hardware benchmark
 
-# Full pipeline regression tests across all 3 tracks (Workstation WSL2)
+# Full pipeline regression tests across all 4 tracks (Workstation WSL2)
 ~/py311_train/bin/pytest lsp/tests/test_pipeline_workflows.py
 ~/py311_train/bin/pytest hdrnet/verified_lifting/tests/test_lifting.py
 ~/py311_train/bin/pytest universal_cfa/tests/ -o testpaths=universal_cfa/tests
+PYTHONPATH=. ~/py311_train/bin/pytest comp_lsp/tests/ -o testpaths=comp_lsp/tests
 
 # Rebuild interactive guidebook &amp; run self-verification
 ~/py311_train/bin/python docs/build_spec_portal.py</code></pre>
@@ -696,6 +705,7 @@ python tools/rpi_remote.py bench      # Run physical hardware benchmark
               <tr><td>IMX500 / Hailo-8 Cross-Compilers</td><td><a class="src" href="../../../lsp/src/server/convert_v2_imx500.py" title="lsp/src/server/convert_v2_imx500.py" target="_blank" rel="noopener">convert_v2_imx500.py</a> · <a class="src" href="../../../lsp/src/server/compile_all_imx500.py" title="lsp/src/server/compile_all_imx500.py" target="_blank" rel="noopener">compile_all_imx500.py</a> · <a class="src" href="../../../lsp/src/server/compile_all_stgb_hef.py" title="lsp/src/server/compile_all_stgb_hef.py" target="_blank" rel="noopener">compile_all_stgb_hef.py</a> · <a class="src" href="../../../lsp/src/server/compile_taesd_hef.py" title="lsp/src/server/compile_taesd_hef.py" target="_blank" rel="noopener">compile_taesd_hef.py</a></td></tr>
               <tr><td>Software ISP · Verified Lifting</td><td><a class="src" href="../../../hdrnet/README.md" title="hdrnet/README.md" target="_blank" rel="noopener">hdrnet/README.md</a> · <a class="src" href="../../../hdrnet/verified_lifting/README.md" title="hdrnet/verified_lifting/README.md" target="_blank" rel="noopener">hdrnet/verified_lifting/README.md</a> · <a class="src" href="../../../hdrnet/c_src/build_openisp_halide.py" title="hdrnet/c_src/build_openisp_halide.py" target="_blank" rel="noopener">build_openisp_halide.py</a></td></tr>
               <tr><td>Universal CFA Proposal &amp; Benchmarks</td><td><a class="src" href="../../../universal_cfa/README.md" title="universal_cfa/README.md" target="_blank" rel="noopener">universal_cfa/README.md</a> · <a class="src" href="../../../universal_cfa/docs/architecture_proposal.md" title="universal_cfa/docs/architecture_proposal.md" target="_blank" rel="noopener">architecture_proposal.md</a></td></tr>
+              <tr><td>Comp-LSP 2.0 White-Box Latent ISP</td><td><a class="src" href="../../../comp_lsp/README.md" title="comp_lsp/README.md" target="_blank" rel="noopener">comp_lsp/README.md</a> · <a class="src" href="../../../comp_lsp/tests/test_comp_lsp_pipeline.py" title="comp_lsp/tests/test_comp_lsp_pipeline.py" target="_blank" rel="noopener">test_comp_lsp_pipeline.py</a></td></tr>
               <tr><td>MCP Server · Remote Bridge · Role Rules</td><td><a class="src" href="../../../tools/aicamera_mcp_server.py" title="tools/aicamera_mcp_server.py" target="_blank" rel="noopener">tools/aicamera_mcp_server.py</a> · <a class="src" href="../../../tools/rpi_remote.py" title="tools/rpi_remote.py" target="_blank" rel="noopener">tools/rpi_remote.py</a> · <a class="src" href="../../../.agents/rules/specialist_roles.md" title=".agents/rules/specialist_roles.md" target="_blank" rel="noopener">specialist_roles.md</a> · <a class="src" href="../../../.agents/rules/project_rules.md" title=".agents/rules/project_rules.md" target="_blank" rel="noopener">.agents/rules/project_rules.md</a></td></tr>
             </tbody>
           </table>
@@ -706,14 +716,14 @@ python tools/rpi_remote.py bench      # Run physical hardware benchmark
     <div class="card">
       <h3>Repository Directory Tree</h3>
 <pre class="tree">aicamera/
-├── README.md                  # Monorepo landing page &amp; 3-track summary
+├── README.md                  # Monorepo landing page &amp; 4-track summary
 ├── GEMINI.md                  # Agent master context &amp; operating charter
 ├── .agents/                   # Antigravity agent customizations
 │   ├── rules/                 # project_rules.md, specialist_roles.md (10 specialist roles)
 │   └── skills/                # /bench, /train, /hp-sweep, /demo, /design, /verify-figures, /patent
 ├── docs/                      # Interactive guidebook (generated by build_spec_portal.py)
 │   ├── index.html             # Guidebook home (3D hardware pipeline + roadmap)
-│   ├── chapters/              # Ch.01~05 deep-dive chapters &amp; interactive simulators
+│   ├── chapters/              # Ch.01–06 deep-dive chapters &amp; interactive simulators
 │   ├── imx500_calib_frames/   # Real indoor camera calibration frames for IMX500 MCT INT8 PTQ
 │   └── aicamera_architecture_spec.html
 ├── lsp/                       # [Project 1] Latent Signal Processing
@@ -728,9 +738,12 @@ python tools/rpi_remote.py bench      # Run physical hardware benchmark
 │   ├── verified_lifting/      # C99 → Halide automated lifting &amp; numerical parity verifier
 │   ├── src/  scripts/         # Dual-NPU edge AI (ZAP tracking, person seg) &amp; sw_isp_demo.py
 │   └── benchmarks/            # 12MP 6-engine benchmark canonical JSON
-├── universal_cfa/             # [Project 3] Universal CFA (Bayer / Tetracell / Hexadeca)
-│   ├── src/                   # PixelUnshuffle phase compressor, frozen translator, CFA physics
-│   └── experiments/           # Quantitative evaluation JSON against remosaicing baselines
+├── universal_cfa/             # [Project 3] 16-Ch SE-Universal-CFA (Bayer / Tetracell / Hexadeca)
+│   ├── src/                   # PixelUnshuffle + SE phase compressor, unified translator (16→16), TAEF1 decoder
+│   └── experiments/           # 64 KB INT8 single-stream vs remosaicing baseline evaluation JSON
+├── comp_lsp/                  # [Project 4] White-Box Computational LSP 2.0 (16-Ch FLUX.1 / TAEF1)
+│   ├── src/                   # Class I–III math latent operators, 1:4:1 quadrature, Halide SIMD, 4-Step Refiner
+│   └── tests/                 # Partition-of-unity, biorthogonality &amp; 10-camera RAW regression suite
 └── tools/                     # aicamera_mcp_server.py (FastMCP), rpi_remote.py (SSH bridge)</pre>
     </div>
   </section>
@@ -740,9 +753,10 @@ python tools/rpi_remote.py bench      # Run physical hardware benchmark
     <h2>Key Takeaways</h2>
     <ol>
       <li>Streaming high-resolution uncompressed frames from an edge camera makes <strong>MIPI CSI-2 DMA serialization latency (52.91 ms @ 512²)</strong> the dominant bottleneck, capping frame rate at 14.9 FPS regardless of host NPU speed.</li>
-      <li><strong>LSP (Project 1)</strong> asymmetrically splits the encoder across the sensor NPU (Stage A, 5,924 params) and host NPU (Stage B, 595K params), shrinking bus payload by <strong>48× (64 KB, 2.90 ms)</strong> to achieve a 30.0 FPS live viewfinder and ZSL generative capture.</li>
-      <li><strong>Software ISP (Project 2)</strong> fuses a 10-stage C99 pipeline into a single Halide kernel (Tier 3) and applies VideoCore VII DMA-BUF zero-copy (Tier 4), cutting per-12MP-frame DRAM traffic by <strong>13.8× (811 → 59 MB)</strong>.</li>
-      <li><strong>Universal CFA (Project 3)</strong> processes Bayer (2×2), Tetracell (4×4), and Hexadecacell (8×8) clustered CFAs with an in-sensor phase-aware <code>PixelUnshuffle</code> compressor that shares a single frozen host translator (\(\mathcal{T}_B\)).</li>
+      <li><strong>LSP (Project 1)</strong> asymmetrically splits the encoder across the sensor NPU (Stage A, 5,924 Conv2d / 9.59K graph params) and host NPU (Stage B, 595K params), shrinking bus payload by <strong>48× (64 KB, 2.90 ms)</strong> to achieve a 30.0 FPS live viewfinder and ZSL generative capture.</li>
+      <li><strong>Software ISP (Project 2)</strong> fuses a 10-stage C99 pipeline into a single Halide kernel (Tier 3, 128.78 ms · 3.68× speedup) and applies VideoCore VII DMA-BUF zero-copy (Tier 4), cutting per-12.3MP-frame DRAM traffic by <strong>13.8× (811.4 → 58.8 MB)</strong>.</li>
+      <li><strong>Universal CFA (Project 3)</strong> processes Bayer (1×1), Tetracell (2×2), and Hexadecacell (4×4) clustered CFAs with an in-sensor phase-aware <code>PixelUnshuffle</code> + <code>SE-ResBlock</code> compressor emitting a single 16-channel bus tensor (<code>64 KB</code> INT8) into a sensor-invariant <code>FLUX.1</code> / <code>TAEF1</code> host pipeline (35.91–40.69 dB).</li>
+      <li><strong>Comp-LSP 2.0 (Project 4)</strong> executes a 7-stage physical ISP directly on 16-channel VAE latents (\(\mathcal{S}_{\mathrm{DC}}^3 \oplus \mathcal{S}_{\mathrm{AC}}^{13}\)) via Class I–III white-box mathematical operators and a 4-step manifold refiner, reaching <strong>27.18 dB</strong> across 10 cameras, a <strong>70.5×</strong> 12MP Halide SIMD speedup, and <strong>765.2×</strong> faster differentiable inverse 3A.</li>
       <li><strong>Dual-NPU SW Stack &amp; Agent Workflow</strong> compiles <code>.rpk</code>/<code>.hef</code> binaries via NCHW→NHWC kernel transposition and real-distribution calibration across 4-Tier isolated Python virtualenvs (<code>py311_train</code>, <code>venv</code>, <code>py310</code>, RPi 5), automating physical benchmarks and drift guarding through the FastMCP server (<a class="src" href="../../../tools/aicamera_mcp_server.py" title="tools/aicamera_mcp_server.py" target="_blank" rel="noopener">tools/aicamera_mcp_server.py</a>) and remote bridge (<a class="src" href="../../../tools/rpi_remote.py" title="tools/rpi_remote.py" target="_blank" rel="noopener">tools/rpi_remote.py</a>).</li>
     </ol>
   </section>
@@ -1029,14 +1043,14 @@ python tools/rpi_remote.py bench      # Run physical hardware benchmark
     },
     halide: {
       venv: "WSL2 clang/Halide → RPi 5 Cortex-A76 / V3D",
-      art: "libopenisp_halide.so (128.78 ms @ 12MP)",
-      basePsnr: 42.80,
+      art: "libopenisp_halide.so (128.78 ms @ 12MP · 3.68×)",
+      basePsnr: 43.53,
       baseMs: 128.78,
       baseFps: 7.8,
       stages: [
         { t: "1. C99 10-Stage ISP", s: "openisp_ref.c", env: "C99 Reference" },
         { t: "2. Verified Lifting", s: "Stencil IR → Halide", env: "PSNR ≥ 40 dB Check" },
-        { t: "3. Tiled Schedule Fusion", s: "256×128 Strip + SIMD", env: "13.8× DRAM Saved" },
+        { t: "3. Tiled Schedule Fusion", s: "811.4 → 58.8 MB", env: "13.8× DRAM Saved" },
         { t: "4. AOT Cross-Compile", s: "build_openisp_halide.py", env: "libopenisp_halide.so" },
         { t: "5. DMA-BUF Zero-Copy", s: "V3D Vulkan / ARM NEON", env: "12MP 128.78 ms" },
       ],

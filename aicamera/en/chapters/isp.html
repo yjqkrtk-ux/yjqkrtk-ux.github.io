@@ -17,19 +17,19 @@
 <body data-chapter="isp" data-root="../">
 
 <main class="chapter">
-    <header class="ch-header">
+    <header class="chapter-hero">
       <div class="eyebrow">CHAPTER 03 · SOFTWARE ISP &amp; HALIDE/NPU OPTIMIZATION (hdrnet/)</div>
       <h1>Software ISP — From C99 Reference to Fused Halide &amp; Edge AI</h1>
       <p class="lead">
         The raw <code>uint16</code> Bayer RGGB array emitted by a sensor is, by itself, merely a dark, green-tinted mosaic grid.
         In this chapter, we ① dissect the exact mathematical specification of our 10-stage C99 reference OpenISP pipeline and 3A closed-loop controller, and
-        ② use interactive simulators to explore how a pipeline that originally consumed <strong>1,257.8 MB/frame</strong> of round-trip DRAM traffic is compressed down to
-        <strong>91.3 MB/frame (13.8× reduction)</strong> through <strong>Verified Lifting</strong>, <strong>Halide kernel fusion, and DMA-BUF Zero-Copy</strong>.
+        ② use interactive simulators to explore how a 12MP pipeline that originally consumed <strong>811.4 MB/frame</strong> of round-trip DRAM traffic is compressed down to
+        <strong>58.8 MB/frame (13.8× reduction)</strong> through <strong>Verified Lifting</strong>, <strong>Halide kernel fusion, and DMA-BUF Zero-Copy</strong> (achieving <strong>32.76 ms · 30.5 FPS</strong> on the 3MP viewfinder and <strong>128.78 ms</strong> at 12MP).
       </p>
       <div class="meta-bar">
         <span>Pipeline <b>10-Stage C99 + 3A (AWB·CCM·AE)</b></span>
-        <span>12MP DRAM Saved <b>1257.8 MB → 91.3 MB (13.8×)</b></span>
-        <span>CPU Speedup <b>493.85 ms → 121.48 ms (4.07×)</b></span>
+        <span>12MP DRAM Saved <b>811.4 MB → 58.8 MB (13.8×)</b></span>
+        <span>CPU Speedup <b>474.04 ms → 128.78 ms (3.68× · 3MP 30.5 FPS)</b></span>
         <span>Edge AI <b>IMX500 SSD + Hailo Grid/Seg + ZAP</b></span>
       </div>
     </header>
@@ -170,13 +170,13 @@
       <h2>3.5 4-Tier Execution Engines, Halide Kernel Fusion &amp; DMA-BUF Zero-Copy</h2>
       <p>
         When processing a 12.33 MP (<code>4056×3040</code>) high-resolution frame by writing and reading full-frame buffers to and from DRAM at every stage like the C99 reference (Tier 1),
-        each frame incurs roughly <strong>102 B/px (1,257.8 MB)</strong> of DRAM traffic, thrashing the CPU cache at every stage boundary.
+        each 6-stage core pass incurs roughly <strong>65.8 B/px (811.4 MB)</strong> of DRAM traffic, thrashing the CPU cache at every stage boundary.
         To overcome this, we progressively optimized the exact same mathematical pipeline across four execution tiers (Tiers 1–4):
       </p>
       <div class="tier-grid" style="margin:14px 0;">
-        <div class="tier"><b>Tier 1 · C99 Baseline</b><span>Single-threaded · Full-frame DRAM round-trip per stage (1,257.8 MB)</span><a class="src" href="../../../hdrnet/c_src/openisp_procedural.c" title="hdrnet/c_src/openisp_procedural.c (line 522)" target="_blank" rel="noopener">openisp_procedural.c:522</a></div>
-        <div class="tier"><b>Tier 2 · Halide Block-wise</b><span>Per-stage individual Halide functions · ARM NEON SIMD vectorization</span><a class="src" href="../../../hdrnet/c_src/openisp_halide_wrapper.c" title="hdrnet/c_src/openisp_halide_wrapper.c" target="_blank" rel="noopener">openisp_halide_wrapper.c</a></div>
-        <div class="tier"><b>Tier 3 · Halide Fused CPU</b><span>Fuses all stages into a single tiled loop · L2 cache resident (91.3 MB)</span><a class="src" href="../../../hdrnet/c_src/build_openisp_halide.py" title="hdrnet/c_src/build_openisp_halide.py" target="_blank" rel="noopener">build_openisp_halide.py</a></div>
+        <div class="tier"><b>Tier 1 · C99 Baseline</b><span>Single-threaded · Full-frame DRAM round-trip per stage (811.4 MB)</span><a class="src" href="../../../hdrnet/c_src/openisp_procedural.c" title="hdrnet/c_src/openisp_procedural.c (line 522)" target="_blank" rel="noopener">openisp_procedural.c:522</a></div>
+        <div class="tier"><b>Tier 2 · Halide Block-wise</b><span>Per-stage individual Halide functions · ARM NEON SIMD vectorization (298.28 ms)</span><a class="src" href="../../../hdrnet/c_src/openisp_halide_wrapper.c" title="hdrnet/c_src/openisp_halide_wrapper.c" target="_blank" rel="noopener">openisp_halide_wrapper.c</a></div>
+        <div class="tier"><b>Tier 3 · Halide Fused CPU</b><span>Fuses all stages into a single tiled loop · L2 cache resident (58.8 MB · 128.78 ms)</span><a class="src" href="../../../hdrnet/c_src/build_openisp_halide.py" title="hdrnet/c_src/build_openisp_halide.py" target="_blank" rel="noopener">build_openisp_halide.py</a></div>
         <div class="tier"><b>Tier 4 · Halide GPU (V3D)</b><span>VideoCore VII Vulkan Compute · Staged / DMA-BUF / FP16</span><a class="src" href="../../../hdrnet/c_src/openisp_halide_gpu_wrapper.c" title="hdrnet/c_src/openisp_halide_gpu_wrapper.c" target="_blank" rel="noopener">openisp_halide_gpu_wrapper.c</a></div>
       </div>
 
@@ -197,22 +197,22 @@
       <div class="callout warn">
         <div class="callout-title">Important Notes When Interpreting the 12MP Benchmark</div>
         <ul>
-          <li><strong>Active Stage Condition</strong>: For a fair core-pipeline comparison, <a class="src" href="../../../hdrnet/scripts/bench_3way_isp.py" title="hdrnet/scripts/bench_3way_isp.py (line 77)" target="_blank" rel="noopener">bench_3way_isp.py:77</a> was measured with <code>DPC · LSC · ANF · EEH</code> disabled (running the <strong>6 core stages: BLC · AWB · Demosaic · CCM · Gamma · CSC</strong>).</li>
+          <li><strong>Active Stage Condition</strong>: For a fair core-pipeline comparison, <a class="src" href="../../../hdrnet/scripts/bench_3way_isp.py" title="hdrnet/scripts/bench_3way_isp.py (line 77)" target="_blank" rel="noopener">bench_3way_isp.py:77</a> was measured with <code>DPC · LSC · ANF · EEH</code> disabled (running the <strong>6 core stages: BLC · AWB · Demosaic · CCM · Gamma · CSC</strong>; at 3MP <code>2028×1520</code> viewfinder resolution, Tier 3 achieves <strong>32.76 ms · 30.5 FPS</strong>, saturating the 30 FPS sensor ceiling).</li>
           <li><strong>Numerical Parity</strong>: Due to floating-point associativity and fast approximations, Halide Tiers 2–4 achieve <strong>43.53 dB PSNR / 1.29 MAE</strong> against the C reference (numerical parity rather than bit-exactness).</li>
-          <li><strong>DMA-BUF Zero-Copy Impact</strong>: Eliminating the host↔GPU staging memory copy (60.16 ms) from Tier 4 GPU Staged (289.56 ms) via <code>DMA-BUF</code> buffer sharing cuts latency to <strong>229.40 ms (2.15×)</strong>.</li>
+          <li><strong>DMA-BUF Zero-Copy Impact</strong>: Eliminating the host↔GPU staging memory copy (60.16 ms) from Tier 4 GPU Staged (289.56 ms) via <code>DMA-BUF</code> buffer sharing cuts latency to <strong>229.40 ms (2.07×)</strong>.</li>
         </ul>
       </div>
 
       <div class="sim" id="sim-halide">
         <div class="sim-head">
           <div class="sim-title">SIMULATOR 03 · Halide Tiled Kernel Fusion (Loop Fusion) &amp; DRAM Traffic Simulator</div>
-          <span class="badge b-ok">102 B/px → 7.4 B/px</span>
+          <span class="badge b-ok">65.8 B/px → 4.8 B/px</span>
         </div>
         <div class="sim-body">
           <p style="margin-top:0;">
             Select an execution Tier and tile size (\(T_x \times T_y\)).
-            In <strong>Unfused</strong> mode, every stage flushes the full 12MP frame to DRAM; in <strong>Single-Kernel Fused</strong> mode, each tile flows through all 6 stages inside the L2 cache (up to 2 MB),
-            shrinking external DRAM access to just <strong>initial RAW read (2 B/px) + final YUV/RGB write (5.4 B/px) = 7.4 B/px</strong>.
+            In <strong>Unfused</strong> mode, every stage flushes the full 12MP frame to DRAM (<strong>811.4 MB</strong>); in <strong>Single-Kernel Fused</strong> mode, each tile flows through all 6 stages inside the L2 cache (up to 2 MB),
+            shrinking external DRAM access to just <strong>initial RAW read (2.0 B/px) + final output write (2.8 B/px) = 4.8 B/px (58.8 MB, 13.8× reduction)</strong>.
           </p>
           <div class="sim-controls" id="hal-ctrl"></div>
           <canvas id="hal-cv" data-w="920" data-h="230"></canvas>
@@ -321,13 +321,13 @@
     </section>
 
     <section class="keypoints" id="summary">
-      <h3>Key Takeaways · Chapter 03</h3>
-      <ul>
+      <h2>Key Takeaways · Chapter 03</h2>
+      <ol>
         <li><strong>Linear-Domain-First Principle</strong>: BLC, LSC, ANF, and AWB (Stages 2–5) along with Demosaic and CCM (Stages 6–7) must operate in the photon-linear domain to prevent distortion of color ratios and radial shading correction, placing nonlinear Gamma (Stage 8) and YUV conversion (Stage 9) at the end.</li>
         <li><strong>Adaptive 3A Feedback Loop</strong>: Gray-World AWB and digital-gain AE suppress flicker during steady state using low EMA factors (\(\alpha=0.15, \beta=0.20\)), and immediately switch to fast factors (\(0.40 / 0.45\)) upon detecting large illumination steps (\(|\Delta| \gt 0.3 / 0.4\)).</li>
-        <li><strong>Halide Kernel Fusion &amp; DMA-BUF</strong>: Fusing the 12MP pipeline—which previously consumed <strong>1,257.8 MB</strong> of stage-by-stage DRAM round-trips—into a single tiled loop (Tier 3) slashes DRAM traffic to <strong>91.3 MB (13.8× reduction)</strong> and accelerates CPU execution from <strong>493.85 ms → 121.48 ms (4.07× speedup)</strong>.</li>
+        <li><strong>Halide Kernel Fusion &amp; DMA-BUF</strong>: Fusing the 12MP pipeline—which previously consumed <strong>811.4 MB</strong> of stage-by-stage DRAM round-trips—into a single tiled loop (Tier 3) slashes DRAM traffic to <strong>58.8 MB (13.8× reduction)</strong> and accelerates CPU execution from <strong>474.04 ms → 128.78 ms (3.68× speedup, 32.76 ms · 30.5 FPS at 3MP viewfinder)</strong>.</li>
         <li><strong>Dual-NPU Async Edge AI</strong>: Running IMX500 (in-sensor detection) and Hailo-8 (Bilateral Grid / segmentation) on asynchronous threads decoupled from the ISP loop, combined with ZAP EMA viewport tracking, delivers drop-free intelligent camera UX.</li>
-      </ul>
+      </ol>
     </section>
 </main>
 <script>
@@ -768,11 +768,11 @@
   let tileSize = 128;
 
   const TIER_SIM = {
-    t1: { name: 'Tier 1 · C99 Unfused', ms: 493.85, dram: 1257.8, bpp: 102.0, fused: false, gpu: false },
-    t2: { name: 'Tier 2 · Halide Block-wise', ms: 162.88, dram: 1257.8, bpp: 102.0, fused: false, gpu: false },
-    t3: { name: 'Tier 3 · Halide Fused CPU', ms: 121.48, dram: 91.3, bpp: 7.4, fused: true, gpu: false },
-    t4s: { name: 'Tier 4 · GPU Staged', ms: 289.56, dram: 165.0, bpp: 13.4, fused: true, gpu: true },
-    t4z: { name: 'Tier 4 · GPU DMA-BUF Zero-Copy', ms: 229.40, dram: 91.3, bpp: 7.4, fused: true, gpu: true }
+    t1: { name: 'Tier 1 · C99 Unfused', ms: 474.04, dram: 811.4, bpp: 65.8, fused: false, gpu: false },
+    t2: { name: 'Tier 2 · Halide Block-wise', ms: 298.28, dram: 811.4, bpp: 65.8, fused: false, gpu: false },
+    t3: { name: 'Tier 3 · Halide Fused CPU', ms: 128.78, dram: 58.8, bpp: 4.8, fused: true, gpu: false },
+    t4s: { name: 'Tier 4 · GPU Staged', ms: 289.56, dram: 117.6, bpp: 9.5, fused: true, gpu: true },
+    t4z: { name: 'Tier 4 · GPU DMA-BUF Zero-Copy', ms: 229.40, dram: 58.8, bpp: 4.8, fused: true, gpu: true }
   };
 
   if(halCtrl){
@@ -845,7 +845,7 @@
     const dy = 148;
     ctx.fillStyle = dk ? 'rgba(255,255,255,0.06)' : 'rgba(15,23,42,0.06)';
     ctx.beginPath(); ctx.roundRect(34, dy, w - 68, 52, 8); ctx.fill();
-    const barW = (t.dram / 1257.8) * (w - 88);
+    const barW = (t.dram / 811.4) * (w - 88);
     ctx.fillStyle = t.fused ? '#10b981' : '#ef4444';
     ctx.beginPath(); ctx.roundRect(44, dy + 12, Math.max(18, barW), 28, 6); ctx.fill();
     ctx.fillStyle = tx;
@@ -855,7 +855,7 @@
 
     if(halStats){
       halStats.innerHTML = [
-        SB.stat({ label: '12MP Mean Frame Latency', value: t.ms.toFixed(2) + ' ms (' + (493.85 / t.ms).toFixed(2) + '× speedup)' }),
+        SB.stat({ label: '12MP Mean Frame Latency', value: t.ms.toFixed(2) + ' ms (' + (474.04 / t.ms).toFixed(2) + '× speedup)' }),
         SB.stat({ label: 'Per-Frame DRAM Traffic', value: t.dram.toFixed(1) + ' MB (' + t.bpp.toFixed(1) + ' B/px)' }),
         SB.stat({ label: 'Tile Working-Set Size', value: t.fused ? tileKb + ' KB (' + (fitsL2 ? 'Fits RPi5 2MB L2' : 'L2 Spill') + ')' : '49,320 KB (Exceeds L2)' }),
         SB.stat({ label: 'Numerical Parity (vs C99)', value: halTier === 't1' ? 'Ref (Baseline)' : '43.53 dB / MAE 1.29' })
@@ -886,6 +886,7 @@
   }
 
   const zapCvEl = document.getElementById('zap-cv');
+  const zapCanvas = zapCvEl ? SB.canvas(zapCvEl) : null;
   if(zapCvEl){
     zapCvEl.addEventListener('mousemove', e => {
       const r = zapCvEl.getBoundingClientRect();
@@ -895,9 +896,10 @@
   }
 
   function stepZap(){
+    if(!zapCanvas) return;
     vpX = zapAlpha * tgtX + (1 - zapAlpha) * vpX;
     vpY = zapAlpha * tgtY + (1 - zapAlpha) * vpY;
-    const { ctx, w, h } = SB.canvas('#zap-cv');
+    const { ctx, w, h } = zapCanvas;
     ctx.clearRect(0, 0, w, h);
     const dk = SB.isDark();
     const tx = dk ? '#e6edf6' : '#12161f';
@@ -948,9 +950,8 @@
         SB.stat({ label: 'Output Aspect Ratio', value: 'Fixed 4:3 Crop' })
       ].join('');
     }
-    requestAnimationFrame(stepZap);
   }
-  requestAnimationFrame(stepZap);
+  if(zapCvEl && zapCanvas) SB.loop(zapCvEl, stepZap);
 
   window.addEventListener('sb:theme', () => { drawIspSim(); draw3aSim(); drawHalSim(); });
 })();

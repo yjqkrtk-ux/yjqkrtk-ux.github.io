@@ -5,6 +5,18 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>AICAMERA Research Papers — Latent Signal Processing Series</title>
+
+  <script>
+    (function() {
+      try {
+        var t = localStorage.getItem('sb-theme');
+        if (t === 'light' || t === 'dark') {
+          document.documentElement.setAttribute('data-theme', t);
+        }
+      } catch (e) {}
+    })();
+  </script>
+
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link
@@ -14,6 +26,7 @@
     :root,
     [data-theme="light"] {
       --bg: #f6f8fa;
+      --bg-soft: #eef2f6;
       --surface: #ffffff;
       --surface-alt: #f0f3f6;
       --surface-border: #d0d7de;
@@ -21,9 +34,9 @@
       --text-bright: #0d1117;
       --text-muted: #57606a;
       --accent: #0969da;
-      --accent-glow: rgba(9, 105, 218, 0.08);
+      --accent-glow: color-mix(in srgb, var(--accent) 9%, transparent);
       --green: #1a7f37;
-      --green-bg: rgba(26, 127, 55, 0.10);
+      --green-bg: color-mix(in srgb, var(--green) 10%, transparent);
       --orange: #bc4c00;
       --purple: #8250df;
       --font-body: 'Newsreader', Georgia, serif;
@@ -33,6 +46,7 @@
 
     [data-theme="dark"] {
       --bg: #0d1117;
+      --bg-soft: #161b22;
       --surface: #161b22;
       --surface-alt: #1f242d;
       --surface-border: #30363d;
@@ -40,9 +54,9 @@
       --text-bright: #f0f6fc;
       --text-muted: #8b949e;
       --accent: #58a6ff;
-      --accent-glow: rgba(88, 166, 255, 0.15);
+      --accent-glow: color-mix(in srgb, var(--accent) 15%, transparent);
       --green: #3fb950;
-      --green-bg: rgba(63, 185, 80, 0.14);
+      --green-bg: color-mix(in srgb, var(--green) 14%, transparent);
       --orange: #f0883e;
       --purple: #bc8cff;
     }
@@ -155,7 +169,7 @@
       background: var(--surface);
       border: 1px solid var(--surface-border);
       border-radius: 12px;
-      box-shadow: 0 14px 40px rgba(0, 0, 0, 0.25);
+      box-shadow: 0 12px 36px color-mix(in srgb, var(--text-bright) 10%, transparent);
     }
 
     /* Unified Paper Header */
@@ -238,17 +252,6 @@
       font-family: var(--font-ui);
     }
 
-    @media (max-width: 980px) {
-      .kpi-strip,
-      .kpi-grid {
-        grid-template-columns: repeat(2, minmax(0, 1fr));
-      }
-      .paper-container {
-        padding: 28px 22px;
-        margin: 16px 12px 60px;
-      }
-    }
-
     .kpi-card {
       background: var(--bg);
       border: 1px solid var(--surface-border);
@@ -290,6 +293,10 @@
       line-height: 1.68;
     }
 
+    .abstract-box p:last-of-type {
+      margin-bottom: 0;
+    }
+
     .abstract-title,
     .abstract-box > strong:first-child {
       font-family: var(--font-ui);
@@ -319,7 +326,7 @@
     .paper-body.two-col,
     .two-col,
     .two-column-layout {
-      column-count: 2 !important;
+      column-count: 2;
       column-gap: 32px;
       column-rule: 1px solid var(--surface-border);
       column-fill: balance;
@@ -328,16 +335,42 @@
 
     .paper-body.one-col,
     .one-col {
-      column-count: 1 !important;
+      column-count: 1;
       text-align: justify;
     }
 
     @media (max-width: 980px) {
+      .kpi-strip,
+      .kpi-grid {
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+      }
+      .paper-container {
+        padding: 28px 22px;
+        margin: 16px 12px 60px;
+      }
       .paper-body.two-col,
       .two-col,
       .two-column-layout {
         column-gap: 20px;
         font-size: 14.5px;
+      }
+    }
+
+    @media (max-width: 820px) {
+      .paper-body.two-col,
+      .two-col,
+      .two-column-layout {
+        column-count: 1;
+      }
+    }
+
+    @media (max-width: 560px) {
+      .kpi-strip,
+      .kpi-grid {
+        grid-template-columns: 1fr;
+      }
+      .paper-container {
+        padding: 20px 16px 48px;
       }
     }
 
@@ -446,10 +479,33 @@
       line-height: 1.5;
     }
 
-    .table-container {
+    .table-container,
+    .table-card,
+    .table-scroll {
       margin: 18px 0;
       overflow-x: auto;
+      max-width: 100%;
+      -webkit-overflow-scrolling: touch;
       break-inside: avoid;
+    }
+
+    .table-caption {
+      font-family: var(--font-ui);
+      font-size: 13px;
+      font-weight: 700;
+      color: var(--text-bright);
+      margin-bottom: 8px;
+      line-height: 1.45;
+      text-align: left;
+    }
+
+    .table-footnote {
+      font-family: var(--font-ui);
+      font-size: 11.5px;
+      color: var(--text-muted);
+      margin-top: 6px;
+      line-height: 1.45;
+      text-align: left;
     }
 
     table,
@@ -463,7 +519,6 @@
       background: var(--bg);
       border: 1px solid var(--surface-border);
       border-radius: 8px;
-      overflow: hidden;
     }
 
     th,
@@ -477,9 +532,15 @@
 
     th,
     table.academic-table th {
-      background: rgba(88, 166, 255, 0.10);
+      background: color-mix(in srgb, var(--accent) 10%, var(--surface));
       color: var(--text-bright);
       font-weight: 600;
+    }
+
+    tr.baseline-row td,
+    table.academic-table tr.baseline-row td {
+      color: var(--text-muted);
+      background: var(--bg-soft);
     }
 
     tr.highlight-row td,
@@ -489,15 +550,32 @@
     }
 
     tr.section-row td {
-      background: rgba(188, 140, 255, 0.10);
+      background: color-mix(in srgb, var(--purple) 11%, var(--surface));
       color: var(--purple);
       font-weight: 700;
       text-align: left;
     }
 
+    tr.summary-row td,
+    table.academic-table tr.summary-row td {
+      border-top: 2px solid var(--accent);
+      font-weight: 700;
+    }
+
+    tr.subtotal-row td,
+    table.academic-table tr.subtotal-row td {
+      border-top: 1.5px solid var(--surface-border);
+      font-weight: 700;
+    }
+
     .highlight-val {
       color: var(--green);
       font-weight: 700;
+    }
+
+    .dim-note {
+      font-size: 11px;
+      opacity: 0.82;
     }
 
     .metric-pill {
@@ -510,17 +588,17 @@
     }
 
     .pill-green {
-      background: rgba(63, 185, 80, 0.18);
+      background: color-mix(in srgb, var(--green) 16%, transparent);
       color: var(--green);
     }
 
     .pill-orange {
-      background: rgba(240, 136, 62, 0.18);
+      background: color-mix(in srgb, var(--orange) 16%, transparent);
       color: var(--orange);
     }
 
     .pill-purple {
-      background: rgba(188, 140, 255, 0.18);
+      background: color-mix(in srgb, var(--purple) 16%, transparent);
       color: var(--purple);
     }
 
@@ -531,6 +609,86 @@
       padding: 2px 6px;
       border-radius: 4px;
       border: 1px solid var(--surface-border);
+    }
+
+    /* Reusable Academic Algorithm Box */
+    .algo-box {
+      background: var(--bg);
+      border-top: 2.5px solid var(--text-bright);
+      border-bottom: 2.5px solid var(--text-bright);
+      padding: 14px 18px;
+      margin: 20px 0;
+      font-family: var(--font-body);
+      text-align: left;
+      overflow-x: auto;
+      max-width: 100%;
+      -webkit-overflow-scrolling: touch;
+      break-inside: avoid;
+    }
+
+    .algo-head {
+      font-family: var(--font-ui);
+      font-size: 14px;
+      font-weight: 700;
+      color: var(--text-bright);
+      padding-bottom: 8px;
+      border-bottom: 1px solid var(--surface-border);
+      margin-bottom: 10px;
+      line-height: 1.45;
+    }
+
+    .algo-sub {
+      font-size: 13.2px;
+      line-height: 1.68;
+      color: var(--text);
+      margin-bottom: 6px;
+    }
+
+    .algo-body {
+      border-top: 1px solid var(--surface-border);
+      padding-top: 8px;
+      font-size: 13.2px;
+      line-height: 1.78;
+      color: var(--text);
+    }
+
+    .algo-line {
+      white-space: normal;
+    }
+
+    .algo-line.algo-phase {
+      margin-top: 4px;
+      font-weight: 600;
+    }
+
+    .algo-line.algo-phase:first-child {
+      margin-top: 0;
+    }
+
+    .algo-ln {
+      font-family: var(--font-mono);
+      font-size: 11.5px;
+      color: var(--text-muted);
+      display: inline-block;
+      width: 28px;
+      font-weight: 400;
+    }
+
+    .algo-indent {
+      padding-left: 24px;
+    }
+
+    .algo-phase-bright { color: var(--text-bright); }
+    .algo-phase-accent { color: var(--accent); }
+    .algo-phase-green { color: var(--green); }
+    .algo-phase-purple { color: var(--purple); }
+    .algo-phase-orange { color: var(--orange); }
+    .algo-comment { color: var(--text-muted); font-size: 12px; font-weight: 400; }
+
+    .appendix-section {
+      margin-top: 36px;
+      padding-top: 28px;
+      border-top: 2.5px solid var(--surface-border);
     }
 
     .reference-list {
@@ -545,9 +703,26 @@
     }
 
     @media print {
+      html,
+      html[data-theme="dark"] {
+        --bg: #ffffff;
+        --bg-soft: #f8fafc;
+        --surface: #ffffff;
+        --surface-alt: #f8fafc;
+        --surface-border: #cbd5e1;
+        --text: #111827;
+        --text-bright: #000000;
+        --text-muted: #4b5563;
+        --accent: #1d4ed8;
+        --accent-glow: rgba(29, 78, 216, 0.08);
+        --green: #15803d;
+        --green-bg: rgba(21, 128, 61, 0.08);
+        --orange: #c2410c;
+        --purple: #6d28d9;
+      }
       body {
         background: #ffffff;
-        color: #000000;
+        color: #111827;
         font-size: 10pt;
       }
       .top-bar {
@@ -561,9 +736,10 @@
         width: 100%;
         max-width: 100%;
       }
-      .paper-body.two-col {
-        column-count: 2;
-        column-gap: 20px;
+      .paper-body.two-col,
+      .two-col,
+      .two-column-layout {
+        column-count: 1 !important;
       }
     }
 
@@ -587,6 +763,10 @@
       border-color: var(--accent);
       transform: translateY(-2px);
     }
+    .hub-card .header-badges {
+      justify-content: flex-start;
+      margin-bottom: 0;
+    }
     .hub-card-title {
       font-family: var(--font-ui);
       font-size: 21px;
@@ -597,6 +777,12 @@
     }
     .hub-card-title:hover {
       color: var(--accent);
+    }
+    .hub-card-authors {
+      font-family: var(--font-ui);
+      font-size: 13px;
+      color: var(--text-muted);
+      margin-top: -4px;
     }
     .hub-card-desc {
       font-size: 15px;
@@ -634,7 +820,7 @@
       <a class="nav-pill" href="../index.html">👤 Resume</a>
     </div>
     <div class="top-bar-right">
-      <button class="btn" id="btn-theme" type="button" onclick="togglePaperTheme()">☀️ Light</button>
+      <button class="btn" id="btn-theme" type="button" title="Toggle Light / Dark theme" onclick="togglePaperTheme()">☀️ Theme: Light</button>
     </div>
   </div>
 
@@ -652,7 +838,7 @@
     <div class="hub-grid">
       <!-- Paper I -->
       <article class="hub-card">
-        <div class="header-badges" style="justify-content:flex-start;margin-bottom:0">
+        <div class="header-badges">
           <span class="badge">Paper I · Core LSP Architecture</span>
           <span class="badge">IEEE ICASSP 2027 &amp; Sensors</span>
           <span class="badge-green">Physical Dual-NPU Verified</span>
@@ -667,7 +853,7 @@
           <span class="hub-kpi">48.0× Bus Contraction (64 KB)</span>
           <span class="hub-kpi">30.0 FPS Live Sync (43.7 FPS Compute)</span>
           <span class="hub-kpi">22.90 ms Serial Latency</span>
-          <span class="hub-kpi">27.31 dB PSNR (SD 2.1 VAE Manifold)</span>
+          <span class="hub-kpi">24.2 dB PSNR (Within 0.6 dB of SD-VAE)</span>
         </div>
         <div>
           <a class="btn active" href="lsp.html">Read Paper I (2-Col Interactive HTML) →</a>
@@ -676,7 +862,7 @@
 
       <!-- Paper II -->
       <article class="hub-card">
-        <div class="header-badges" style="justify-content:flex-start;margin-bottom:0">
+        <div class="header-badges">
           <span class="badge">Paper II · Universal CFA LSP</span>
           <span class="badge">IEEE TIP / CVPR 2027 Track</span>
           <span class="badge-green">16-Ch Single-Stream (FLUX.1 / TAEF1) Unified</span>
@@ -685,12 +871,12 @@
           2. Universal In-Sensor Latent Signal Processing for Heterogeneous CFAs: Phase-Aware Implicit Remosaicing and 16-Channel Single-Stream Latent Unification
         </a>
         <p class="hub-card-desc">
-          Unifies Standard Bayer (1×1), Tetracell (2×2), and Hexadecacell (4×4) high-megapixel sensors onto a single 16-channel host translator (T_B: 16→16) and a 100% CFA-agnostic host decoder (D_rec) on the FLUX.1 / TAEF1 latent manifold via in-sensor phase-aware PixelUnshuffle + SE-ResNet compressors (64 KB INT8 single-stream bus).
+          Unifies Standard Bayer (1×1), Tetracell (2×2), and Hexadecacell (4×4) high-megapixel sensors onto a single 16-channel host translator (T_B: 16→16) and a 100% CFA-agnostic host decoder (D_rec) on the FLUX.1 / TAEF1 latent manifold via in-sensor phase-aware PixelUnshuffle + SE-ResNet compressors (64 KB INT8 single-stream bus), achieving 40.69 / 36.80 / 31.13 dB on BJDD_CVPR21.
         </p>
         <div class="hub-kpis">
-          <span class="hub-kpi">Bayer (1×1): 35.91 dB</span>
-          <span class="hub-kpi">Tetracell (2×2): 34.56 dB (+0.50 dB vs. KLAP)</span>
-          <span class="hub-kpi">Hexadecacell (4×4): 30.27 dB (+0.53 dB vs. KLAP)</span>
+          <span class="hub-kpi">Bayer (1×1): 40.69 dB (BJDD_CVPR21)</span>
+          <span class="hub-kpi">Tetracell (2×2): 36.80 dB (+2.74 dB vs. KLAP)</span>
+          <span class="hub-kpi">Hexadecacell (4×4): 31.13 dB (+1.39 dB vs. KLAP)</span>
           <span class="hub-kpi">100% Single-Stream 16-Ch (64 KB INT8)</span>
         </div>
         <div>
@@ -700,7 +886,7 @@
 
       <!-- Paper III -->
       <article class="hub-card">
-        <div class="header-badges" style="justify-content:flex-start;margin-bottom:0">
+        <div class="header-badges">
           <span class="badge">Paper III · IEEE/CVF CVPR 2027 Track</span>
           <span class="badge">FLUX.1 &amp; TAEF1 16-Ch VAE</span>
           <span class="badge-green">10 Hardware Camera RAWs &amp; 4-Step Refiner Verified</span>
@@ -708,7 +894,7 @@
         <a class="hub-card-title" href="comp_lsp.html">
           3. White-Box Computational Latent Signal Processing: Step-by-Step Radiometric &amp; Colorimetric Operators and Iterative Manifold Refinement in 16-Channel VAEs
         </a>
-        <div style="font-family:var(--font-ui);font-size:13px;color:var(--text-muted);margin-top:-4px;">
+        <div class="hub-card-authors">
           <strong>Authors:</strong> Yongjoon Song, Han-sol Lee, Jeisung Lee, Yeolmin Seong &bull; <em>Samsung Electronics, Republic of Korea</em>
         </div>
         <p class="hub-card-desc">
@@ -728,43 +914,88 @@
   </div>
 
   <script>
-    function setPaperCols(n) {
-      const body = document.getElementById('paper-body') || document.getElementById('main-paper-body');
-      const b1 = document.getElementById('btn-1col');
-      const b2 = document.getElementById('btn-2col');
-      if (!body) return;
-      if (n === 2) {
-        body.classList.add('two-col');
-        body.classList.remove('one-col');
-        body.style.columnCount = '2';
-        if (b2) b2.classList.add('active');
-        if (b1) b1.classList.remove('active');
-      } else {
-        body.classList.remove('two-col');
-        body.classList.remove('two-column-layout');
-        body.classList.add('one-col');
-        body.style.columnCount = '1';
-        if (b1) b1.classList.add('active');
-        if (b2) b2.classList.remove('active');
+    function syncThemeButton() {
+      var root = document.documentElement;
+      var btn = document.getElementById('btn-theme');
+      if (!btn) return;
+      var isDark = root.getAttribute('data-theme') === 'dark';
+      btn.textContent = isDark ? '🌙 Theme: Dark' : '☀️ Theme: Light';
+      btn.setAttribute('title', 'Toggle Light / Dark theme');
+    }
+
+    function setPaperCols(n, persist) {
+      var body = document.getElementById('paper-body') || document.getElementById('main-paper-body');
+      var b1 = document.getElementById('btn-1col');
+      var b2 = document.getElementById('btn-2col');
+      var cols = (Number(n) === 1) ? 1 : 2;
+      if (body) {
+        if (cols === 2) {
+          body.classList.add('two-col');
+          body.classList.remove('one-col');
+        } else {
+          body.classList.remove('two-col');
+          body.classList.remove('two-column-layout');
+          body.classList.add('one-col');
+        }
+      }
+      if (b2) b2.classList.toggle('active', cols === 2);
+      if (b1) b1.classList.toggle('active', cols === 1);
+      if (persist !== false) {
+        try {
+          localStorage.setItem('sb-paper-cols', String(cols));
+        } catch (e) {}
       }
     }
 
     function togglePaperTheme() {
-      const root = document.documentElement;
-      const btn = document.getElementById('btn-theme');
-      if (root.getAttribute('data-theme') === 'dark') {
-        root.setAttribute('data-theme', 'light');
-        if (btn) btn.textContent = '☀️ Light';
-      } else {
-        root.setAttribute('data-theme', 'dark');
-        if (btn) btn.textContent = '🌙 Dark';
-      }
+      var root = document.documentElement;
+      var next = root.getAttribute('data-theme') === 'dark' ? 'light' : 'dark';
+      root.setAttribute('data-theme', next);
+      try {
+        localStorage.setItem('sb-theme', next);
+      } catch (e) {}
+      syncThemeButton();
     }
+
+    var _paperMathRendered = false;
+    function renderPaperMath() {
+      if (_paperMathRendered || typeof window.renderMathInElement !== 'function') return;
+      _paperMathRendered = true;
+      window.renderMathInElement(document.body, {
+        delimiters: [
+          {left: '$$', right: '$$', display: true},
+          {left: '\\[', right: '\\]', display: true},
+          {left: '$', right: '$', display: false},
+          {left: '\\(', right: '\\)', display: false}
+        ],
+        ignoredTags: ['script', 'noscript', 'style', 'textarea', 'pre', 'code', 'svg'],
+        strict: false,
+        throwOnError: false
+      });
+    }
+
+    function initPaperPortal() {
+      syncThemeButton();
+      var savedCols = '2';
+      try {
+        var c = localStorage.getItem('sb-paper-cols');
+        if (c === '1' || c === '2') savedCols = c;
+      } catch (e) {}
+      setPaperCols(Number(savedCols), false);
+      renderPaperMath();
+    }
+
+    if (document.readyState === 'loading') {
+      document.addEventListener('DOMContentLoaded', initPaperPortal);
+    } else {
+      initPaperPortal();
+    }
+    window.addEventListener('load', renderPaperMath);
 
     // Legacy aliases for backward compatibility
     window.setCols = setPaperCols;
     window.toggleCols = function() {
-      const body = document.getElementById('paper-body') || document.getElementById('main-paper-body');
+      var body = document.getElementById('paper-body') || document.getElementById('main-paper-body');
       setPaperCols(body && body.classList.contains('one-col') ? 2 : 1);
     };
     window.toggleLayout = window.toggleCols;

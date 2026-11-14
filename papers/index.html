@@ -898,12 +898,12 @@
           <strong>Authors:</strong> Yongjoon Song, Han-sol Lee, Jeisung Lee, Yeolmin Seong &bull; <em>Samsung Electronics, Republic of Korea</em>
         </div>
         <p class="hub-card-desc">
-          Generalizes the emergent 16-channel FLUX.1 latent color subspace (Pach et al., ICML 2026) into a 1st-Order Jet Bundle (<code>R<sup>16</sup> = S<sub>DC</sub><sup>3</sup> &oplus; S<sub>AC</sub><sup>13</sup></code>) that executes (I) Pointwise Linear/Affine, (II) Pointwise Non-Linear (<code>1:4:1</code> Simpson Quadrature + 3&times;3 Secant Jacobians), and (III) Spatial Neighborhood Kernels (13D AC Orthonormal Projectors + 3&times;3 Cross-Cell Bilateral/ODE Stencils) directly on the H/8 &times; W/8 &times; 16 latent grid of genuine hardware sensor Bayer RAWs. Trained on 201 strictly held-out real camera DNGs (0% overlap), it boosts Zero-Shot 10-camera mean sRGB PSNR from 24.46 dB (0-Net) and 24.91 dB (1-Step 1x1) to 25.17 dB (4-Step D4 3x3 Refiner, 10/10 camera wins, up to 30.55 dB; Intra-DB Pixel-31 reaches 28.99 → 29.36 dB and 30.88 dB Indoor), with 128.4 dB Halide parity and 290.8× faster differentiable inverse 3A auto-tuning.
+          Generalizes the emergent 16-channel FLUX.1 latent color subspace (Pach et al., ICML 2026) into a 1st-Order Jet Bundle (<code>R<sup>16</sup> = S<sub>DC</sub><sup>3</sup> &oplus; S<sub>AC</sub><sup>13</sup></code>) that executes (I) Pointwise Linear/Affine, (II) Pointwise Non-Linear (<code>1:4:1</code> Simpson Quadrature + 3&times;3 Secant Jacobians), and (III) Spatial Neighborhood Kernels (13D AC Orthonormal Projectors + 3&times;3 Cross-Cell Bilateral &amp; Conditional DDIM Diffusion Bridge Stencils) directly on the H/8 &times; W/8 &times; 16 latent grid of genuine hardware sensor Bayer RAWs. Trained on 201 strictly held-out real camera DNGs (0% overlap), it boosts Zero-Shot 10-camera mean sRGB PSNR from 24.46 dB (0-Net) and 24.84 dB (1-Step 1x1 DDIM, 20.0K) to 25.16 dB (4-Step D4 3x3 Conditional DDIM Bridge, 33.5K, 10/10 camera wins, up to 30.30 dB; Intra-DB Pixel-31 reaches 28.99 → 29.36 dB and 30.88 dB Indoor), with 128.4 dB Halide parity and 290.8× faster differentiable inverse 3A auto-tuning.
         </p>
         <div class="hub-kpis">
           <span class="hub-kpi">3-Class Operator Taxonomy (Linear / Non-Linear / Kernel)</span>
           <span class="hub-kpi">201-DNG Zero-Shot R² = 0.9950 (Pixel-31: 29.36 dB)</span>
-          <span class="hub-kpi">24.46 → 25.17 dB (10/10 Wins, up to 30.55 dB)</span>
+          <span class="hub-kpi">24.46 → 25.16 dB (10/10 Wins, up to 30.30 dB · 30.88 dB Intra-DB)</span>
           <span class="hub-kpi">6.24 ms @ 1MP · 50.78 ms @ 12MP (16.7×) · 290.8× Inv-3A</span>
         </div>
         <div>

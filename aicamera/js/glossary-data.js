@@ -485,10 +485,10 @@ window.BOOK_GLOSSARY = {
       ]
     },
     {
-      "ko": "4단계 다양체 리파이너",
-      "en": "4-Step Manifold Refiner",
-      "abbr": "Residual ODE Refiner",
-      "def": "32×32 인코더 수용장 중첩으로 발생하는 잠재 패치 경계 위상 오차를 텍스처 환각 없이 교정하는 경량 4단계 감쇠 잔차 등방성(1×1 + 해석적 3×3 라플라시안) ODE 리파이너(Stage 6, 32.0K 파라미터, 201개 홀드아웃 DNG 학습)로, 10대 미학습 카메라 평균 PSNR을 24.46 dB(0-Net)에서 25.17 dB(10/10 승리, 최대 30.55 dB)로 끌어올린다.",
+      "ko": "4단계 조건부 확산 브리지 리파이너",
+      "en": "4-Step Conditional DDIM Bridge Refiner",
+      "abbr": "Conditional DDIM Bridge",
+      "def": "32×32 인코더 수용장 중첩으로 발생하는 잠재 패치 경계 위상 오차를 텍스처 환각 없이 교정하는 경량 4단계 조건부 브라운 브리지 잠재 확산(DDIM) 리파이너(Stage 6, 33.5K 파라미터, 201개 홀드아웃 DNG 학습)로, 10대 미학습 카메라 평균 PSNR을 24.46 dB(0-Net) 및 24.84 dB(1-Step DDIM)에서 25.16 dB(10/10 승리, 최대 30.30 dB · Intra-DB Indoor 30.88 dB)로 끌어올린다.",
       "chapters": [
         "comp_lsp"
       ]

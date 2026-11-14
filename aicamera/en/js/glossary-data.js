@@ -485,10 +485,10 @@ window.BOOK_GLOSSARY = {
       ]
     },
     {
-      "ko": "4-Step Manifold Refiner",
-      "en": "4-Step Iterative Residual ODE Refiner",
-      "abbr": "Residual ODE Refiner",
-      "def": "Lightweight 4-step damped residual isotropic (1×1 + analytical 3×3 Laplacian) ODE refiner (Stage 6, 32.0K params, trained on 201 held-out DNGs) that resolves 32×32 encoder receptive-field boundary phase artifacts without texture hallucination, boosting 10-camera unseen mean PSNR from 24.46 dB (0-Net Math) to 25.17 dB (10/10 wins, up to 30.55 dB).",
+      "ko": "4-Step Conditional DDIM Bridge",
+      "en": "4-Step Conditional Latent Denoising Diffusion Bridge Refiner",
+      "abbr": "Conditional DDIM Bridge",
+      "def": "Lightweight 4-step conditional Brownian Bridge DDIM latent denoiser (Stage 6, 33.5K params, trained on 201 held-out DNGs) that resolves 32×32 encoder receptive-field boundary phase artifacts without texture hallucination, boosting 10-camera unseen mean PSNR from 24.46 dB (0-Net Math) and 24.84 dB (1-Step DDIM) to 25.16 dB (10/10 wins, up to 30.30 dB; Intra-DB Indoor 30.88 dB).",
       "chapters": [
         "comp_lsp"
       ]

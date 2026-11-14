@@ -25,7 +25,7 @@ window.BOOK_GLOSSARY = {
       "ko": "Stage B Latent Translator",
       "en": "Host NPU ResBlock Translator",
       "abbr": "Stage B",
-      "def": "A ResBlock translation network on the host NPU mapping the compressed sensor tensor r onto a standardized latent manifold ẑ. In LSP (SA8), Hailo-8 (.hef; 595,524 params, 2.43 GMACs, 0.97 ms) maps to the 64×64×4 SD VAE space; in 16-Ch Single-Stream SE-Universal-CFA, the sensor-invariant unified translator (T_B: 16→16, 1.52M params) aligns r onto FLUX.1 / TAEF1.",
+      "def": "A ResBlock translation network on the host NPU mapping the compressed sensor tensor r onto a standardized latent manifold ẑ. In LSP (SA8), Hailo-8 (.hef; 595,524 params, 2.43 GMACs, 0.97 ms) maps to the 64×64×4 SD VAE space; in 16-Ch Single-Stream SE-Universal-CFA, the sensor-invariant unified translator (T_B: 16→16, 1.36M params, cos=0.8767–0.9122) aligns r onto FLUX.1 / TAEF1.",
       "chapters": [
         "overview",
         "lsp",
@@ -64,7 +64,7 @@ window.BOOK_GLOSSARY = {
       "ko": "Sony IMX500",
       "en": "Sony IMX500 Intelligent Vision Sensor",
       "abbr": "IMX500",
-      "def": "An intelligent vision sensor stacking an on-chip ISP, dedicated NPU, and SRAM (<2 MB budget) beneath a 12.3 MP pixel die. Executes quantized .rpk models directly inside the sensor and emits output tensors over MIPI metadata.",
+      "def": "An intelligent vision sensor stacking an on-chip ISP, dedicated NPU, and 8.00 MB on-chip SRAM (2.37–3.24 MB [<41%] for LSP Stage A; 0.84–4.65 MB [11%–59%] for Universal CFA) beneath a 12.3 MP pixel die. Executes quantized .rpk models directly inside the sensor and emits output tensors over MIPI metadata.",
       "chapters": [
         "overview",
         "lsp",
@@ -240,7 +240,7 @@ window.BOOK_GLOSSARY = {
       "ko": "Verified Lifting",
       "en": "Automated C99-to-Halide Transpilation & Parity Check",
       "abbr": "Lifting",
-      "def": "A compilation workflow that parses legacy C99 image processing loops into stencil/pointwise intermediate representations (IR), emits optimized Halide code and schedules, and verifies numerical parity (PSNR ≥ 40 dB).",
+      "def": "A compilation workflow that parses legacy C99 image processing loops into stencil/pointwise intermediate representations (IR), emits optimized Halide code and schedules, and verifies numerical parity (149.80 dB PSNR / 0.000000 MAE across JIT tier0..tier2, >44.1 dB on AOT Stage 4 ANF, and 43.53 dB on 12MP full-chain captures).",
       "chapters": [
         "overview",
         "isp"
@@ -508,7 +508,7 @@ window.BOOK_GLOSSARY = {
       "ko": "Differentiable Inverse 3A",
       "en": "Latent-Domain Auto-Tuning Optimization",
       "abbr": "Latent Inverse 3A",
-      "def": "Backpropagates target appearance losses directly through closed-form white-box latent ISP operators with respect to exposure, white balance, CCM, and gamma parameters, accelerating inverse 3A auto-tuning by 765.2× over pixel-decoded loops.",
+      "def": "Backpropagates target appearance losses directly through closed-form white-box latent ISP operators with respect to exposure, white balance, CCM, and gamma parameters, accelerating fair multi-core inverse 3A auto-tuning by 290.8× on FLUX.1 (1.17 s vs. 340.38 s; 34.7× on TAEF1) over pixel-decoded loops.",
       "chapters": [
         "comp_lsp"
       ]

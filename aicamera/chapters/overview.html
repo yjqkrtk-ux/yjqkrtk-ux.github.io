@@ -143,7 +143,7 @@
           <span class="eyebrow">Project 3 · universal_cfa/</span><span class="badge b-sim">16-Ch 단일 스트림</span>
         </div>
         <h3>Universal CFA (<code>SE-Universal-CFA</code>)</h3>
-        <p>고화소 모바일 센서의 군집형 CFA(Bayer 1×1 · Tetracell 2×2 · Hexadecacell 4×4)에서 리모자이킹과 RAW 전송 없이 <code>PixelUnshuffle(p)</code> + <code>SE-ResBlock</code> 압축기만으로 단일 16채널 <code>FLUX.1</code> / <code>TAEF1</code> 버스 텐서(<code>64 KB</code> INT8, 48× 축소)와 센서 불변 호스트 번역기(\(\mathcal{T}_B: 16\to 16\))에 직결합니다.</p>
+        <p>고화소 모바일 센서의 군집형 CFA(Bayer 1×1 · Tetracell 2×2 · Hexadecacell 4×4)에서 리모자이킹과 RAW 전송 없이 <code>PixelUnshuffle(p)</code> + <code>SE-ResBlock</code> 압축기만으로 단일 16채널 <code>FLUX.1</code> / <code>TAEF1</code> 버스 텐서(<code>64 KB</code> INT8, RAW 대비 5~8× · RGB 대비 48× 축소)와 센서 불변 호스트 번역기(\(\mathcal{T}_B: 16\to 16\), 1.36M) 및 100% <code>z</code>-단독 디코더(<code>BJDD_CVPR21</code> <strong>29.03 / 28.57 / 27.29 dB</strong> · <code>Kodak24</code> <strong>29.36 dB</strong>)에 직결합니다.</p>
         <svg viewBox="0 0 272 68" role="img" aria-label="센서 마이크로렌즈 단면 및 Bayer·Tetracell·Hexadecacell CFA 격자 요약" style="margin:6px 0;border-radius:6px;background:var(--surface)">
           <!-- Mini Sensor Cross-Section -->
           <path d="M18,20 Q27,10 36,20 Q45,10 54,20 Q63,10 72,20 Z" fill="rgba(56,182,245,0.3)" stroke="var(--accent)" stroke-width="1.2"/>
@@ -183,7 +183,7 @@
           <span class="eyebrow">Project 4 · comp_lsp/</span><span class="badge b-comp">화이트박스 수리</span>
         </div>
         <h3>White-Box Comp-LSP 2.0</h3>
-        <p>16채널 VAE(<code>FLUX.1</code> / <code>TAEF1</code>, \(\mathbf{z}_0 \in \mathcal{S}_{\mathrm{DC}}^3 \oplus \mathcal{S}_{\mathrm{AC}}^{13}\)) 잠재 공간 위에서 7단계 물리 ISP(BLC · WB · 3×3 CCM · <code>1:4:1</code> 심슨 구적법 감마 &amp; 할선 야코비안 · 공간 커널 · 4단계 리파이너)를 픽셀 복원 없이 직접 실행해 10대 미학습 카메라 평균 <strong>25.17 dB (10/10 승리, 최대 30.55 dB)</strong> 및 Halide SIMD <strong>70.5×</strong> 가속을 달성합니다.</p>
+        <p>16채널 VAE(<code>FLUX.1</code> / <code>TAEF1</code>, \(\mathbf{z}_0 \in \mathcal{S}_{\mathrm{DC}}^3 \oplus \mathcal{S}_{\mathrm{AC}}^{13}\)) 잠재 공간 위에서 7단계 물리 ISP(BLC · WB · 3×3 CCM · <code>1:4:1</code> 심슨 구적법 감마 &amp; 할선 야코비안 · 공간 커널 · 4단계 리파이너)를 픽셀 복원 없이 직접 실행해 10대 미학습 카메라 평균 <strong>25.17 dB (10/10 승리, 최대 30.55 dB; Intra-DB Pixel-31 28.99→29.36 dB · Indoor 30.88 dB)</strong>, 12MP Halide SIMD <strong>16.7× (50.78 ms · 1MP 6.24 ms · 128.4 dB 정합)</strong> 및 역방향 3A <strong>290.8×</strong> 가속을 달성합니다.</p>
         <p class="note">정본: <a class="src" href="../../comp_lsp/README.md" title="comp_lsp/README.md" target="_blank" rel="noopener">comp_lsp/README.md</a> · <a href="comp_lsp.html"><b>Chapter 05 이동 →</b></a></p>
       </article>
     </div>
@@ -195,11 +195,11 @@
         </thead>
         <tbody>
           <tr><td><b>센서 입력 도메인</b></td><td>IMX500 온칩 ISP 출력 RGB (512×512×3)</td><td>10-bit Bayer RGGB RAW (3MP / 12.3MP uint16)</td><td>1채널 군집형 CFA RAW (Bayer 1×1 · Tetra 2×2 · Hexa 4×4)</td><td>10대 카메라 14-bit Bayer RAW → 16-Ch 잠재 \(\mathbf{z}_0\)</td></tr>
-          <tr><td><b>센서 NPU (.rpk) 역할</b></td><td>Stage A 압축기 (<code>EncoderStageA</code>, 5,924 Conv2d / 9.59K params)</td><td>센서 내 얼굴 검출 (SSD MobileNetV2 / BlazeFace)</td><td>위상 인식 SE 압축 + 암묵적 리모자이킹 (16.3K~17.1K ch16)</td><td>16-Ch 잠재 인코더 (\(\mathcal{S}_{\mathrm{DC}}^3 \oplus \mathcal{S}_{\mathrm{AC}}^{13}\) 분해)</td></tr>
-          <tr><td><b>MIPI 전송 데이터</b></td><td>메타데이터 텐서 \(r \in \mathbb{R}^{64\times 64\times 4}\) (64 KB)</td><td>비압축 Bayer RAW 프레임 (12MP 기준 ~24.6 MB)</td><td>단일 버스 텐서 \(r \in \mathbb{R}^{16\times 64\times 64}\) (64 KB INT8)</td><td>16채널 잠재 텐서 \(\mathbf{z}_0 \in \mathbb{R}^{\frac{H}{8}\times\frac{W}{8}\times 16}\) (64 KB INT8)</td></tr>
-          <tr><td><b>호스트 NPU (.hef) 역할</b></td><td>Stage B 번역기 (0.97 ms) + TAESD_ft 디코더 (16.44 ms)</td><td>HDRnet Bilateral Grid 계수 추론 + YOLOv5n 인물 분할</td><td>100% 센서 불변 통합 번역기 (\(\mathcal{T}_B: 16\to 16\), 1.52M)</td><td>32.0K 4단계 잔차 ODE 다양체 리파이너 (\(\mathcal{R}_{4\text{-step}}\), 25.17 dB)</td></tr>
-          <tr><td><b>호스트 CPU / GPU 역할</b></td><td>MJPEG 뷰파인더 서빙 + ZSL 캡처 트리거</td><td>Halide 4-Tier 10단계 ISP + 3A EMA 제어 + ZAP 추적</td><td>16-Ch <code>TAEF1</code> + <code>DemosaicPixelShuffleDecoder</code> / ZSL</td><td>Class I–III 화이트박스 연산자 (Halide SIMD 0.93 ms @ 1MP)</td></tr>
-          <tr><td><b>핵심 병목 해결</b></td><td>MIPI 버스 직렬화 지연 52.91 ms → 2.90 ms (18.2× 단축)</td><td>단계 간 DRAM 왕복 811.4 MB → 58.8 MB (13.8× 절감, 128.78 ms · 3.68×)</td><td>군집형 CFA 리모자이킹·RAW 재전송 제거 (35.91~40.69 dB)</td><td>잠재 공간 물리 ISP 투명성 · 12MP 70.5× SIMD · 역방향 3A 765.2×</td></tr>
+          <tr><td><b>센서 NPU (.rpk) 역할</b></td><td>Stage A 압축기 (<code>EncoderStageA</code>, 5,924 Conv2d / 9.59K params · 2.37~3.24 MB SRAM)</td><td>센서 내 얼굴 검출 (SSD MobileNetV2 / BlazeFace)</td><td>위상 인식 SE 압축 + 암묵적 리모자이킹 (16.3K~17.1K b16 · 413.7K~582.5K b64 · 0.84~4.65 MB SRAM)</td><td>16-Ch 잠재 인코더 (\(\mathcal{S}_{\mathrm{DC}}^3 \oplus \mathcal{S}_{\mathrm{AC}}^{13}\) 분해)</td></tr>
+          <tr><td><b>MIPI 전송 데이터</b></td><td>메타데이터 텐서 \(r \in \mathbb{R}^{64\times 64\times 4}\) (64 KB)</td><td>비압축 Bayer RAW 프레임 (12MP 기준 ~24.6 MB)</td><td>단일 버스 텐서 \(r \in \mathbb{R}^{16\times 64\times 64}\) (64 KB INT8 · RAW 대비 5~8× 축소)</td><td>16채널 잠재 텐서 \(\mathbf{z}_0 \in \mathbb{R}^{\frac{H}{8}\times\frac{W}{8}\times 16}\) (64 KB INT8)</td></tr>
+          <tr><td><b>호스트 NPU (.hef) 역할</b></td><td>Stage B 번역기 (0.97 ms) + TAESD_ft 디코더 (16.44 ms)</td><td>HDRnet Bilateral Grid 계수 추론 + YOLOv5n 인물 분할</td><td>100% 센서 불변 통합 번역기 (\(\mathcal{T}_B: 16\to 16\), 1.36M)</td><td>32.0K 4단계 잔차 ODE 다양체 리파이너 (\(\mathcal{R}_{4\text{-step}}\), 25.17 dB)</td></tr>
+          <tr><td><b>호스트 CPU / GPU 역할</b></td><td>MJPEG 뷰파인더 서빙 + ZSL 캡처 트리거</td><td>Halide 4-Tier 10단계 ISP + 3A EMA 제어 + ZAP 추적</td><td>동결 <code>TAEF1</code> + <code>DemosaicPixelShuffleDecoder</code> (3.21M, 100% <code>z</code>-단독) / ZSL</td><td>Class I–III 화이트박스 연산자 (Halide SIMD 6.24 ms @ 1MP · 0.93 ms @ 256²)</td></tr>
+          <tr><td><b>핵심 병목 해결</b></td><td>MIPI 버스 직렬화 지연 52.91 ms → 2.90 ms (18.2× 단축)</td><td>단계 간 DRAM 왕복 811.4 MB → 58.8 MB (13.8× 절감, 128.78 ms · 3.68×)</td><td>군집형 CFA 리모자이킹·RAW 재전송 제거 (BJDD 29.03/28.57/27.29 dB · Kodak24 29.36 dB)</td><td>잠재 공간 물리 ISP 투명성 · 12MP 16.7× SIMD (50.78 ms) · 역방향 3A 290.8×</td></tr>
         </tbody>
       </table>
     </div>
@@ -217,7 +217,7 @@
           <rect width="218" height="185" rx="12" class="f-acc-soft"/>
           <text x="109" y="28" text-anchor="middle" class="t-acc">① Sony IMX500 센서 다이</text>
           <rect x="14" y="42" width="190" height="42" rx="7" class="f-elev"/><text x="109" y="61" text-anchor="middle" class="t">12.3 MP RGGB 픽셀</text><text x="109" y="76" text-anchor="middle" class="t-mono">4056×3040 · 1.55 µm</text>
-          <rect x="14" y="92" width="190" height="42" rx="7" class="f-elev"/><text x="109" y="111" text-anchor="middle" class="t">On-chip ISP + NPU</text><text x="109" y="126" text-anchor="middle" class="t-mono">.rpk (INT8) · SRAM &lt; 2 MB</text>
+          <rect x="14" y="92" width="190" height="42" rx="7" class="f-elev"/><text x="109" y="111" text-anchor="middle" class="t">On-chip ISP + NPU</text><text x="109" y="126" text-anchor="middle" class="t-mono">.rpk (INT8) · 8.00 MB SRAM</text>
           <text x="109" y="162" text-anchor="middle" class="t-dim" style="font-size:10.5px">제약: BN·GroupConv·Residual 금지</text>
         </g>
         <line x1="236" y1="112" x2="260" y2="112" class="s-acc" marker-end="url(#oha)"/>
@@ -245,11 +245,11 @@
           <text x="100" y="162" text-anchor="middle" class="t-dim" style="font-size:11px">SSH / SCP 원격 오케스트레이션</text>
         </g>
       </svg>
-      <figcaption><b>그림 1-2.</b> AICAMERA의 4계층 하드웨어 아키텍처. 센서 내부 SRAM(&lt; 2 MB)부터 호스트 공유 DRAM, PCIe NPU, 워크스테이션 VRAM까지 메모리와 정밀도 제약이 계층화되어 있다.</figcaption>
+      <figcaption><b>그림 1-2.</b> AICAMERA의 4계층 하드웨어 아키텍처. 센서 내부 8.00 MB 온칩 SRAM(Stage A 2.37~3.24 MB, &lt;41% 점유)부터 호스트 공유 DRAM, PCIe NPU, 워크스테이션 VRAM까지 메모리와 정밀도 제약이 계층화되어 있다.</figcaption>
     </figure>
 
     <div class="sim" id="sim-sram">
-      <div class="sim-head"><span class="sim-tag">SIMULATOR</span><h3>IMX500 센서 내장 NPU SRAM 예산(&lt; 2 MB) 및 Stage A 복잡도 계산기</h3></div>
+      <div class="sim-head"><span class="sim-tag">SIMULATOR</span><h3>IMX500 센서 내장 NPU 8.00 MB 온칩 SRAM 점유율 및 Stage A 복잡도 계산기</h3></div>
       <div class="sim-body side">
         <div class="sim-view"><canvas id="cv-sram"></canvas></div>
         <div class="sim-controls">
@@ -277,7 +277,7 @@
         <div class="stat"><span class="k">피크 활성화 + 가중치 SRAM</span><span class="v" id="o-sr-mem">—</span></div>
         <div class="stat"><span class="k">IMX500 배포 가능 여부</span><span class="v" id="o-sr-ok" style="font-size:15px">—</span></div>
       </div>
-      <div class="sim-note">해볼 것: 정본 설정(<code>SA8, C_mid=16, k=4, 512×512</code>)에서 합성곱 가중치 파라미터 수는 정확히 <b>5,924개</b>(내보낸 그래프 기준 <b>9.59K</b>), 연산량은 <b>0.122 GMACs</b>입니다(<a class="src" href="../../lsp/src/train/models/encoder.py" title="lsp/src/train/models/encoder.py (line 44)" target="_blank" rel="noopener">encoder.py:44</a>). 입력 해상도를 <b>1024</b>로 올리거나 은닉 채널을 <b>64</b>로 키우면 첫 층의 피크 활성화 버퍼 때문에 2.0 MB SRAM 한계를 초과하는 것을 볼 수 있습니다.</div>
+      <div class="sim-note">해볼 것: 정본 설정(<code>SA8, C_mid=16, k=4, 512×512</code>)에서 합성곱 가중치 파라미터 수는 정확히 <b>5,924개</b>(내보낸 그래프 기준 <b>9.59K</b>), 연산량은 <b>0.122 GMACs</b>(<a class="src" href="../../lsp/src/train/models/encoder.py" title="lsp/src/train/models/encoder.py (line 44)" target="_blank" rel="noopener">encoder.py:44</a>)이며, Sony 컴파일러 리포트(<a class="src" href="../../lsp/aicamera-models/model_quantized_MemoryReport.json" title="lsp/aicamera-models/model_quantized_MemoryReport.json" target="_blank" rel="noopener">model_quantized_MemoryReport.json</a>) 기준 <b>8.00 MB</b> 온칩 SRAM 중 <b>2.76 MB (35%, SA2/SA4/SA8 전체 2.37~3.24 MB · &lt;41%)</b>를 점유합니다. 입력 해상도를 <b>1024</b>로 올리거나 은닉 채널을 <b>64</b>로 키우면 첫 층의 피크 활성화 + 타일 런타임 버퍼 때문에 8.00 MB 온칩 SRAM 한계를 초과하는 것을 볼 수 있습니다.</div>
     </div>
   </section>
 
@@ -626,7 +626,7 @@
             </tbody>
           </table>
         </div>
-        <p class="note">주요 전문 페르소나(<a class="src" href="../../.agents/rules/specialist_roles.md" title=".agents/rules/specialist_roles.md" target="_blank" rel="noopener">specialist_roles.md</a>): <code>pipeline-verifier</code>(전체 pytest 회귀 검증), <code>keras-transpiler</code>(PyTorch→Keras 수치 동치성 및 2 MB SRAM 감시), <code>algorithm-engineer</code>(10단계 ISP 및 3A 수렴), <code>workflow-engineer</code>(Verified Lifting), <code>optimize-engineer</code>(Halide 융합 및 DMA-BUF 제로카피).</p>
+        <p class="note">주요 전문 페르소나(<a class="src" href="../../.agents/rules/specialist_roles.md" title=".agents/rules/specialist_roles.md" target="_blank" rel="noopener">specialist_roles.md</a>): <code>pipeline-verifier</code>(전체 pytest 회귀 검증), <code>keras-transpiler</code>(PyTorch→Keras 수치 동치성 및 8.00 MB 온칩 SRAM 감시), <code>algorithm-engineer</code>(10단계 ISP 및 3A 수렴), <code>workflow-engineer</code>(Verified Lifting), <code>optimize-engineer</code>(Halide 융합 및 DMA-BUF 제로카피).</p>
       </div>
     </div>
 
@@ -755,8 +755,8 @@ PYTHONPATH=. ~/py311_train/bin/pytest comp_lsp/tests/ -o testpaths=comp_lsp/test
       <li>엣지 카메라에서 고해상도 비압축 프레임을 그대로 전송하면 <strong>MIPI CSI-2 DMA 직렬화 지연(52.91 ms @ 512²)</strong>이 지배적 병목이 되어 호스트 NPU 성능과 무관하게 프레임레이트가 14.9 FPS에 묶인다.</li>
       <li><strong>LSP(Project 1)</strong>는 인코더를 센서 NPU(Stage A, 5,924 Conv2d / 9.59K 그래프 params)와 호스트 NPU(Stage B, 595K params)로 비대칭 분할해 버스 페이로드를 <strong>48×(64 KB, 2.90 ms)</strong> 줄이고 30.0 FPS 실시간 뷰파인더와 ZSL 생성형 캡처를 달성한다.</li>
       <li><strong>Software ISP(Project 2)</strong>는 10단계 C99 파이프라인을 Halide 단일 커널로 융합(Tier 3, 128.78 ms · 3.68× 가속)하고 VideoCore VII DMA-BUF 제로카피(Tier 4)를 적용해 12.3MP 프레임당 DRAM 트래픽을 <strong>13.8×(811.4 → 58.8 MB)</strong> 절감한다.</li>
-      <li><strong>Universal CFA(Project 3)</strong>는 Bayer(1×1)·Tetracell(2×2)·Hexadecacell(4×4) 군집형 CFA를 센서 내 위상 인식 <code>PixelUnshuffle</code> + <code>SE-ResBlock</code> 압축기로 처리해 단일 16채널 버스 텐서(<code>64 KB</code> INT8)와 센서 불변 <code>FLUX.1</code> / <code>TAEF1</code> 호스트 파이프라인(35.91~40.69 dB)을 공유한다.</li>
-      <li><strong>Comp-LSP 2.0(Project 4)</strong>은 16채널 VAE 잠재 공간(\(\mathcal{S}_{\mathrm{DC}}^3 \oplus \mathcal{S}_{\mathrm{AC}}^{13}\)) 위에서 7단계 물리 ISP를 Class I–III 화이트박스 수리 연산자와 4단계 다양체 리파이너로 직접 실행해 10대 미학습 카메라 평균 <strong>25.17 dB (10/10 승리, 최대 30.55 dB)</strong>, 12MP Halide SIMD <strong>70.5×</strong> 가속, 미분가능 역방향 3A <strong>765.2×</strong> 가속을 달성한다.</li>
+      <li><strong>Universal CFA(Project 3)</strong>는 Bayer(1×1)·Tetracell(2×2)·Hexadecacell(4×4) 군집형 CFA를 센서 내 위상 인식 <code>PixelUnshuffle</code> + <code>SE-ResBlock</code> 압축기(0.84~4.65 / 8.00 MB SRAM)로 처리해 단일 16채널 버스 텐서(<code>64 KB</code> INT8, RAW 대비 5~8× 절감)와 센서 불변 <code>FLUX.1</code> / <code>TAEF1</code> 100% <code>z</code>-단독 호스트 파이프라인(<code>BJDD_CVPR21</code> <strong>29.03 / 28.57 / 27.29 dB</strong> · <code>Kodak24</code> <strong>29.36 dB</strong>)을 공유한다.</li>
+      <li><strong>Comp-LSP 2.0(Project 4)</strong>은 16채널 VAE 잠재 공간(\(\mathcal{S}_{\mathrm{DC}}^3 \oplus \mathcal{S}_{\mathrm{AC}}^{13}\)) 위에서 7단계 물리 ISP를 Class I–III 화이트박스 수리 연산자와 4단계 다양체 리파이너로 직접 실행해 10대 미학습 카메라 평균 <strong>25.17 dB (10/10 승리, 최대 30.55 dB; Intra-DB Pixel-31 28.99→29.36 dB · Indoor 30.88 dB)</strong>, 12MP Halide SIMD <strong>16.7× (50.78 ms · 1MP 6.24 ms · 128.4 dB 정합)</strong> 가속, 미분가능 역방향 3A <strong>290.8×</strong> 가속을 달성한다.</li>
       <li><strong>Dual-NPU SW 스택 &amp; 에이전트 워크플로</strong>는 4-Tier Python 가상환경 격리(<code>py311_train</code>, <code>venv</code>, <code>py310</code>, RPi 5) 위에서 NCHW→NHWC 커널 전치와 실분포 캘리브레이션으로 <code>.rpk</code>/<code>.hef</code>를 컴파일하고, FastMCP 서버(<a class="src" href="../../tools/aicamera_mcp_server.py" title="tools/aicamera_mcp_server.py" target="_blank" rel="noopener">tools/aicamera_mcp_server.py</a>)와 원격 브리지(<a class="src" href="../../tools/rpi_remote.py" title="tools/rpi_remote.py" target="_blank" rel="noopener">tools/rpi_remote.py</a>)를 통해 물리 벤치마크 및 드리프트 감시를 자동화한다.</li>
     </ol>
   </section>
@@ -930,29 +930,31 @@ PYTHONPATH=. ~/py311_train/bin/pytest comp_lsp/tests/ -o testpaths=comp_lsp/test
       inC = outC;
     }
     const weightKB = params / 1024;
-    const totalSramKB = weightKB + peakActBytes / 1024 + 180; // +180 KB runtime/firmware overhead
+    const runtimeKB = 1028; // IMX500 compiler tile/DMA runtime reserve (calibrated to MemoryReport.json 2.76 MB)
+    const totalSramKB = weightKB + peakActBytes / 1024 + runtimeKB;
     const totalSramMB = totalSramKB / 1024;
-    const limitMB = 2.0;
+    const limitMB = 8.0;
+    const maxGaugeMB = 10.0;
     const ok = totalSramMB <= limitMB;
 
     SB.stat("o-sr-params", params.toLocaleString());
     SB.stat("o-sr-macs", (macs / 1e9).toFixed(3) + "<small>GMACs</small>");
-    SB.stat("o-sr-mem", totalSramMB.toFixed(2) + "<small>MB / 2.0 MB</small>");
+    SB.stat("o-sr-mem", totalSramMB.toFixed(2) + "<small>MB / 8.0 MB</small>");
     SB.stat("o-sr-ok", ok ? '<span style="color:var(--ok)">통과 (SRAM 적합)</span>' : '<span style="color:var(--bad)">초과 (컴파일 불가)</span>');
 
     ctx.font = "600 12.5px " + SB.color("font");
     ctx.fillStyle = P.text;
-    ctx.fillText(`IMX500 온칩 SRAM 점유율 (${totalSramKB.toFixed(0)} KB / 2,048 KB 예산)`, 18, 26);
+    ctx.fillText(`IMX500 온칩 SRAM 점유율 (${totalSramKB.toFixed(0)} KB / 8,192 KB 예산 · ${Math.round((totalSramMB / limitMB) * 100)}%)`, 18, 26);
 
     // Gauge bar
     const gx = 18, gy = 40, gw = W - 36, gh = 30;
     ctx.fillStyle = P.surface;
     ctx.fillRect(gx, gy, gw, gh);
-    const limX = gx + (2.0 / 2.5) * gw;
+    const limX = gx + (limitMB / maxGaugeMB) * gw;
 
-    const wFrac = (weightKB / 1024 / 2.5) * gw;
-    const aFrac = ((peakActBytes / 1024) / 1024 / 2.5) * gw;
-    const fFrac = (180 / 1024 / 2.5) * gw;
+    const wFrac = (weightKB / 1024 / maxGaugeMB) * gw;
+    const aFrac = ((peakActBytes / 1024) / 1024 / maxGaugeMB) * gw;
+    const fFrac = (runtimeKB / 1024 / maxGaugeMB) * gw;
 
     ctx.fillStyle = P.accent;
     ctx.fillRect(gx, gy, Math.min(gw, aFrac), gh);
@@ -965,7 +967,7 @@ PYTHONPATH=. ~/py311_train/bin/pytest comp_lsp/tests/ -o testpaths=comp_lsp/test
     ctx.beginPath(); ctx.moveTo(limX, gy - 6); ctx.lineTo(limX, gy + gh + 6); ctx.stroke();
     ctx.setLineDash([]);
     ctx.fillStyle = P.bad; ctx.font = "600 11px " + SB.color("mono");
-    ctx.fillText("2.0 MB 한계선", limX - 40, gy - 9);
+    ctx.fillText("8.0 MB 한계선", limX - 40, gy - 9);
 
     // Layer breakdown cards
     let ly = 98;

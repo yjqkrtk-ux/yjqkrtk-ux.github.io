@@ -81,7 +81,7 @@
         <text x="91" y="57" text-anchor="middle" class="t-mono">5.9K/9.59K · 2.59 ms</text>
         <rect x="14" y="78" width="154" height="46" rx="8" class="f-elev"/>
         <text x="91" y="99" text-anchor="middle" class="t" style="font-size:11.5px;font-weight:600">PixelUnshuffle 압축</text>
-        <text x="91" y="115" text-anchor="middle" class="t-mono">SRAM &lt; 2 MB</text>
+        <text x="91" y="115" text-anchor="middle" class="t-mono" style="font-size:10px">8.00 MB SRAM (&lt;59%)</text>
         <text x="91" y="170" text-anchor="middle" class="t">인센서 NPU 압축</text>
         <text x="91" y="188" text-anchor="middle" class="t-mono">Ch.02 · Ch.04</text>
       </g>
@@ -138,10 +138,10 @@
   <div class="numbers">
     <div><b>64 KB (48×↓)</b><span>SA8 MIPI 버스 페이로드 — 비압축 3072 KB 대비 52.91 ms → 2.90 ms로 단축</span></div>
     <div><b>30.0 FPS</b><span>실시간 카메라 동기 프리뷰 — 직렬 지연 22.90 ms, 파이프라인 처리량 43.7 FPS로 30 FPS 상한 도달</span></div>
-    <div><b>5,924 / 9.59K</b><span>IMX500 센서 내 Stage A(SA8) Conv2d 가중치(5,924) / 내보내기 그래프(9.59K) 파라미터 — 0.122 GMACs, &lt;2 MB SRAM 충족</span></div>
+    <div><b>5,924 / 9.59K</b><span>IMX500 센서 내 Stage A(SA8) Conv2d 가중치(5,924) / 내보내기 그래프(9.59K) 파라미터 — 0.122 GMACs, 2.76 / 8.00 MB SRAM (35%, 전 모드 &lt;41%)</span></div>
     <div><b>128.78 ms (×3.68)</b><span>12.3MP 10단계 ISP Halide 단일 커널 융합 지연 — 순차 C99(474.04 ms) 대비 3.68배 가속</span></div>
     <div><b>13.8× 절감</b><span>커널 융합을 통한 12MP 프레임당 DRAM 트래픽 감소 — 811 MB에서 59 MB로 축소</span></div>
-    <div><b>16-Ch · 64 KB</b><span>16-Ch SE-Universal-CFA — Bayer(1×1) · Tetracell(2×2) · Hexadecacell(4×4)을 단일 FLUX.1 / TAEF1 호스트(35.91~40.69 dB)로 통합</span></div>
+    <div><b>16-Ch · 64 KB</b><span>16-Ch SE-Universal-CFA — Bayer(1×1) · Tetracell(2×2) · Hexadecacell(4×4)을 단일 FLUX.1 / TAEF1 호스트(BJDD 29.03/28.57/27.29 dB · Kodak24 29.36 dB)로 통합</span></div>
   </div>
 </section>
 
@@ -209,7 +209,7 @@
     <div><b>도해 클릭</b>아키텍처 SVG 블록을 클릭하면 해당 모듈의 하드웨어 제약과 코드 위치가 열립니다.</div>
     <div><b>시뮬레이터 조작</b>슬라이더와 단계 스위치를 끝까지 움직여 병목 이동과 화질 변화를 직접 실험하세요.</div>
     <div><b>소스 코드 추적</b>파란색 <code>파일명:줄번호</code> 칩은 빌드 시 검증된 실제 저장소 코드 링크입니다.</div>
-    <div><b>정합성 검증</b>6장 검증 노트에서 문서 서술과 실제 C/PyTorch 코드·측정 JSON의 차이를 투명하게 확인합니다.</div>
+    <div><b>정합성 검증</b>6장 검증 노트(29개 항목)에서 문서 서술과 실제 C/PyTorch 코드·측정 JSON의 차이를 투명하게 확인합니다.</div>
   </div>
 </section>
 

@@ -25,7 +25,7 @@ window.BOOK_GLOSSARY = {
       "ko": "스테이지 B 번역기",
       "en": "Stage B Latent Translator",
       "abbr": "Stage B",
-      "def": "호스트 NPU에서 센서 압축 텐서 r을 표준 잠재 다양체 ẑ로 사상하는 ResBlock 번역 네트워크. LSP(SA8)에서는 Hailo-8(.hef, 595,524 파라미터, 2.43 GMACs, 0.97 ms)이 64×64×4 SD VAE 잠재 공간으로 사상하며, 16채널 단일 스트림 SE-Universal-CFA에서는 센서 불변 통합 번역기(T_B: 16→16, 1.52M 파라미터)가 FLUX.1 / TAEF1 잠재 공간으로 정렬한다.",
+      "def": "호스트 NPU에서 센서 압축 텐서 r을 표준 잠재 다양체 ẑ로 사상하는 ResBlock 번역 네트워크. LSP(SA8)에서는 Hailo-8(.hef, 595,524 파라미터, 2.43 GMACs, 0.97 ms)이 64×64×4 SD VAE 잠재 공간으로 사상하며, 16채널 단일 스트림 SE-Universal-CFA에서는 센서 불변 통합 번역기(T_B: 16→16, 1.36M 파라미터, cos=0.8767~0.9122)가 FLUX.1 / TAEF1 잠재 공간으로 정렬한다.",
       "chapters": [
         "overview",
         "lsp",
@@ -64,7 +64,7 @@ window.BOOK_GLOSSARY = {
       "ko": "소니 IMX500",
       "en": "Sony IMX500 Intelligent Vision Sensor",
       "abbr": "IMX500",
-      "def": "12.3 MP 픽셀 다이 아래에 온칩 ISP와 전용 NPU 및 SRAM(<2 MB 예산)을 적층한 지능형 비전 센서. .rpk 양자화 모델을 센서 내부에서 직접 실행해 출력 텐서를 MIPI 메타데이터로 내보낸다.",
+      "def": "12.3 MP 픽셀 다이 아래에 온칩 ISP와 전용 NPU 및 8.00 MB 온칩 SRAM(LSP Stage A 2.37~3.24 MB [<41%], Universal CFA 0.84~4.65 MB [11%~59%])을 적층한 지능형 비전 센서. .rpk 양자화 모델을 센서 내부에서 직접 실행해 출력 텐서를 MIPI 메타데이터로 내보낸다.",
       "chapters": [
         "overview",
         "lsp",
@@ -240,7 +240,7 @@ window.BOOK_GLOSSARY = {
       "ko": "검증된 리프팅",
       "en": "Verified Lifting",
       "abbr": "Lifting",
-      "def": "레거시 C99 영상 처리 루프를 파싱해 스텐실/포인트와이즈 중간 표현(IR)으로 분류하고, 최적화된 Halide 함수 및 스케줄 코드로 자동 변환한 뒤 수치 동치성(PSNR ≥ 40 dB)을 검증하는 컴파일 파이프라인.",
+      "def": "레거시 C99 영상 처리 루프를 파싱해 스텐실/포인트와이즈 중간 표현(IR)으로 분류하고, 최적화된 Halide 함수 및 스케줄 코드로 자동 변환한 뒤 수치 동치성(tier0..tier2 JIT 149.80 dB PSNR / MAE 0.000000, AOT Stage 4 ANF >44.1 dB, 12MP 전체 체인 43.53 dB)을 검증하는 컴파일 파이프라인.",
       "chapters": [
         "overview",
         "isp"
@@ -508,7 +508,7 @@ window.BOOK_GLOSSARY = {
       "ko": "미분가능 역방향 3A 자동 튜닝",
       "en": "Differentiable Inverse 3A",
       "abbr": "Latent Inverse 3A",
-      "def": "해석적 잠재 ISP 연산자를 통해 타깃 화질 손실의 기울기를 카메라 제어 파라미터(노출 게인·화이트밸런스·CCM·감마)로 직접 역전파함으로써 픽셀 디코딩 루프 대비 765.2× 빠르게 최적 3A를 수렴시키는 기법.",
+      "def": "해석적 잠재 ISP 연산자를 통해 타깃 화질 손실의 기울기를 카메라 제어 파라미터(노출 게인·화이트밸런스·CCM·감마)로 직접 역전파함으로써 공정한 멀티코어 기준 픽셀 디코딩 루프 대비 290.8×(FLUX.1: 1.17 s vs 340.38 s; TAEF1: 34.7×) 빠르게 최적 3A를 수렴시키는 기법.",
       "chapters": [
         "comp_lsp"
       ]

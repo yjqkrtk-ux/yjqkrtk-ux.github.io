@@ -871,13 +871,13 @@
           2. Universal In-Sensor Latent Signal Processing for Heterogeneous CFAs: Phase-Aware Implicit Remosaicing and 16-Channel Single-Stream Latent Unification
         </a>
         <p class="hub-card-desc">
-          Unifies Standard Bayer (1×1), Tetracell (2×2), and Hexadecacell (4×4) high-megapixel sensors onto a single 16-channel host translator (T_B: 16→16) and a 100% CFA-agnostic host decoder (D_rec) on the FLUX.1 / TAEF1 latent manifold via in-sensor phase-aware PixelUnshuffle + SE-ResNet compressors (64 KB INT8 single-stream bus), achieving 40.69 / 36.80 / 31.13 dB on BJDD_CVPR21.
+          Unifies Standard Bayer (1×1, p=2), Tetracell (2×2, p=4), and Hexadecacell (4×4, p=8) high-megapixel sensors onto a single 16-channel host translator (T_B: 16→16, 1.36M params, cos = 0.8767–0.9122) and a 100% CFA-agnostic host decoder (D_rec, 3.21M params decoding 100% from z alone) on the FLUX.1 / TAEF1 latent manifold via in-sensor phase-aware PixelUnshuffle + SE-ResNet compressors (16.3K–582.5K params, 0.84–4.65 MB of 8.00 MB IMX500 SRAM, 64.0 KB INT8 single-stream bus: 5.0×–8.0× vs. packed RAW, 48.0× vs. FP32 RGB), achieving 29.03 / 28.57 / 27.29 dB on BJDD_CVPR21 and 29.36 / 29.13 / 28.30 dB on Kodak24 under strict No-Raw-Retention.
         </p>
         <div class="hub-kpis">
-          <span class="hub-kpi">Bayer (1×1): 40.69 dB (BJDD_CVPR21)</span>
-          <span class="hub-kpi">Tetracell (2×2): 36.80 dB (+2.74 dB vs. KLAP)</span>
-          <span class="hub-kpi">Hexadecacell (4×4): 31.13 dB (+1.39 dB vs. KLAP)</span>
-          <span class="hub-kpi">100% Single-Stream 16-Ch (64 KB INT8)</span>
+          <span class="hub-kpi">BJDD_CVPR21 (b64 INT8): 29.03 / 28.57 / 27.29 dB</span>
+          <span class="hub-kpi">Kodak24: 29.36 / 29.13 / 28.30 dB (+6.14–6.70 dB vs. 4-Ch LSP)</span>
+          <span class="hub-kpi">Surpasses 27.86 dB SVD-16 Bound (+0.78 / +4.53 dB vs. Binning)</span>
+          <span class="hub-kpi">64.0 KB INT8 Bus (5–8× vs. RAW · 100% z-Only Decode)</span>
         </div>
         <div>
           <a class="btn active" href="universal_cfa.html">Read Paper II (2-Col Interactive HTML) →</a>
@@ -898,13 +898,13 @@
           <strong>Authors:</strong> Yongjoon Song, Han-sol Lee, Jeisung Lee, Yeolmin Seong &bull; <em>Samsung Electronics, Republic of Korea</em>
         </div>
         <p class="hub-card-desc">
-          Generalizes the emergent 16-channel FLUX.1 latent color subspace (Pach et al., ICML 2026) into a 1st-Order Jet Bundle (<code>R<sup>16</sup> = S<sub>DC</sub><sup>3</sup> &oplus; S<sub>AC</sub><sup>13</sup></code>) that executes (I) Pointwise Linear/Affine, (II) Pointwise Non-Linear (<code>1:4:1</code> Simpson Quadrature + 3&times;3 Secant Jacobians), and (III) Spatial Neighborhood Kernels (13D AC Orthonormal Projectors + 3&times;3 Cross-Cell Bilateral/ODE Stencils) directly on the H/8 &times; W/8 &times; 16 latent grid of genuine hardware sensor Bayer RAWs. Trained on 201 strictly held-out real camera DNGs (0% overlap), it boosts Zero-Shot 10-camera mean sRGB PSNR from 24.46 dB (0-Net) and 24.91 dB (1-Step 1x1) to 25.17 dB (4-Step D4 3x3 Refiner, 10/10 camera wins, up to 30.55 dB).
+          Generalizes the emergent 16-channel FLUX.1 latent color subspace (Pach et al., ICML 2026) into a 1st-Order Jet Bundle (<code>R<sup>16</sup> = S<sub>DC</sub><sup>3</sup> &oplus; S<sub>AC</sub><sup>13</sup></code>) that executes (I) Pointwise Linear/Affine, (II) Pointwise Non-Linear (<code>1:4:1</code> Simpson Quadrature + 3&times;3 Secant Jacobians), and (III) Spatial Neighborhood Kernels (13D AC Orthonormal Projectors + 3&times;3 Cross-Cell Bilateral/ODE Stencils) directly on the H/8 &times; W/8 &times; 16 latent grid of genuine hardware sensor Bayer RAWs. Trained on 201 strictly held-out real camera DNGs (0% overlap), it boosts Zero-Shot 10-camera mean sRGB PSNR from 24.46 dB (0-Net) and 24.91 dB (1-Step 1x1) to 25.17 dB (4-Step D4 3x3 Refiner, 10/10 camera wins, up to 30.55 dB; Intra-DB Pixel-31 reaches 28.99 → 29.36 dB and 30.88 dB Indoor), with 128.4 dB Halide parity and 290.8× faster differentiable inverse 3A auto-tuning.
         </p>
         <div class="hub-kpis">
           <span class="hub-kpi">3-Class Operator Taxonomy (Linear / Non-Linear / Kernel)</span>
-          <span class="hub-kpi">201-DNG Zero-Shot R² = 0.9950</span>
+          <span class="hub-kpi">201-DNG Zero-Shot R² = 0.9950 (Pixel-31: 29.36 dB)</span>
           <span class="hub-kpi">24.46 → 25.17 dB (10/10 Wins, up to 30.55 dB)</span>
-          <span class="hub-kpi">0.93 ms @ 1MP (70.5× Speedup)</span>
+          <span class="hub-kpi">6.24 ms @ 1MP · 50.78 ms @ 12MP (16.7×) · 290.8× Inv-3A</span>
         </div>
         <div>
           <a class="btn active" href="comp_lsp.html">Read Paper III (2-Col Interactive HTML) →</a>

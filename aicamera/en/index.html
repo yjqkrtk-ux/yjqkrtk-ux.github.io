@@ -81,7 +81,7 @@
         <text x="91" y="57" text-anchor="middle" class="t-mono">5.9K/9.59K · 2.59 ms</text>
         <rect x="14" y="78" width="154" height="46" rx="8" class="f-elev"/>
         <text x="91" y="99" text-anchor="middle" class="t" style="font-size:11px;font-weight:600">PixelUnshuffle Compress</text>
-        <text x="91" y="115" text-anchor="middle" class="t-mono">SRAM &lt; 2 MB</text>
+        <text x="91" y="115" text-anchor="middle" class="t-mono" style="font-size:10px">8.00 MB SRAM (&lt;59%)</text>
         <text x="91" y="170" text-anchor="middle" class="t" style="font-size:11.5px">In-Sensor NPU Compress</text>
         <text x="91" y="188" text-anchor="middle" class="t-mono">Ch.02 · Ch.04</text>
       </g>
@@ -138,10 +138,10 @@
   <div class="numbers">
     <div><b>64 KB (48×↓)</b><span>SA8 MIPI bus payload — cuts extraction latency from 52.91 ms to 2.90 ms vs. uncompressed 3072 KB</span></div>
     <div><b>30.0 FPS</b><span>Camera-synchronized live preview — reaches the 30 FPS sensor ceiling with 22.90 ms serial latency (43.7 FPS pipelined)</span></div>
-    <div><b>5,924 / 9.59K</b><span>In-sensor Stage A (SA8) Conv2d weights (5,924) / exported graph params (9.59K) — 0.122 GMACs within &lt;2 MB SRAM</span></div>
+    <div><b>5,924 / 9.59K</b><span>In-sensor Stage A (SA8) Conv2d weights (5,924) / exported graph params (9.59K) — 0.122 GMACs in 2.76 / 8.00 MB SRAM (35%, &lt;41% across modes)</span></div>
     <div><b>128.78 ms (×3.68)</b><span>12.3MP 10-stage ISP Halide fused CPU latency — 3.68× speedup over sequential C99 (474.04 ms)</span></div>
     <div><b>13.8× Saved</b><span>Per-frame 12MP DRAM traffic reduction via kernel fusion — shrunk from 811 MB to 59 MB</span></div>
-    <div><b>16-Ch · 64 KB</b><span>16-Ch SE-Universal-CFA — Unifies Bayer (1×1), Tetracell (2×2), and Hexadecacell (4×4) onto a shared FLUX.1 / TAEF1 host (35.91–40.69 dB)</span></div>
+    <div><b>16-Ch · 64 KB</b><span>16-Ch SE-Universal-CFA — Unifies Bayer (1×1), Tetracell (2×2), and Hexadecacell (4×4) onto a shared 100% z-only FLUX.1 / TAEF1 host (BJDD 29.03/28.57/27.29 dB · Kodak24 29.36 dB)</span></div>
   </div>
 </section>
 
@@ -209,7 +209,7 @@
     <div><b>Click Diagrams</b>Click any node in the architecture SVGs to inspect hardware constraints and source code locations.</div>
     <div><b>Manipulate Simulators</b>Push sliders and stage toggles to their limits to observe regime shifts and image quality trade-offs live.</div>
     <div><b>Trace Source Code</b>Blue <code>file:line</code> chips are build-verified links pointing directly to canonical repository files.</div>
-    <div><b>Verify Consistency</b>Chapter 06 transparently documents 26 audit items comparing prose claims against actual C/PyTorch code and JSONs.</div>
+    <div><b>Verify Consistency</b>Chapter 06 transparently documents 29 audit items comparing prose claims against actual C/PyTorch code and JSONs.</div>
   </div>
 </section>
 

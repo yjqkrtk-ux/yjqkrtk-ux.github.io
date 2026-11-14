@@ -199,7 +199,7 @@
         <div class="callout-title">12MP 벤치마크 해석 시 주의사항</div>
         <ul>
           <li><strong>활성 단계 조건</strong>: <a class="src" href="../../hdrnet/scripts/bench_3way_isp.py" title="hdrnet/scripts/bench_3way_isp.py (line 77)" target="_blank" rel="noopener">bench_3way_isp.py:77</a> 벤치마크는 공정한 코어 파이프라인 비교를 위해 <code>DPC · LSC · ANF · EEH</code>를 끈 상태(<strong>BLC · AWB · Demosaic · CCM · Gamma · CSC 6단계</strong>)로 측정되었습니다(3MP <code>2028×1520</code> 뷰파인더 모드에서는 Tier 3가 <strong>32.76 ms · 30.5 FPS</strong>로 센서 30 FPS 상한을 포화시킵니다).</li>
-          <li><strong>수치 근사 일치</strong>: Halide Tier 2~4는 부동소수점 결합 순서 및 고속 근사 차이로 C 레퍼런스 대비 <strong>PSNR 43.53 dB / MAE 1.29</strong>를 기록합니다(bit-exact가 아닌 수치 동등성).</li>
+          <li><strong>수치 근사 일치</strong>: 12MP 6단계 AOT 파이프라인(Halide Tier 2~4)은 부동소수점 결합 순서 및 고속 LUT 근사 차이로 C 레퍼런스 대비 <strong>PSNR 43.53 dB / 8-bit MAE 1.29</strong>를 기록하며, 개별 C99→Halide 자동 리프팅(<code>tier0..tier2</code> JIT)은 <strong>PSNR 149.80 dB / MAE 0.000000</strong>, AOT Stage 4 양방향 <code>ANF</code>는 10-bit·16-bit RAW 모두 <strong>&gt;44.1 dB</strong>를 달성합니다.</li>
           <li><strong>DMA-BUF Zero-Copy 효과</strong>: Tier 4 GPU Staged(289.56 ms)에서 호스트↔GPU 메모리 복사(60.16 ms)를 <code>DMA-BUF</code> 공유로 제거하면 <strong>229.40 ms (2.07×)</strong>로 단축됩니다.</li>
         </ul>
       </div>
@@ -244,15 +244,15 @@
             <li><strong>C AST 파싱</strong>: 정규식 및 구문 분석기가 C 단계 함수 시그니처와 중첩 루프 경계를 추출합니다 (<a class="src" href="../../hdrnet/verified_lifting/src/ast_parser.py" title="hdrnet/verified_lifting/src/ast_parser.py" target="_blank" rel="noopener">ast_parser.py</a>).</li>
             <li><strong>연산자 패턴 분류</strong>: 루프 본문을 <code>Pointwise</code>, <code>Stencil</code>(이웃 참조), <code>Reduction</code>, <code>LUT</code> 중간 표현(IR)으로 정규화합니다 (<a class="src" href="../../hdrnet/verified_lifting/src/patterns.py" title="hdrnet/verified_lifting/src/patterns.py" target="_blank" rel="noopener">patterns.py</a>).</li>
             <li><strong>Halide 코드 &amp; 스케줄 생성</strong>: <code>Halide::Func</code>/<code>Var</code> C++ 코드를 방출(<a class="src" href="../../hdrnet/verified_lifting/src/halide_emitter.py" title="hdrnet/verified_lifting/src/halide_emitter.py" target="_blank" rel="noopener">halide_emitter.py</a>)하고 타겟 하드웨어(CPU NEON / GPU Vulkan) 스케줄(<a class="src" href="../../hdrnet/verified_lifting/src/schedule_library.py" title="hdrnet/verified_lifting/src/schedule_library.py" target="_blank" rel="noopener">schedule_library.py</a>)을 결합합니다.</li>
-            <li><strong>수치 Parity 검증기</strong>: 랜덤 및 테스트 패턴 입력에 대해 C 레퍼런스 출력과 Halide 출력의 오차를 측정하여 <strong>PSNR ≥ 40.0 dB 및 MAE ≤ 10⁻³</strong> 기준 통과 여부를 판정합니다 (<a class="src" href="../../hdrnet/verified_lifting/src/verifier.py" title="hdrnet/verified_lifting/src/verifier.py (line 42)" target="_blank" rel="noopener">verifier.py:42</a>).</li>
+            <li><strong>수치 Parity 검증기</strong>: 실제 컴파일된 <code>libopenisp_c.so</code> C99 출력과 리프팅된 Halide 출력을 대조하여 <strong>PSNR ≥ 40.0 dB 및 MAE ≤ 10⁻³</strong> 기준 통과 여부를 판정합니다 (<a class="src" href="../../hdrnet/verified_lifting/src/verifier.py" title="hdrnet/verified_lifting/src/verifier.py (line 42)" target="_blank" rel="noopener">verifier.py:42</a>). CPU JIT <code>tier0..tier2</code> 스케줄에서 <strong>PSNR 149.80 dB · MAE 0.000000</strong> 정밀 일치(GPU <code>tier3</code> IR 하강 검증 포함)를 달성하며, AOT Stage 4 양방향 <code>ANF</code> 커널 또한 10-bit·16-bit RAW 모두 <strong>&gt;44.1 dB</strong>로 통과합니다.</li>
           </ol>
         </div>
         <div class="callout warn">
-          <div class="callout-title">검증 범위 명확화 (수치 Parity vs 형식 증명)</div>
+          <div class="callout-title">검증 범위 명확화 (실제 Halide C++ JIT/AOT 수치 Parity vs 형식 증명)</div>
           <p>
-            현재 저장소의 <code>verifier.py</code>(<a class="src" href="../../hdrnet/verified_lifting/src/verifier.py" title="hdrnet/verified_lifting/src/verifier.py (line 42)" target="_blank" rel="noopener">verifier.py:42</a>)는 <strong>테스트 입력 텐서에 대한 수치 동등성(Numerical Parity) 자동 검증</strong>을 수행합니다.
+            현재 저장소의 <code>verifier.py</code>(<a class="src" href="../../hdrnet/verified_lifting/src/verifier.py" title="hdrnet/verified_lifting/src/verifier.py (line 42)" target="_blank" rel="noopener">verifier.py:42</a>)와 <code>run_lift_openisp.py</code>는 실제 Halide C++ 방출 코드를 컴파일해 <code>libopenisp_c.so</code> C99 레퍼런스와 대조하는 <strong>자동 수치 동등성(Numerical Parity: JIT 149.80 dB / MAE 0.000000, AOT ANF &gt;44.1 dB) 검증</strong>을 수행합니다.
             Z3 SMT 솔버나 SyGuS 기반의 기호적 형식 증명(Formal Proof) 엔진 코드는 저장소에 포함되어 있지 않으므로,
-            관련 문서의 “Verified Lifting”은 <strong>패턴 기반 자동 변환 + 수치 회귀 검증 파이프라인</strong>으로 이해해야 합니다.
+            관련 문서의 “Verified Lifting”은 <strong>C99 AST 패턴 기반 Halide 자동 생성 + 다계층 수치 회귀 검증 파이프라인</strong>으로 이해해야 합니다.
           </p>
         </div>
       </div>

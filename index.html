@@ -408,12 +408,17 @@
     }
 
     @media print {
-      .sidebar {
-        -webkit-print-color-adjust: exact;
-        print-color-adjust: exact
+      @page {
+        size: A4;
+        margin: 0;
       }
 
-      .badge {
+      .sidebar,
+      .badge,
+      .gen-badge,
+      .pat-granted,
+      .lnk-ico,
+      .sk-tag {
         -webkit-print-color-adjust: exact;
         print-color-adjust: exact
       }
@@ -462,25 +467,26 @@
 
     <div class="sb-section">
       <h3>Core Skills</h3>
-      <span class="sk-tag">Camera ISP</span>
       <span class="sk-tag">Algorithm Design</span>
-      <span class="sk-tag">Deep Learning</span>
-      <span class="sk-tag">Mobile Device S/W</span>
-      <span class="sk-tag">Image Sensors</span>
-      <span class="sk-tag">Remosaic Algorithm</span>
-      <span class="sk-tag">E2E ISP Pipeline</span>
       <span class="sk-tag">On-Device AI</span>
-      <span class="sk-tag">Model Quantization</span>
-      <span class="sk-tag">Diffusion Models</span>
-      <span class="sk-tag">Reinforcement Learning</span>
-      <span class="sk-tag">Computer Vision</span>
+      <span class="sk-tag">Image Sensors</span>
+      <span class="sk-tag">Camera ISP</span>
+      <span class="sk-tag">Computational Photography</span>
+      <span class="sk-tag">C / C++</span>
+      <span class="sk-tag">Python</span>
+      <span class="sk-tag">Android Camera S/W</span>
+      <span class="sk-tag">Deep Learning</span>
+      <span class="sk-tag">E2E ISP Pipeline</span>
+      <span class="sk-tag">Remosaic &amp; Super-Resolution</span>
+      <span class="sk-tag">Multi-Frame Reconstruction</span>
+      <span class="sk-tag">CPU / GPU / DSP / NPU</span>
       <span class="sk-tag">Heterogeneous SoC</span>
+      <span class="sk-tag">Model Quantization</span>
+      <span class="sk-tag">Computer Vision</span>
+      <span class="sk-tag">Reinforcement Learning</span>
       <span class="sk-tag">Embedded Software</span>
       <span class="sk-tag">SW Project Mgmt</span>
-      <span class="sk-tag">AI-Assisted Development</span>
-      <span class="sk-tag">Agentic Workflows (Claude Code)</span>
       <span class="sk-tag">Bioinformatics</span>
-      <span class="sk-tag">Data Analysis</span>
     </div>
 
     <div class="sb-section">
@@ -526,17 +532,18 @@
       <h2>Summary</h2>
       <p class="sum-text">
         Leading Neural ISP algorithm development for image sensors at Samsung Electronics, specializing in deep
-        learning-based
-        image signal processing for <strong>100MP+ mobile camera sensors</strong>. Architecting End-to-End (E2E)
-        imaging solutions from In-sensor H/W ISP to Deep learning based S/W ISP pipelines working on SoC —
-        covering both real-time imaging and high-fidelity still capture solutions to maximize image quality in a limited
-        system budget,
-        deployed across <strong>30+ global OEM devices</strong>.
+        learning-based image signal processing and computational photography for <strong>100MP+ mobile camera
+          sensors</strong>. Architecting End-to-End (E2E) imaging solutions from in-sensor H/W ISP to C/C++ Neural S/W
+        ISP pipelines operating on Application Processors with <strong>Android</strong> — covering both real-time
+        imaging and high-fidelity still capture solutions to maximize image quality within constrained system budgets,
+        shipped across <strong>50+ Android smartphones</strong>. Collaborating across global R&amp;D centers (China and
+        India branches) for on-device S/W optimization, algorithmic image quality (IQ) tuning, and OEM engineering
+        partnerships to successfully ship End-to-End AI Remosaic algorithms across multiple global OEMs.
         <br><br>
         Ph.D. in Electrical Engineering (KAIST) with a focus on Deep Learning &amp; Reinforcement Learning.
         Pioneered reinforcement learning architectures for genomic sequence alignment, engineered high-throughput
-        C/Python sequence mining engines, and developed edge vision &amp; sensor fusion systems for 1kW wireless
-        charging platforms.
+        C/C++ &amp; Python sequence mining engines, and developed edge vision &amp; sensor fusion systems for RF-based
+        distant wireless power transfer (WPT) platforms.
       </p>
     </div>
 
@@ -553,12 +560,15 @@
         <ul>
           <li>Leading Neural ISP algorithm development for <strong>ISOCELL HP5</strong> (0.5µm, 200MP, 1/1.56") —
             world's smallest 200MP sensor — defining the DL-based S/W algorithm roadmap at mass-production scale.</li>
-          <li>Architecting End-to-End (E2E) imaging solutions from in-sensor H/W processing to mobile SoC S/W ISP
-            pipelines, driving technical strategy across hardware and software organizations.</li>
-          <li>Developing 4th-generation E2E AI Remosaic: implementing DL-based Multi-frame Remosaic optimized for
-            flagship AP NPU features to achieve commercial 200MP multi-frame processing.</li>
-          <li>Partnering with global R&D centers (China &amp; India) and commercial OEM taskforces to drive on-device
-            S/W optimization, algorithmic image quality (IQ) tuning, and quantitative evaluation for E2E AI Remosaic commercialization.</li>
+          <li>Architecting End-to-End (E2E) imaging solutions from in-sensor H/W ISP to production C/C++ Neural S/W ISP
+            pipelines operating on Android Application Processors, driving technical strategy across hardware and software
+            organizations.</li>
+          <li>Developing 4th-generation E2E AI Remosaic: designing DL-based multi-frame reconstruction algorithms to
+            maximize remosaic and noise reduction performance while maintaining flagship-class detail fidelity, optimized
+            for cutting-edge flagship AP NPU architectures to deliver on-device 200MP multi-frame processing.</li>
+          <li>Collaborating across global R&amp;D centers (China &amp; India branches) and global OEM engineering teams
+            to drive on-device S/W optimization, sensor-specific algorithmic image quality (IQ) tuning, and commercial
+            shipping across flagship Android schedules.</li>
           <li>Contributing to sensor silicon co-design through cross-functional collaboration with pixel physics,
             circuit design, and image evaluation teams.</li>
         </ul>
@@ -571,14 +581,17 @@
         </div>
         <div class="eorg"><em>Samsung Electronics</em> · S.LSI Sensor Business Team · Hwaseong, South Korea</div>
         <ul>
-          <li>Invented the <strong>world's first DL-based Hexadeca Remosaic</strong> algorithm for ISOCELL HP3/HP9
-            (0.56µm, 200MP, 1/1.4"), commercialized for flagship main and telephoto cameras.</li>
-          <li>Delivered <strong>E2E AI Remosaic ISP turn-key solution</strong> for 200MP ISOCELL sensors — deployed
-            across <strong>30+ China OEM products</strong> (HONOR, vivo, Xiaomi) as the standard S/W ISP platform.</li>
-          <li>Engineered Gen 2 E2E AI Remosaic: accelerated 200MP capture latency through joint optimization and
-            parallelization of DL Remosaic &amp; SW ISP on heterogeneous mobile SoC (CPU/GPU/NPU/ISP).</li>
-          <li>Developed <strong>AI-based 4×4 Qcell Remosaic (QMSC)</strong> for ISOCELL HP2 (0.6µm, 200MP, 1/1.3"),
-            enabling 4× in-sensor zoom for Galaxy S23 Ultra main camera.</li>
+          <li>Achieved the <strong>world's first commercialization of a DL-based Hexadeca (16-cell) Remosaic</strong> S/W
+            algorithm for ISOCELL HP3/HP9 (0.56µm, 200MP, 1/1.4") across flagship main and telephoto cameras.</li>
+          <li>Delivered <strong>E2E AI Remosaic S/W ISP turn-key solution</strong> for 200MP ISOCELL sensors — shipped
+            across <strong>30+ Android smartphones</strong> for multiple global OEM partners (HONOR, vivo, Xiaomi) as the
+            standard S/W ISP platform.</li>
+          <li>Engineered Gen 2 E2E AI Remosaic: accelerated 200MP CFA-to-YUV capture latency up to <strong>3×
+              faster</strong> (3s &rarr; 1s @ SM8550) through joint optimization and parallelization of DL Remosaic &amp;
+            S/W ISP pipelines on heterogeneous computing systems (CPU/GPU/DSP/NPU/ISP) across midrange-to-flagship
+            Application Processors.</li>
+          <li>Developed <strong>AI-based 4×4 Q-cell Remosaic (QMSC)</strong> for ISOCELL HP2 (0.6µm, 200MP, 1/1.3"),
+            enabling 4× in-sensor zoom for the Galaxy S23 Ultra main camera.</li>
           <li>Awarded <strong>SEC Annual Award 2023 (Silver Award)</strong> by Samsung Electronics for outstanding
             innovation on E2E AI Remosaic.</li>
         </ul>
@@ -593,28 +606,33 @@
 
       <div class="entry">
         <div class="ehdr">
-          <span class="etitle">E2E AI Remosaic — End-to-End ISP Turn-Key Platform</span>
+          <span class="etitle">E2E AI Remosaic — End-to-End S/W ISP Turn-Key Platform</span>
           <span class="edate">Sep 2022 – Present</span>
         </div>
         <ul>
-          <li>Delivered End-to-End S/W ISP turn-key solutions for ISOCELL 200MP sensors — deployed across <strong>30+
-              China OEM products</strong> (HONOR Magic 9 &amp; Magic 9 Pro Max, Magic7 Pro, vivo X200 Pro ZEISS Camera, Redmi Note 13 Pro+ 5G, etc.) as
-            the standard commercial platform, publicly recognized by Samsung Semiconductor Global. Honored with
-            <strong>Samsung Electronics Annual Award 2023 (Silver Award)</strong>.</li>
+          <li>Delivered End-to-End C/C++ S/W ISP turn-key solutions for ISOCELL 200MP sensors — shipped across
+            <strong>30+ Android smartphones</strong> for multiple global OEM partners (HONOR Magic 9 &amp; Magic 9 Pro
+            Max, Magic7 Pro, vivo X200 Pro ZEISS Camera, Redmi Note 13 Pro+ 5G, etc.) as the standard commercial platform,
+            publicly recognized by Samsung Semiconductor Global. Honored with <strong>Samsung Electronics Annual Award
+              2023 (Silver Award)</strong>.</li>
         </ul>
         <div class="sub-gen-list">
-          <div class="sub-gen"><span class="gen-badge">Gen 1</span><span class="gen-date">Sep 2022</span>Foundational
-            E2E Remosaic + SW ISP architecture for 200MP ISOCELL sensors; established the production-ready turn-key
-            platform.</div>
+          <div class="sub-gen"><span class="gen-badge">Gen 1</span><span class="gen-date">Sep 2022 – Dec
+              2022</span><span>Foundational E2E Remosaic + S/W ISP architecture for 200MP ISOCELL sensors; established the
+              production-ready turn-key platform.</span></div>
           <div class="sub-gen"><span class="gen-badge">Gen 2</span><span class="gen-date">Jan 2023 – Dec
-              2024</span>Joint DL Remosaic &amp; SW ISP co-optimization on Heterogeneous Mobile SoC (CPU/GPU/NPU/ISP
-            across Qualcomm &amp; MediaTek) — optimized 200MP capture latency, throughput, and image quality under tight
-            hardware budgets.</div>
+              2024</span><span>Accelerated 200MP CFA-to-YUV capture latency up to <strong>3× faster</strong> (3s &rarr; 1s @
+              SM8550) by jointly optimizing DL Remosaic &amp; S/W ISP pipelines on heterogeneous computing systems
+              (CPU/GPU/DSP/NPU/ISP) across midrange-to-flagship Application Processors (Qualcomm &amp; MediaTek).</span></div>
           <div class="sub-gen"><span class="gen-badge">Gen 3</span><span class="gen-date">Jan 2025 – Dec
-              2025</span>In-Sensor Zoom expansion: added Multi-frame &amp; Zoom processing capability to E2E AI remosaic
-            for broader OEM device coverage (e.g., Redmi Note 15 Pro+ 5G).</div>
-          <div class="sub-gen"><span class="gen-badge">Gen 4</span><span class="gen-date">Jan 2026 –
-              Present</span>DL-based Multi-frame Remosaic: joint multi-frame reconstruction to recover missing spatial details and maximize noise reduction for peak resolution fidelity; optimized for cutting-edge flagship AP NPU architectures to deliver commercial 200MP multi-frame processing (e.g., HONOR Magic 9 &amp; Magic 9 Pro Max).</div>
+              2025</span><span>Enabling features for zoom applications: maximized zoom processing capability via <strong>joint
+                remosaic &amp; super-resolution</strong> with multi-frame processing, expanding E2E AI Remosaic from
+              high-resolution capture to main camera scenarios (e.g., Redmi Note 15 Pro+ 5G).</span></div>
+          <div class="sub-gen"><span class="gen-badge">Gen 4</span><span class="gen-date">Jan 2026 – Dec
+              2026</span><span>DL-based Multi-frame Remosaic: multi-frame reconstruction algorithm maximizing remosaic and
+              noise reduction performance while maintaining flagship-class detail performance; optimized for cutting-edge
+              flagship AP NPU architectures to deliver on-device 200MP multi-frame processing (e.g., HONOR Magic 9 &amp;
+              Magic 9 Pro Max).</span></div>
         </div>
       </div>
 
@@ -624,12 +642,20 @@
           <span class="edate">Apr 2021 – Present</span>
         </div>
         <ul>
-          <li>Engineered deep learning-based neural remosaic algorithms across Samsung's flagship 200MP ISOCELL sensor lineup, overcoming physical sub-micron pixel constraints (0.6µm to 0.5µm) to deliver industry-leading detail resolution for main and telephoto cameras.</li>
+          <li>Engineered DL-based neural remosaic algorithms across Samsung's flagship 200MP ISOCELL sensor lineup —
+            shipped across <strong>50+ Android smartphones</strong> — overcoming physical sub-micron pixel constraints
+            (0.6µm to 0.5µm) to deliver industry-leading detail resolution for main and telephoto cameras.</li>
         </ul>
         <div class="sub-gen-list">
-          <div class="sub-gen"><span class="gen-badge">HP5</span><span class="gen-date">Jan 2025 – Present</span>0.5µm, 200MP (1/1.56") — World's smallest 200MP sensor; designed DL S/W algorithms addressing extreme physical pixel constraints for mass-market mobile flagships.</div>
-          <div class="sub-gen"><span class="gen-badge">HP3 / HP9</span><span class="gen-date">Sep 2022 – Present</span>0.56µm, 200MP (1/1.4") — World's first DL-based Hexadeca (16-cell) Remosaic; deployed for flagship telephoto (HP9) and main (HP3) cameras.</div>
-          <div class="sub-gen"><span class="gen-badge">HP2</span><span class="gen-date">Apr 2021 – Apr 2023</span>0.6µm, 200MP (1/1.3") — AI-based 4×4 Qcell Remosaic (QMSC) deployed in-sensor, enabling 4× in-sensor zoom for Galaxy S23 Ultra main camera.</div>
+          <div class="sub-gen"><span class="gen-badge">HP5</span><span class="gen-date">Jan 2025 – Dec
+              2025</span><span>0.5µm, 200MP (1/1.56") — DL-based imaging algorithms for the world's smallest 200MP sensor,
+              addressing extreme physical pixel constraints for mass-market mobile flagships.</span></div>
+          <div class="sub-gen"><span class="gen-badge">HP3 / HP9</span><span class="gen-date">Jan 2022 – Dec
+              2022</span><span>0.56µm, 200MP (1/1.4") — World's 1st commercialization of a DL-based Hexadeca (16-cell)
+              Remosaic S/W algorithm; deployed for flagship telephoto (HP9) and main (HP3) cameras.</span></div>
+          <div class="sub-gen"><span class="gen-badge">HP2</span><span class="gen-date">Apr 2021 – Dec
+              2021</span><span>0.6µm, 200MP (1/1.3") — AI-based 4×4 Q-cell Remosaic (QMSC) algorithm deployed in-sensor,
+              enabling 4× in-sensor zoom for the Galaxy S23 Ultra main camera.</span></div>
         </div>
       </div>
 
@@ -652,17 +678,18 @@
 
       <div class="entry">
         <div class="ehdr">
-          <span class="etitle">3D Resonant Wireless Power Transfer &amp; Edge Safety Vision System</span>
+          <span class="etitle">RF-Based Distant Wireless Power Transfer &amp; Edge Safety Vision System</span>
           <span class="edate">Mar 2017 – Feb 2021</span>
         </div>
         <ul>
           <li>Developed real-time multi-camera computer vision and FLIR Lepton far-infrared (FIR) thermal sensor fusion
-            pipelines on Raspberry Pi / Coral Edge TPU for a 1kW wireless charging platform.</li>
+            pipelines on Raspberry Pi / Google Coral Edge TPU / Android mobile devices for a 1kW wireless charging
+            platform.</li>
           <li>Implemented 3D receiver localization and dynamic human-avoidance safety cutoffs / power routing pathways,
             ensuring EMF safety compliance around personnel (US Patent <strong>US 12,496,917 B2</strong> [Granted],
             Korean Patent <strong>KR 10-2021-0092933 A</strong>).</li>
-          <li>Engineered vehicle arrival-time / lane-detection predictive power control inverter algorithms and Android
-            telematics GPS logging for 85kHz On-Line Electric Vehicles (WiPowerOne / OLEV).</li>
+          <li>Engineered GPS-based lane-detection &amp; Google Firebase Cloud Messaging (FCM) predictive inverter power
+            control algorithms on Android for 85kHz On-Line Electric Vehicles (WiPowerOne / OLEV).</li>
         </ul>
       </div>
 
@@ -672,9 +699,9 @@
           <span class="edate">Mar 2016 – Feb 2019</span>
         </div>
         <ul>
-          <li>Engineered <code>REminerII</code> (high-performance C engine for de novo repetitive element mining) paired
-            with <code>PixelRE</code> (dot-plot computer vision encoding) and <code>REDNN</code>/<code>RERNN</code>
-            (deep/recurrent neural networks for genomic repeat classification).</li>
+          <li>Engineered <code>REminerII</code> (high-performance C/C++ engine for de novo repetitive element mining)
+            paired with <code>PixelRE</code> (dot-plot computer vision encoding) and
+            <code>REDNN</code>/<code>RERNN</code> (deep/recurrent neural networks for genomic repeat classification).</li>
           <li>Developed CNN-based complex genetic interaction network models extracting diagnostic somatic mutation and
             miRNA biomarkers for acute myeloid leukemia (AML), colorectal, and breast cancer in clinical partnerships
             with SNUBH &amp; Mediage (US Patent App. <strong>US 2019-0385696 A1</strong> / KR 10-2018-0062331).</li>

@@ -62,7 +62,7 @@
       <h2>6.2 Single-Source-of-Truth 빌드 원칙과 자동 검증</h2>
       <p>
         가이드북 전체(<code>docs/index.html</code>, <code>docs/aicamera_architecture_spec.html</code>, <code>docs/chapters/*.html</code>, <code>docs/css/*</code>, <code>docs/js/*</code>)는
-        수작업 HTML 편집이 아니라 <a class="src" href="../../docs/build_spec_portal.py" title="docs/build_spec_portal.py" target="_blank" rel="noopener">build_spec_portal.py</a> 스크립트에 의해 결정론적으로 생성됩니다.
+        수작업 HTML 편집이 아니라 <a class="src" href="https://github.com/yjqkrtk-ux/aicamera/blob/main/docs/build_spec_portal.py" title="docs/build_spec_portal.py" target="_blank" rel="noopener">build_spec_portal.py</a> 스크립트에 의해 결정론적으로 생성됩니다.
       </p>
       <div class="grid-3">
         <div class="card">
@@ -100,7 +100,7 @@
       <h2>핵심 정리 · Chapter 06</h2>
       <ol>
         <li><strong>코드·데이터 우선 원칙</strong>: 논문이나 슬라이드 초안의 서술과 실제 구현이 다를 때는 언제나 실행 코드(<code>.py</code>, <code>.c</code>, <code>.yaml</code>)와 실측 JSON을 정본으로 삼습니다.</li>
-        <li><strong>전 트랙 교차 검증 완료</strong>: LSP(Ch.02), Software ISP(Ch.03), 16채널 Universal CFA(Ch.04), White-Box Comp-LSP 2.0(Ch.05) 전반의 29개 정합성 항목과 53개 핵심 용어를 단일 빌더(<a class="src" href="../../docs/build_spec_portal.py" title="docs/build_spec_portal.py" target="_blank" rel="noopener">build_spec_portal.py</a>)로 관리합니다.</li>
+        <li><strong>전 트랙 교차 검증 완료</strong>: LSP(Ch.02), Software ISP(Ch.03), 16채널 Universal CFA(Ch.04), White-Box Comp-LSP 2.0(Ch.05) 전반의 29개 정합성 항목과 53개 핵심 용어를 단일 빌더(<a class="src" href="https://github.com/yjqkrtk-ux/aicamera/blob/main/docs/build_spec_portal.py" title="docs/build_spec_portal.py" target="_blank" rel="noopener">build_spec_portal.py</a>)로 관리합니다.</li>
         <li><strong>자동화된 정합성 보장</strong>: <code>~/py311_train/bin/python docs/build_spec_portal.py</code> 명령 하나로 전체 인터랙티브 가이드북과 논문 리더 허브가 재생성되며 수백 개의 소스 링크가 자동 검증됩니다.</li>
       </ol>
     </section>

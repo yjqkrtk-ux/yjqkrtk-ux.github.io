@@ -1371,7 +1371,7 @@
 
       <!-- Figure 5: Latent Channel Sweep -->
       <div class="span-all fig-card">
-        <img src="../docs/latent_channel_sweep_comparison.png" alt="Latent Channel Sweep Rate-Distortion Frontier" loading="lazy" decoding="async">
+        <img src="figures/ucfa_latent_channel_sweep_comparison.webp" alt="Latent Channel Sweep Rate-Distortion Frontier" loading="lazy" decoding="async">
         <div class="caption">
           <strong>Fig. 5.</strong> Genuine rate-distortion Pareto frontier across latent channel widths $C \in \{4, 8, 12, 16, 24, 32, 48\}$ and compressor capacities <code>comp_base_ch</code> $\in \{16, 32, 64\}$ trained strictly on disjoint <code>DIV2K</code> crops. Scaling $C=4 \to 16$ ($16 \to 64\text{ KB}$ INT8) yields $+5.71\text{ dB}$ on Bayer while matching the public <code>FLUX.1</code> / <code>TAEF1</code> hub; scaling further to $C=48$ ($192\text{ KB}$ INT8, still $1.67\times\text{--}2.67\times$ smaller than 10/16-bit RAW and $16\times$ smaller than FP32 RGB) climbs smoothly to <strong>$33.34 / 29.78 / 28.38\text{ dB}$ INT8</strong> on <code>BJDD_CVPR21</code> and <strong>$34.20 / 31.73 / 31.03\text{ dB}$ INT8</strong> on <code>Kodak24</code>.
         </div>
@@ -1521,8 +1521,8 @@
           The full 13-page compiled CVPR 2027 manuscript (<a href="universal_cfa_paper.pdf"><code>universal_cfa_paper.pdf</code></a>) provides: <strong>Appendix A</strong> (coset phase alignment and $40{\times}40$ lapped neighborhood proof), <strong>Appendix B / Table 6</strong> (complete 17-configuration Sony IMX500 compiler SRAM audit from <code>imx500_compile_audit.json</code>), <strong>Appendix C / Table 7</strong> (full 21-point $C \in \{4\dots 48\} \times \{\text{b16,b32,b64}\}$ Pareto matrix), <strong>Appendix D / Table 8</strong> (complete 32-scene per-image unseen breakdown), and <strong>Appendix E / Fig. 6</strong> below illustrating full $512\times 512$ reconstruction and zero-shutter-lag (ZSL) generative synthesis directly from resident latent $\mathbf{z}$ without secondary raw transmission.
         </p>
         <div class="span-all fig-card" style="display:grid; grid-template-columns: 3fr 1fr; gap: 14px; align-items: start;">
-          <img src="../docs/candy_full_comparison.png" alt="Full-Frame 512x512 Reconstruction on BJDD 01952.bmp" loading="lazy" decoding="async">
-          <img src="../docs/01952_tetracell_zsl_capture.png" alt="One-Pass ZSL Generative Synthesis from Resident Latent z" loading="lazy" decoding="async">
+          <img src="figures/ucfa_candy_full_comparison.webp" alt="Full-Frame 512x512 Reconstruction on BJDD 01952.bmp" loading="lazy" decoding="async">
+          <img src="figures/ucfa_01952_tetracell_zsl_capture.webp" alt="One-Pass ZSL Generative Synthesis from Resident Latent z" loading="lazy" decoding="async">
           <div class="caption" style="grid-column: 1 / -1;">
             <strong>Fig. 6 (Appendix E).</strong> Full-frame $512\times 512$ comparison on unseen <code>BJDD 01952.bmp</code> (left: Ground Truth, uncompressed Tetracell <code>PIPNet</code> $33.43\text{ dB}$, and $64\text{ KB}$ INT8 <code>SE-Universal-CFA</code> $26.08\text{ dB}$) alongside downstream one-pass ZSL synthesis (right: <code>01952_tetracell_zsl_capture.png</code>) generated directly from resident $\mathbf{z}$ with zero raw re-transmission.
           </div>

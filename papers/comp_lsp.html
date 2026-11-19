@@ -811,7 +811,7 @@
     <div class="abstract-box">
       <div class="abstract-title">Abstract</div>
       <p>
-        Modern generative models standardize on $8\times$-downsampled <strong>16-channel VAEs</strong> (e.g., <code>FLUX.1</code>, <code>TAEF1</code>), packing each $8\times 8\times 3$ patch into $\mathbb{R}^{16} = \mathcal{S}_{\text{DC}}^3 \oplus \mathcal{S}_{\text{AC}}^{13}$. However, 0th-order sRGB subspace steering ($\mathbf{z} + W_{\text{DC}}^+\Delta\mathbf{c}$) [4] fails on sensor Bayer RAWs due to curved degree-3 chromatic manifolds, concave gamma Jensen bias, and untransformed 13D AC edges, whereas diffusion latent ISPs require $&gt;500\text{ ms}$ and neural pixel ISPs run at full $H\times W$ resolution. We introduce <strong>White-Box Computational Latent Signal Processing (Comp-LSP)</strong>, executing three camera ISP families directly on $\frac{H}{8}\times\frac{W}{8}\times 16$ latents with a $100\%$ frozen decoder ($\Delta\theta_{\text{dec}} = 0$): <strong>(I) Pointwise Linear</strong> (<code>BLC</code>, <code>Gain</code>, <code>WB</code>, $3\times 3$ <code>CCM</code>) via exact 1-point evaluation; <strong>(II) Pointwise Non-Linear</strong> (<code>Gamma</code>, <code>LUTs</code>) via <strong>3-Point Simpson (<code>1:4:1</code>) Quadrature</strong> ($+3.6\text{--}7.5\text{ dB}$ DC gain) and <strong>$3\times 3$ Secant Jacobians</strong> with $144\text{-D}$ Kronecker AC transport; and <strong>(III) Spatial Kernels</strong> (<code>EEH</code>, <code>NR</code>, <code>LTM</code>) via 13D orthonormal Legendre projectors and a <strong>4-Step $D_4$-Symmetric $3\times 3$ Conditional DDIM Bridge ($\mathcal{R}_{4\text{-step}}^{\text{DDIM}}$, $33.5\text{K}$ params)</strong>. Across 10 unseen hardware RAW scenes ($201$-DNG $0\%$-overlap splits), Comp-LSP achieves $R^2 = 0.9950$ color consistency ($\text{MAE}=0.0086$), surpasses 0th-order steering by $+2.57\text{ dB}$, lifts mean PSNR from <strong>$24.46\text{ dB}$ (0-Net Math)</strong> and <strong>$24.84\text{ dB}$ (+1-Step $1\times 1$ DDIM)</strong> to <strong>$25.16\text{ dB}$ (up to $30.88\text{ dB}$ Intra-DB / $30.30\text{ dB}$ Unified)</strong> in $6.24\text{--}9.11\text{ ms}$ at 1MP in Halide ($0.93\text{ ms}$ at $256^2$), and speeds up inverse 3A auto-tuning by $290.8\times$.
+        Modern generative models standardize on $8\times$-downsampled <strong>16-channel VAEs</strong> (e.g., <code>FLUX.1</code>, <code>TAEF1</code>), packing each $8\times 8\times 3$ patch into $\mathbb{R}^{16} = \mathcal{S}_{\text{DC}}^3 \oplus \mathcal{S}_{\text{AC}}^{13}$. However, 0th-order sRGB subspace steering ($\mathbf{z} + W_{\text{DC}}^+\Delta\mathbf{c}$) [4] fails on sensor Bayer RAWs due to curved degree-3 chromatic manifolds, concave gamma Jensen bias, and untransformed 13D AC edges, whereas diffusion latent ISPs require $&gt;500\text{ ms}$ and neural pixel ISPs run at full $H\times W$ resolution. We introduce <strong>White-Box Computational Latent Signal Processing (Comp-LSP)</strong>, executing three camera ISP families directly on $\frac{H}{8}\times\frac{W}{8}\times 16$ latents with a $100\%$ frozen decoder ($\Delta\theta_{\text{dec}} = 0$): <strong>(I) Pointwise Linear</strong> (<code>BLC</code>, <code>Gain</code>, <code>WB</code>, $3\times 3$ <code>CCM</code>) via exact 1-point evaluation; <strong>(II) Pointwise Non-Linear</strong> (<code>Gamma</code>, <code>LUTs</code>) via <strong>3-Point Simpson (<code>1:4:1</code>) Quadrature</strong> ($+3.6\text{--}7.5\text{ dB}$ DC gain) and <strong>$3\times 3$ Secant Jacobians</strong> with $144\text{-D}$ Kronecker AC transport; and <strong>(III) Spatial Kernels</strong> (<code>EEH</code>, <code>NR</code>, <code>LTM</code>) via 13D orthonormal Legendre projectors and a <strong>4-Step $D_4$-Symmetric $3\times 3$ Conditional DDIM Bridge ($\mathcal{R}_{4\text{-step}}^{\text{DDIM}}$, $33.5\text{K}$ params)</strong>. Across 10 unseen hardware RAW scenes ($201$-DNG $0\%$-overlap splits), Comp-LSP achieves $R^2 = 0.9950$ color consistency ($\text{MAE}=0.0086$), surpasses 0th-order steering by $+2.57\text{ dB}$, lifts mean PSNR from <strong>$24.46\text{ dB}$ (0-Net Math)</strong> and <strong>$24.84\text{ dB}$ (+1-Step $1\times 1$ DDIM)</strong> to <strong>$25.16\text{ dB}$ (up to $30.63\text{ dB}$ [1-Step] / $30.30\text{ dB}$ [4-Step] Unified, $30.88\text{ dB}$ Intra-DB)</strong> in $6.24\text{--}9.11\text{ ms}$ at 1MP in Halide ($0.93\text{ ms}$ at $256^2$), and speeds up inverse 3A auto-tuning by $290.8\times$.
       </p>
       <div class="keywords">
         <strong>Index Terms &mdash;</strong> White-Box Computational LSP, Latent Color Subspace (FLUX.1 / TAEF1), 16-Channel VAE, 3-Point Simpson Jet Quadrature, $3\times 3$ Secant Jacobian, Conditional DDIM Diffusion Bridge.
@@ -839,7 +839,7 @@
       <ul>
         <li><strong>Universal 16-Channel Latent Operator Taxonomy (Sec. 3, Table 2, Fig. 1):</strong> We formalize arbitrary camera ISP stages on the decomposed latent bundle $\mathbb{R}^{16} = \mathcal{S}_{\text{DC}}^3 \oplus \mathcal{S}_{\text{AC}}^{13}$ into three closed-form operator families: <em>Pointwise Linear</em> ($\mathcal{F}_{\text{lin}}$), <em>Pointwise Non-Linear</em> ($\mathcal{F}_{\text{nonlin}}$), and <em>Two-Scale Spatial Kernel</em> ($\mathcal{F}_{\text{kernel}}$).</li>
         <li><strong>3-Point Simpson Jet Quadrature and $3\times 3$ Secant Jacobian AC Transport (Sec. 4, Algorithm 1, Fig. 3):</strong> We derive a zero-network white-box operator (<code>Stages 1&ndash;5: 0-Net</code>, $0.93\text{ ms}$ at $256^2$ / $6.24\text{ ms}$ at 1MP in Halide [11], $\text{MSE} \le 1.78\times 10^{-13}$) that integrates concave tone curves via <code>1:4:1</code> Simpson quadrature ($+3.60\text{--}7.47\text{ dB}$ patch DC gain, Eq. 3) and transports 13D spatial edges via a $3\times 3$ Secant Jacobian matrix $J_{3\times 3}$ (Eq. 4) lifted through a $144\text{-D}$ Kronecker outer product $\mathbf{z}_{\text{AC}} \otimes \operatorname{vec}(J_{3\times 3} - I_3)$.</li>
-        <li><strong>201-DNG Zero-Shot Cross-Dataset Calibration and 4-Step $D_4$-Symmetric Conditional DDIM Diffusion Bridge (Sec. 5, Table 3, Table 4, Fig. 2, Fig. 4):</strong> Calibrated once on 201 held-out real camera DNGs ($170$ FiveK DSLRs + $31$ Google Pixel mobile DNGs, $0\%$ overlap with the 10 test scenes), our $33.5\text{K}$-parameter rotation/reflection-equivariant ($D_4$-symmetric) $3\times 3$ conditional DDIM diffusion bridge ($\mathcal{R}_{4\text{-step}}^{\text{DDIM}}$, Eq. 5) eliminates $8\times 8$ block-boundary ringing without spatial texture memorization, boosting zero-shot 10-camera mean PSNR from $24.46\text{ dB}$ (0-Net) to $24.84\text{ dB}$ (+1-Step Pointwise $1\times 1$ DDIM) and <strong>$25.16\text{ dB}$ (+4-Step $D_4$-Symmetric $3\times 3$ DDIM Bridge, winning on 10/10 unseen cameras vs. 0-Net, up to $30.88\text{ dB}$ Intra-DB / $30.30\text{ dB}$ Unified, and $29.38\text{ dB}$ on Google Pixel)</strong> with $R^2 = 0.9950$ colorimetric fidelity.</li>
+        <li><strong>201-DNG Zero-Shot Cross-Dataset Calibration and 4-Step $D_4$-Symmetric Conditional DDIM Diffusion Bridge (Sec. 5, Table 3, Table 4, Fig. 2, Fig. 4):</strong> Calibrated once on 201 held-out real camera DNGs ($170$ FiveK DSLRs + $31$ Google Pixel mobile DNGs, $0\%$ overlap with the 10 test scenes), our $33.5\text{K}$-parameter rotation/reflection-equivariant ($D_4$-symmetric) $3\times 3$ conditional DDIM diffusion bridge ($\mathcal{R}_{4\text{-step}}^{\text{DDIM}}$, Eq. 5) eliminates $8\times 8$ block-boundary ringing without spatial texture memorization, boosting zero-shot 10-camera mean PSNR from $24.46\text{ dB}$ (0-Net) to $24.84\text{ dB}$ (+1-Step Pointwise $1\times 1$ DDIM) and <strong>$25.16\text{ dB}$ (+4-Step $D_4$-Symmetric $3\times 3$ DDIM Bridge, winning on 10/10 unseen cameras vs. 0-Net, up to $30.63\text{ dB}$ [1-Step] / $30.30\text{ dB}$ [4-Step] Unified, $30.88\text{ dB}$ Intra-DB, and $29.38\text{ dB}$ on Google Pixel)</strong> with $R^2 = 0.9950$ colorimetric fidelity.</li>
       </ul>
 
       <h2>2. Related Work</h2>
@@ -975,9 +975,9 @@
         To generalize beyond a fixed sequence of camera blocks, we formalize any image processing operator $\mathcal{O}: \mathbf{x} \mapsto \mathbf{y}$ acting on the 16-channel latent space ($\mathbf{z}_0 \in \mathbb{R}^{(H/8)\times(W/8)\times 16} = \mathcal{S}_{\text{DC}}^3 \oplus \mathcal{S}_{\text{AC}}^{13}$) into <strong>three canonical function families</strong> (<strong>Table 2</strong>):
       </p>
       <ul>
-        <li><strong>Type I &mdash; Pointwise Linear / Affine Operators ($\mathcal{F}_{\text{lin}}(\mathbf{x}) = A\mathbf{x} + \mathbf{b}$):</strong> Includes Black Level Correction ($\mathbf{x}-\mathbf{b}_0$), Digital Gain ($gI_3$), White Balance ($\operatorname{diag}(\mathbf{w}_{\text{WB}})$), and $3\times 3$ CCM ($M_{\text{CCM}}$). Because the Hessian vanishes ($\nabla^2\mathcal{F}_{\text{lin}} = \mathbf{0}$), spatial expectation commutes with $\mathcal{F}_{\text{lin}}$ ($\mathbb{E}_{8\times 8}[A\mathbf{x}+\mathbf{b}] = A\bar{\mathbf{c}}_0+\mathbf{b}$), making <strong>1-point DC evaluation exact</strong> and yielding a <strong>spatially constant analytical Jacobian</strong> $J_{3\times 3} \equiv A$.</li>
-        <li><strong>Type II &mdash; Pointwise Non-Linear Operators ($\mathcal{F}_{\text{nonlin}}(\mathbf{x}) = \phi(\mathbf{x}),\,\nabla^2\phi \neq \mathbf{0}$):</strong> Includes Gamma Tone Mapping ($x^{1/\gamma}$), S-Curves, Highlight Soft-Clipping, and 1D/3D LUTs. Because concave curvature ($\phi'' &lt; 0$) couples intra-patch AC variance $\boldsymbol{\sigma}_{\text{AC}}^2$ into the patch mean via $\mathbb{E}[\phi(\mathbf{x})] \approx \phi(\bar{\mathbf{c}}_0) + \frac{1}{2}\phi''(\bar{\mathbf{c}}_0)\boldsymbol{\sigma}_{\text{AC}}^2$, Type II operators require <strong>3-Point Simpson (<code>1:4:1</code>) Quadrature</strong> at $\bar{\mathbf{c}}_0 \pm \sqrt{1.5}\boldsymbol{\sigma}_{\text{AC}}$ for DC color and a <strong>state-dependent $3\times 3$ Secant Chord Jacobian</strong> $J_{3\times 3}(\bar{\mathbf{c}}_0, \boldsymbol{\delta})$ for 13D AC contrast stretching.</li>
-        <li><strong>Type III &mdash; Spatial Neighborhood / Kernel Operators ($\mathcal{F}_{\text{kernel}}[\mathbf{x}](p) = \sum_{q\in\mathcal{N}_r(p)} K(p,q;\mathbf{x})\mathbf{x}(q)$):</strong> Includes Unsharp Masking (EEH/USM), Gaussian/Box Smoothing, Bilateral Denoising, and $32\times 32$ Encoder Receptive-Field Alignment. Because each latent cell $\mathbf{z}_0(i,j)$ packs an $8\times 8$ pixel patch, a spatial kernel of pixel radius $r$ splits into a <strong>two-scale latent operator</strong>:
+        <li><strong>Class I &mdash; Pointwise Linear / Affine Operators ($\mathcal{F}_{\text{lin}}(\mathbf{x}) = A\mathbf{x} + \mathbf{b}$):</strong> Includes Black Level Correction ($\mathbf{x}-\mathbf{b}_0$), Digital Gain ($gI_3$), White Balance ($\operatorname{diag}(\mathbf{w}_{\text{WB}})$), and $3\times 3$ CCM ($M_{\text{CCM}}$). Because the Hessian vanishes ($\nabla^2\mathcal{F}_{\text{lin}} = \mathbf{0}$), spatial expectation commutes with $\mathcal{F}_{\text{lin}}$ ($\mathbb{E}_{8\times 8}[A\mathbf{x}+\mathbf{b}] = A\bar{\mathbf{c}}_0+\mathbf{b}$), making <strong>1-point DC evaluation exact</strong> and yielding a <strong>spatially constant analytical Jacobian</strong> $J_{3\times 3} \equiv A$.</li>
+        <li><strong>Class II &mdash; Pointwise Non-Linear Operators ($\mathcal{F}_{\text{nonlin}}(\mathbf{x}) = \phi(\mathbf{x}),\,\nabla^2\phi \neq \mathbf{0}$):</strong> Includes Gamma Tone Mapping ($x^{1/\gamma}$), S-Curves, Highlight Soft-Clipping, and 1D/3D LUTs. Because concave curvature ($\phi'' &lt; 0$) couples intra-patch AC variance $\boldsymbol{\sigma}_{\text{AC}}^2$ into the patch mean via $\mathbb{E}[\phi(\mathbf{x})] \approx \phi(\bar{\mathbf{c}}_0) + \frac{1}{2}\phi''(\bar{\mathbf{c}}_0)\boldsymbol{\sigma}_{\text{AC}}^2$, Class II operators require <strong>3-Point Simpson (<code>1:4:1</code>) Quadrature</strong> at $\bar{\mathbf{c}}_0 \pm \sqrt{1.5}\boldsymbol{\sigma}_{\text{AC}}$ for DC color and a <strong>state-dependent $3\times 3$ Secant Chord Jacobian</strong> $J_{3\times 3}(\bar{\mathbf{c}}_0, \boldsymbol{\delta})$ for 13D AC contrast stretching.</li>
+        <li><strong>Class III &mdash; Spatial Neighborhood / Kernel Operators ($\mathcal{F}_{\text{kernel}}[\mathbf{x}](p) = \sum_{q\in\mathcal{N}_r(p)} K(p,q;\mathbf{x})\mathbf{x}(q)$):</strong> Includes Unsharp Masking (EEH/USM), Gaussian/Box Smoothing, Bilateral Denoising, and $32\times 32$ Encoder Receptive-Field Alignment. Because each latent cell $\mathbf{z}_0(i,j)$ packs an $8\times 8$ pixel patch, a spatial kernel of pixel radius $r$ splits into a <strong>two-scale latent operator</strong>:
           <ul>
             <li><em>Sub-Patch Intra-Cell Scale ($r &lt; 8\text{ px}$):</em> Preserves $\bar{\mathbf{c}}_0$ and applies orthonormal 13D AC directional projectors ($\Pi_x, \Pi_y, \Pi_{\text{curv}}$): $\Delta\mathbf{z}_{\text{AC}} = (\Delta g_x\Pi_x + \Delta g_y\Pi_y + \Delta g_{\text{curv}}\Pi_{\text{curv}})\mathbf{z}_{\text{AC}}$.</li>
             <li><em>Inter-Patch Cross-Cell Scale ($r \ge 8\text{ px}$):</em> Aggregates across the $3\times 3$ latent grid stencil $\mathcal{N}_{3\times 3}(i,j)$ via finite-difference operators $\nabla_{3\times 3}\mathbf{z} = [\partial_x\mathbf{z}, \partial_y\mathbf{z}, \nabla^2_{3\times 3}\mathbf{z}]$, bilateral range weights $w_{\text{range}} = \exp(-\|\bar{\mathbf{c}}_0(i,j)-\bar{\mathbf{c}}_0(i',j')\|_2^2/2\sigma_r^2)$, and the 4-step cross-cell conditional DDIM diffusion bridge $\mathcal{R}_{4\text{-step}}^{\text{DDIM}}$.</li>
@@ -1088,12 +1088,12 @@
         $$\hat{\mathbf{z}}_{0\mid t_k} = \mathbf{z}_{t_k} - t_k\,g(\Theta_{\text{ISP}})\,w_{\text{trust}}\,\hat{\boldsymbol{\epsilon}}_\theta^{D_4}\!\left(\mathbf{z}_{t_k},\, t_k \mid \mathbf{z}_5,\, \mathbf{z}_0,\, \bar{\mathbf{c}}_0,\, \bar{\mathbf{c}}_{\text{new}},\, \Delta_{3\times 3}\mathbf{z}_{t_k}\right), \qquad \mathbf{z}_{t_{k+1}} = (1 - t_{k+1})\,\hat{\mathbf{z}}_{0\mid t_k} + t_{k+1}\,\mathbf{z}_5, \qquad (5)$$
       </div>
       <p>
-        boosting zero-shot mean sRGB PSNR across all 10 unseen hardware cameras from $24.46\text{ dB}$ (0-Net) to $24.84\text{ dB}$ (+1-Step Pointwise $1\times 1$ DDIM) and <strong>$25.16\text{ dB}$ (+4-Step $D_4$-Symmetric $3\times 3$ DDIM Bridge, winning on 10/10 unseen cameras vs. 0-Net; DDIM step progression $24.32\to 25.08\to 25.16\text{ dB}$ for $N=1,2,4$)</strong> (up to $30.88\text{ dB}$ Intra-DB / $30.30\text{ dB}$ Unified on Google Pixel Indoor and $28.46\text{ dB}$ on Google Pixel Daylight, <strong>Fig. 4a&ndash;c</strong>).
+        boosting zero-shot mean sRGB PSNR across all 10 unseen hardware cameras from $24.46\text{ dB}$ (0-Net) to $24.84\text{ dB}$ (+1-Step Pointwise $1\times 1$ DDIM) and <strong>$25.16\text{ dB}$ (+4-Step $D_4$-Symmetric $3\times 3$ DDIM Bridge, winning on 10/10 unseen cameras vs. 0-Net; DDIM step progression $24.32\to 25.08\to 25.16\text{ dB}$ for $N=1,2,4$)</strong> (up to $30.63\text{ dB}$ [1-Step] / $30.30\text{ dB}$ [4-Step] Unified and $30.88\text{ dB}$ Intra-DB on Google Pixel Indoor, and $28.46\text{ dB}$ on Google Pixel Daylight, <strong>Fig. 4a&ndash;c</strong>).
       </p>
 
-      <h3>4.3 Worked Numerical Example of Type III Spatial Kernel Execution</h3>
+      <h3>4.3 Worked Numerical Example of Class III Spatial Kernel Execution</h3>
       <p>
-        To illustrate how <strong>Type III Spatial Kernel Operators</strong> ($\mathcal{F}_{\text{kernel}}$) execute without decoding to pixel space, consider patch $(y=7, x=8)$ of <code>OpenISP 10-bit Full Chart</code> (<code>openisp_test_raw</code>). QR orthonormalization of the Legendre Jet basis inside the 13D pure-AC subspace $P_{\text{AC}} = I_{16} - \Phi_{\text{DC}}\Psi_{\text{DC}}$ constructs three mutually orthogonal directional projectors ($\Pi_x + \Pi_y + \Pi_{\text{curv}} = P_{\text{AC}}$, $\operatorname{cond}(\Pi_\bullet) = 1.0$) for horizontal gradients ($\Pi_x$, rank 3), vertical gradients ($\Pi_y$, rank 3), and 2nd-order Laplacian curvature ($\Pi_{\text{curv}}$, rank 7):
+        To illustrate how <strong>Class III Spatial Kernel Operators</strong> ($\mathcal{F}_{\text{kernel}}$) execute without decoding to pixel space, consider patch $(y=7, x=8)$ of <code>OpenISP 10-bit Full Chart</code> (<code>openisp_test_raw</code>). QR orthonormalization of the Legendre Jet basis inside the 13D pure-AC subspace $P_{\text{AC}} = I_{16} - \Phi_{\text{DC}}\Psi_{\text{DC}}$ constructs three mutually orthogonal directional projectors ($\Pi_x + \Pi_y + \Pi_{\text{curv}} = P_{\text{AC}}$, $\operatorname{cond}(\Pi_\bullet) = 1.0$) for horizontal gradients ($\Pi_x$, rank 3), vertical gradients ($\Pi_y$, rank 3), and 2nd-order Laplacian curvature ($\Pi_{\text{curv}}$, rank 7):
       </p>
       <ul>
         <li><strong>1. Intra-Patch Kernel ($\text{EEH}$ Sharpening &amp; Bilateral $\text{NR}$, $r &lt; 8\text{ px}$):</strong> Projecting $\mathbf{z}_{\text{AC}}(7,8) = P_{\text{AC}}(\mathbf{z}_0(7,8)-\mathbf{z}_{\text{black}})$ ($\|\mathbf{z}_{\text{AC}}\|_2 = 2.7924$) yields $\mathbf{z}_x = \Pi_x\mathbf{z}_{\text{AC}}$ ($\|\mathbf{z}_x\|_2 = 1.4986$), $\mathbf{z}_y = \Pi_y\mathbf{z}_{\text{AC}}$ ($\|\mathbf{z}_y\|_2 = 1.4756$), and $\mathbf{z}_{\text{curv}} = \Pi_{\text{curv}}\mathbf{z}_{\text{AC}}$ ($\|\mathbf{z}_{\text{curv}}\|_2 = 1.9091$). The RMS gradient energy $e(7,8) = \sqrt{\tfrac{1}{16}(\|\mathbf{z}_x\|_2^2 + \|\mathbf{z}_y\|_2^2)} = 0.5258$ activates the edge-preserving coring gate ($\tau_{\text{coring}} = 0.01$):
@@ -1102,7 +1102,7 @@
           </div>
           For $3\times 3$ Laplacian Edge Enhancement (<code>EEH</code>, $\kappa_{\text{eeh}}=0.45$), $(\Delta g_x, \Delta g_y, \Delta g_{\text{curv}}) = (+0.0309, +0.0309, +0.0442)$ selectively amplifies chart edges ($30.01\text{ dB}$ 10-cam mean PSNR, $33.04\text{ dB}$ on OpenISP). Conversely, for Bilateral Noise Reduction (<code>NR</code>, $\lambda_Y=0.35, \lambda_C=0.45$), the range factor $(1-0.5\,w_{\text{edge}}) = 0.5094$ halves high-frequency damping at this strong edge to $(\Delta g_x, \Delta g_y, \Delta g_{\text{curv}}) = (-0.0089, -0.0089, -0.0183)$ ($32.20\text{ dB}$ 10-cam mean PSNR).
         </li>
-        <li><strong>2. Inter-Patch $3\times 3$ Stencil ($\text{LTM}$ Local Tone Mapping, $r \ge 8\text{ px}$):</strong> Pooling the $3\times 3$ neighborhood patch luminance around $(7,8)$, $\mathbf{Y}_{\mathcal{N}_{3\times 3}}(7,8) = \bigl[\begin{smallmatrix} 0.777 & 0.790 & 0.874 \\ 0.300 & \mathbf{0.437} & 0.866 \\ 0.387 & 0.357 & 0.859 \end{smallmatrix}\bigr]$, yields neighborhood base luminance $Y_{\text{base}}(7,8) = 0.6273$ and inter-patch discrete Laplacian $\Delta_{3\times 3} Y = \bar{Y}_0(7,8) - Y_{\text{base}} = -0.1901$, modulating the spatially varying exposure gain $G_{\text{LTM}}(7,8) = 1 + \beta_{\text{sh}}(1-Y_{\text{base}})^2 - \beta_{\text{hi}}Y_{\text{base}}^2 = 0.9833$ ($29.53\text{ dB}$ 10-cam mean PSNR).</li>
+        <li><strong>2. Inter-Patch $3\times 3$ Stencil ($\text{LTM}$ Local Tone Mapping, $r \ge 8\text{ px}$):</strong> Pooling the $3\times 3$ neighborhood patch luminance around $(7,8)$, $\mathbf{Y}_{\mathcal{N}_{3\times 3}}(7,8) = \bigl[\begin{smallmatrix} 0.777 & 0.790 & 0.874 \\ 0.300 & \mathbf{0.4371} & 0.866 \\ 0.387 & 0.357 & 0.859 \end{smallmatrix}\bigr]$ (center luminance $\bar{Y}_0(7,8) = 0.4371$), yields neighborhood base luminance $Y_{\text{base}}(7,8) = 0.6273$ and inter-patch discrete Laplacian $\Delta_{3\times 3} Y = \bar{Y}_0(7,8) - Y_{\text{base}} = -0.1901$, modulating the spatially varying exposure gain $G_{\text{LTM}}(7,8) = 1 + \beta_{\text{sh}}(1-Y_{\text{base}})^2 - \beta_{\text{hi}}Y_{\text{base}}^2 = 0.9833$ ($29.53\text{ dB}$ 10-cam mean PSNR).</li>
       </ul>
 
       <div class="span-all algo-box">
@@ -1155,7 +1155,7 @@
 
       <h3>5.2 Single-Stage Operator Accuracy and Full-Pipeline Progression</h3>
       <p>
-        <strong>Table 3</strong>, <strong>Fig. 4</strong>, and full-page supplementary galleries (<strong>Figs. 5&ndash;6</strong>, Appendix D) report both the <strong>standalone single-stage PSNR (&uarr;)</strong>&mdash;where each individual latent operator across Type I ($f_{\text{BLC/Gain}}, f_{\text{WB}}, f_{\text{CCM}}$), Type II ($f_{\text{Gamma}}$), and Type III Spatial Kernels ($f_{\text{EEH}}, f_{\text{NR}}$) is evaluated directly against the ground-truth image that went through <em>only that single stage</em> ($f_k(\mathbf{x}_0)$)&mdash;and the <strong>end-to-end combined full-ISP PSNR</strong> across all 10 unseen hardware camera RAWs using each camera&rsquo;s native DNG white-balance gains and $3\times 3$ CCM. Evaluated zero-shot per individual operator, 0-Net latent execution achieves <strong>$30.45\text{ dB}$</strong> on BLC/Gain, <strong>$24.67\text{ dB}$</strong> on White Balance, <strong>$26.78\text{ dB}$</strong> on $3\times 3$ CCM, <strong>$25.45\text{ dB}$</strong> on Gamma tone mapping, <strong>$30.01\text{ dB}$</strong> on $3\times 3$ Laplacian Edge Enhancement (<code>Only EEH</code>), <strong>$32.20\text{ dB}$</strong> on Bilateral Noise Reduction (<code>Only NR</code>), and <strong>$29.53\text{ dB}$</strong> on Local Tone Mapping (<code>Only LTM</code>). When all stages are composed end-to-end, our latent readout and quadrature track ground-truth pixel-ISP colorimetry across all $210$ RGB scene-stage points with $R^2 = 0.9950$ and mean absolute RGB error $\text{MAE} = 0.0086$ (<strong>Fig. 4c</strong>), while the 4-Step $D_4$-Symmetric Conditional DDIM Diffusion Bridge boosts zero-shot full-ISP PSNR from $24.46\text{ dB}$ (0-Net, $\text{MAE}=0.0126$) to <strong>$24.84\text{ dB}$</strong> (+1-Step Pointwise $1\times 1$ DDIM) and <strong>$25.16\text{ dB}$</strong> (+4-Step $D_4$-Symmetric $3\times 3$ DDIM Bridge, winning on 10/10 unseen cameras vs. 0-Net, up to $30.88\text{ dB}$ Intra-DB / $30.30\text{ dB}$ Unified on Google Pixel Indoor, reducing final RGB MAE to $0.0086$) with zero spatial texture hallucination across all 10 unseen cameras.
+        <strong>Table 3</strong>, <strong>Fig. 4</strong>, and full-page supplementary galleries (<strong>Figs. 5&ndash;6</strong>, Appendix D) report both the <strong>standalone single-stage PSNR (&uarr;)</strong>&mdash;where each individual latent operator across Class I ($f_{\text{BLC/Gain}}, f_{\text{WB}}, f_{\text{CCM}}$), Class II ($f_{\text{Gamma}}$), and Class III Spatial Kernels ($f_{\text{EEH}}, f_{\text{NR}}$) is evaluated directly against the ground-truth image that went through <em>only that single stage</em> ($f_k(\mathbf{x}_0)$)&mdash;and the <strong>end-to-end combined full-ISP PSNR</strong> across all 10 unseen hardware camera RAWs using each camera&rsquo;s native DNG white-balance gains and $3\times 3$ CCM. Evaluated zero-shot per individual operator, 0-Net latent execution achieves <strong>$30.45\text{ dB}$</strong> on BLC/Gain, <strong>$24.67\text{ dB}$</strong> on White Balance, <strong>$26.78\text{ dB}$</strong> on $3\times 3$ CCM, <strong>$25.45\text{ dB}$</strong> on Gamma tone mapping, <strong>$30.01\text{ dB}$</strong> on $3\times 3$ Laplacian Edge Enhancement (<code>Only EEH</code>), <strong>$32.20\text{ dB}$</strong> on Bilateral Noise Reduction (<code>Only NR</code>), and <strong>$29.53\text{ dB}$</strong> on Local Tone Mapping (<code>Only LTM</code>). When all stages are composed end-to-end, our latent readout and quadrature track ground-truth pixel-ISP colorimetry across all $210$ RGB scene-stage points with $R^2 = 0.9950$ and mean absolute RGB error $\text{MAE} = 0.0086$ (<strong>Fig. 4c</strong>), while the 4-Step $D_4$-Symmetric Conditional DDIM Diffusion Bridge boosts zero-shot full-ISP PSNR from $24.46\text{ dB}$ (0-Net, $\text{MAE}=0.0126$) to <strong>$24.84\text{ dB}$</strong> (+1-Step Pointwise $1\times 1$ DDIM) and <strong>$25.16\text{ dB}$</strong> (+4-Step $D_4$-Symmetric $3\times 3$ DDIM Bridge, winning on 10/10 unseen cameras vs. 0-Net, up to $30.63\text{ dB}$ [1-Step] / $30.30\text{ dB}$ [4-Step] Unified and $30.88\text{ dB}$ Intra-DB on Google Pixel Indoor, reducing final RGB MAE to $0.0086$) with zero spatial texture hallucination across all 10 unseen cameras.
       </p>
 
       <div class="span-all figure-card">
@@ -1350,7 +1350,7 @@
       <ul>
         <li><strong>0th-Order Scalar Subspace Shift vs. 1st-Order Simpson-Jacobian Jet (Mode B vs. Mode A):</strong> On the cumulative <code>Stages 1&ndash;4</code> benchmark, unprocessed sensor RAW yields $13.38\text{ dB}$ and flat 0th-order scalar subspace steering [4] reaches $22.59\text{ dB}$ ($\text{MSE}_z = 0.190$) because it omits concave gamma quadrature and leaves the 13D AC edge fiber untouched. Introducing <code>1:4:1</code> Simpson quadrature and $144\text{-D}$ Secant Jacobian Kronecker transport improves 0-Net PSNR to $24.30\text{ dB}$ in <strong>Mode B</strong> ($\mathbf{z}_0$-only readout, zero auxiliary metadata) and <strong>$25.16\text{ dB}$ in Mode A</strong> (on-chip sensor patch stats, reducing latent error by $36.8\%$ to $\text{MSE}_z = 0.120$; per-stage breakdown in <strong>Table 6</strong>).</li>
         <li><strong>Refiner Spatial Topology &amp; DDIM Schedule ($1\times 1$ Pointwise 1-Step DDIM vs. $D_4$-Symmetric $3\times 3$ Conditional DDIM Bridge, Part B):</strong> Across all 10 unseen scenes, zero-network analytical math (<code>Stage 4: 0-Net</code>) reaches $24.46\text{ dB}$ ($\text{MAE}=0.0126$) at $0.93\text{ ms}$ ($256^2$) / $6.24\text{ ms}$ (1MP). A strictly pointwise $1\times 1$ single-step DDIM denoiser (<code>Stage 6: +1-Step Pointwise DDIM</code>, $20.0\text{K}$ params, zero $3\times 3$ context) corrects intra-patch manifold curvature to reach $24.84\text{ dB}$. Evaluating our rotation/reflection-equivariant ($D_4$-symmetric) $3\times 3$ Conditional DDIM Diffusion Bridge (<code>Stage 6: +4-Step $D_4$-Sym $3\times 3$ DDIM Bridge</code>, $33.5\text{K}$ params) across $N \in \{1, 2, 4\}$ DDIM reverse steps progresses from $24.32\text{ dB}$ ($N=1$) to $25.08\text{ dB}$ ($N=2$) and <strong>$25.16\text{ dB}$ ($N=4$, $+0.70\text{ dB}$ over 0-Net and $+0.32\text{ dB}$ over $1\times 1$ 1-Step DDIM, winning on $10/10$ unseen scenes vs. 0-Net)</strong>.</li>
-        <li><strong>Intra-DB Held-Out vs. Cross-DB vs. Unified All-DB Generalization (Part C):</strong> To evaluate whether camera-family specialization or multi-dataset diversity dominates, we compare calibrating $W_{\text{trans}}$ and $\mathcal{R}$ within a single dataset family (<strong>Intra-DB Held-Out</strong>: <code>FiveK-170</code> $\to$ 6 unseen FiveK DSLRs; <code>Pixel-31</code> $\to$ 2 unseen Google Pixel mobile DNGs) against <strong>Cross-DB</strong> transfer and <strong>Unified All-DB (`201 DNGs`)</strong> training. On homogeneous 14-bit mobile captures (<code>Pixel-31</code> $\to$ 2 unseen Pixel), Intra-DB analytical regression already reaches $28.99\text{ dB}$ 0-Net and $29.36\text{ dB}$ with 1-Step (reaching $30.88\text{ dB}$ on <code>Pixel Indoor</code>), whereas training on the unified 201-DNG corpus unlocks the $D_4$-symmetric 4-Step DDIM Bridge across all three sensor families, achieving the highest PSNR on FiveK ($24.20\text{ dB}$ vs. $24.01\text{ dB}$ Intra-DB and $23.60\text{ dB}$ Cross-DB), Google Pixel ($29.38\text{ dB}$ vs. $28.66\text{ dB}$ Cross-DB), and unseen OpenISP ($23.83\text{ dB}$).</li>
+        <li><strong>Intra-DB Held-Out vs. Cross-DB vs. Unified All-DB Generalization (Part C):</strong> To evaluate whether camera-family specialization or multi-dataset diversity dominates, we compare calibrating $W_{\text{trans}}$ and $\mathcal{R}$ within a single dataset family (<strong>Intra-DB Held-Out</strong>: <code>FiveK-170</code> $\to$ 6 unseen FiveK DSLRs; <code>Pixel-31</code> $\to$ 2 unseen Google Pixel mobile DNGs) against <strong>Cross-DB</strong> transfer and <strong>Unified All-DB (`201 DNGs`)</strong> training. On homogeneous 14-bit mobile captures (<code>Pixel-31</code> $\to$ 2 unseen Pixel), Intra-DB analytical regression already reaches $28.99\text{ dB}$ 0-Net and $29.36\text{ dB}$ with 1-Step / $29.19\text{ dB}$ with 4-Step (reaching $30.88\text{ dB}$ on <code>Pixel Indoor</code>), whereas training on the unified 201-DNG corpus unlocks the $D_4$-symmetric 4-Step DDIM Bridge across all three sensor families, achieving the highest PSNR on FiveK ($24.20\text{ dB}$ vs. $24.01\text{ dB}$ Intra-DB and $23.60\text{ dB}$ Cross-DB), Google Pixel ($29.38\text{ dB}$ vs. $28.66\text{ dB}$ Cross-DB), and unseen OpenISP ($23.84\text{ dB}$).</li>
         <li><strong>Authentic Native vs. Fixed Global Camera Metadata:</strong> Replacing each camera&rsquo;s native DNG metadata $\Theta_{\text{ISP}}$ with a fixed global parameter set ($g=1.20$, $\mathbf{w}_{\text{WB}}=[1.95, 1.0, 1.45]$, $\gamma=2.0$) degrades final Stage 6 PSNR against the true camera-rendered ground truth by $-4.08\text{ dB}$ ($21.08\text{ dB}$ vs. $25.16\text{ dB}$) and increases RGB MAE by $5.84\times$ ($0.0502$ vs. $0.0086$).</li>
       </ul>
 
@@ -1509,8 +1509,8 @@
               <td>Test: <strong>OpenISP (2 Unseen 10-bit)</strong> &mdash; Cross-DB</td>
               <td>FiveK-170 / All-201</td>
               <td>$0\to 1\to 4$</td>
-              <td>$23.29\to 23.37\to \mathbf{23.83}$</td>
-              <td>$+0.54\text{ dB}$ ($+0.46\text{ vs }1\text{S}$)</td>
+              <td>$23.29\to 23.37\to \mathbf{23.84}$</td>
+              <td>$+0.55\text{ dB}$ ($+0.47\text{ vs }1\text{S}$)</td>
               <td>3.80 ms</td>
             </tr>
           </tbody>
@@ -1527,7 +1527,7 @@
 
       <h2>6. Conclusion</h2>
       <p>
-        We presented <strong>White-Box Computational Latent Signal Processing (Comp-LSP)</strong>, establishing the 16-channel latent-space counterpart to <strong>HDRNet</strong> [14]: a unified white-box operator architecture that executes <em>Pointwise Linear</em> ($\mathcal{F}_{\text{lin}}$), <em>Pointwise Non-Linear</em> ($\mathcal{F}_{\text{nonlin}}$), and <em>Two-Scale Spatial Kernel</em> ($\mathcal{F}_{\text{kernel}}$) camera ISP functions directly on the $\frac{H}{8} \times \frac{W}{8} \times 16$ latent grid of frozen 16-channel VAEs (<code>FLUX.1</code> and <code>TAEF1</code>). By combining <strong>3-Point Simpson (<code>1:4:1</code>) Jet Quadrature</strong>, <strong>$3\times 3$ Secant Jacobians</strong> with $144\text{-D}$ Kronecker AC transport, 13D orthonormal Legendre spatial kernel projectors, and a <strong>4-Step $D_4$-Symmetric Conditional DDIM Diffusion Bridge ($\mathcal{R}_{4\text{-step}}^{\text{DDIM}}$, $33.5\text{K}$ parameters)</strong> calibrated once on 201 held-out real camera DNGs and conditioned on authentic DNG metadata, our framework eliminates raw Bayer green bias ($R^2 = 0.9950$, final $\text{MAE} = 0.0086$), boosts zero-shot 10-scene mean PSNR from $24.46\text{ dB}$ (0-Net) and $24.84\text{ dB}$ ($1\times 1$ 1-Step DDIM) to <strong>$25.16\text{ dB}$ ($D_4$-Symmetric 4-Step DDIM Bridge, winning on 10/10 unseen scenes vs. 0-Net, up to $30.88\text{ dB}$ Intra-DB / $30.30\text{ dB}$ Unified, and $29.38\text{ dB}$ on Google Pixel)</strong> in $6.24\text{--}9.11\text{ ms}$ at 1MP ($0.93\text{ ms}$ at $256^2$), and accelerates multi-core differentiable inverse 3A auto-tuning by $290.8\times$.
+        We presented <strong>White-Box Computational Latent Signal Processing (Comp-LSP)</strong>, establishing the 16-channel latent-space counterpart to <strong>HDRNet</strong> [14]: a unified white-box operator architecture that executes <em>Pointwise Linear</em> ($\mathcal{F}_{\text{lin}}$), <em>Pointwise Non-Linear</em> ($\mathcal{F}_{\text{nonlin}}$), and <em>Two-Scale Spatial Kernel</em> ($\mathcal{F}_{\text{kernel}}$) camera ISP functions directly on the $\frac{H}{8} \times \frac{W}{8} \times 16$ latent grid of frozen 16-channel VAEs (<code>FLUX.1</code> and <code>TAEF1</code>). By combining <strong>3-Point Simpson (<code>1:4:1</code>) Jet Quadrature</strong>, <strong>$3\times 3$ Secant Jacobians</strong> with $144\text{-D}$ Kronecker AC transport, 13D orthonormal Legendre spatial kernel projectors, and a <strong>4-Step $D_4$-Symmetric Conditional DDIM Diffusion Bridge ($\mathcal{R}_{4\text{-step}}^{\text{DDIM}}$, $33.5\text{K}$ parameters)</strong> calibrated once on 201 held-out real camera DNGs and conditioned on authentic DNG metadata, our framework eliminates raw Bayer green bias ($R^2 = 0.9950$, final $\text{MAE} = 0.0086$), boosts zero-shot 10-scene mean PSNR from $24.46\text{ dB}$ (0-Net) and $24.84\text{ dB}$ ($1\times 1$ 1-Step DDIM) to <strong>$25.16\text{ dB}$ ($D_4$-Symmetric 4-Step DDIM Bridge, winning on 10/10 unseen scenes vs. 0-Net, up to $30.63\text{ dB}$ [1-Step] / $30.30\text{ dB}$ [4-Step] Unified, $30.88\text{ dB}$ Intra-DB, and $29.38\text{ dB}$ on Google Pixel)</strong> in $6.24\text{--}9.11\text{ ms}$ at 1MP ($0.93\text{ ms}$ at $256^2$), and accelerates multi-core differentiable inverse 3A auto-tuning by $290.8\times$.
       </p>
 
       <h2>LLM Usage Statement</h2>
@@ -1575,7 +1575,7 @@
 
         <h3>Appendix B: Complete 10-Camera Fixed Global Metadata Ablation</h3>
         <p>
-          <strong>Table 5</strong> reports the complete per-camera breakdown of Experiment B (Fixed Global Metadata: $g=1.20\times$, $\mathbf{w}_{\text{WB}}=[1.95, 1.0, 1.45]$, $\gamma=2.0$ applied identically across all 10 unseen cameras) compared against Experiment A (Authentic Native DNG Metadata in <strong>Table 3</strong>). When camera-specific white-balance gains and $3\times 3$ CCM matrices are replaced by a fixed global preset, scenes with strong tungsten or daylight chromaticity shifts (e.g., <code>Google Pixel Indoor</code> with native $w_B = 2.633$ and <code>Canon EOS 5D</code> with native $w_R = 2.724$) suffer severe color cast errors against the true camera-rendered ground truth, dropping 10-camera mean Stage 6 PSNR from $25.16\text{ dB}$ to $21.08\text{ dB}$ ($24.17\to 24.51\text{ dB}$ when evaluated against a synthetic fixed-preset reference) and increasing RGB MAE from $0.0086$ to $0.0502$.
+          <strong>Table 5</strong> reports the complete per-camera breakdown of Experiment B (Fixed Global Metadata: $g=1.20\times$, $\mathbf{w}_{\text{WB}}=[1.950, 1.000, 1.450]$, $\gamma=2.0$ applied identically across all 10 unseen scenes) compared against Experiment A (Authentic Native DNG Metadata in <strong>Table 3</strong>). When camera-specific white-balance gains and $3\times 3$ CCM matrices are replaced by a fixed global preset, scenes with strong tungsten or daylight chromaticity shifts (e.g., <code>Google Pixel Indoor</code> with native $w_B = 2.633$ and <code>Canon EOS 5D</code> with native $w_R = 2.724$) suffer severe color cast errors against the true camera-rendered ground truth, dropping 10-scene mean Stage 6 PSNR from $25.16\text{ dB}$ to $21.08\text{ dB}$ ($-4.08\text{ dB}$; $24.17\to 24.65\text{ dB}$ when evaluated against a synthetic fixed-preset reference) and increasing RGB MAE by $5.84\times$ from $0.0086$ to $0.0502$.
         </p>
 
         <div class="table-container span-all">
@@ -1601,149 +1601,149 @@
               <tr>
                 <td>1. <strong>OpenISP 10-bit Full</strong> (<code>test.RAW</code>)</td>
                 <td>$1.20\times$ / $[1.950, 1.0, 1.450]$</td>
-                <td>28.44</td>
-                <td>23.70</td>
-                <td>28.40</td>
+                <td>28.16</td>
+                <td>23.93</td>
+                <td>27.91</td>
                 <td>25.91</td>
                 <td>33.04</td>
                 <td>35.32</td>
-                <td>21.84</td>
-                <td>21.97</td>
-                <td>21.96</td>
-                <td>0.0365</td>
+                <td>21.90</td>
+                <td>21.90</td>
+                <td>21.91</td>
+                <td>0.0139</td>
               </tr>
               <tr>
                 <td>2. <strong>OpenISP 10-bit Crop</strong> (<code>test.RAW</code>)</td>
                 <td>$1.20\times$ / $[1.950, 1.0, 1.450]$</td>
-                <td>28.59</td>
-                <td>24.53</td>
-                <td>27.32</td>
+                <td>28.39</td>
+                <td>24.16</td>
+                <td>26.37</td>
                 <td>25.29</td>
                 <td>29.77</td>
                 <td>31.70</td>
-                <td>23.43</td>
-                <td>24.09</td>
-                <td>24.17</td>
-                <td>0.0110</td>
+                <td>23.66</td>
+                <td>24.37</td>
+                <td>24.46</td>
+                <td>0.0130</td>
               </tr>
               <tr>
                 <td>3. <strong>Nikon D700</strong> (12-bit BGGR <code>.DNG</code>)</td>
                 <td>$1.20\times$ / $[1.950, 1.0, 1.450]$</td>
-                <td>28.29</td>
-                <td>26.26</td>
+                <td>30.24</td>
+                <td>25.97</td>
                 <td>29.36</td>
                 <td>27.05</td>
                 <td>30.77</td>
                 <td>33.31</td>
-                <td>24.20</td>
-                <td>24.30</td>
-                <td>24.33</td>
-                <td>0.0155</td>
+                <td>23.72</td>
+                <td>23.98</td>
+                <td>23.78</td>
+                <td>0.0330</td>
               </tr>
               <tr>
                 <td>4. <strong>FiveK DSLR</strong> (14-bit RGGB <code>.DNG</code>)</td>
                 <td>$1.20\times$ / $[1.950, 1.0, 1.450]$</td>
-                <td>29.11</td>
-                <td>19.63</td>
-                <td>30.20</td>
+                <td>30.09</td>
+                <td>25.57</td>
+                <td>30.64</td>
                 <td>25.32</td>
                 <td>31.05</td>
                 <td>33.35</td>
-                <td>17.56</td>
-                <td>17.52</td>
-                <td>17.52</td>
-                <td>0.0686</td>
+                <td>17.24</td>
+                <td>17.51</td>
+                <td>17.47</td>
+                <td>0.0821</td>
               </tr>
               <tr>
                 <td>5. <strong>Canon EOS 5D</strong> (14-bit RGGB <code>.DNG</code>)</td>
                 <td>$1.20\times$ / $[1.950, 1.0, 1.450]$</td>
-                <td>24.35</td>
-                <td>21.35</td>
-                <td>21.18</td>
+                <td>25.06</td>
+                <td>22.62</td>
+                <td>22.97</td>
                 <td>21.86</td>
                 <td>25.42</td>
                 <td>27.92</td>
-                <td>19.30</td>
-                <td>19.51</td>
-                <td>19.45</td>
-                <td>0.0442</td>
+                <td>18.32</td>
+                <td>18.89</td>
+                <td>18.95</td>
+                <td>0.0572</td>
               </tr>
               <tr>
                 <td>6. <strong>Canon 1Ds MkII</strong> (12-bit RGGB <code>.DNG</code>)</td>
                 <td>$1.20\times$ / $[1.950, 1.0, 1.450]$</td>
-                <td>26.55</td>
-                <td>24.66</td>
-                <td>23.21</td>
+                <td>27.50</td>
+                <td>24.68</td>
+                <td>25.98</td>
                 <td>24.12</td>
                 <td>27.79</td>
                 <td>30.37</td>
-                <td>22.71</td>
-                <td>22.96</td>
-                <td>22.90</td>
-                <td>0.0091</td>
+                <td>23.39</td>
+                <td>23.44</td>
+                <td>23.38</td>
+                <td>0.0174</td>
               </tr>
               <tr>
                 <td>7. <strong>Canon EOS 40D #1</strong> (14-bit RGGB <code>.DNG</code>)</td>
                 <td>$1.20\times$ / $[1.950, 1.0, 1.450]$</td>
-                <td>26.31</td>
-                <td>22.29</td>
-                <td>24.98</td>
+                <td>28.14</td>
+                <td>24.02</td>
+                <td>26.81</td>
                 <td>25.38</td>
                 <td>28.53</td>
                 <td>30.86</td>
-                <td>21.05</td>
-                <td>21.38</td>
-                <td>21.25</td>
-                <td>0.0447</td>
+                <td>20.67</td>
+                <td>21.12</td>
+                <td>21.00</td>
+                <td>0.0601</td>
               </tr>
               <tr>
                 <td>8. <strong>Canon EOS 40D #2</strong> (14-bit RGGB <code>.DNG</code>)</td>
-                <td>$1.20\times$ / $[1.950, 1.0, 1.388]$</td>
-                <td>25.88</td>
-                <td>22.39</td>
-                <td>20.62</td>
+                <td>$1.20\times$ / $[1.950, 1.0, 1.450]$</td>
+                <td>26.52</td>
+                <td>22.78</td>
+                <td>25.27</td>
                 <td>22.89</td>
                 <td>26.57</td>
                 <td>29.14</td>
-                <td>21.24</td>
                 <td>21.37</td>
-                <td>21.39</td>
-                <td>0.0235</td>
+                <td>21.62</td>
+                <td>21.59</td>
+                <td>0.0230</td>
               </tr>
               <tr>
                 <td>9. <strong>Google Pixel Daylight</strong> (14-bit <code>.DNG</code>)</td>
                 <td>$1.20\times$ / $[1.950, 1.0, 1.450]$</td>
-                <td>27.49</td>
-                <td>22.49</td>
-                <td>28.84</td>
+                <td>31.36</td>
+                <td>26.35</td>
+                <td>28.01</td>
                 <td>26.65</td>
                 <td>31.45</td>
                 <td>33.56</td>
-                <td>21.84</td>
-                <td>22.22</td>
-                <td>22.14</td>
-                <td>0.0750</td>
+                <td>23.43</td>
+                <td>23.00</td>
+                <td>22.84</td>
+                <td>0.0555</td>
               </tr>
               <tr>
                 <td>10. <strong>Google Pixel Indoor</strong> (14-bit <code>.DNG</code>)</td>
                 <td>$1.20\times$ / $[1.950, 1.0, 1.450]$</td>
-                <td>31.34</td>
-                <td>16.92</td>
-                <td>29.49</td>
+                <td>32.87</td>
+                <td>29.44</td>
+                <td>31.93</td>
                 <td>30.00</td>
                 <td>35.75</td>
                 <td>36.51</td>
-                <td>15.99</td>
-                <td>16.08</td>
-                <td>15.72</td>
-                <td>0.1735</td>
+                <td>15.51</td>
+                <td>15.55</td>
+                <td>15.38</td>
+                <td>0.1467</td>
               </tr>
               <tr class="subtotal-row">
                 <td><strong>10-Camera Mean (Fixed Global)</strong></td>
                 <td>&mdash;</td>
-                <td>27.64</td>
-                <td>22.42</td>
-                <td>26.36</td>
+                <td>28.83</td>
+                <td>24.95</td>
+                <td>27.52</td>
                 <td>25.45</td>
                 <td>30.01</td>
                 <td>32.20</td>
@@ -1755,16 +1755,16 @@
               <tr class="summary-row">
                 <td><strong>Gain of Native Metadata (Table 3)</strong></td>
                 <td>&mdash;</td>
-                <td class="highlight-val">+2.81</td>
-                <td class="highlight-val">+2.25</td>
-                <td class="highlight-val">+0.42</td>
+                <td class="highlight-val">+1.62</td>
+                <td>&minus;0.28</td>
+                <td>&minus;0.74</td>
                 <td>+0.00</td>
                 <td>+0.00</td>
                 <td>+0.00</td>
                 <td class="highlight-val">+3.54</td>
-                <td class="highlight-val">+3.77</td>
-                <td class="highlight-val">+4.09 dB</td>
-                <td class="highlight-val">5.70&times; lower</td>
+                <td class="highlight-val">+3.70</td>
+                <td class="highlight-val">+4.08 dB</td>
+                <td class="highlight-val">5.84&times; lower</td>
               </tr>
             </tbody>
           </table>
@@ -1925,13 +1925,13 @@
 
         <h3>Appendix D: Full-Page 512&times;512 Multi-Camera &amp; Stage/Operator Galleries</h3>
         <div class="figure-card span-all">
-          <img src="figures/fig_supp_gallery_10cam.png" alt="Full-Page 512x512 Qualitative Gallery Across All 10 Unseen Hardware Cameras" loading="lazy" decoding="async">
+          <img src="figures/comp_fig_supp_gallery_10cam.webp" alt="Full-Page 512x512 Qualitative Gallery Across All 10 Unseen Hardware Cameras" loading="lazy" decoding="async">
           <div class="figure-caption">
             <strong>Fig. 5 (Gallery I). Full-Page $512\times 512$ Qualitative Gallery Across All 10 Unseen Hardware Cameras and $3\times$ Zoomed Quads.</strong> Left metadata reports canonical $128\times 128$ <strong>Table 3</strong> progression (<code>T3</code>) and $512\times 512$ gains over flat 0th-order steering [4]; under-tile values give $512\times 512$ PSNR. Each rightmost quad shows $3\times$ crops of the highlighted orange ROI (<code>TL</code>: 0th-Order [4], <code>TR</code>: Ours 0-Net, <code>BL</code>: Ours $+4$-Step DDIM, <code>BR</code>: Pixel-ISP GT).
           </div>
         </div>
         <div class="figure-card span-all">
-          <img src="figures/fig_supp_stage_and_ops.png" alt="Full-Page Pipeline Evolution Across Stages 0-6 and Class II / III Operator Dissections" loading="lazy" decoding="async">
+          <img src="figures/comp_fig_supp_stage_and_ops.webp" alt="Full-Page Pipeline Evolution Across Stages 0-6 and Class II / III Operator Dissections" loading="lazy" decoding="async">
           <div class="figure-caption">
             <strong>Fig. 6 (Gallery II). Full-Page Pipeline Evolution Across <code>Stages 0&ndash;6</code> and Class II / Class III Operator Dissections.</strong> <strong>(a)</strong> Progressive latent execution from unprocessed Bayer RAW through Class I linear operators (<code>Stages 1&ndash;3</code>), Class II <code>1:4:1</code> Simpson + $J_{3\times 3}$ (<code>Stage 4</code>), Class III spatial kernels (<code>Stage 5</code>), and $D_4$-symmetric 4-step DDIM refinement (<code>Stage 6</code>) on 5 diverse cameras at $512\times 512$; <strong>(b-1)</strong> Standalone Class II Jensen bias heatmaps ($8\times 8$ DC error reduced by $+2.95$ to $+7.11\text{ dB}$) and $3\times 3$ Secant AC cast removal (<code>Pixel Daylight</code> $+8.25\text{ dB}$, <code>OpenISP</code> $+5.26\text{ dB}$); <strong>(b-2)</strong> Standalone Class III $13$-D Legendre projectors and $3\times 3$ bilateral NR, Laplacian EEH, and local tone mapping operating strictly on the $1/64$ latent grid.
           </div>

@@ -285,7 +285,7 @@
 
       const foot = document.createElement("footer");
       foot.className = "sb-foot";
-      foot.innerHTML = `Samsung Electronics · S.LSI Sensor Business Team — 200MP ISOCELL &amp; E2E AI Remosaic Project Guidebook · Yongjoon Song, Ph.D. · Build 2026-11-02 (<code>c1f9ffd</code>)`;
+      foot.innerHTML = `Samsung Electronics · S.LSI Sensor Business Team — 200MP ISOCELL &amp; E2E AI Remosaic Project Guidebook · Yongjoon Song, Ph.D. · Build 2026-11-16 (<code>008d628</code>)`;
       main.appendChild(foot);
     });
   }

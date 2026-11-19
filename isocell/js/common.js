@@ -285,7 +285,7 @@
 
       const foot = document.createElement("footer");
       foot.className = "sb-foot";
-      foot.innerHTML = `삼성전자 S.LSI 센서사업팀 — 200MP ISOCELL &amp; E2E AI Remosaic 프로젝트 가이드북 · 송용준 박사 (Yongjoon Song, Ph.D.) · Build 2026-11-02 (<code>c1f9ffd</code>)`;
+      foot.innerHTML = `삼성전자 S.LSI 센서사업팀 — 200MP ISOCELL &amp; E2E AI Remosaic 프로젝트 가이드북 · 송용준 박사 (Yongjoon Song, Ph.D.) · Build 2026-11-16 (<code>008d628</code>)`;
       main.appendChild(foot);
     });
   }

@@ -8,11 +8,11 @@
 <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/katex@0.16.11/dist/katex.min.css">
 <script defer src="https://cdn.jsdelivr.net/npm/katex@0.16.11/dist/katex.min.js"></script>
 <script defer src="https://cdn.jsdelivr.net/npm/katex@0.16.11/dist/contrib/auto-render.min.js"></script>
-<link rel="stylesheet" href="../css/style.css?v=c1f9ffd">
-<link rel="stylesheet" href="../css/glossary-tooltips.css?v=c1f9ffd">
-<script src="../js/glossary-data.js?v=c1f9ffd"></script>
-<script src="../js/common.js?v=c1f9ffd"></script>
-<script defer src="../js/glossary-tooltips.js?v=c1f9ffd"></script>
+<link rel="stylesheet" href="../css/style.css?v=008d628">
+<link rel="stylesheet" href="../css/glossary-tooltips.css?v=008d628">
+<script src="../js/glossary-data.js?v=008d628"></script>
+<script src="../js/common.js?v=008d628"></script>
+<script defer src="../js/glossary-tooltips.js?v=008d628"></script>
 </head>
 <body data-chapter="life" data-root="../">
 <main class="chapter">
@@ -21,9 +21,9 @@
     <h1>Data Pipeline Automation, Zero-Dependency OOXML Engine &amp; Multimodal Vision Studio</h1>
     <p class="lead">
       This chapter dissects <strong>Theme 5 (<code>5_Household_and_Life_Automation</code>)</strong> (<a class="src" href="../../5_Household_and_Life_Automation/README.md" target="_blank" rel="noopener" title="5_Household_and_Life_Automation/README.md">Theme 5 README.md</a>), which brings lab-proven data pipelines, computer vision, and multimodal AI to real-world financial data processing and large-scale media indexing.
-      We examine the <strong>Ledger Analytics Engine &amp; Zero-Dependency OOXML Builder</strong> (<a class="src" href="../../5_Household_and_Life_Automation/1_Household_Finance/analyzer.py#L14" target="_blank" rel="noopener" title="5_Household_and_Life_Automation/1_Household_Finance/analyzer.py:14">analyzer.py:14</a>, <a class="src" href="../../5_Household_and_Life_Automation/1_Household_Finance/xlsx_writer.py#L10" target="_blank" rel="noopener" title="5_Household_and_Life_Automation/1_Household_Finance/xlsx_writer.py:10">xlsx_writer.py:10</a>) that eliminates statistical distortion through refund sign preservation and 2-Track aggregation,
-      the <strong>Multimodal Vision Studio</strong> (<a class="src" href="../../5_Household_and_Life_Automation/4_Photo_Memory_Studio/server.py#L30" target="_blank" rel="noopener" title="5_Household_and_Life_Automation/4_Photo_Memory_Studio/server.py:30">server.py:30</a>, <a class="src" href="../../5_Household_and_Life_Automation/4_Photo_Memory_Studio/face_engine.py#L31" target="_blank" rel="noopener" title="5_Household_and_Life_Automation/4_Photo_Memory_Studio/face_engine.py:31">face_engine.py:31</a>) powered by <strong>YuNet · SFace 128-D · YOLO11n · RAG</strong>,
-      and the <strong>Offline Map Web Planner &amp; Automated PPTX Deck Engine</strong> (<a class="src" href="../../5_Household_and_Life_Automation/2_Travel_and_Trip_Planners/2026_Osaka/data/destinations.json#L2" target="_blank" rel="noopener" title="5_Household_and_Life_Automation/2_Travel_and_Trip_Planners/2026_Osaka/data/destinations.json:2">destinations.json:2</a>, <a class="src" href="../../5_Household_and_Life_Automation/3_Automated_Trip_Reporter/make_ppt_v3.py" target="_blank" rel="noopener" title="5_Household_and_Life_Automation/3_Automated_Trip_Reporter/make_ppt_v3.py">make_ppt_v3.py</a>).
+      We examine the <strong>Ledger Analytics Engine &amp; Zero-Dependency OOXML Builder</strong> (<a class="src" href="../../5_Household_and_Life_Automation/1_Household_Finance/analyzer.py#L15" target="_blank" rel="noopener" title="5_Household_and_Life_Automation/1_Household_Finance/analyzer.py:15">analyzer.py:15</a>, <a class="src" href="../../5_Household_and_Life_Automation/1_Household_Finance/xlsx_writer.py#L10" target="_blank" rel="noopener" title="5_Household_and_Life_Automation/1_Household_Finance/xlsx_writer.py:10">xlsx_writer.py:10</a>) that eliminates statistical distortion through refund sign preservation and 2-Track aggregation,
+      the <strong>Multimodal Vision Studio</strong> (<a class="src" href="../../5_Household_and_Life_Automation/3_Photo_Memory_Studio/server.py#L30" target="_blank" rel="noopener" title="5_Household_and_Life_Automation/3_Photo_Memory_Studio/server.py:30">server.py:30</a>, <a class="src" href="../../5_Household_and_Life_Automation/3_Photo_Memory_Studio/face_engine.py#L31" target="_blank" rel="noopener" title="5_Household_and_Life_Automation/3_Photo_Memory_Studio/face_engine.py:31">face_engine.py:31</a>) powered by <strong>YuNet · SFace 128-D · YOLO11n · RAG</strong>,
+      and the <strong>Offline Map Web Planner &amp; Automated PPTX Deck Engine</strong> (<a class="src" href="../../5_Household_and_Life_Automation/2_Travel_Hub/trips/2026_Osaka/data/destinations.json#L2" target="_blank" rel="noopener" title="5_Household_and_Life_Automation/2_Travel_Hub/trips/2026_Osaka/data/destinations.json:2">destinations.json:2</a>, <a class="src" href="../../5_Household_and_Life_Automation/2_Travel_Hub/trips/2026_SanFrancisco/legacy_pptx/make_ppt_v3.py" target="_blank" rel="noopener" title="5_Household_and_Life_Automation/2_Travel_Hub/trips/2026_SanFrancisco/legacy_pptx/make_ppt_v3.py">make_ppt_v3.py</a>).
     </p>
     <ul class="objectives">
       <li>Verify the accounting invariants of authorization/billing deduplication, <strong>refund sign preservation (<code>spend(tx) = -tx['amount']</code>)</strong>, and <strong>Pure Expense vs. Fixed Financial Burden 2-Track separation</strong>.</li>
@@ -38,7 +38,7 @@
       Naively summing authorization logs, billing statements, and bank transfer ledgers exported from heterogeneous financial institutions introduces four major accounting distortions:
       (1) <strong>authorization-vs-billing duplicate entries</strong>, (2) <strong>expense inflation caused by taking absolute values (<code>abs</code>) of cancellations and refunds</strong>,
       (3) <strong>double-counting of internal transfers between own/family accounts</strong>, and (4) <strong>mixing rigid fixed obligations (<code>financial_burden</code>) with variable operating expenses (pure consumption)</strong>.
-      <code>1_Household_Finance</code> resolves all four via the three-stage pipeline <a class="src" href="../../5_Household_and_Life_Automation/1_Household_Finance/parser.py#L664" target="_blank" rel="noopener" title="5_Household_and_Life_Automation/1_Household_Finance/parser.py:664">parser.py:664</a> → <a class="src" href="../../5_Household_and_Life_Automation/1_Household_Finance/analyzer.py#L14" target="_blank" rel="noopener" title="5_Household_and_Life_Automation/1_Household_Finance/analyzer.py:14">analyzer.py:14</a> → <a class="src" href="../../5_Household_and_Life_Automation/1_Household_Finance/xlsx_writer.py#L10" target="_blank" rel="noopener" title="5_Household_and_Life_Automation/1_Household_Finance/xlsx_writer.py:10">xlsx_writer.py:10</a>.
+      <code>1_Household_Finance</code> resolves all four via the three-stage pipeline <a class="src" href="../../5_Household_and_Life_Automation/1_Household_Finance/parser.py#L664" target="_blank" rel="noopener" title="5_Household_and_Life_Automation/1_Household_Finance/parser.py:664">parser.py:664</a> → <a class="src" href="../../5_Household_and_Life_Automation/1_Household_Finance/analyzer.py#L15" target="_blank" rel="noopener" title="5_Household_and_Life_Automation/1_Household_Finance/analyzer.py:15">analyzer.py:15</a> → <a class="src" href="../../5_Household_and_Life_Automation/1_Household_Finance/xlsx_writer.py#L10" target="_blank" rel="noopener" title="5_Household_and_Life_Automation/1_Household_Finance/xlsx_writer.py:10">xlsx_writer.py:10</a>.
     </p>
 
     <figure class="diagram">
@@ -118,18 +118,18 @@
     <h3 id="sec-finance-math">Core Accounting Invariants in <code>analyzer.py</code></h3>
     <ol>
       <li>
-        <strong>Refund Sign-Preservation Rule (<a class="src" href="../../5_Household_and_Life_Automation/1_Household_Finance/analyzer.py#L14" target="_blank" rel="noopener" title="5_Household_and_Life_Automation/1_Household_Finance/analyzer.py:14">analyzer.py:14</a>)</strong>:
+        <strong>Refund Sign-Preservation Rule (<a class="src" href="../../5_Household_and_Life_Automation/1_Household_Finance/analyzer.py#L15" target="_blank" rel="noopener" title="5_Household_and_Life_Automation/1_Household_Finance/analyzer.py:15">analyzer.py:15</a>)</strong>:
         In normalized ledger records, standard outflows carry negative amounts ($\text{amount} \lt 0$) while cancellations and refunds carry positive amounts ($\text{amount} \gt 0$).
         Applying <code>abs(tx['amount'])</code> during expense summation would miscalculate a $100$-unit payment followed by a $100$-unit refund as $200$ of net spending instead of $0$.
         Therefore, <code>spend(tx)</code> strictly applies the unary negation operator <code>-tx['amount']</code>:
         $$\text{spend}(\text{tx}) = -\text{tx}[\text{'amount'}], \qquad \sum_{i} \text{spend}(\text{tx}_i) = \sum_{\text{pay}} |\text{amount}| - \sum_{\text{refund}} |\text{amount}|$$
       </li>
       <li>
-        <strong>Dual-Track Aggregation: Pure Expense vs. Fixed Financial Burden (<a class="src" href="../../5_Household_and_Life_Automation/1_Household_Finance/analyzer.py#L60" target="_blank" rel="noopener" title="5_Household_and_Life_Automation/1_Household_Finance/analyzer.py:60">analyzer.py:60</a>, <a class="src" href="../../5_Household_and_Life_Automation/1_Household_Finance/analyzer.py#L77" target="_blank" rel="noopener" title="5_Household_and_Life_Automation/1_Household_Finance/analyzer.py:77">analyzer.py:77</a>)</strong>:
+        <strong>Dual-Track Aggregation: Pure Expense vs. Fixed Financial Burden (<a class="src" href="../../5_Household_and_Life_Automation/1_Household_Finance/analyzer.py#L61" target="_blank" rel="noopener" title="5_Household_and_Life_Automation/1_Household_Finance/analyzer.py:61">analyzer.py:61</a>, <a class="src" href="../../5_Household_and_Life_Automation/1_Household_Finance/analyzer.py#L78" target="_blank" rel="noopener" title="5_Household_and_Life_Automation/1_Household_Finance/analyzer.py:78">analyzer.py:78</a>)</strong>:
         Rigid obligations such as fixed financing costs and taxes (<code>tx['financial_burden'] == True</code>) are separated from variable operating expenses (Pure Expense), producing independent worksheet tabs for real monthly consumption versus total cash outflow.
       </li>
       <li>
-        <strong>Internal Transfer Netting (<a class="src" href="../../5_Household_and_Life_Automation/1_Household_Finance/analyzer.py#L22" target="_blank" rel="noopener" title="5_Household_and_Life_Automation/1_Household_Finance/analyzer.py:22">analyzer.py:22</a>) &amp; Complete-Month Coverage Filtering (<a class="src" href="../../5_Household_and_Life_Automation/1_Household_Finance/analyzer.py#L120" target="_blank" rel="noopener" title="5_Household_and_Life_Automation/1_Household_Finance/analyzer.py:120">analyzer.py:120</a>)</strong>:
+        <strong>Internal Transfer Netting (<a class="src" href="../../5_Household_and_Life_Automation/1_Household_Finance/analyzer.py#L23" target="_blank" rel="noopener" title="5_Household_and_Life_Automation/1_Household_Finance/analyzer.py:23">analyzer.py:23</a>) &amp; Complete-Month Coverage Filtering (<a class="src" href="../../5_Household_and_Life_Automation/1_Household_Finance/analyzer.py#L120" target="_blank" rel="noopener" title="5_Household_and_Life_Automation/1_Household_Finance/analyzer.py:120">analyzer.py:120</a>)</strong>:
         Transfers between accounts belonging to the same household entity (<code>is_internal</code>) are reconciled and excluded, while <code>month_coverage()</code> filters out partially collected months so they cannot skew annual monthly average benchmarks.
       </li>
       <li>
@@ -184,28 +184,28 @@
   </section>
 
   <section id="sec-photo-studio">
-    <h2>AI Vision Studio (<code>4_Photo_Memory_Studio</code>) Multimodal Architecture</h2>
+    <h2>AI Vision Studio (<code>3_Photo_Memory_Studio</code>) Multimodal Architecture</h2>
     <p>
       To browse, compare, and curate a massive local media archive safely without re-uploading to external clouds,
-      <code>4_Photo_Memory_Studio</code> is architected around four core modules:
+      <code>3_Photo_Memory_Studio</code> is architected around four core modules:
     </p>
     <ul>
       <li>
-        <strong>Read-Only Indexer &amp; EXIF Normalization (<a class="src" href="../../5_Household_and_Life_Automation/4_Photo_Memory_Studio/indexer.py#L24" target="_blank" rel="noopener" title="5_Household_and_Life_Automation/4_Photo_Memory_Studio/indexer.py:24">indexer.py:24</a>)</strong>:
+        <strong>Read-Only Indexer &amp; EXIF Normalization (<a class="src" href="../../5_Household_and_Life_Automation/3_Photo_Memory_Studio/indexer.py#L24" target="_blank" rel="noopener" title="5_Household_and_Life_Automation/3_Photo_Memory_Studio/indexer.py:24">indexer.py:24</a>)</strong>:
         Scans <code>PHOTOS_ROOT</code> in strict Read-Only mode, indexing EXIF capture timestamps (<code>normalize_exif_datetime</code>) and media metadata into a local SQLite database.
       </li>
       <li>
-        <strong>YuNet Detection + SFace 128-D Face Recognition (<a class="src" href="../../5_Household_and_Life_Automation/4_Photo_Memory_Studio/face_engine.py#L31" target="_blank" rel="noopener" title="5_Household_and_Life_Automation/4_Photo_Memory_Studio/face_engine.py:31">face_engine.py:31</a>, <a class="src" href="../../5_Household_and_Life_Automation/4_Photo_Memory_Studio/face_engine.py#L29" target="_blank" rel="noopener" title="5_Household_and_Life_Automation/4_Photo_Memory_Studio/face_engine.py:29">face_engine.py:29</a>)</strong>:
+        <strong>YuNet Detection + SFace 128-D Face Recognition (<a class="src" href="../../5_Household_and_Life_Automation/3_Photo_Memory_Studio/face_engine.py#L31" target="_blank" rel="noopener" title="5_Household_and_Life_Automation/3_Photo_Memory_Studio/face_engine.py:31">face_engine.py:31</a>, <a class="src" href="../../5_Household_and_Life_Automation/3_Photo_Memory_Studio/face_engine.py#L29" target="_blank" rel="noopener" title="5_Household_and_Life_Automation/3_Photo_Memory_Studio/face_engine.py:29">face_engine.py:29</a>)</strong>:
         Aligns 5-point facial landmarks via <code>cv2.FaceDetectorYN</code> (YuNet) and extracts $128$-dimensional feature embeddings $\mathbf{u}, \mathbf{v} \in \mathbb{R}^{128}$ via <code>cv2.FaceRecognizerSF</code> (SFace).
         Faces whose cosine similarity meets or exceeds <strong><code>MATCH_THRESHOLD = 0.360</code></strong> are clustered as the same identity:
         $$\text{sim}(\mathbf{u}, \mathbf{v}) = \frac{\mathbf{u} \cdot \mathbf{v}}{\|\mathbf{u}\|_2 \, \|\mathbf{v}\|_2} \ge 0.360$$
       </li>
       <li>
-        <strong>YOLO11n Semantic Concept Tag Mapper (<a class="src" href="../../5_Household_and_Life_Automation/4_Photo_Memory_Studio/detector.py#L23" target="_blank" rel="noopener" title="5_Household_and_Life_Automation/4_Photo_Memory_Studio/detector.py:23">detector.py:23</a>)</strong>:
+        <strong>YOLO11n Semantic Concept Tag Mapper (<a class="src" href="../../5_Household_and_Life_Automation/3_Photo_Memory_Studio/detector.py#L23" target="_blank" rel="noopener" title="5_Household_and_Life_Automation/3_Photo_Memory_Studio/detector.py:23">detector.py:23</a>)</strong>:
         Maps natural-language concept queries directly to COCO object detection classes via the <code>CONCEPT_TO_YOLO_CLASSES</code> dictionary.
       </li>
       <li>
-        <strong>Knowledge-Graph (<code>FAMILY_GRAPH</code>) Multimodal RAG Agent (<a class="src" href="../../5_Household_and_Life_Automation/4_Photo_Memory_Studio/gemini_agent.py#L23" target="_blank" rel="noopener" title="5_Household_and_Life_Automation/4_Photo_Memory_Studio/gemini_agent.py:23">gemini_agent.py:23</a>, <a class="src" href="../../5_Household_and_Life_Automation/4_Photo_Memory_Studio/server.py#L30" target="_blank" rel="noopener" title="5_Household_and_Life_Automation/4_Photo_Memory_Studio/server.py:30">server.py:30</a>)</strong>:
+        <strong>Knowledge-Graph (<code>FAMILY_GRAPH</code>) Multimodal RAG Agent (<a class="src" href="../../5_Household_and_Life_Automation/3_Photo_Memory_Studio/gemini_agent.py#L23" target="_blank" rel="noopener" title="5_Household_and_Life_Automation/3_Photo_Memory_Studio/gemini_agent.py:23">gemini_agent.py:23</a>, <a class="src" href="../../5_Household_and_Life_Automation/3_Photo_Memory_Studio/server.py#L30" target="_blank" rel="noopener" title="5_Household_and_Life_Automation/3_Photo_Memory_Studio/server.py:30">server.py:30</a>)</strong>:
         Injects structured metadata graphs into a multimodal agent to power natural-language media retrieval.
       </li>
     </ul>
@@ -214,7 +214,7 @@
   <section id="sec-sim-photo">
     <h2>Interactive Simulator · SFace 128-D Matching &amp; Dual-Viewer Split-Wipe</h2>
     <p>
-      The simulator below reproduces the core UI of <code>4_Photo_Memory_Studio</code> in the browser: the <strong>Dual-Viewer Split-Wipe A/B Comparator</strong>,
+      The simulator below reproduces the core UI of <code>3_Photo_Memory_Studio</code> in the browser: the <strong>Dual-Viewer Split-Wipe A/B Comparator</strong>,
       <strong>non-destructive exposure ($\Delta\text{EV}$) &amp; color-temperature grading with a live RGB histogram</strong>, and <strong>SFace 128-D cosine similarity threshold filtering</strong>.
     </p>
 
@@ -257,15 +257,15 @@
   </section>
 
   <section id="sec-travel-ppt">
-    <h2>Offline Map Web Planner (<code>2_Travel_and_Trip_Planners</code>) &amp; Automated PPTX Builder</h2>
+    <h2>Unified Travel Hub (<code>2_Travel_Hub</code>) — Offline Map Web Planner, Dual Edition &amp; PPTX Builder</h2>
     <ul>
       <li>
-        <strong>Offline-First Web Planner SPA (<a class="src" href="../../5_Household_and_Life_Automation/2_Travel_and_Trip_Planners/2026_Osaka/data/destinations.json#L2" target="_blank" rel="noopener" title="5_Household_and_Life_Automation/2_Travel_and_Trip_Planners/2026_Osaka/data/destinations.json:2">destinations.json:2</a>)</strong>:
+        <strong>Offline-First Web Planner SPA (<a class="src" href="../../5_Household_and_Life_Automation/2_Travel_Hub/trips/2026_Osaka/data/destinations.json#L2" target="_blank" rel="noopener" title="5_Household_and_Life_Automation/2_Travel_Hub/trips/2026_Osaka/data/destinations.json:2">destinations.json:2</a>)</strong>:
         Embeds a curated JSON database of <strong>6 POI spots</strong> into a single offline-capable web application featuring category filters, day-by-day route timelines, and synchronized Leaflet map markers.
       </li>
       <li>
-        <strong>16:9 Widescreen Report Deck Builder (<a class="src" href="../../5_Household_and_Life_Automation/3_Automated_Trip_Reporter/make_ppt_v3.py" target="_blank" rel="noopener" title="5_Household_and_Life_Automation/3_Automated_Trip_Reporter/make_ppt_v3.py">make_ppt_v3.py</a>)</strong>:
-        Uses <code>python-pptx</code> to programmatically assemble executive summary cards, comparison tables, and architecture diagram slides on a pixel-accurate widescreen grid.
+        <strong>16:9 Widescreen Report Deck Builder (<a class="src" href="../../5_Household_and_Life_Automation/2_Travel_Hub/trips/2026_SanFrancisco/legacy_pptx/make_ppt_v3.py" target="_blank" rel="noopener" title="5_Household_and_Life_Automation/2_Travel_Hub/trips/2026_SanFrancisco/legacy_pptx/make_ppt_v3.py">make_ppt_v3.py</a>)</strong>:
+        Uses <code>python-pptx</code> to programmatically assemble executive summary cards, comparison tables, and architecture diagram slides on a pixel-accurate widescreen grid alongside the Dual-Edition web reporter engine in <code>2_Travel_Hub/engine/</code>.
       </li>
     </ul>
   </section>
@@ -286,15 +286,15 @@
         body: "A three-stage data pipeline comprising authorization/billing deduplication in parser.py, refund sign preservation (-tx['amount']) and 2-Track split aggregation in analyzer.py, and a zero-dependency ZIP/XML Excel writer in xlsx_writer.py."
       },
       "life-travel": {
-        title: "SUITE 2 · 2_Travel_and_Trip_Planners (Offline JSON & Leaflet Web SPA)",
-        body: "An offline-capable responsive web application for exploring 100 curated POI coordinates and day-by-day itineraries stored in destinations.json with interactive map markers and timelines."
+        title: "SUITE 2A · 2_Travel_Hub/trips (Offline JSON, Leaflet SPA & Settlement)",
+        body: "An offline-capable responsive web application and post-trip settlement hub exploring 100 curated POI coordinates and day-by-day itineraries stored in destinations.json."
       },
       "life-ppt": {
-        title: "SUITE 3 · 3_Automated_Trip_Reporter (make_ppt_v3.py)",
-        body: "A deterministic Python presentation engine that compiles trip logs and technical comparison tables into standardized 16:9 widescreen .pptx slide decks."
+        title: "SUITE 2B · 2_Travel_Hub/engine + legacy_pptx (Dual-Edition Web & make_ppt_v3.py)",
+        body: "Combines the Dual-Edition 200MP/360° Dewarp web reporter engine (build_reports.py) with the deterministic Python 16:9 widescreen .pptx presentation builder."
       },
       "life-photo": {
-        title: "SUITE 4 · 4_Photo_Memory_Studio (YuNet + SFace + YOLO11n + RAG)",
+        title: "SUITE 3 · 3_Photo_Memory_Studio (YuNet + SFace + YOLO11n + RAG)",
         body: "Mounts the Photos/ archive in Read-Only mode to provide SFace 128-D face recognition (cos >= 0.360), YOLO11n semantic tagging, dual-viewer Split-Wipe comparison, and Graph RAG retrieval."
       }
     };

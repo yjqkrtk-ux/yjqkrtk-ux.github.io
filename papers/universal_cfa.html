@@ -1006,7 +1006,7 @@
       </p>
 
       <h2 class="sec-title">3. Sensor Physics and Rate-Distortion Bounds</h2>
-      <h3 class="subsec-title">3.1 Clustered CFA Sampling and Strided Phase Aliasing</h3>
+      <h3 class="subsec-title">3.1 Clustered CFA Sampling and Phase Aliasing</h3>
       <p>
         Let $\mathbf{I}_{\mathrm{lin}} = \mathrm{clip}(\mathbf{X}, \epsilon, 1)^{\gamma}$ ($\gamma=2.2$) denote linear radiance and $M_c^{(q)} \in \{0,1\}^{1\times H\times W}$ ($c\in\{R,G,B\}$) denote $q\times q$ clustered RGGB indicator masks of tile period $p = 2q \in \{2,4,8\}$. Physical sensor capture under heteroscedastic noise $\boldsymbol{\eta}$ and $B$-bit ADC quantization $\mathcal{Q}_B$ follows:
       </p>
@@ -1017,7 +1017,7 @@
         Naive stride-2 stems ($s=2 &lt; p$) mix distinct translation cosets on $p \in \{4,8\}$ CFAs, inducing $22.00\text{ dB}$ ($2\times 2$) and $21.65\text{ dB}$ ($4\times 4$) zippering in Gen-1 stride-conv compressors (Table 3). Period-exact <code>PixelUnshuffle</code><sub>p</sub> isolates each photosite phase coset $(u,v) \in \{0,\dots,p-1\}^2$ into an alias-free $p^2$-channel tensor before compression.
       </p>
 
-      <h3 class="subsec-title">3.2 Rate-Distortion Limits Under Strict No-Raw-Retention</h3>
+      <h3 class="subsec-title">3.2 No-Raw-Retention Rate-Distortion Bounds</h3>
       <p>
         Under <strong>No-Raw-Retention</strong>, inference forms $\mathbf{y} \to \mathbf{r}_{\mathrm{int8}} \to \mathbf{z} \to \hat{\mathbf{X}}$. Partitioning $8\times 8\times 3 = 192$-dim patches with sorted covariance eigenvalues $\lambda_1 \ge \dots \ge \lambda_{192}$, the Eckart-Young-Mirsky rank-$C$ SVD ceiling satisfies:
       </p>
@@ -1028,8 +1028,8 @@
         evaluating on <code>BJDD_CVPR21</code> to $22.01\text{ dB}$ ($C=4$), <strong>$27.86\text{ dB}$ ($C=16$)</strong>, and $35.91\text{ dB}$ ($C=48$), while nonlinear $f=8, C=16$ clean-RGB VAEs saturate at $31.08\text{ dB}$ (<code>TAEF1</code>) and $33.84\text{ dB}$ (<code>FLUX.1</code>) on <code>BJDD_CVPR21</code> ($29.89 / 32.64\text{ dB}$ on <code>Kodak24</code>).
       </p>
 
-      <h2 class="sec-title">4. Proposed Single-Stream Universal CFA Architecture</h2>
-      <h3 class="subsec-title">4.1 Zone 1: Period-Matched Compressors and INT8 Bus</h3>
+      <h2 class="sec-title">4. Single-Stream Universal CFA Architecture</h2>
+      <h3 class="subsec-title">4.1 Zone 1: In-Sensor Phase-Aware Compression</h3>
       <p>
         Each sensor variant compiles a matched compressor (<code>BayerPhaseCompressor</code> $582.5\text{K}$, <code>TetracellPhaseCompressor</code> $572.1\text{K}$, <code>HexadecaPhaseCompressor</code> $413.7\text{K}$ at <code>b64</code>) using IMX500-safe permutation strided convs, GAP+$1\times 1$ <code>SELayer</code> recalibration [13], and symmetric INT8 STE quantization ($s=\max(|\mathbf{r}_{\mathrm{fp32}}|)/127$) [14] into $64.0\text{ KB}$ inside $0.84\text{--}4.65\text{ MB}$ of SRAM:
       </p>
@@ -1038,7 +1038,7 @@
         $$\mathbf{r}_{\mathrm{int8}} = s\,\mathrm{round}\!\left(\mathrm{clamp}(\mathbf{r}_{\mathrm{fp32}}/s, -127, 127)\right), \quad \mathbf{r} = \mathbf{r}_{\mathrm{fp32}} + \mathrm{sg}(\mathbf{r}_{\mathrm{int8}} - \mathbf{r}_{\mathrm{fp32}}). \qquad (5)$$
       </div>
 
-      <h3 class="subsec-title">4.2 Zone 2: Sensor-Invariant 16-Channel Host Translator</h3>
+      <h3 class="subsec-title">4.2 Zone 2: Sensor-Invariant Host Translator</h3>
       <p>
         Receiving $\mathbf{r}$ with zero CFA flags, <code>UnifiedLatentTranslator</code> ($\mathcal{T}_B$: $16\to 16$, $1,356,400$ params, 8 pre-activation residual blocks at width 96, zero-init identity output) maps $\mathbf{z} = \mathbf{r} + f_{\theta}(\mathbf{r})$ onto frozen <code>TAEF1</code> / <code>FLUX.1</code> latents ($\cos = 0.8767\text{--}0.8882$ on <code>BJDD</code>; $0.9029\text{--}0.9122$ on real <code>KLAP CIS</code>).
       </p>
@@ -1066,7 +1066,7 @@
         </div>
       </div>
 
-      <h3 class="subsec-title">4.3 Zone 3: Pure-z SE-PixelShuffle and Lapped Decoder</h3>
+      <h3 class="subsec-title">4.3 Zone 3: Pure-z Lapped Reconstruction</h3>
       <p>
         Decoding purely from $\mathbf{z}$ (<code>subband_ch=0</code>), <code>DemosaicPixelShuffleDecoder</code> ($3,212,742$ params: $1,229,443$ frozen <code>TAEF1</code> trunk + $1,983,299$ trainable parameters) fuses a pretrained <code>TAEF1</code> prior $\mathbf{X}_{\mathrm{taef1}}(\mathbf{z})$, a 3-stage $128\to 96\to 64\to 32$ <code>SE-PixelShuffle(2)</code> pyramid $\mathcal{U}_{\mathrm{SE\text{-}PS}}(\mathbf{z})$, and a $5\times 5$ cross-block lapped synthesis branch $\mathcal{H}_{\mathrm{lap}}(\mathbf{z}) = \mathrm{PixelShuffle}_8(\mathrm{Conv}_{5\times 5}^{\mathrm{reflect}}(\mathbf{z}))$ integrating $25$ latent neighbors ($40\times 40$ pixels) across macro-block boundaries:
       </p>
@@ -1078,7 +1078,7 @@
       </p>
 
       <h2 class="sec-title">5. Experimental Evaluation</h2>
-      <h3 class="subsec-title">5.1 Disjoint DIV2K Protocol and Baseline Reproduction</h3>
+      <h3 class="subsec-title">5.1 Disjoint Protocol and Baseline Setup</h3>
       <p>
         All models are trained from scratch on an NVIDIA RTX 5060 Ti ($16\text{ GB}$ VRAM, peak $7.40\text{ GB}$) using strictly <strong>774 <code>DIV2K</code> training images (<code>0001..0774</code>)</strong> [1] and validated on <strong>20 held-out <code>DIV2K</code> scenes (<code>0775..0797</code> excluding <code>0780, 0785, 0792</code>)</strong>, ensuring <strong>0.0% overlap</strong> against all 32 evaluation images (<code>BJDD_CVPR21</code>, <code>Kodak24</code>, <code>KLAP_ICCV23 CIS</code> [18], and <code>Remosaic Stress</code>). We also reproduce genuine pixel-domain <code>KLAPUnifiedModel</code> ($1.53\text{M}$) [18] and <code>MobileRemosaicNet</code> ($0.25\text{M}$) end-to-end on the same 774-image split alongside pretrained official <code>PIPNet</code> ($3.47\text{M}$) [25], reporting PSNR, MS-SSIM [28], and AlexNet LPIPS [33].
       </p>
@@ -1460,17 +1460,17 @@
         </table>
       </div>
 
-      <h3 class="subsec-title">5.2 Held-Out Multi-Suite Evaluation &amp; Factorized Ablations</h3>
+      <h3 class="subsec-title">5.2 Multi-Suite Evaluation, Ablations, &amp; Pareto Frontier</h3>
       <p>
-        Across all 32 unseen images (Tables 3–4, Figs. 2–4), our <code>b64</code> 64 KB INT8 model hits <strong>$29.03 / 28.57 / 27.29\text{ dB}$</strong> on <code>BJDD_CVPR21</code> (exceeding the $27.86\text{ dB}$ rank-16 SVD bound by $+1.17 / +0.71\text{ dB}$, Gen-1 4-ch SA8 LSP by $+6.70 / +6.49 / +6.14\text{ dB}$, and <code>Directional + MHC</code> on $4\times 4$ Hexadecacell by $+1.05\text{ dB}$), <strong>$29.36 / 29.13 / 28.30\text{ dB}$</strong> on <code>Kodak24</code> (MS-SSIM $0.9699 / 0.9653 / 0.9535$), and $\cos=0.9122 / 0.9098 / 0.9029$ on real <code>KLAP_ICCV23 CIS</code> frames. Under physical <code>ISO-200</code> noise (10-bit ADC), contraction inside SE macro-cells achieves <strong>$27.89 / 27.67 / 26.89\text{ dB}$</strong> (<strong>$+0.98 / +1.96\text{ dB}$ vs. MHC</strong>), with $\le 0.02\text{ dB}$ INT8 quantization drop vs. FP32. Scaling to $C=48$ ($192\text{ KB}$ INT8, Table 5, Fig. 5) reaches <strong>$33.34 / 29.78 / 28.38\text{ dB}$</strong> (<code>BJDD</code>) and <strong>$34.20 / 31.73 / 31.03\text{ dB}$</strong> (<code>Kodak24</code>).
+        Across all 32 unseen images (Tables 3–4, Figs. 2–4), our <code>b64</code> 64 KB INT8 model hits <strong>$29.03 / 28.57 / 27.29\text{ dB}$</strong> on <code>BJDD_CVPR21</code> (exceeding the $27.86\text{ dB}$ rank-16 SVD bound by $+1.17 / +0.71\text{ dB}$, Gen-1 4-ch SA8 LSP by $+6.70 / +6.49 / +6.14\text{ dB}$, and <code>Directional + MHC</code> on $4\times 4$ Hexadecacell by $+1.05\text{ dB}$), <strong>$29.36 / 29.13 / 28.30\text{ dB}$</strong> on <code>Kodak24</code> (MS-SSIM $0.9699 / 0.9653 / 0.9535$), and $\cos=0.9122 / 0.9098 / 0.9029$ on real <code>KLAP_ICCV23 CIS</code> frames ($0.8767\text{--}0.8882$ on <code>BJDD</code>) via the $40\times 40$ lapped synthesis head. Under physical <code>ISO-200</code> noise (10-bit ADC), contraction inside SE macro-cells achieves <strong>$27.89 / 27.67 / 26.89\text{ dB}$</strong> (<strong>$+0.98 / +1.96\text{ dB}$ vs. MHC</strong>), with $\le 0.02\text{ dB}$ INT8 quantization drop vs. FP32. Scaling to $C=48$ ($192\text{ KB}$ INT8, Table 5, Fig. 5) reaches <strong>$33.34 / 29.78 / 28.38\text{ dB}$</strong> (<code>BJDD</code>) and <strong>$34.20 / 31.73 / 31.03\text{ dB}$</strong> (<code>Kodak24</code>), partitioning into compact <code>b16</code> ($0.84\text{--}3.02\text{ MB}$), balanced <code>b32</code> ($1.56\text{ MB}$ Tetracell SRAM), and flagship <code>b64</code> ($1.47\text{--}3.37\text{ MB}$) deployment tiers.
       </p>
       <p>
-        <strong>Limitations:</strong> (i) Any $f=8, C=16$ bottleneck exhibits Nyquist roll-off on extreme synthetic zone plates (<code>02_chromatic_moire_gratings.png</code>); (ii) implemented compressors assume power-of-two tile periods $p\in\{2,4,8\}$, requiring fractional $4/3$ resampling for $3\times 3$ Nonacell ($p=6$).
+        <strong>Limitations:</strong> (i) Any $f=8, C=16$ bottleneck exhibits Nyquist roll-off on extreme synthetic zone plates in <code>Remosaic Stress</code> (<code>02_chromatic_moire_gratings.png</code>, where clean-RGB <code>TAEF1</code> saturates at $24.73\text{ dB}$); (ii) implemented compressors assume power-of-two tile periods $p\in\{2,4,8\}$, requiring fractional $4/3$ resampling for $3\times 3$ Nonacell ($p=6$).
       </p>
 
       <h2 class="sec-title">6. Conclusion</h2>
       <p>
-        We introduced <strong><code>SE-Universal-CFA</code></strong>, an asymmetric sensor-AP split-inference architecture unifying Bayer ($1\times 1$), Tetracell ($2\times 2$), and Hexadecacell ($4\times 4$) sensors onto a single 16-channel translator ($\mathcal{T}_B$: $16\to 16$) and a single 100% CFA-agnostic pure-$\mathbf{z}$ decoder ($\mathcal{D}_{\mathrm{rec}}(\mathbf{z})$) aligned with <code>FLUX.1</code> / <code>TAEF1</code> [3], [21]. Compressing in-sensor mosaics within $0.84\text{--}4.65\text{ MB}$ of Sony IMX500 SRAM ($11\%\text{--}59\%$ util.) into a standardized $64.0\text{ KB}$ INT8 stream ($5\text{--}8\times$ smaller than packed RAW, $&lt;0.02\text{ dB}$ quantization drop) achieves $29.03 / 28.57 / 27.29\text{ dB}$ on unseen <code>BJDD_CVPR21</code>, $29.36 / 29.13 / 28.30\text{ dB}$ on all 18 <code>Kodak24</code> scenes, $+0.98 / +1.96\text{ dB}$ gains under <code>ISO-200</code> noise, and scales smoothly to $34.20 / 31.73 / 31.03\text{ dB}$ at $C=48$.
+        We introduced <strong><code>SE-Universal-CFA</code></strong>, an asymmetric sensor-AP split-inference architecture unifying Bayer ($1\times 1$), Tetracell ($2\times 2$), and Hexadecacell ($4\times 4$) sensors onto a single 16-channel translator ($\mathcal{T}_B$: $16\to 16$) and a single 100% CFA-agnostic pure-$\mathbf{z}$ decoder ($\mathcal{D}_{\mathrm{rec}}(\mathbf{z})$) aligned with <code>FLUX.1</code> / <code>TAEF1</code> [3], [21]. Compressing in-sensor mosaics within $0.84\text{--}4.65\text{ MB}$ of Sony IMX500 SRAM ($11\%\text{--}59\%$ util.) into a standardized $64.0\text{ KB}$ INT8 stream ($5\text{--}8\times$ smaller than packed RAW, $48\times$ smaller than FP32 RGB, $&lt;0.02\text{ dB}$ quantization drop) achieves $29.03 / 28.57 / 27.29\text{ dB}$ on unseen <code>BJDD_CVPR21</code>, $29.36 / 29.13 / 28.30\text{ dB}$ on all 18 <code>Kodak24</code> scenes, $28.51 / 28.29 / 27.56\text{ dB}$ on real <code>KLAP CIS</code> frames ($\cos=0.903\text{--}0.912$), $+0.98 / +1.96\text{ dB}$ gains under <code>ISO-200</code> noise, and scales smoothly to $34.20 / 31.73 / 31.03\text{ dB}$ at $C=48$ alongside $2.90\text{ ms}$ ($30.0\text{ FPS}$) preview and one-pass ZSL capture.
       </p>
 
       <h2 class="sec-title">LLM Usage Statement</h2>

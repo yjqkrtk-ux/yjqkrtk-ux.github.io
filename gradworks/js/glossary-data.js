@@ -285,6 +285,17 @@ window.BOOK_GLOSSARY = {
       ]
     },
     {
+      "ko": "AI 다크팩토리 전환 시뮬레이터",
+      "en": "ReverseFactory 62-Node Migration Simulator",
+      "abbr": "ReverseFactory",
+      "def": "C#/.NET 10 코어·Unity 6·60fps HTML5 기반으로 7본부 22부서 62노드 제조 기업을 베테랑 LLM 심문, RuleDSL 컴파일, Shadow 패리티 게이트를 통해 무인 다크팩토리로 전환하는 시뮬레이터.",
+      "chapters": [
+        "overview",
+        "automation",
+        "notes"
+      ]
+    },
+    {
       "ko": "Casio FX-9860G 그래픽 엔진",
       "en": "Casio FX-9860G 128x64 1-Bit VRAM Engine",
       "abbr": "FX-SDK",
@@ -334,17 +345,17 @@ window.BOOK_GLOSSARY = {
       "ko": "오프라인 지도 웹 플래너",
       "en": "Offline-First JSON & Leaflet Web Planner",
       "abbr": "WebPlanner",
-      "def": "지역 명소 JSON 데이터베이스와 일차별 동선 타임라인, 예산 계산기, Leaflet 지도 마커를 결합한 반응형 단일 페이지 웹앱.",
+      "def": "2_Travel_Hub 내 7개 도시 트립(2024_Tokyo..2027_Danang)과 오사카 85선 JSON 데이터베이스, 일차별 동선 타임라인, 사후 정산, Leaflet 지도 마커를 결합한 반응형 웹앱.",
       "chapters": [
         "life",
         "archive"
       ]
     },
     {
-      "ko": "16:9 와이드스크린 PPTX 빌더",
-      "en": "Automated 16:9 Widescreen PPTX Deck Builder",
-      "abbr": "TripPPTX",
-      "def": "python-pptx를 활용해 다크 네이비 헤더, KPI 카드, 일정 타임라인, 비교 테이블 그리드를 13.333×7.5인치 슬라이드로 자동 조립하는 보고서 생성기.",
+      "ko": "듀얼 에디션 트립 리포터",
+      "en": "Dual-Edition 200MP/360 Web & PPTX Reporter",
+      "abbr": "TravelHub",
+      "def": "2_Travel_Hub의 Personal Master 및 Public_Share_Edition(204.5MP 초고화소 줌·360° Canvas2D 디워핑) 웹 리포터와 16:9 python-pptx 자동 슬라이드 빌더를 결합한 통합 엔진.",
       "chapters": [
         "life",
         "archive"
@@ -443,7 +454,7 @@ window.BOOK_GLOSSARY = {
       "ko": "AI 포토 메모리 스튜디오",
       "en": "AI Photo Memory Studio (Read-Only Media Indexer)",
       "abbr": "MemoryStudio",
-      "def": "Photos/ 원본을 읽기 전용(Read-Only)으로 마운트해 YuNet 얼굴 검출, SFace 128-D 임베딩, YOLO11n 객체 태그, 지식 그래프 RAG 검색 및 Split-Wipe 비교를 제공하는 로컬 웹 스튜디오.",
+      "def": "Photos/ 원본을 읽기 전용(Read-Only)으로 마운트하고 JSON 벡터·메타데이터 캐시(.cache/*.json)를 통해 YuNet 얼굴 검출, SFace 128-D 임베딩, YOLO11n 객체 태그, 지식 그래프 RAG 검색 및 Split-Wipe 비교를 제공하는 로컬 웹 스튜디오.",
       "chapters": [
         "archive",
         "life"
@@ -453,7 +464,7 @@ window.BOOK_GLOSSARY = {
       "ko": "YuNet + SFace 128-D",
       "en": "YuNet Face Detector & SFace 128-D Embedding",
       "abbr": "SFace",
-      "def": "경량 얼굴 검출기 YuNet(conf≥0.6)과 128차원 L2 정규화 특징 벡터 SFace(코사인 유사도≥0.360)를 결합해 인물 클러스터링·검색을 수행하는 비전 파이프라인.",
+      "def": "경량 얼굴 검출기 YuNet(conf≥0.65)과 128차원 L2 정규화 특징 벡터 SFace(코사인 유사도 sim≥0.360, 코사인 거리 d_cos≤0.640)를 결합해 인물 클러스터링·검색을 수행하는 비전 파이프라인.",
       "chapters": [
         "archive",
         "life"

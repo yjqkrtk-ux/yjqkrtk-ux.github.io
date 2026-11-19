@@ -8,25 +8,25 @@
 <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/katex@0.16.11/dist/katex.min.css">
 <script defer src="https://cdn.jsdelivr.net/npm/katex@0.16.11/dist/katex.min.js"></script>
 <script defer src="https://cdn.jsdelivr.net/npm/katex@0.16.11/dist/contrib/auto-render.min.js"></script>
-<link rel="stylesheet" href="../css/style.css?v=008d628">
-<link rel="stylesheet" href="../css/glossary-tooltips.css?v=008d628">
-<script src="../js/glossary-data.js?v=008d628"></script>
-<script src="../js/common.js?v=008d628"></script>
-<script defer src="../js/glossary-tooltips.js?v=008d628"></script>
+<link rel="stylesheet" href="../css/style.css?v=75f4314">
+<link rel="stylesheet" href="../css/glossary-tooltips.css?v=75f4314">
+<script src="../js/glossary-data.js?v=75f4314"></script>
+<script src="../js/common.js?v=75f4314"></script>
+<script defer src="../js/glossary-tooltips.js?v=75f4314"></script>
 </head>
 <body data-chapter="automation" data-root="../">
 <main class="chapter">
   <header class="chapter-hero">
-    <div class="eyebrow">CHAPTER 04 · THEMES 3 &amp; 4 — INTELLIGENT AUTOMATION, MARKOV &amp; SPECIALTY SYSTEMS</div>
-    <h1>지능형 비전 자동화 · 마르코프 확률 모델링 &amp; 특수 임베디드 시스템</h1>
+    <div class="eyebrow">CHAPTER 04 · THEMES 3 &amp; 4 — INTELLIGENT AUTOMATION, REVERSEFACTORY &amp; SPECIALTY SYSTEMS</div>
+    <h1>지능형 비전 자동화 · 마르코프 확률 모델링 · ReverseFactory &amp; 특수 임베디드 시스템</h1>
     <p class="lead">
       복잡한 동적 소프트웨어 환경과 극한 하드웨어 제약 아래에서 자율 제어와 최적 의사결정을 달성하기 위해,
-      Theme 3(<a class="src" href="../../3_Intelligent_Automation/README.md" target="_blank" rel="noopener" title="3_Intelligent_Automation/README.md">Theme 3 README.md</a>, 7개 서브모듈)은 <strong>Win32 DirectInput 스캔코드 후킹 · 13-상태 비전 FSM · Faster R-CNN 객체 검출 · 흡수 마르코프 체인 · 제약 조합 최적화</strong>를 결합했고,
-      Theme 4(<a class="src" href="../../4_Specialty_Systems/README.md" target="_blank" rel="noopener" title="4_Specialty_Systems/README.md">Theme 4 README.md</a>, 4개 서브모듈)는 <strong>Casio FX-9860G 128×64 베어메탈 게임 엔진</strong>과 <strong>3GPP/WINNER II 3D MIMO 무선 채널 시뮬레이터</strong>를 구현했습니다.
+      Theme 3(<span class="src" title="kaist-grad-works: 3_Intelligent_Automation/README.md">Theme 3 README.md</span>, 8개 서브모듈 + <code>ReverseFactory</code>)은 <strong>Win32 DirectInput 스캔코드 후킹 · 13-상태 비전 FSM · Faster R-CNN 객체 검출 · 흡수 마르코프 체인 · 62노드 AI 다크팩토리 전환 시뮬레이터(<code>ReverseFactory</code>)</strong>를 결합했고,
+      Theme 4(<span class="src" title="kaist-grad-works: 4_Specialty_Systems/README.md">Theme 4 README.md</span>, 4개 서브모듈)는 <strong>Casio FX-9860G 128×64 베어메탈 게임 엔진</strong>과 <strong>3GPP/WINNER II 3D MIMO 무선 채널 시뮬레이터</strong>를 구현했습니다.
     </p>
     <ul class="objectives">
       <li>Win32 DirectInput 하드웨어 스캔코드 주입과 <strong>PyMaple 13-상태 우선순위 비전 상태 머신(FSM)</strong> 및 Faster R-CNN 검출 루프를 이해한다.</li>
-      <li>2연속 하락 시 100% 성공하는 비마르코프 찬스 타임을 1차 <strong>흡수 마르코프 체인(Absorbing Markov Chain)</strong>으로 정식화한 <code>StarForce.m</code> 모델을 실험한다.</li>
+      <li>2연속 하락 시 100% 성공하는 비마르코프 찬스 타임을 1차 <strong>흡수 마르코프 체인(Absorbing Markov Chain)</strong>으로 정식화한 <code>StarForce.m</code> 모델과 <strong>ReverseFactory</strong>(62노드 조직 트리 · 베테랑 LLM 심문 · Shadow 패리티 · RuleDSL 컴파일러)를 살펴본다.</li>
       <li><strong>Casio FX-9860G 1-bit VRAM 그래픽 엔진</strong>과 <strong>WINNER II 3D MIMO 다중경로 빔포밍(Sim 07)</strong>의 동작 원리를 확인한다.</li>
     </ul>
   </header>
@@ -35,93 +35,106 @@
     <h2>저수준 입력 드라이버 후킹 &amp; 13-상태 우선순위 비전 상태 머신</h2>
     <p>
       DirectX 기반 클라이언트 환경에서는 일반적인 운영체제 가상 키보드 이벤트(<code>keybd_event</code>)가 DirectInput 폴링 루프에 의해 차단됩니다.
-      이를 해결하기 위해 <code>CMaple</code>(C#)과 <code>PyMaple</code>(<a class="src" href="../../3_Intelligent_Automation/Vision_and_Driver_Automation/PyMaple/PyMaple2/pydetect.py#L4" target="_blank" rel="noopener" title="3_Intelligent_Automation/Vision_and_Driver_Automation/PyMaple/PyMaple2/pydetect.py:4">pydetect.py:4</a>)은 하드웨어 스캔코드(DIK Scancode) 주입 계층과
+      이를 해결하기 위해 <code>CMaple</code>(C#)과 <code>PyMaple</code>(<span class="src" title="kaist-grad-works: 3_Intelligent_Automation/Vision_and_Driver_Automation/PyMaple/PyMaple2/pydetect.py:4">pydetect.py:4</span>)은 하드웨어 스캔코드(DIK Scancode) 주입 계층과
       OpenCV + Faster R-CNN 멀티스케일 비전 피드백 루프를 계층화했습니다.
     </p>
 
     <figure class="diagram">
-      <svg id="auto-svg" viewBox="0 0 1080 320" xmlns="http://www.w3.org/2000/svg" role="img" aria-label="Themes 3 and 4 Intelligent Automation and Specialty Systems Pipeline">
+      <svg id="auto-svg" viewBox="0 0 1080 320" xmlns="http://www.w3.org/2000/svg" role="img" aria-label="Themes 3 and 4 Intelligent Automation, ReverseFactory, and Specialty Systems Pipeline">
         <defs>
           <marker id="auto-arr" viewBox="0 0 10 10" refX="8" refY="5" markerWidth="6" markerHeight="6" orient="auto-start-reverse">
             <path d="M 0 1 L 9 5 L 0 9 z" fill="var(--warn)" />
           </marker>
         </defs>
         <rect x="4" y="4" width="1072" height="312" rx="12" class="f-surface" />
-        <text x="24" y="28" class="t-warn">CLICKABLE ARCHITECTURE · THEME 3 VISION/MARKOV (7 MODS) &amp; THEME 4 MIMO/CASIO (4 MODS)</text>
+        <text x="24" y="28" class="t-warn">CLICKABLE ARCHITECTURE · THEME 3 VISION/MARKOV/REVERSEFACTORY (8+1) &amp; THEME 4 MIMO/CASIO (4 MODS)</text>
 
         <!-- Node 1: Vision FSM & Driver -->
         <g class="svg-node" data-node="auto-fsm">
-          <rect x="24" y="48" width="242" height="184" rx="9" class="f-warn-soft" />
-          <text x="38" y="74" class="t-warn">THEME 3A · VISION &amp; DRIVER</text>
-          <text x="38" y="98" class="t" font-weight="700">PyMaple · CMaple · Click</text>
-          <text x="38" y="120" class="t-dim">Win32 DirectInput Scancode</text>
-          <text x="38" y="140" class="t-dim">13-State Priority FSM (act)</text>
-          <text x="38" y="160" class="t-dim">Faster R-CNN Captcha Detector</text>
-          <text x="38" y="180" class="t-dim">PyMapleFCM Mobile Push</text>
-          <text x="38" y="212" class="t-mono">pydetect.py · Click_detection.py</text>
+          <rect x="24" y="48" width="194" height="184" rx="9" class="f-warn-soft" />
+          <text x="35" y="74" class="t-warn">THEME 3A · VISION FSM</text>
+          <text x="35" y="98" class="t" font-weight="700">PyMaple · CMaple · Click</text>
+          <text x="35" y="120" class="t-dim">DirectInput DIK Scancode</text>
+          <text x="35" y="140" class="t-dim">13-State Priority FSM</text>
+          <text x="35" y="160" class="t-dim">Faster R-CNN + FCM Push</text>
+          <text x="35" y="180" class="t-dim">Autohotkey · LOSTARK</text>
+          <text x="35" y="212" class="t-mono">pydetect.py · CMaple</text>
         </g>
 
         <!-- Node 2: StarForce Markov & Lophago -->
         <g class="svg-node is-selected" data-node="auto-markov">
-          <rect x="292" y="48" width="242" height="184" rx="9" class="f-acc2-soft" />
-          <text x="306" y="74" class="t-acc2">THEME 3B · STOCHASTIC &amp; OPT</text>
-          <text x="306" y="98" class="t" font-weight="700">StarForce &amp; Lophago Solver</text>
-          <text x="306" y="120" class="t-dim">0-&gt;22 Absorbing Markov Chain</text>
-          <text x="306" y="140" class="t-dim">Chance Time (fail==2 -&gt; 100%)</text>
-          <text x="306" y="160" class="t-dim">Destroy Reset (level = 12)</text>
-          <text x="306" y="180" class="t-dim">Relic/Ancient 5-Slot Pruning</text>
-          <text x="306" y="212" class="t-mono">StarForce.m · Lophago/main.py</text>
+          <rect x="236" y="48" width="194" height="184" rx="9" class="f-acc2-soft" />
+          <text x="247" y="74" class="t-acc2">THEME 3B · MARKOV &amp; OPT</text>
+          <text x="247" y="98" class="t" font-weight="700">StarForce &amp; Lophago</text>
+          <text x="247" y="120" class="t-dim">0-&gt;22 Absorbing Markov</text>
+          <text x="247" y="140" class="t-dim">Chance Time (fail==2)</text>
+          <text x="247" y="160" class="t-dim">Destroy Reset (lv = 12)</text>
+          <text x="247" y="180" class="t-dim">5-Slot Engraving Solver</text>
+          <text x="247" y="212" class="t-mono">StarForce.m · Lophago</text>
         </g>
 
-        <!-- Node 3: Embedded Casio Engines -->
+        <!-- Node 3: ReverseFactory AI Dark-Factory -->
+        <g class="svg-node" data-node="auto-revfac">
+          <rect x="448" y="48" width="196" height="184" rx="9" class="f-bad-soft" />
+          <text x="459" y="74" class="t-bad">THEME 3C · AI FACTORY</text>
+          <text x="459" y="98" class="t" font-weight="700">ReverseFactory (62-Node)</text>
+          <text x="459" y="120" class="t-dim">7 Div · 22 Dept · 62 Node</text>
+          <text x="459" y="140" class="t-dim">Veteran LLM &amp; Sniffer</text>
+          <text x="459" y="160" class="t-dim">RuleDSL &amp; Shadow Parity</text>
+          <text x="459" y="180" class="t-dim">60-Tick SLA &amp; Cash Gate</text>
+          <text x="459" y="212" class="t-mono">.NET 10 · Unity · HTML5</text>
+        </g>
+
+        <!-- Node 4: Embedded Casio Engines -->
         <g class="svg-node" data-node="auto-casio">
-          <rect x="560" y="48" width="240" height="184" rx="9" class="f-ok-soft" />
-          <text x="574" y="74" class="t-ok">THEME 4A · EMBEDDED SDK</text>
-          <text x="574" y="98" class="t" font-weight="700">Casio FX-9860G RPG &amp; RTS</text>
-          <text x="574" y="120" class="t-dim">SuperH-3 Bare-Metal C Engine</text>
-          <text x="574" y="140" class="t-dim">128x64 1-Bit VRAM Bit-Blit</text>
-          <text x="574" y="160" class="t-dim">Tile Collision &amp; RTS Unit AI</text>
-          <text x="574" y="180" class="t-dim">Algorithm_Sandbox (ETC)</text>
-          <text x="574" y="212" class="t-mono">Embedded_Casio_Engines/RPG,RTS</text>
+          <rect x="662" y="48" width="194" height="184" rx="9" class="f-ok-soft" />
+          <text x="673" y="74" class="t-ok">THEME 4A · CASIO SDK</text>
+          <text x="673" y="98" class="t" font-weight="700">FX-9860G RPG &amp; RTS</text>
+          <text x="673" y="120" class="t-dim">SuperH-3 Bare-Metal C</text>
+          <text x="673" y="140" class="t-dim">128x64 1-Bit VRAM Blit</text>
+          <text x="673" y="160" class="t-dim">Tile Collision &amp; Unit AI</text>
+          <text x="673" y="180" class="t-dim">Algorithm_Sandbox (ETC)</text>
+          <text x="673" y="212" class="t-mono">Casio_Engines/RPG,RTS</text>
         </g>
 
-        <!-- Node 4: WINNER II 3D MIMO -->
+        <!-- Node 5: WINNER II 3D MIMO -->
         <g class="svg-node" data-node="auto-mimo">
-          <rect x="826" y="48" width="230" height="184" rx="9" class="f-acc-soft" />
-          <text x="840" y="74" class="t-acc">THEME 4B · 3D MIMO CHANNEL</text>
-          <text x="840" y="98" class="t" font-weight="700">WinnerIIChannel (Step1..11)</text>
-          <text x="840" y="120" class="t-dim">Azimuth + Elevation Clusters</text>
-          <text x="840" y="140" class="t-dim">3D Antenna Pattern &amp; Doppler</text>
-          <text x="840" y="160" class="t-dim">60GHz Unlicensed mmWave</text>
-          <text x="840" y="180" class="t-dim">Massive MIMO Beamforming</text>
-          <text x="840" y="212" class="t-mono">WinnerIIChannel/Main.m</text>
+          <rect x="874" y="48" width="182" height="184" rx="9" class="f-acc-soft" />
+          <text x="885" y="74" class="t-acc">THEME 4B · 3D MIMO</text>
+          <text x="885" y="98" class="t" font-weight="700">WinnerIIChannel</text>
+          <text x="885" y="120" class="t-dim">Azimuth + Elevation</text>
+          <text x="885" y="140" class="t-dim">3D Antenna &amp; Doppler</text>
+          <text x="885" y="160" class="t-dim">60GHz mmWave Backhaul</text>
+          <text x="885" y="180" class="t-dim">Massive MIMO Beamform</text>
+          <text x="885" y="212" class="t-mono">Main.m · Step1..11.m</text>
         </g>
 
-        <line x1="266" y1="140" x2="289" y2="140" class="s-warn" stroke-width="2" marker-end="url(#auto-arr)" />
-        <line x1="534" y1="140" x2="557" y2="140" class="s-warn" stroke-width="2" marker-end="url(#auto-arr)" />
-        <line x1="800" y1="140" x2="823" y2="140" class="s-warn" stroke-width="2" marker-end="url(#auto-arr)" />
+        <line x1="218" y1="140" x2="233" y2="140" class="s-warn" stroke-width="2" marker-end="url(#auto-arr)" />
+        <line x1="430" y1="140" x2="445" y2="140" class="s-warn" stroke-width="2" marker-end="url(#auto-arr)" />
+        <line x1="644" y1="140" x2="659" y2="140" class="s-warn" stroke-width="2" marker-end="url(#auto-arr)" />
+        <line x1="856" y1="140" x2="871" y2="140" class="s-warn" stroke-width="2" marker-end="url(#auto-arr)" />
 
         <!-- Bottom Summary Strip -->
         <rect x="24" y="248" width="1032" height="48" rx="8" class="f-elev" />
         <text x="40" y="277" class="t-warn">MATHEMATICAL CORE:</text>
-        <text x="200" y="277" class="t" font-weight="600">Fundamental Matrix N = (I - Q)^(-1) · Combinatorial Pruning · 1-Bit VRAM Bitwise Shift · 3D GBSM MIMO</text>
+        <text x="200" y="277" class="t" font-weight="600">N = (I - Q)^(-1) · RuleDSL Shadow Parity · Combinatorial Pruning · 1-Bit VRAM · 3D GBSM MIMO</text>
       </svg>
       <div class="inspector-box" id="auto-insp">
         <div class="insp-title" id="auto-insp-title">📌 THEME 3B · StarForce Absorbing Markov Chain &amp; Lophago Combinatorics</div>
         <div id="auto-insp-body">2연속 하락 시 100% 성공하는 비마르코프 찬스 타임을 (레벨, 연속실패수) 상태 확장으로 정식화해 기대 비용을 계산합니다. 다이어그램의 블록을 클릭해 상세 아키텍처를 확인하세요.</div>
       </div>
-      <figcaption><b>그림 4-1.</b> Theme 3 지능형 비전 자동화·확률 최적화(PyMaple · StarForce · Lophago) 및 Theme 4 특수 임베디드·3D MIMO(Casio SDK · WINNER II) 아키텍처.</figcaption>
+      <figcaption><b>그림 4-1.</b> Theme 3 지능형 비전 자동화·확률 최적화·AI 다크팩토리(PyMaple · StarForce · Lophago · ReverseFactory) 및 Theme 4 특수 임베디드·3D MIMO(Casio SDK · WINNER II) 아키텍처.</figcaption>
     </figure>
 
     <h3 id="sec-fsm-detail">PyMaple 13-상태 FSM &amp; Faster R-CNN 보안 캡차 검출</h3>
     <ul>
       <li>
-        <strong>13-상태 우선순위 유한 상태 머신 (<a class="src" href="../../3_Intelligent_Automation/Vision_and_Driver_Automation/PyMaple/PyMaple2/pydetect.py#L4" target="_blank" rel="noopener" title="3_Intelligent_Automation/Vision_and_Driver_Automation/PyMaple/PyMaple2/pydetect.py:4">pydetect.py:4</a>, <a class="src" href="../../3_Intelligent_Automation/Vision_and_Driver_Automation/PyMaple/PyMaple2/pydetect.py#L40" target="_blank" rel="noopener" title="3_Intelligent_Automation/Vision_and_Driver_Automation/PyMaple/PyMaple2/pydetect.py:40">pydetect.py:40</a>)</strong>:
+        <strong>13-상태 우선순위 유한 상태 머신 (<span class="src" title="kaist-grad-works: 3_Intelligent_Automation/Vision_and_Driver_Automation/PyMaple/PyMaple2/pydetect.py:4">pydetect.py:4</span>, <span class="src" title="kaist-grad-works: 3_Intelligent_Automation/Vision_and_Driver_Automation/PyMaple/PyMaple2/pydetect.py:40">pydetect.py:40</span>)</strong>:
         <code>act</code> 클래스는 미니맵 내 캐릭터 좌표 $(x, y)$, 룬(Rune) 출현 여부, 타 유저(길드/적) 진입 여부, 그리고 주기 타이머(<code>runeperiod = 900</code>초)를 결합해
         13개 행동 상태를 전이시키며, 이상 상황 감지 시 <code>PyMapleFCM</code>을 통해 스마트폰으로 즉시 FCM 푸시 알림을 발송합니다.
       </li>
       <li>
-        <strong>Faster R-CNN 동적 객체 검출 (<a class="src" href="../../3_Intelligent_Automation/Vision_and_Driver_Automation/Click/Click_detection.py#L27" target="_blank" rel="noopener" title="3_Intelligent_Automation/Vision_and_Driver_Automation/Click/Click_detection.py:27">Click_detection.py:27</a>)</strong>:
+        <strong>Faster R-CNN 동적 객체 검출 (<span class="src" title="kaist-grad-works: 3_Intelligent_Automation/Vision_and_Driver_Automation/Click/Click_detection.py:27">Click_detection.py:27</span>)</strong>:
         반투명 배경과 형태 왜곡이 적용된 동적 보안 객체(거짓말탐지기 등)를 검출하기 위해 TensorFlow Object Detection API 기반 Faster R-CNN 추론 그래프를 실시간 연동합니다.
       </li>
     </ul>
@@ -130,14 +143,14 @@
   <section id="sec-markov">
     <h2>흡수 마르코프 체인(StarForce) 및 비마르코프 찬스 타임 상태 확장</h2>
     <p>
-      <a class="src" href="../../3_Intelligent_Automation/Modeling_and_Intelligence/StarForce/StarForce.m#L1" target="_blank" rel="noopener" title="3_Intelligent_Automation/Modeling_and_Intelligence/StarForce/StarForce.m:1">StarForce.m:1</a>는 0성부터 22성(목표 흡수 상태)까지의 장비 강화 과정을 시뮬레이션하는 확률 모델입니다.
+      <span class="src" title="kaist-grad-works: 3_Intelligent_Automation/Modeling_and_Intelligence/StarForce/StarForce.m:1">StarForce.m:1</span>는 0성부터 22성(목표 흡수 상태)까지의 장비 강화 과정을 시뮬레이션하는 확률 모델입니다.
       단순히 현재 레벨 $L \in \{0, \dots, 21\}$만 상태로 두면 1차 마르코프 성질이 깨지는데, 그 이유는
-      <a class="src" href="../../3_Intelligent_Automation/Modeling_and_Intelligence/StarForce/StarForce.m#L24" target="_blank" rel="noopener" title="3_Intelligent_Automation/Modeling_and_Intelligence/StarForce/StarForce.m:24">StarForce.m:24</a>에 구현된 <strong>찬스 타임(Chance Time, <code>if(fail == 2)</code>)</strong> 규칙 때문입니다:
+      <span class="src" title="kaist-grad-works: 3_Intelligent_Automation/Modeling_and_Intelligence/StarForce/StarForce.m:24">StarForce.m:24</span>에 구현된 <strong>찬스 타임(Chance Time, <code>if(fail == 2)</code>)</strong> 규칙 때문입니다:
     </p>
     <ul>
       <li>강화 실패로 인해 등급이 <strong>2회 연속 하락(<code>fail == 2</code>)</strong>하면, 그 다음 시도의 성공 확률은 조건부로 <strong>$100\%$($1.0$)</strong>가 됩니다.</li>
-      <li>$12 \sim 21$성 구간에서 파괴 확률 $p_{\text{dest}}(L)$에 걸리면 장비가 파괴되고 즉시 <strong>$12$성(<code>level = 12; fail = 0;</code>, <a class="src" href="../../3_Intelligent_Automation/Modeling_and_Intelligence/StarForce/StarForce.m#L42" target="_blank" rel="noopener" title="3_Intelligent_Automation/Modeling_and_Intelligence/StarForce/StarForce.m:42">StarForce.m:42</a>)</strong>으로 리셋됩니다.</li>
-      <li>스타캐치 미니게임 성공 시(<a class="src" href="../../3_Intelligent_Automation/Modeling_and_Intelligence/StarForce/StarForce.m#L10" target="_blank" rel="noopener" title="3_Intelligent_Automation/Modeling_and_Intelligence/StarForce/StarForce.m:10">StarForce.m:10</a>) 기본 성공률에 $1 + \text{starcatch} = 1.05$가 곱해집니다:
+      <li>$12 \sim 21$성 구간에서 파괴 확률 $p_{\text{dest}}(L)$에 걸리면 장비가 파괴되고 즉시 <strong>$12$성(<code>level = 12; fail = 0;</code>, <span class="src" title="kaist-grad-works: 3_Intelligent_Automation/Modeling_and_Intelligence/StarForce/StarForce.m:42">StarForce.m:42</span>)</strong>으로 리셋됩니다.</li>
+      <li>스타캐치 미니게임 성공 시(<span class="src" title="kaist-grad-works: 3_Intelligent_Automation/Modeling_and_Intelligence/StarForce/StarForce.m:10">StarForce.m:10</span>) 기본 성공률에 $1 + \text{starcatch} = 1.05$가 곱해집니다:
         $$p_{\text{succ}}'(L) = \min\!\left(1.0,\; p_{\text{succ}}(L) \cdot (1 + 0.05)\right)$$
       </li>
     </ul>
@@ -157,7 +170,7 @@
             <th>기본 실패율 ($p_{\text{fail}}$)</th>
             <th>기본 파괴율 ($p_{\text{dest}}$)</th>
             <th>1회 시도 비용 ($c_L$)</th>
-            <th>실패 / 파괴 전이 규칙 (<a class="src" href="../../3_Intelligent_Automation/Modeling_and_Intelligence/StarForce/StarForce.m#L1" target="_blank" rel="noopener" title="3_Intelligent_Automation/Modeling_and_Intelligence/StarForce/StarForce.m:1">StarForce.m:1</a>)</th>
+            <th>실패 / 파괴 전이 규칙 (<span class="src" title="kaist-grad-works: 3_Intelligent_Automation/Modeling_and_Intelligence/StarForce/StarForce.m:1">StarForce.m:1</span>)</th>
           </tr>
         </thead>
         <tbody>
@@ -177,7 +190,7 @@
   <section id="sec-sim-starforce">
     <h2>인터랙티브 시뮬레이터 · StarForce 마르코프 해석해 &amp; 몬테카를로 분포</h2>
     <p>
-      아래 시뮬레이터는 <a class="src" href="../../3_Intelligent_Automation/Modeling_and_Intelligence/StarForce/StarForce.m#L1" target="_blank" rel="noopener" title="3_Intelligent_Automation/Modeling_and_Intelligence/StarForce/StarForce.m:1">StarForce.m:1</a>에서 파싱된 실제 확률·비용 배열을 사용하여,
+      아래 시뮬레이터는 <span class="src" title="kaist-grad-works: 3_Intelligent_Automation/Modeling_and_Intelligence/StarForce/StarForce.m:1">StarForce.m:1</span>에서 파싱된 실제 확률·비용 배열을 사용하여,
       목표 성급($15 \sim 22$성), 스타캐치($+5\%\text{p}$ 상대 보정), 찬스 타임 적용 여부에 따른
       <strong>마르코프 기대 소모 비용</strong>과 <strong>실시간 몬테카를로 시뮬레이션(400회 시행) 비용 분포 히스토그램</strong>을 동시에 계산합니다.
     </p>
@@ -225,6 +238,28 @@
     </section>
   </section>
 
+  <section id="sec-reverse-factory">
+    <h2>ReverseFactory · 62노드 AI 다크팩토리 전환 시뮬레이터</h2>
+    <p>
+      Theme 3의 로컬 엔지니어링 스위트인 <strong>ReverseFactory</strong>(<span class="src" title="kaist-grad-works: 3_Intelligent_Automation/Modeling_and_Intelligence/ReverseFactory/README.md">ReverseFactory/README.md</span>)는 전통 제조 대기업의 인적 조직을
+      상향식·단계별로 AI 에이전트로 치환하여 인건비 지출 <code>$0/tick</code>의 <strong>완전 무인 다크팩토리(Dark Factory)</strong>를 달성하는
+      C#/.NET 10 코어(<span class="src" title="kaist-grad-works: 3_Intelligent_Automation/Modeling_and_Intelligence/ReverseFactory/Assets/Scripts/Core/Simulation/FactorySimulationEngine.cs:16">FactorySimulationEngine.cs:16</span>) + Unity 6 런타임 + 60fps 단일 파일 HTML5 <code>WebPreview</code>(<span class="src" title="kaist-grad-works: 3_Intelligent_Automation/Modeling_and_Intelligence/ReverseFactory/WebPreview/index.html">WebPreview/index.html</span>) 시뮬레이터입니다:
+    </p>
+    <ul>
+      <li>
+        <strong>3-Stage · 7본부 · 22부서 · 62노드 조직 트리 &amp; SLA·CAPEX 게이트</strong>:
+        말단 오퍼레이터부터 CEO <code>아르곤 (ceo_argon)</code>까지 62개 직무 노드를 3단계 캠페인으로 모델링하며,
+        60틱 SLA 위반 카운트다운(<code>SlaBreachTicksRemaining</code>)과 <code>$25,000+</code> 서버 CAPEX 현금 잔고 게이트(<code>CorporateCash &lt; capex</code> 차단)를 강제합니다.
+      </li>
+      <li>
+        <strong>베테랑 암묵지(Tacit Knowledge) 비스포일러 심문 &amp; RuleDSL 컴파일러 (<span class="src" title="kaist-grad-works: 3_Intelligent_Automation/Modeling_and_Intelligence/ReverseFactory/Assets/Scripts/Core/Workspace/RuleDslCompiler.cs:9">RuleDslCompiler.cs:9</span>)</strong>:
+        초기 에이전트 초안(<code>CreateBaselineSopDraft</code>)은 공개 표준 SOP만 탑재하며, 패킷 스니퍼 불일치 증거와 베테랑 LLM 심문(<code>InterrogationSession</code>)으로 숨겨진 암묵지를 발굴한 뒤
+        <code>RuleDslCompiler</code>가 컴파일한 규칙이 <strong>Shadow-Mode 패리티 게이트</strong>(일치율 $100\%$, 연속 $15$틱 일치, $\text{P99} \le 200\text{ ms}$) 및
+        물리 토크 인터록(<code>UsePhysicalTorqueGuardrail</code>)·더티 ERP 스키마 어댑터(<code>UseErpSchemaAdapter</code>) 검증을 통과해야만 무중단 핫스왑(Hot-Swap)을 허용합니다 (4단계 무의존성 하네스 <span class="src" title="kaist-grad-works: 3_Intelligent_Automation/Modeling_and_Intelligence/ReverseFactory/harness.py:51">harness.py:51</span> 23개 단위 테스트 검증).
+      </li>
+    </ul>
+  </section>
+
   <section id="sec-lophago-casio">
     <h2>제약 조합 최적화(Lophago) 및 Casio FX-9860G 베어메탈 엔진</h2>
     <p>
@@ -232,13 +267,13 @@
     </p>
     <ul>
       <li>
-        <strong>Lophago 각인 조합 솔버 (<a class="src" href="../../3_Intelligent_Automation/Modeling_and_Intelligence/Lophago/main.py#L119" target="_blank" rel="noopener" title="3_Intelligent_Automation/Modeling_and_Intelligence/Lophago/main.py:119">main.py:119</a>)</strong>:
+        <strong>Lophago 각인 조합 솔버 (<span class="src" title="kaist-grad-works: 3_Intelligent_Automation/Modeling_and_Intelligence/Lophago/main.py:119">main.py:119</span>)</strong>:
         장착 악세서리 <code>ITEM_NUM = 5</code>부위(목걸이·귀걸이2·반지2)에 대해 유물 조합(<code>ENGRAVING_COMB_RELIC</code>: $[3,3], [4,3], [5,3]$ 등)과
         고대 조합(<code>ENGRAVING_COMB_LEGENDARY</code>: $[6,3]$ 포함) 후보군에서 어빌리티 스톤 및 각인서 포인트를 합산해
         목표 각인 벡터(예: $33333$ 또는 $333331$)를 정확히 만족하는 모든 해를 백트래킹으로 고속 열거합니다.
       </li>
       <li>
-        <strong>Casio FX-9860G 네이티브 게임 엔진 (<a class="src" href="../../4_Specialty_Systems/Embedded_Casio_Engines/RPG/README.md" target="_blank" rel="noopener" title="4_Specialty_Systems/Embedded_Casio_Engines/RPG/README.md">Casio RPG/README.md</a>, <a class="src" href="../../4_Specialty_Systems/Embedded_Casio_Engines/RTS/README.md" target="_blank" rel="noopener" title="4_Specialty_Systems/Embedded_Casio_Engines/RTS/README.md">Casio RTS/README.md</a>)</strong>:
+        <strong>Casio FX-9860G 네이티브 게임 엔진 (<span class="src" title="kaist-grad-works: 4_Specialty_Systems/Embedded_Casio_Engines/RPG/README.md">Casio RPG/README.md</span>, <span class="src" title="kaist-grad-works: 4_Specialty_Systems/Embedded_Casio_Engines/RTS/README.md">Casio RTS/README.md</span>)</strong>:
         르네사스 SuperH-3 프로세서와 $128 \times 64$ 1-bit 흑백 LCD($1{,}024\text{ Bytes}$ 프레임버퍼)만을 갖춘 공학용 계산기 위에서
         바이트 경계를 넘는 스프라이트 비트 시프트 블리팅(Bit-Blit), 타일맵 스크롤링, 그리고 실시간 전략(RTS) 유닛 다중 객체 루프를 C 언어로 직접 구현했습니다.
       </li>
@@ -248,7 +283,7 @@
   <section id="sec-winner-mimo">
     <h2>WINNER II 3D MIMO 기하 확률 채널 &amp; 60GHz 밀리미터파 백홀</h2>
     <p>
-      Theme 4의 <code>WinnerIIChannel</code>(<a class="src" href="../../4_Specialty_Systems/Wireless_Communications/WinnerIIChannel/Main.m" target="_blank" rel="noopener" title="4_Specialty_Systems/Wireless_Communications/WinnerIIChannel/Main.m">Main.m</a>, <code>Step1.m</code>~<code>Step11.m</code>)은 5G/B5G 대규모 다중안테나(Massive MIMO) 및
+      Theme 4의 <code>WinnerIIChannel</code>(<span class="src" title="kaist-grad-works: 4_Specialty_Systems/Wireless_Communications/WinnerIIChannel/Main.m">Main.m</span>, <code>Step1.m</code>~<code>Step11.m</code>)은 5G/B5G 대규모 다중안테나(Massive MIMO) 및
       60GHz 비면허 대역 소형셀 무선 백홀 링크 설계를 위한 <strong>11단계 기하 기반 확률 채널 모델(GBSM)</strong>입니다.
       $S$개 송신 안테나 소자와 $U$개 수신 안테나 소자 사이의 클러스터 $n \in \{1,\dots,N\}$, 서브패스 $m \in \{1,\dots,M\}$에 대한 3차원 채널 임펄스 응답은 다음과 같이 합성됩니다:
     </p>
@@ -300,7 +335,7 @@
   <section class="keypoints" id="summary">
     <h2>핵심 정리 · Chapter 04</h2>
     <ol>
-      <li><strong>비전 FSM &amp; 흡수 마르코프 체인</strong>: DirectInput 스캔코드 주입과 13-상태 비전 상태 머신으로 실시간 제어를 수행하고, 찬스 타임과 파괴 리셋을 포함한 흡수 마르코프 체인($\mathbf{N}=(\mathbf{I}-\mathbf{Q})^{-1}$)으로 강화 비용 분포를 규명했습니다.</li>
+      <li><strong>비전 FSM · 흡수 마르코프 체인 &amp; ReverseFactory</strong>: DirectInput 스캔코드와 13-상태 비전 FSM으로 실시간 제어를 수행하고, 찬스 타임 흡수 마르코프 체인($\mathbf{N}=(\mathbf{I}-\mathbf{Q})^{-1}$) 및 62노드 AI 다크팩토리 전환 시뮬레이터(<code>ReverseFactory</code>)로 확률·조직 의사결정 최적화를 구현했습니다.</li>
       <li><strong>베어메탈 엔진 &amp; 3D MIMO</strong>: 1KB VRAM의 Casio FX-9860G C 엔진과 WINNER II 11단계 3D 기하 확률 채널 시뮬레이터로 하드웨어·무선 물리계층 엔지니어링을 구현했습니다.</li>
     </ol>
   </section>
@@ -315,6 +350,10 @@
       "auto-markov": {
         title: "THEME 3B · StarForce Absorbing Markov Chain & Lophago Combinatorics",
         body: "StarForce.m은 2연속 하락 시 100% 성공하는 찬스 타임과 12성 파괴 리셋을 반영한 확률 모델이며, Lophago/main.py는 5부위 유물/고대 악세서리 각인 제약 만족 조합을 고속 역산합니다."
+      },
+      "auto-revfac": {
+        title: "THEME 3C · ReverseFactory (62-Node AI Dark-Factory Migration Simulator)",
+        body: "C#/.NET 10 코어·Unity 6·HTML5 WebPreview 기반 시뮬레이터로, 7본부 22부서 62노드(CEO 아르곤 ceo_argon)의 암묵지를 베테랑 LLM 심문과 패킷 스니퍼로 발굴하고 RuleDSL·Shadow 패리티·CAPEX 게이트를 거쳐 무인 다크팩토리로 전환합니다."
       },
       "auto-casio": {
         title: "THEME 4A · Casio FX-9860G Native C RPG & RTS Engines",

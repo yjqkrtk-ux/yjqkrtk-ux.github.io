@@ -8,11 +8,11 @@
 <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/katex@0.16.11/dist/katex.min.css">
 <script defer src="https://cdn.jsdelivr.net/npm/katex@0.16.11/dist/katex.min.js"></script>
 <script defer src="https://cdn.jsdelivr.net/npm/katex@0.16.11/dist/contrib/auto-render.min.js"></script>
-<link rel="stylesheet" href="../css/style.css?v=008d628">
-<link rel="stylesheet" href="../css/glossary-tooltips.css?v=008d628">
-<script src="../js/glossary-data.js?v=008d628"></script>
-<script src="../js/common.js?v=008d628"></script>
-<script defer src="../js/glossary-tooltips.js?v=008d628"></script>
+<link rel="stylesheet" href="../css/style.css?v=75f4314">
+<link rel="stylesheet" href="../css/glossary-tooltips.css?v=75f4314">
+<script src="../js/glossary-data.js?v=75f4314"></script>
+<script src="../js/common.js?v=75f4314"></script>
+<script defer src="../js/glossary-tooltips.js?v=75f4314"></script>
 </head>
 <body data-chapter="e2e_remosaic" data-root="../">
 <main class="chapter">
@@ -22,18 +22,21 @@
     <h1>E2E AI Remosaic (Gen 1–4) — Camera ISP 파이프라인 이기종 병렬화</h1>
     <p class="lead">
       글로벌 스마트폰 OEM에 200MP 이미지 센서를 공급하기 위해서는 단독 Remosaic 모델만으로는 충분하지 않습니다. 만약 딥러닝 Remosaic과 Camera ISP가 직렬로 순차 실행되면 단일 200MP 촬영(<code>cfa2yuv</code>)에 약 3초가 소요됩니다.
-      <strong>E2E AI Remosaic</strong>은 <strong>DL Remosaic</strong>과 <strong>Camera ISP</strong> 연산을 모바일 이기종 연산 장치(<code>CPU / GPU / NPU / ISP</code>)에 적절히 분배하고 이를 <strong>Camera ISP 파이프라인 상단</strong>에 직접 탑재함으로써, 200MP 캡처 지연시간을 <strong>최대 3배 가속(<code>3s → 1s @ SM8550</code>)</strong>하여 <strong>30개 이상 상용 스마트폰 모델</strong>에 탑재되었으며 <strong>SEC Annual Awards 2023 (Silver Award)</strong>을 수상했습니다.
+      <strong>E2E AI Remosaic</strong>은 <strong>DL Remosaic</strong>과 <strong>Camera ISP</strong> 연산을 모바일 이기종 연산 장치(<code>CPU / GPU / NPU / ISP</code>)에 적절히 분배하고 이를 <strong>Camera ISP 파이프라인 상단</strong>에 직접 탑재함으로써, 200MP 캡처 지연시간을 <strong>최대 3배 가속(<code>3s → 1s @ SM8550</code>)</strong>하여 <strong>30개 이상 상용 OEM 스마트폰 모델</strong>(200MP 센서군 전체 <strong>50+ 안드로이드 스마트폰</strong>)에 탑재되었으며 <strong>Samsung Best Paper Awards 2026 — Silver Award (AI &amp; Software)</strong> 및 <strong>SEC Annual Awards 2023 (Silver Award)</strong>을 수상했습니다.
     </p>
     <ul class="objectives">
       <li><strong>Camera ISP 파이프라인 상단 이기종 병렬화 원리:</strong> Camera ISP와 DL Remosaic 연산을 <code>CPU</code>, <code>NPU</code>, <code>GPU</code>, <code>ISP</code>에 잘 분배하고 이를 Camera ISP 파이프라인 위에 올려놓아 스테이지들이 직렬 대기 없이 병렬로 실행되는 구조를 이해한다.</li>
       <li><strong>세대별 기능 추가 연대기 (Gen 1 → Gen 4):</strong> <strong>Gen 1</strong>(초기 턴키 ISP 구축)과 <strong>Gen 2</strong>(이기종 SoC 병렬화, 3배 가속)에서 <strong>Gen 3</strong>(인센서 줌 및 멀티프레임 확장), <strong>Gen 4</strong>(플래그십 AP NPU 기반 DL Multi-frame Remosaic)로 이어진 진화 이력을 확인한다.</li>
-      <li><strong>상용화 스마트폰 라인업 (Table &amp; List):</strong> E2E AI Remosaic이 탑재된 실제 상용 제품들의 종합 테이블과 모델 리스트를 확인한다.</li>
+      <li><strong>상용화 스마트폰 라인업 (Table &amp; List):</strong> E2E AI Remosaic(30+ OEM 단말) 및 200MP ISOCELL 라인업(50+ 안드로이드 스마트폰) 상용 제품 종합 테이블과 모델 리스트를 확인한다.</li>
     </ul>
-    <div class="ch-pubs" role="region" aria-label="삼성전자 E2E AI Remosaic 공식 보도자료 및 수상">
-      <span class="ch-pubs-label">OFFICIAL SAMSUNG PRESS &amp; RECOGNITION</span>
+    <div class="ch-pubs" role="region" aria-label="삼성전자 E2E AI Remosaic 공식 보도자료, 수상 및 특허">
+      <span class="ch-pubs-label">OFFICIAL PRESS · AWARDS · US PATENTS</span>
       <a class="pub-tag paper" href="https://semiconductor.samsung.com/news-events/news/samsung-electronics-introduces-isocell-zoom-anyplace-and-e2e-ai-remosaic-solutions-for-the-200-megapixel-image-sensor/" target="_blank" rel="noopener">📰 Samsung Newsroom: E2E AI Remosaic Solution ↗</a>
-      <a class="pub-tag paper" href="https://semiconductor.samsung.com/technologies/sensor/remosaic/" target="_blank" rel="noopener">🔬 Samsung Remosaic Technology ↗</a>
-      <a class="pub-tag code" href="https://yjqkrtk-ux.github.io/" target="_blank" rel="noopener">🏆 SEC Annual Awards 2023 — Silver Award (E2E AI RMSC) ↗</a>
+      <a class="pub-tag code" href="https://yjqkrtk-ux.github.io/" target="_blank" rel="noopener">🏆 Samsung Best Paper Awards 2026 — Silver (AI &amp; SW) ↗</a>
+      <a class="pub-tag code" href="https://yjqkrtk-ux.github.io/" target="_blank" rel="noopener">🏆 SEC Annual Awards 2023 — Silver (E2E AI RMSC) ↗</a>
+      <a class="pub-tag patent" href="https://patents.google.com/patent/US12574659B2/en" target="_blank" rel="noopener">📜 US 12,574,659 B2 ↗</a>
+      <a class="pub-tag patent" href="https://patents.google.com/patent/US12363458B2/en" target="_blank" rel="noopener">📜 US 12,363,458 B2 ↗</a>
+      <a class="pub-tag patent" href="https://patents.google.com/patent/US20250363601A1/en" target="_blank" rel="noopener">📜 US 2025-0363601 A1 ↗</a>
     </div>
   </header>
 
@@ -303,10 +306,10 @@
           </tr>
           <tr>
             <td><strong>Global / CN OEMs</strong></td>
-            <td><strong>30개 이상 상용 OEM 스마트폰 모델</strong></td>
-            <td>E2E AI Remosaic · <strong>Gen 1–4</strong></td>
-            <td>200MP 메인 및 망원 카메라 (<code>HP3 / HP9 / HPE / HP5</code>)</td>
-            <td>HONOR, vivo, Xiaomi 등 글로벌 OEM 전반에 배포된 표준 200MP S/W ISP 턴키 플랫폼 (<strong>SEC Annual Award 2023 Silver</strong>).</td>
+            <td><strong>30+ E2E 상용 단말 / 50+ 200MP 안드로이드 스마트폰</strong></td>
+            <td>E2E AI Remosaic · <strong>Gen 1–4</strong> &amp; 200MP 라인업</td>
+            <td>200MP 메인 및 망원 카메라 (<code>HP2 / HP3 / HP9 / HPE / HP5</code>)</td>
+            <td>HONOR, vivo, Xiaomi, Samsung 등 글로벌 OEM 전반에 배포된 표준 200MP 플랫폼 (<strong>Samsung Best Paper Awards 2026 Silver &amp; SEC Annual Award 2023 Silver</strong>).</td>
           </tr>
         </tbody>
       </table>
@@ -328,8 +331,8 @@
     <h2>Chapter 02 핵심 요약</h2>
     <ol>
       <li><strong>Camera ISP 파이프라인 상단 이기종 병렬화:</strong> Remosaic과 Camera ISP를 직렬로 실행(~3.0초)하는 대신, <strong>E2E AI Remosaic</strong>은 DL Remosaic과 S/W ISP 스테이지를 <code>CPU</code>, <code>GPU</code>, <code>NPU</code>, <code>ISP</code>에 분배하고 이를 <strong>Camera ISP 파이프라인 상단</strong>에 직접 탑재하여 200MP <code>cfa2yuv</code> 캡처 속도를 <strong>최대 3배 가속(<code>3s → 1s @ SM8550</code>)</strong>했다.</li>
-      <li><strong>4세대에 걸친 기능 진화 (2022.09 – 현재):</strong> <strong>Gen 1</strong>(초기 200MP 턴키 ISP)과 <strong>Gen 2</strong>(이기종 SoC 병렬화, <strong>SEC Annual Awards 2023 Silver Award</strong>)에서 <strong>Gen 3</strong>(인센서 줌 및 멀티프레임 확장), <strong>Gen 4</strong>(플래그십 AP NPU 기반 DL Multi-frame Remosaic)로 고도화되었다.</li>
-      <li><strong>글로벌 30+ 상용 스마트폰 적용:</strong> <strong>HONOR Magic 9 / 9 Pro Max</strong>, <strong>vivo X200 Pro ZEISS 200MP</strong>, <strong>HONOR Magic7 Pro</strong>, <strong>REDMI Note 15 Pro+ 5G</strong>, <strong>Redmi Note 13 Pro+ 5G</strong> 등 30개 이상의 상용 스마트폰에 탑재되었다.</li>
+      <li><strong>4세대 기능 진화 및 수상 실적:</strong> <strong>Gen 1</strong>(초기 200MP 턴키 ISP)과 <strong>Gen 2</strong>(이기종 SoC 병렬화, <strong>SEC Annual Awards 2023 Silver Award</strong>)에서 <strong>Gen 3</strong>(인센서 줌 및 멀티프레임 확장), <strong>Gen 4</strong>(플래그십 AP NPU 기반 DL Multi-frame Remosaic, <strong>Samsung Best Paper Awards 2026 — Silver Award [AI &amp; Software]</strong>)로 고도화되었다.</li>
+      <li><strong>30+ E2E 상용 단말 &amp; 50+ 200MP 스마트폰 적용:</strong> <strong>HONOR Magic 9 / 9 Pro Max</strong>, <strong>vivo X200 Pro ZEISS 200MP</strong>, <strong>HONOR Magic7 Pro</strong>, <strong>REDMI Note 15 Pro+ 5G</strong>, <strong>Redmi Note 13 Pro+ 5G</strong> 등 30개 이상의 E2E 상용 OEM 단말(200MP ISOCELL 전체 50+ 안드로이드 스마트폰)에 탑재되었다.</li>
     </ol>
   </section>
 

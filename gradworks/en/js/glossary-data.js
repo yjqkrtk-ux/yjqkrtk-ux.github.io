@@ -285,6 +285,17 @@ window.BOOK_GLOSSARY = {
       ]
     },
     {
+      "ko": "AI Dark-Factory Migration Simulator",
+      "en": "ReverseFactory 62-Node Enterprise Migration Simulator",
+      "abbr": "ReverseFactory",
+      "def": "C#/.NET 10, Unity 6, and 60fps HTML5 simulation engine modeling 3-stage top-down AI migration across 7 divisions, 22 departments, and 62 org nodes via Veteran LLM interrogation, RuleDSL compilation, and Shadow-Mode parity gates.",
+      "chapters": [
+        "overview",
+        "automation",
+        "notes"
+      ]
+    },
+    {
       "ko": "Casio FX-9860G VRAM Engine",
       "en": "Casio FX-9860G 128x64 1-Bit VRAM Engine",
       "abbr": "FX-SDK",
@@ -334,17 +345,17 @@ window.BOOK_GLOSSARY = {
       "ko": "Offline Map Web Planner",
       "en": "Offline-First JSON & Leaflet Web Planner",
       "abbr": "WebPlanner",
-      "def": "Responsive single-page application combining a curated 100-POI JSON database, day-by-day route timelines, budget calculators, and interactive Leaflet map markers.",
+      "def": "Responsive single-page application in 2_Travel_Hub combining 85 curated Osaka spots across 7 multi-city trip folders (2024_Tokyo..2027_Danang), day-by-day route timelines, post-trip settlement, and interactive Leaflet map markers.",
       "chapters": [
         "life",
         "archive"
       ]
     },
     {
-      "ko": "Automated 16:9 PPTX Builder",
-      "en": "Automated 16:9 Widescreen PPTX Deck Builder",
-      "abbr": "TripPPTX",
-      "def": "Programmatic presentation engine using python-pptx to assemble dark-navy headers, KPI cards, itinerary timelines, and comparison tables on a 13.333×7.5-inch widescreen grid.",
+      "ko": "Dual-Edition Trip Reporter",
+      "en": "Dual-Edition 200MP/360 Web & PPTX Reporter",
+      "abbr": "TravelHub",
+      "def": "Unified reporting engine in 2_Travel_Hub pairing a Personal Master & Public_Share_Edition HTML5 reporter (204.5MP zoom + Canvas2D 360° equirectangular dewarp) with a deterministic 16:9 python-pptx deck builder.",
       "chapters": [
         "life",
         "archive"
@@ -443,7 +454,7 @@ window.BOOK_GLOSSARY = {
       "ko": "AI Photo Memory Studio",
       "en": "AI Photo Memory Studio (Read-Only Media Indexer)",
       "abbr": "MemoryStudio",
-      "def": "Local multimodal web studio mounting Photos/ in strict Read-Only mode to provide YuNet face detection, SFace 128-D clustering, YOLO11n semantic tagging, knowledge-graph RAG search, and Split-Wipe comparison.",
+      "def": "Local multimodal web studio mounting Photos/ in strict Read-Only mode and storing indices in a JSON Vector & Metadata Cache (.cache/*.json) for YuNet face detection, SFace 128-D clustering, YOLO11n semantic tagging, Graph RAG search, and Split-Wipe comparison.",
       "chapters": [
         "archive",
         "life"
@@ -453,7 +464,7 @@ window.BOOK_GLOSSARY = {
       "ko": "YuNet + SFace 128-D",
       "en": "YuNet Face Detector & SFace 128-D Embedding",
       "abbr": "SFace",
-      "def": "Vision pipeline combining the lightweight YuNet 5-landmark face detector (conf≥0.6) with 128-dimensional L2-normalized SFace embeddings (cosine similarity≥0.360) for identity clustering.",
+      "def": "Vision pipeline combining the lightweight YuNet 5-landmark face detector (conf≥0.65) with 128-dimensional L2-normalized SFace embeddings (cosine similarity sim≥0.360, cosine distance d_cos≤0.640) for identity clustering.",
       "chapters": [
         "archive",
         "life"

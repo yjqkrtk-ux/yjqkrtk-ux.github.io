@@ -9,11 +9,11 @@
 <script defer src="https://cdn.jsdelivr.net/npm/katex@0.16.11/dist/katex.min.js"></script>
 <script defer src="https://cdn.jsdelivr.net/npm/katex@0.16.11/dist/contrib/auto-render.min.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/three@0.128.0/build/three.min.js"></script>
-<link rel="stylesheet" href="../css/style.css?v=008d628">
-<link rel="stylesheet" href="../css/glossary-tooltips.css?v=008d628">
-<script src="../js/glossary-data.js?v=008d628"></script>
-<script src="../js/common.js?v=008d628"></script>
-<script defer src="../js/glossary-tooltips.js?v=008d628"></script>
+<link rel="stylesheet" href="../css/style.css?v=75f4314">
+<link rel="stylesheet" href="../css/glossary-tooltips.css?v=75f4314">
+<script src="../js/glossary-data.js?v=75f4314"></script>
+<script src="../js/common.js?v=75f4314"></script>
+<script defer src="../js/glossary-tooltips.js?v=75f4314"></script>
 </head>
 <body data-chapter="wpt" data-root="../">
 <main class="chapter">
@@ -24,8 +24,8 @@
       자유 공간 내 이동하는 전자기기에 1kW급 전력을 고효율·안전하게 무선 공급하려면, 수신 코일의 3차원 위치 $(X, Y, Z)$를 밀리미터 단위로 추적하는 동시에
       강한 자기장 영역으로 진입하는 인체나 반려동물을 즉시 감지하여 송신 출력을 차단해야 합니다.
       본 장에서는 미국 등록특허 <a class="src" href="https://patents.google.com/patent/US12496917B2/en" target="_blank" rel="noopener">US 12,496,917 B2 ↗</a>(<a class="src" href="https://patents.google.com/patent/KR102370592B1/en" target="_blank" rel="noopener">KR 10-2370592 B1 ↗</a>) 및 국내 특허 <a class="src" href="https://patents.google.com/patent/KR20210092933A/en" target="_blank" rel="noopener">KR 10-2021-0092933 A ↗</a>로 결실을 맺은
-      <strong>Tsai 양안 3D 비전 삼각측량 · FLIR 열화상 · Coral EdgeTPU</strong> 제어 루프(<a class="src" href="../../1_Wireless_Power_Transfer_and_EV/3D_Positioning_and_Vision/ObjectDetection/TsaiCalibration.py#L4" target="_blank" rel="noopener" title="1_Wireless_Power_Transfer_and_EV/3D_Positioning_and_Vision/ObjectDetection/TsaiCalibration.py:4">TsaiCalibration.py:4</a>, <a class="src" href="../../1_Wireless_Power_Transfer_and_EV/3D_Positioning_and_Vision/FIR" target="_blank" rel="noopener" title="1_Wireless_Power_Transfer_and_EV/3D_Positioning_and_Vision/FIR">FIR</a>, <a class="src" href="../../1_Wireless_Power_Transfer_and_EV/3D_Positioning_and_Vision/edgetpu_models" target="_blank" rel="noopener" title="1_Wireless_Power_Transfer_and_EV/3D_Positioning_and_Vision/edgetpu_models">edgetpu_models</a>)와
-      85kHz 주행중 무선충전 전기버스(OLEV)의 <strong>UTM 궤적 예측 텔레매틱스</strong>(<a class="src" href="../../1_Wireless_Power_Transfer_and_EV/Telematics_and_GPS/GPS/get_lane_distance.m#L1" target="_blank" rel="noopener" title="1_Wireless_Power_Transfer_and_EV/Telematics_and_GPS/GPS/get_lane_distance.m:1">get_lane_distance.m:1</a>, <a class="src" href="../../1_Wireless_Power_Transfer_and_EV/Telematics_and_GPS/GPS/get_predicted_time.m#L1" target="_blank" rel="noopener" title="1_Wireless_Power_Transfer_and_EV/Telematics_and_GPS/GPS/get_predicted_time.m:1">get_predicted_time.m:1</a>)를 해부합니다.
+      <strong>Tsai 양안 3D 비전 삼각측량 · FLIR 열화상 · Coral EdgeTPU</strong> 제어 루프(<span class="src" title="kaist-grad-works: 1_Wireless_Power_Transfer_and_EV/3D_Positioning_and_Vision/ObjectDetection/TsaiCalibration.py:4">TsaiCalibration.py:4</span>, <span class="src" title="kaist-grad-works: 1_Wireless_Power_Transfer_and_EV/3D_Positioning_and_Vision/FIR">FIR</span>, <span class="src" title="kaist-grad-works: 1_Wireless_Power_Transfer_and_EV/3D_Positioning_and_Vision/edgetpu_models">edgetpu_models</span>)와
+      85kHz 주행중 무선충전 전기버스(OLEV)의 <strong>UTM 궤적 예측 텔레매틱스</strong>(<span class="src" title="kaist-grad-works: 1_Wireless_Power_Transfer_and_EV/Telematics_and_GPS/GPS/get_lane_distance.m:1">get_lane_distance.m:1</span>, <span class="src" title="kaist-grad-works: 1_Wireless_Power_Transfer_and_EV/Telematics_and_GPS/GPS/get_predicted_time.m:1">get_predicted_time.m:1</span>)를 해부합니다.
     </p>
     <ul class="objectives">
       <li><strong>Tsai 11-DoF 핀홀 카메라 캘리브레이션</strong>(<code>Find_K_Matrix</code>)과 <strong>양안 꼬인 광선 최단중점 삼각측량</strong>(<code>Est_Point</code>) 수식을 유도한다.</li>
@@ -42,8 +42,8 @@
   <section id="sec-wpt-arch">
     <h2>멀티모달 비전 기반 3D 무선전력전송 &amp; OLEV 통합 아키텍처</h2>
     <p>
-      Theme 1(<a class="src" href="../../1_Wireless_Power_Transfer_and_EV/README.md" target="_blank" rel="noopener" title="1_Wireless_Power_Transfer_and_EV/README.md">Theme 1 README.md</a>)은 크게 실내외 3차원 자유 공간 무선충전을 위한 <code>3D_Positioning_and_Vision</code>(3개 서브모듈)과
-      도로 매설형 세그먼트 급전 인버터를 사전 제어하는 <code>Telematics_and_GPS</code>(5개 서브모듈)로 구성됩니다.
+      Theme 1(<span class="src" title="kaist-grad-works: 1_Wireless_Power_Transfer_and_EV/README.md">Theme 1 README.md</span>)은 크게 실내외 3차원 자유 공간 무선충전을 위한 <code>3D_Positioning_and_Vision</code>(5개 서브모듈)과
+      도로 매설형 세그먼트 급전 인버터를 사전 제어하는 <code>Telematics_and_GPS</code>(6개 서브모듈)의 총 11개 서브모듈로 구성됩니다.
       아래 다이어그램의 각 스테이지를 클릭하면 상세 입출력 수식과 구현 파일이 표시됩니다.
     </p>
 
@@ -55,7 +55,7 @@
           </marker>
         </defs>
         <rect x="4" y="4" width="1072" height="312" rx="12" class="f-surface" />
-        <text x="24" y="28" class="t-ok">CLICKABLE PIPELINE · THEME 1 3D RESONANT WPT VISION CONTROL &amp; 85kHz OLEV TELEMATICS (8 SUBMODULES)</text>
+        <text x="24" y="28" class="t-ok">CLICKABLE PIPELINE · THEME 1 3D RESONANT WPT VISION CONTROL &amp; 85kHz OLEV TELEMATICS (11 SUBMODULES)</text>
 
         <!-- Node 1: Tsai DLT Calibration -->
         <g class="svg-node" data-node="wpt-calib">
@@ -125,7 +125,7 @@
   <section id="sec-tsai">
     <h2>Tsai 카메라 캘리브레이션 및 양안 3D 광선 삼각측량 수학적 유도</h2>
     <p>
-      <a class="src" href="../../1_Wireless_Power_Transfer_and_EV/3D_Positioning_and_Vision/ObjectDetection/TsaiCalibration.py#L4" target="_blank" rel="noopener" title="1_Wireless_Power_Transfer_and_EV/3D_Positioning_and_Vision/ObjectDetection/TsaiCalibration.py:4">TsaiCalibration.py:4</a>는 외부 라이브러리 블랙박스에 의존하지 않고, 3D 월드 좌표 $\mathbf{X}_i = [X_i, Y_i, Z_i]^T$와 2D 이미지 픽셀 좌표 $\mathbf{u}_i = [u_i, v_i]^T$의 대응점들로부터
+      <span class="src" title="kaist-grad-works: 1_Wireless_Power_Transfer_and_EV/3D_Positioning_and_Vision/ObjectDetection/TsaiCalibration.py:4">TsaiCalibration.py:4</span>는 외부 라이브러리 블랙박스에 의존하지 않고, 3D 월드 좌표 $\mathbf{X}_i = [X_i, Y_i, Z_i]^T$와 2D 이미지 픽셀 좌표 $\mathbf{u}_i = [u_i, v_i]^T$의 대응점들로부터
       카메라 투영 행렬을 직접 추정하고 3차원 좌표를 역산하는 4단계 파이프라인을 구현합니다.
     </p>
 
@@ -136,7 +136,7 @@
     $$s \begin{bmatrix} u \\ v \\ 1 \end{bmatrix} = \begin{bmatrix} k_{11} & k_{12} & k_{13} & k_{14} \\ k_{21} & k_{22} & k_{23} & k_{24} \\ k_{31} & k_{32} & k_{33} & 1 \end{bmatrix} \begin{bmatrix} X \\ Y \\ Z \\ 1 \end{bmatrix}$$
     <p>
       스케일 인자 $s = k_{31}X + k_{32}Y + k_{33}Z + 1$을 소거하면 각 3D-2D 대응점마다 2개의 선형 방정식이 유도되며,
-      $N$개의 기준점에 대해 $2N \times 11$ 행렬 $\mathbf{A}$와 $2N \times 1$ 벡터 $\mathbf{b}$를 구성할 수 있습니다(<a class="src" href="../../1_Wireless_Power_Transfer_and_EV/3D_Positioning_and_Vision/ObjectDetection/TsaiCalibration.py#L4" target="_blank" rel="noopener" title="1_Wireless_Power_Transfer_and_EV/3D_Positioning_and_Vision/ObjectDetection/TsaiCalibration.py:4">TsaiCalibration.py:4</a>).
+      $N$개의 기준점에 대해 $2N \times 11$ 행렬 $\mathbf{A}$와 $2N \times 1$ 벡터 $\mathbf{b}$를 구성할 수 있습니다(<span class="src" title="kaist-grad-works: 1_Wireless_Power_Transfer_and_EV/3D_Positioning_and_Vision/ObjectDetection/TsaiCalibration.py:4">TsaiCalibration.py:4</span>).
       정규방정식(Normal Equation)을 통한 최소자승 해는 다음과 같습니다:
     </p>
     $$\mathbf{k}^* = \left(\mathbf{A}^T \mathbf{A}\right)^{-1} \mathbf{A}^T \mathbf{b} \in \mathbb{R}^{11}$$
@@ -144,15 +144,15 @@
     <h3 id="sec-tsai-step2">Step 2 · 2D 픽셀의 3D 광선 역투영 (<code>Line_gen</code>) 및 최단 중점 삼각측량 (<code>Est_Point</code>)</h3>
     <p>
       캘리브레이션된 카메라 행렬 $K$에서 픽셀 $(u, v)$가 주어지면, 위 투영식의 첫 번째 행과 두 번째 행은 각각 3차원 공간 상의 두 평면 $\Pi_u, \Pi_v$를 정의합니다.
-      <a class="src" href="../../1_Wireless_Power_Transfer_and_EV/3D_Positioning_and_Vision/ObjectDetection/TsaiCalibration.py#L41" target="_blank" rel="noopener" title="1_Wireless_Power_Transfer_and_EV/3D_Positioning_and_Vision/ObjectDetection/TsaiCalibration.py:41">TsaiCalibration.py:41</a>의 <code>Line_gen(K, u, v)</code>는 두 평면의 법선 벡터 $\mathbf{n}_u, \mathbf{n}_v \in \mathbb{R}^3$의 외적(Cross Product)으로
+      <span class="src" title="kaist-grad-works: 1_Wireless_Power_Transfer_and_EV/3D_Positioning_and_Vision/ObjectDetection/TsaiCalibration.py:41">TsaiCalibration.py:41</span>의 <code>Line_gen(K, u, v)</code>는 두 평면의 법선 벡터 $\mathbf{n}_u, \mathbf{n}_v \in \mathbb{R}^3$의 외적(Cross Product)으로
       3차원 광선의 방향 벡터 $\mathbf{v} = \mathbf{n}_u \times \mathbf{n}_v$와 기준점 $\mathbf{p}_0$를 구합니다:
     </p>
     $$\mathbf{L}_1(t_1) = \mathbf{p}_1 + t_1 \mathbf{v}_1, \qquad \mathbf{L}_2(t_2) = \mathbf{p}_2 + t_2 \mathbf{v}_2$$
     <p>
       실제 환경에서는 렌즈 왜곡과 양자화 노이즈로 인해 두 카메라의 광선 $\mathbf{L}_1(t_1)$과 $\mathbf{L}_2(t_2)$가 3차원 공간에서 정확히 한 점에서 만나지 않는
-      <strong>꼬인 직선(Skew Lines)</strong>이 됩니다. <a class="src" href="../../1_Wireless_Power_Transfer_and_EV/3D_Positioning_and_Vision/ObjectDetection/TsaiCalibration.py#L58" target="_blank" rel="noopener" title="1_Wireless_Power_Transfer_and_EV/3D_Positioning_and_Vision/ObjectDetection/TsaiCalibration.py:58">TsaiCalibration.py:58</a>의 <code>Est_Point(Line1, Line2)</code>는 두 직선 사이의 유클리드 거리 제곱
+      <strong>꼬인 직선(Skew Lines)</strong>이 됩니다. <span class="src" title="kaist-grad-works: 1_Wireless_Power_Transfer_and_EV/3D_Positioning_and_Vision/ObjectDetection/TsaiCalibration.py:58">TsaiCalibration.py:58</span>의 <code>Est_Point(Line1, Line2)</code>는 두 직선 사이의 유클리드 거리 제곱
       $\|\mathbf{L}_1(t_1) - \mathbf{L}_2(t_2)\|_2^2$을 최소화하는 직교 조건($(\mathbf{L}_1 - \mathbf{L}_2) \perp \mathbf{v}_1$, $(\mathbf{L}_1 - \mathbf{L}_2) \perp \mathbf{v}_2$)으로부터
-      $2 \times 2$ 연립방정식을 풀어 최적 매개변수 $(t_1^*, t_2^*)$를 구하고, 두 최단점의 <strong>중점(Midpoint)</strong>으로 수신 코일의 3D 위치 $\mathbf{P}^*$를 결정합니다(<a class="src" href="../../1_Wireless_Power_Transfer_and_EV/3D_Positioning_and_Vision/ObjectDetection/TsaiCalibration.py#L72" target="_blank" rel="noopener" title="1_Wireless_Power_Transfer_and_EV/3D_Positioning_and_Vision/ObjectDetection/TsaiCalibration.py:72">TsaiCalibration.py:72</a>):
+      $2 \times 2$ 연립방정식을 풀어 최적 매개변수 $(t_1^*, t_2^*)$를 구하고, 두 최단점의 <strong>중점(Midpoint)</strong>으로 수신 코일의 3D 위치 $\mathbf{P}^*$를 결정합니다(<span class="src" title="kaist-grad-works: 1_Wireless_Power_Transfer_and_EV/3D_Positioning_and_Vision/ObjectDetection/TsaiCalibration.py:72">TsaiCalibration.py:72</span>):
     </p>
     $$\begin{bmatrix} \mathbf{v}_1 \cdot \mathbf{v}_1 & -\mathbf{v}_1 \cdot \mathbf{v}_2 \\ \mathbf{v}_1 \cdot \mathbf{v}_2 & -\mathbf{v}_2 \cdot \mathbf{v}_2 \end{bmatrix} \begin{bmatrix} t_1^* \\ t_2^* \end{bmatrix} = \begin{bmatrix} -(\mathbf{p}_1 - \mathbf{p}_2) \cdot \mathbf{v}_1 \\ -(\mathbf{p}_1 - \mathbf{p}_2) \cdot \mathbf{v}_2 \end{bmatrix}, \qquad \mathbf{P}^* = \frac{\mathbf{L}_1(t_1^*) + \mathbf{L}_2(t_2^*)}{2}$$
   </section>
@@ -206,23 +206,23 @@
       도로 아래 매설된 급전 세그먼트 코일(85kHz, 100kW급)을 상시 켜두면 막대한 대기 전력 손실과 전자기장 노출이 발생하므로,
       전기버스(OLEV)가 해당 세그먼트에 진입하기 직전에만 인버터를 예열·기동(Pre-Turn-On)해야 합니다.
       Theme 1의 <code>Telematics_and_GPS</code>는 안드로이드 단말 4종(<code>EVGPS</code>, <code>GPSlog</code>, <code>GPStracker</code>, <code>InverterGPS</code>)과
-      MATLAB 궤적 해석 엔진(<a class="src" href="../../1_Wireless_Power_Transfer_and_EV/Telematics_and_GPS/GPS/get_lane_distance.m#L1" target="_blank" rel="noopener" title="1_Wireless_Power_Transfer_and_EV/Telematics_and_GPS/GPS/get_lane_distance.m:1">get_lane_distance.m:1</a>, <a class="src" href="../../1_Wireless_Power_Transfer_and_EV/Telematics_and_GPS/GPS/get_predicted_time.m#L1" target="_blank" rel="noopener" title="1_Wireless_Power_Transfer_and_EV/Telematics_and_GPS/GPS/get_predicted_time.m:1">get_predicted_time.m:1</a>)으로 이를 해결합니다.
+      MATLAB 궤적 해석 엔진(<span class="src" title="kaist-grad-works: 1_Wireless_Power_Transfer_and_EV/Telematics_and_GPS/GPS/get_lane_distance.m:1">get_lane_distance.m:1</span>, <span class="src" title="kaist-grad-works: 1_Wireless_Power_Transfer_and_EV/Telematics_and_GPS/GPS/get_predicted_time.m:1">get_predicted_time.m:1</span>)으로 이를 해결합니다.
     </p>
 
     <h3 id="sec-olev-math">점-직선 직교 차선 편차 및 사분위 25% 절사 평균 (<code>get_lane_distance.m</code>)</h3>
     <p>
       WGS84 위경도 좌표를 <code>deg2utm.m</code>으로 미터(m) 단위의 평면 직교 좌표 $\mathbf{p}_i = (x_i, y_i)$로 투영한 뒤,
-      도로 중심 기준선 세그먼트 $(\mathbf{q}_1, \mathbf{q}_2)$로부터 차량의 횡방향 수직 이탈 거리(Orthogonal Lateral Distance)를 외적으로 계산합니다(<a class="src" href="../../1_Wireless_Power_Transfer_and_EV/Telematics_and_GPS/GPS/get_lane_distance.m#L10" target="_blank" rel="noopener" title="1_Wireless_Power_Transfer_and_EV/Telematics_and_GPS/GPS/get_lane_distance.m:10">get_lane_distance.m:10</a>):
+      도로 중심 기준선 세그먼트 $(\mathbf{q}_1, \mathbf{q}_2)$로부터 차량의 횡방향 수직 이탈 거리(Orthogonal Lateral Distance)를 외적으로 계산합니다(<span class="src" title="kaist-grad-works: 1_Wireless_Power_Transfer_and_EV/Telematics_and_GPS/GPS/get_lane_distance.m:10">get_lane_distance.m:10</span>):
     </p>
     $$d_{\perp, i} = \frac{\left|(x_{q_2} - x_{q_1})(y_{q_1} - y_i) - (x_{q_1} - x_i)(y_{q_2} - y_{q_1})\right|}{\sqrt{(x_{q_2} - x_{q_1})^2 + (y_{q_2} - y_{q_1})^2}}$$
     <p>
       도심 빌딩 숲의 GPS 멀티패스(Multipath) 반사로 인해 간헐적으로 수 미터의 튀는 값(Outlier)이 유입되므로,
-      <a class="src" href="../../1_Wireless_Power_Transfer_and_EV/Telematics_and_GPS/GPS/get_lane_distance.m#L16" target="_blank" rel="noopener" title="1_Wireless_Power_Transfer_and_EV/Telematics_and_GPS/GPS/get_lane_distance.m:16">get_lane_distance.m:16</a>은 수집된 거리 배열을 오름차순 정렬한 뒤 <strong>하위 25%와 상위 25%를 모두 제거(Interquartile 25% Trimmed Mean)</strong>하고 중앙 50% 샘플만 평균을 취합니다.
+      <span class="src" title="kaist-grad-works: 1_Wireless_Power_Transfer_and_EV/Telematics_and_GPS/GPS/get_lane_distance.m:16">get_lane_distance.m:16</span>은 수집된 거리 배열을 오름차순 정렬한 뒤 <strong>하위 25%와 상위 25%를 모두 제거(Interquartile 25% Trimmed Mean)</strong>하고 중앙 50% 샘플만 평균을 취합니다.
     </p>
 
     <h3 id="sec-olev-eta">보수적 10% 감속 마진 기반 인버터 예열 시간 예측 (<code>get_predicted_time.m</code>)</h3>
     <p>
-      인버터가 차량 진입보다 늦게 켜지면 충전 누락이 발생하므로, <a class="src" href="../../1_Wireless_Power_Transfer_and_EV/Telematics_and_GPS/GPS/get_predicted_time.m#L4" target="_blank" rel="noopener" title="1_Wireless_Power_Transfer_and_EV/Telematics_and_GPS/GPS/get_predicted_time.m:4">get_predicted_time.m:4</a>의 4행(<code>% reduce 10 %</code>) 및 26행(<a class="src" href="../../1_Wireless_Power_Transfer_and_EV/Telematics_and_GPS/GPS/get_predicted_time.m#L26" target="_blank" rel="noopener" title="1_Wireless_Power_Transfer_and_EV/Telematics_and_GPS/GPS/get_predicted_time.m:26">get_predicted_time.m:26</a>)은
+      인버터가 차량 진입보다 늦게 켜지면 충전 누락이 발생하므로, <span class="src" title="kaist-grad-works: 1_Wireless_Power_Transfer_and_EV/Telematics_and_GPS/GPS/get_predicted_time.m:4">get_predicted_time.m:4</span>의 4행(<code>% reduce 10 %</code>) 및 26행(<span class="src" title="kaist-grad-works: 1_Wireless_Power_Transfer_and_EV/Telematics_and_GPS/GPS/get_predicted_time.m:26">get_predicted_time.m:26</span>)은
       구간 평균 주행 속도 $\bar{v}_k$에 <strong>$0.9$배 보수적 안전 계수</strong>를 적용하거나 가속 추세를 반영하여 세그먼트 도달 잔여 시간 $\widehat{\text{ETA}}$를 산출합니다:
     </p>
     $$\widehat{d}_{\text{step}, k} = 0.9 \cdot \Delta d_k, \qquad \widehat{\text{ETA}}_k = \frac{d_{\text{rem}, k}}{\bar{v}_k}, \qquad \text{Inverter State} = \begin{cases} \text{ON (Active)} & \text{if } d_{\text{rem}} \le 0 \\ \text{PRE-HEAT} & \text{if } 0 \lt \widehat{\text{ETA}}_k \le \tau_{\text{warm}} \\ \text{STANDBY} & \text{otherwise} \end{cases}$$

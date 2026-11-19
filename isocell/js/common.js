@@ -12,28 +12,30 @@
     "slug": "isocell_sensors",
     "num": "01",
     "title": "200MP ISOCELL 센서 개발 (HP2 · HP3/HP9 · HP5)",
-    "desc": "Non-Bayer (4×4 Hexadeca / 2×2 Q-cell) → 표준 Bayer Remosaic 원리, ISOCELL HP2 (0.6µm, 인센서 QMSC), HP3/HP9 (0.56µm, 세계 최초 DL Hexadeca Remosaic), HP5 (0.5µm, 세계 최소형 200MP Technical Leader) 연대기별 개발 이력 및 상용 탑재 기기.",
+    "desc": "Non-Bayer (4×4 Hexadeca / 2×2 Q-cell) → 표준 Bayer Remosaic 원리, ISOCELL HP2 (0.6µm, 인센서 QMSC), HP3/HP9 (0.56µm, 세계 최초 DL Hexadeca Remosaic), HP5 (0.5µm, 세계 최소형 200MP Technical Leader) 연대기, 삼성 미국 특허 3건 및 50+ 상용 안드로이드 스마트폰.",
     "tags": [
       "Remosaic 원리",
       "HP2 · QMSC",
-      "HP3/HP9 · 세계 최초 DL 16-Cell",
-      "HP5 · 0.5µm Tech Lead"
+      "HP3/HP9 · 1st DL 16-Cell",
+      "HP5 · 0.5µm TL",
+      "50+ 스마트폰 & US 특허"
     ]
   },
   {
     "slug": "e2e_remosaic",
     "num": "02",
     "title": "E2E AI Remosaic (Gen 1–4) — Camera ISP 파이프라인 이기종 병렬화",
-    "desc": "DL Remosaic과 Camera ISP 연산을 CPU/GPU/NPU/ISP에 분배해 Camera ISP 파이프라인 상단에 탑재하는 이기종 병렬화 원리(200MP 캡처 속도 최대 3배 가속, SEC 2023 Silver Award), Gen 1 → Gen 4 기능 고도화 연대기 및 30+ 글로벌 OEM 상용 단말 라인업.",
+    "desc": "DL Remosaic과 Camera ISP 연산을 CPU/GPU/NPU/ISP에 분배해 Camera ISP 파이프라인 상단에 탑재하는 이기종 병렬화 원리(200MP 캡처 최대 3배 가속, Samsung Best Paper Awards 2026 Silver & SEC 2023 Silver), Gen 1 → Gen 4 연대기 및 30+ 상용 OEM 단말(200MP 전체 50+ 스마트폰).",
     "tags": [
       "ISP 파이프라인 병렬화",
       "CPU/GPU/NPU/ISP",
       "Gen 1–4 연대기",
-      "30+ 상용 단말"
+      "Best Paper '26 Silver",
+      "30+ E2E / 50+ 200MP"
     ]
   }
 ];
-  const PREBUILT_SEARCH = [{"type": "섹션", "slug": "isocell_sensors", "num": "01", "chTitle": "200MP ISOCELL 센서 개발 (HP2 · HP3/HP9 · HP5)", "title": "Remosaic이란 무엇인가? (CFA 구조와 멀티모드 동작 원리)", "hash": "sec-remosaic-principle", "keywords": "200MP ISOCELL 센서 개발 (HP2 · HP3/HP9 · HP5) Remosaic이란 무엇인가? (CFA 구조와 멀티모드 동작 원리) sec-remosaic-principle"}, {"type": "섹션", "slug": "isocell_sensors", "num": "01", "chTitle": "200MP ISOCELL 센서 개발 (HP2 · HP3/HP9 · HP5)", "title": "연대기별 200MP ISOCELL 센서 개발 이력 (2021 – 현재)", "hash": "sec-sensor-history", "keywords": "200MP ISOCELL 센서 개발 (HP2 · HP3/HP9 · HP5) 연대기별 200MP ISOCELL 센서 개발 이력 (2021 – 현재) sec-sensor-history"}, {"type": "섹션", "slug": "isocell_sensors", "num": "01", "chTitle": "200MP ISOCELL 센서 개발 (HP2 · HP3/HP9 · HP5)", "title": "200MP ISOCELL 센서 라인업 &amp; 상용 탑재 스마트폰 표", "hash": "sec-sensor-products", "keywords": "200MP ISOCELL 센서 개발 (HP2 · HP3/HP9 · HP5) 200MP ISOCELL 센서 라인업 &amp; 상용 탑재 스마트폰 표 sec-sensor-products"}, {"type": "섹션", "slug": "isocell_sensors", "num": "01", "chTitle": "200MP ISOCELL 센서 개발 (HP2 · HP3/HP9 · HP5)", "title": "Chapter 01 핵심 요약", "hash": "summary", "keywords": "200MP ISOCELL 센서 개발 (HP2 · HP3/HP9 · HP5) Chapter 01 핵심 요약 summary"}, {"type": "섹션", "slug": "e2e_remosaic", "num": "02", "chTitle": "E2E AI Remosaic (Gen 1–4) — Camera ISP 파이프라인 이기종 병렬화", "title": "Camera ISP 파이프라인 상단에서의 이기종(CPU / GPU / NPU / ISP) 병렬화 원리", "hash": "sec-isp-parallelization", "keywords": "E2E AI Remosaic (Gen 1–4) — Camera ISP 파이프라인 이기종 병렬화 Camera ISP 파이프라인 상단에서의 이기종(CPU / GPU / NPU / ISP) 병렬화 원리 sec-isp-parallelization"}, {"type": "섹션", "slug": "e2e_remosaic", "num": "02", "chTitle": "E2E AI Remosaic (Gen 1–4) — Camera ISP 파이프라인 이기종 병렬화", "title": "세대별 E2E AI Remosaic 기능 추가 연대기 (Gen 1 – Gen 4)", "hash": "sec-e2e-history", "keywords": "E2E AI Remosaic (Gen 1–4) — Camera ISP 파이프라인 이기종 병렬화 세대별 E2E AI Remosaic 기능 추가 연대기 (Gen 1 – Gen 4) sec-e2e-history"}, {"type": "섹션", "slug": "e2e_remosaic", "num": "02", "chTitle": "E2E AI Remosaic (Gen 1–4) — Camera ISP 파이프라인 이기종 병렬화", "title": "상용화 스마트폰 제품 라인업 (종합 테이블 &amp; 리스트)", "hash": "sec-commercial-products", "keywords": "E2E AI Remosaic (Gen 1–4) — Camera ISP 파이프라인 이기종 병렬화 상용화 스마트폰 제품 라인업 (종합 테이블 &amp; 리스트) sec-commercial-products"}, {"type": "섹션", "slug": "e2e_remosaic", "num": "02", "chTitle": "E2E AI Remosaic (Gen 1–4) — Camera ISP 파이프라인 이기종 병렬화", "title": "Chapter 02 핵심 요약", "hash": "summary", "keywords": "E2E AI Remosaic (Gen 1–4) — Camera ISP 파이프라인 이기종 병렬화 Chapter 02 핵심 요약 summary"}, {"type": "개념", "slug": "e2e_remosaic", "num": "02", "chTitle": "E2E AI Remosaic & 센서 가이드북", "title": "리모자이크 (Remosaic) (Remosaic)", "hash": "sec-commercial-products", "keywords": "리모자이크 (Remosaic) Non-Bayer to Bayer Conversion Remosaic Non-Bayer 멀티셀 컬러 필터 배열(2×2 Q-cell / 4×4 Hexadeca)을 표준 Camera ISP가 처리할 수 있는 2×2 Bayer (RGGB) 배열로 재배열·복원하여 200MP 초고해상도 촬영 및 2×/4× 무손실 인센서 줌을 가능하게 하는 핵심 알고리즘."}, {"type": "개념", "slug": "e2e_remosaic", "num": "02", "chTitle": "E2E AI Remosaic & 센서 가이드북", "title": "Tetra²pixel (4×4 Hexadeca CFA) (Tetra²pixel)", "hash": "sec-commercial-products", "keywords": "Tetra²pixel (4×4 Hexadeca CFA) 16-Cell Non-Bayer Color Filter Array Tetra²pixel 인접한 4×4 = 16개 서브마이크론 포토다이오드에 동일 컬러 필터(R, G, B)를 배치해 저조도 12.5MP(4×4 비닝), 중조도 50MP(2×2 비닝), 고조도 200MP 풀해상도 및 4× 인센서 줌(Remosaic)을 모두 지원하는 삼성전자의 16-cell 컬러 필터 구조."}, {"type": "개념", "slug": "e2e_remosaic", "num": "02", "chTitle": "E2E AI Remosaic & 센서 가이드북", "title": "QMSC (AI 4×4 Q-Cell Remosaic) (QMSC)", "hash": "sec-commercial-products", "keywords": "QMSC (AI 4×4 Q-Cell Remosaic) In-Sensor AI 4×4 Q-Cell Remosaic QMSC ISOCELL HP2 (0.6µm, 200MP) 센서 내부에 탑재된 AI 기반 4×4 Q-cell Remosaic 알고리즘으로, Galaxy S23 Ultra 메인 카메라의 200MP 촬영 및 12MP 4× 인센서 줌 모드를 구현한 핵심 기술."}, {"type": "개념", "slug": "e2e_remosaic", "num": "02", "chTitle": "E2E AI Remosaic & 센서 가이드북", "title": "E2E AI Remosaic (E2E AI RMSC)", "hash": "sec-commercial-products", "keywords": "E2E AI Remosaic End-to-End 200MP S/W ISP Turn-Key Platform E2E AI RMSC DL Remosaic과 Camera ISP 연산을 모바일 이기종 연산기(CPU/GPU/NPU/ISP)에 분배하고 Camera ISP 파이프라인 상단에 직접 탑재하여 200MP 캡처 지연시간(cfa2yuv)을 최대 3배 단축(3s → 1s @ SM8550)한 삼성전자의 턴키 S/W ISP 플랫폼."}, {"type": "개념", "slug": "e2e_remosaic", "num": "02", "chTitle": "E2E AI Remosaic & 센서 가이드북", "title": "이기종 SoC 병렬화 (HetSoC)", "hash": "sec-commercial-products", "keywords": "이기종 SoC 병렬화 CPU / GPU / NPU / ISP Pipeline Distribution HetSoC Qualcomm Snapdragon 및 MediaTek Dimensity 모바일 AP의 CPU, GPU, NPU, H/W ISP에 DL Remosaic과 S/W ISP 서브태스크를 분할·스케줄링하여 Camera ISP 파이프라인 위에서 병렬 실행하는 아키텍처."}];
+  const PREBUILT_SEARCH = [{"type": "섹션", "slug": "isocell_sensors", "num": "01", "chTitle": "200MP ISOCELL 센서 개발 (HP2 · HP3/HP9 · HP5)", "title": "Remosaic이란 무엇인가? (CFA 구조와 멀티모드 동작 원리)", "hash": "sec-remosaic-principle", "keywords": "200MP ISOCELL 센서 개발 (HP2 · HP3/HP9 · HP5) Remosaic이란 무엇인가? (CFA 구조와 멀티모드 동작 원리) sec-remosaic-principle"}, {"type": "섹션", "slug": "isocell_sensors", "num": "01", "chTitle": "200MP ISOCELL 센서 개발 (HP2 · HP3/HP9 · HP5)", "title": "연대기별 200MP ISOCELL 센서 개발 이력 (2021 – 현재)", "hash": "sec-sensor-history", "keywords": "200MP ISOCELL 센서 개발 (HP2 · HP3/HP9 · HP5) 연대기별 200MP ISOCELL 센서 개발 이력 (2021 – 현재) sec-sensor-history"}, {"type": "섹션", "slug": "isocell_sensors", "num": "01", "chTitle": "200MP ISOCELL 센서 개발 (HP2 · HP3/HP9 · HP5)", "title": "200MP ISOCELL 센서 라인업 &amp; 상용 탑재 스마트폰 표", "hash": "sec-sensor-products", "keywords": "200MP ISOCELL 센서 개발 (HP2 · HP3/HP9 · HP5) 200MP ISOCELL 센서 라인업 &amp; 상용 탑재 스마트폰 표 sec-sensor-products"}, {"type": "섹션", "slug": "isocell_sensors", "num": "01", "chTitle": "200MP ISOCELL 센서 개발 (HP2 · HP3/HP9 · HP5)", "title": "삼성전자 이미지 센서 &amp; 영상처리 미국 특허 및 수상 실적", "hash": "sec-isocell-patents", "keywords": "200MP ISOCELL 센서 개발 (HP2 · HP3/HP9 · HP5) 삼성전자 이미지 센서 &amp; 영상처리 미국 특허 및 수상 실적 sec-isocell-patents"}, {"type": "섹션", "slug": "isocell_sensors", "num": "01", "chTitle": "200MP ISOCELL 센서 개발 (HP2 · HP3/HP9 · HP5)", "title": "Chapter 01 핵심 요약", "hash": "summary", "keywords": "200MP ISOCELL 센서 개발 (HP2 · HP3/HP9 · HP5) Chapter 01 핵심 요약 summary"}, {"type": "섹션", "slug": "e2e_remosaic", "num": "02", "chTitle": "E2E AI Remosaic (Gen 1–4) — Camera ISP 파이프라인 이기종 병렬화", "title": "Camera ISP 파이프라인 상단에서의 이기종(CPU / GPU / NPU / ISP) 병렬화 원리", "hash": "sec-isp-parallelization", "keywords": "E2E AI Remosaic (Gen 1–4) — Camera ISP 파이프라인 이기종 병렬화 Camera ISP 파이프라인 상단에서의 이기종(CPU / GPU / NPU / ISP) 병렬화 원리 sec-isp-parallelization"}, {"type": "섹션", "slug": "e2e_remosaic", "num": "02", "chTitle": "E2E AI Remosaic (Gen 1–4) — Camera ISP 파이프라인 이기종 병렬화", "title": "세대별 E2E AI Remosaic 기능 추가 연대기 (Gen 1 – Gen 4)", "hash": "sec-e2e-history", "keywords": "E2E AI Remosaic (Gen 1–4) — Camera ISP 파이프라인 이기종 병렬화 세대별 E2E AI Remosaic 기능 추가 연대기 (Gen 1 – Gen 4) sec-e2e-history"}, {"type": "섹션", "slug": "e2e_remosaic", "num": "02", "chTitle": "E2E AI Remosaic (Gen 1–4) — Camera ISP 파이프라인 이기종 병렬화", "title": "상용화 스마트폰 제품 라인업 (종합 테이블 &amp; 리스트)", "hash": "sec-commercial-products", "keywords": "E2E AI Remosaic (Gen 1–4) — Camera ISP 파이프라인 이기종 병렬화 상용화 스마트폰 제품 라인업 (종합 테이블 &amp; 리스트) sec-commercial-products"}, {"type": "섹션", "slug": "e2e_remosaic", "num": "02", "chTitle": "E2E AI Remosaic (Gen 1–4) — Camera ISP 파이프라인 이기종 병렬화", "title": "Chapter 02 핵심 요약", "hash": "summary", "keywords": "E2E AI Remosaic (Gen 1–4) — Camera ISP 파이프라인 이기종 병렬화 Chapter 02 핵심 요약 summary"}, {"type": "개념", "slug": "e2e_remosaic", "num": "02", "chTitle": "E2E AI Remosaic & 센서 가이드북", "title": "리모자이크 (Remosaic) (Remosaic)", "hash": "sec-commercial-products", "keywords": "리모자이크 (Remosaic) Non-Bayer to Bayer Conversion Remosaic Non-Bayer 멀티셀 컬러 필터 배열(2×2 Q-cell / 4×4 Hexadeca)을 표준 Camera ISP가 처리할 수 있는 2×2 Bayer (RGGB) 배열로 재배열·복원하여 200MP 초고해상도 촬영 및 2×/4× 무손실 인센서 줌을 가능하게 하는 핵심 알고리즘."}, {"type": "개념", "slug": "e2e_remosaic", "num": "02", "chTitle": "E2E AI Remosaic & 센서 가이드북", "title": "Tetra²pixel (4×4 Hexadeca CFA) (Tetra²pixel)", "hash": "sec-commercial-products", "keywords": "Tetra²pixel (4×4 Hexadeca CFA) 16-Cell Non-Bayer Color Filter Array Tetra²pixel 인접한 4×4 = 16개 서브마이크론 포토다이오드에 동일 컬러 필터(R, G, B)를 배치해 저조도 12.5MP(4×4 비닝), 중조도 50MP(2×2 비닝), 고조도 200MP 풀해상도 및 4× 인센서 줌(Remosaic)을 모두 지원하는 삼성전자의 16-cell 컬러 필터 구조."}, {"type": "개념", "slug": "e2e_remosaic", "num": "02", "chTitle": "E2E AI Remosaic & 센서 가이드북", "title": "QMSC (AI 4×4 Q-Cell Remosaic) (QMSC)", "hash": "sec-commercial-products", "keywords": "QMSC (AI 4×4 Q-Cell Remosaic) In-Sensor AI 4×4 Q-Cell Remosaic QMSC ISOCELL HP2 (0.6µm, 200MP) 센서 내부에 탑재된 AI 기반 4×4 Q-cell Remosaic 알고리즘으로, Galaxy S23 Ultra 메인 카메라의 200MP 촬영 및 12MP 4× 인센서 줌 모드를 구현한 핵심 기술."}, {"type": "개념", "slug": "e2e_remosaic", "num": "02", "chTitle": "E2E AI Remosaic & 센서 가이드북", "title": "E2E AI Remosaic (E2E AI RMSC)", "hash": "sec-commercial-products", "keywords": "E2E AI Remosaic End-to-End 200MP S/W ISP Turn-Key Platform E2E AI RMSC DL Remosaic과 Camera ISP 연산을 모바일 이기종 연산기(CPU/GPU/NPU/ISP)에 분배하고 Camera ISP 파이프라인 상단에 직접 탑재하여 200MP 캡처 지연시간(cfa2yuv)을 최대 3배 단축(3s → 1s @ SM8550)한 삼성전자의 턴키 S/W ISP 플랫폼."}, {"type": "개념", "slug": "e2e_remosaic", "num": "02", "chTitle": "E2E AI Remosaic & 센서 가이드북", "title": "이기종 SoC 병렬화 (HetSoC)", "hash": "sec-commercial-products", "keywords": "이기종 SoC 병렬화 CPU / GPU / NPU / ISP Pipeline Distribution HetSoC Qualcomm Snapdragon 및 MediaTek Dimensity 모바일 AP의 CPU, GPU, NPU, H/W ISP에 DL Remosaic과 S/W ISP 서브태스크를 분할·스케줄링하여 Camera ISP 파이프라인 위에서 병렬 실행하는 아키텍처."}];
 
   const LOGO = `<svg viewBox="0 0 28 28" fill="none" aria-hidden="true">
     <rect x="2" y="2" width="11" height="11" rx="3" fill="#e0443e"/>
@@ -167,11 +169,15 @@
         </a>
         <a href="https://yjqkrtk-ux.github.io/aicamera/" target="_blank" rel="noopener">
           <span class="num">LSP</span>
-          <span>AICAMERA (Edge LSP) Guidebook<div class="sub">Sony IMX500 + Hailo-8 Split Inference &amp; ISP</div></span>
+          <span>AICAMERA (Edge LSP) Guidebook<div class="sub">Sony IMX500 + Hailo-8 Split Inference &amp; Comp-LSP</div></span>
+        </a>
+        <a href="https://yjqkrtk-ux.github.io/papers/" target="_blank" rel="noopener">
+          <span class="num">PAP</span>
+          <span>Academic Paper Reader Hub<div class="sub">ICASSP · CVPR · TIP Interactive Manuscripts</div></span>
         </a>
         <a href="https://yjqkrtk-ux.github.io/gradworks/" target="_blank" rel="noopener">
           <span class="num">PHD</span>
-          <span>KAIST Ph.D. Research Guidebook<div class="sub">DQNAlign · 3D WPT · REminerII · Academic Archive</div></span>
+          <span>KAIST Ph.D. Research Guidebook<div class="sub">DQNAlign · 3D WPT · ReverseFactory · Archive</div></span>
         </a>
       </nav>
     `;
@@ -285,7 +291,7 @@
 
       const foot = document.createElement("footer");
       foot.className = "sb-foot";
-      foot.innerHTML = `삼성전자 S.LSI 센서사업팀 — 200MP ISOCELL &amp; E2E AI Remosaic 프로젝트 가이드북 · 송용준 박사 (Yongjoon Song, Ph.D.) · Build 2026-11-16 (<code>008d628</code>)`;
+      foot.innerHTML = `삼성전자 S.LSI 센서사업팀 — 200MP ISOCELL &amp; E2E AI Remosaic 프로젝트 가이드북 · 송용준 박사 (Yongjoon Song, Ph.D.) · Build 2026-11-20 (<code>75f4314</code>)`;
       main.appendChild(foot);
     });
   }
@@ -372,7 +378,7 @@
         return;
       }
       box.innerHTML = currentHits.map((it, idx) => {
-        const tc = (it.type === "Concept" || it.type === "개념") ? "gl" : "";
+        const tc = (it.type === "개념") ? "gl" : "";
         return `<a href="${itemHref(it)}" class="${idx === 0 ? "on" : ""}" data-idx="${idx}">
           <div class="sr-head"><span class="sr-type ${tc}">${it.type}</span><span>${it.title}</span></div>
           <div class="sr-sub">CH.${it.num} ${it.chTitle}</div>

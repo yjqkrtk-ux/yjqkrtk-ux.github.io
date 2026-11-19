@@ -8,11 +8,11 @@
 <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/katex@0.16.11/dist/katex.min.css">
 <script defer src="https://cdn.jsdelivr.net/npm/katex@0.16.11/dist/katex.min.js"></script>
 <script defer src="https://cdn.jsdelivr.net/npm/katex@0.16.11/dist/contrib/auto-render.min.js"></script>
-<link rel="stylesheet" href="../css/style.css?v=008d628">
-<link rel="stylesheet" href="../css/glossary-tooltips.css?v=008d628">
-<script src="../js/glossary-data.js?v=008d628"></script>
-<script src="../js/common.js?v=008d628"></script>
-<script defer src="../js/glossary-tooltips.js?v=008d628"></script>
+<link rel="stylesheet" href="../css/style.css?v=75f4314">
+<link rel="stylesheet" href="../css/glossary-tooltips.css?v=75f4314">
+<script src="../js/glossary-data.js?v=75f4314"></script>
+<script src="../js/common.js?v=75f4314"></script>
+<script defer src="../js/glossary-tooltips.js?v=75f4314"></script>
 </head>
 <body data-chapter="bio" data-root="../">
 <main class="chapter">
@@ -22,9 +22,9 @@
     <p class="lead">
       As Next-Generation Sequencing (NGS) and third-generation long-read technologies (PacBio, Oxford Nanopore) produce single reads spanning tens to hundreds of kilobases (bp),
       the $O(N_1 N_2)$ spatiotemporal complexity of classical global dynamic programming (Needleman-Wunsch) has become a severe computational bottleneck.
-      This chapter dissects Dr. Yongjoon Song's core Ph.D. dissertation breakthrough, <strong>DQNAlign</strong> (<a class="src" href="../../2_Bioinformatics_and_Genomics/Deep_Learning_Biomarkers/DQNalign/tool/RL/agent.py#L10" target="_blank" rel="noopener" title="2_Bioinformatics_and_Genomics/Deep_Learning_Biomarkers/DQNalign/tool/RL/agent.py:10">agent.py:10</a>, <a class="src" href="../../2_Bioinformatics_and_Genomics/Deep_Learning_Biomarkers/DQNalign/tool/RL/Learning.py#L17" target="_blank" rel="noopener" title="2_Bioinformatics_and_Genomics/Deep_Learning_Biomarkers/DQNalign/tool/RL/Learning.py:17">Learning.py:17</a>, <a class="src" href="https://doi.org/10.1109/OJEMB.2021.3076156" target="_blank" rel="noopener">IEEE OJEMB '21a ↗</a>, <a class="src" href="https://doi.org/10.1109/OJEMB.2021.3055424" target="_blank" rel="noopener">IEEE OJEMB '21b ↗</a>)—including its local sliding-window MDP formulation and
+      This chapter dissects Dr. Yongjoon Song's core Ph.D. dissertation breakthrough, <strong>DQNAlign</strong> (<span class="src" title="kaist-grad-works: 2_Bioinformatics_and_Genomics/Deep_Learning_Biomarkers/DQNalign/tool/RL/agent.py:10">agent.py:10</span>, <span class="src" title="kaist-grad-works: 2_Bioinformatics_and_Genomics/Deep_Learning_Biomarkers/DQNalign/tool/RL/Learning.py:17">Learning.py:17</span>, <a class="src" href="https://doi.org/10.1109/OJEMB.2021.3076156" target="_blank" rel="noopener">IEEE OJEMB '21a ↗</a>, <a class="src" href="https://doi.org/10.1109/OJEMB.2021.3055424" target="_blank" rel="noopener">IEEE OJEMB '21b ↗</a>)—including its local sliding-window MDP formulation and
       <strong>Dueling Double DQN + Exact Match Skip</strong> hybrid accelerator—alongside the chromosome-scale repeat mining and clinical biomarker engines
-      <strong>REminerII · PixelRE · REDNN</strong> (<a class="src" href="../../2_Bioinformatics_and_Genomics/Sequence_Mining_and_Alignment/REminerII/Insilico.py#L74" target="_blank" rel="noopener" title="2_Bioinformatics_and_Genomics/Sequence_Mining_and_Alignment/REminerII/Insilico.py:74">Insilico.py:74</a>, <a class="src" href="../../2_Bioinformatics_and_Genomics/Sequence_Mining_and_Alignment/PixelRE/PixelRE.m#L3" target="_blank" rel="noopener" title="2_Bioinformatics_and_Genomics/Sequence_Mining_and_Alignment/PixelRE/PixelRE.m:3">PixelRE.m:3</a>, <a class="src" href="../../2_Bioinformatics_and_Genomics/Deep_Learning_Biomarkers/REDNN/REDNN.py#L74" target="_blank" rel="noopener" title="2_Bioinformatics_and_Genomics/Deep_Learning_Biomarkers/REDNN/REDNN.py:74">REDNN.py:74</a>, <a class="src" href="https://patents.google.com/patent/US20190385696A1/en" target="_blank" rel="noopener">US 2019/0385696 A1 ↗</a>).
+      <strong>REminerII · PixelRE · REDNN</strong> (<span class="src" title="kaist-grad-works: 2_Bioinformatics_and_Genomics/Sequence_Mining_and_Alignment/REminerII/Insilico.py:74">Insilico.py:74</span>, <span class="src" title="kaist-grad-works: 2_Bioinformatics_and_Genomics/Sequence_Mining_and_Alignment/PixelRE/PixelRE.m:3">PixelRE.m:3</span>, <span class="src" title="kaist-grad-works: 2_Bioinformatics_and_Genomics/Deep_Learning_Biomarkers/REDNN/REDNN.py:74">REDNN.py:74</span>, <a class="src" href="https://patents.google.com/patent/US20190385696A1/en" target="_blank" rel="noopener">US 2019/0385696 A1 ↗</a>).
     </p>
     <ul class="objectives">
       <li>Understand the <strong>Local Sliding-Window MDP</strong> and <strong>Exact Match Skip</strong> heuristic that overcome the $O(N_1 N_2)$ barrier of global Needleman-Wunsch dynamic programming.</li>
@@ -42,12 +42,12 @@
     <h2>Limits of Global Dynamic Programming &amp; Local Sliding-Window MDP Formulation</h2>
     <p>
       When aligning two nucleotide sequences $S^{(1)} = (s^{(1)}_1, \dots, s^{(1)}_{N_1})$ and $S^{(2)} = (s^{(2)}_1, \dots, s^{(2)}_{N_2})$ ($s \in \{\text{A, C, G, T}\}$),
-      Needleman-Wunsch global dynamic programming (<a class="src" href="../../2_Bioinformatics_and_Genomics/Sequence_Mining_and_Alignment/AlignmentGenerator" target="_blank" rel="noopener" title="2_Bioinformatics_and_Genomics/Sequence_Mining_and_Alignment/AlignmentGenerator">AlignmentGenerator</a>, <a class="src" href="../../2_Bioinformatics_and_Genomics/Sequence_Mining_and_Alignment/QLOBAL" target="_blank" rel="noopener" title="2_Bioinformatics_and_Genomics/Sequence_Mining_and_Alignment/QLOBAL">QLOBAL</a>) evaluates the following recurrence across every grid cell $(i, j) \in [0, N_1] \times [0, N_2]$:
+      Needleman-Wunsch global dynamic programming (<span class="src" title="kaist-grad-works: 2_Bioinformatics_and_Genomics/Sequence_Mining_and_Alignment/AlignmentGenerator">AlignmentGenerator</span>, <span class="src" title="kaist-grad-works: 2_Bioinformatics_and_Genomics/Sequence_Mining_and_Alignment/QLOBAL">QLOBAL</span>) evaluates the following recurrence across every grid cell $(i, j) \in [0, N_1] \times [0, N_2]$:
     </p>
     $$F(i, j) = \max \begin{cases} F(i-1, j-1) + \sigma\!\left(s^{(1)}_i, s^{(2)}_j\right) & \text{(Match / Mismatch)} \\[4pt] F(i-1, j) - d_{\text{gap}} & \text{(Deletion in } S^{(2)}\text{)} \\[4pt] F(i, j-1) - d_{\text{gap}} & \text{(Insertion in } S^{(2)}\text{)} \end{cases}$$
     <p>
       If $N_1 = N_2 = 10^5\text{ bp}$, the DP grid contains $10^{10}$ cells (requiring roughly $40\text{ GB}$ of RAM at 4 bytes per integer), making single-node execution infeasible.
-      Instead of materializing the full grid in memory, <strong>DQNAlign</strong> (<a class="src" href="../../2_Bioinformatics_and_Genomics/Deep_Learning_Biomarkers/DQNalign/tool/RL/alignment.py#L9" target="_blank" rel="noopener" title="2_Bioinformatics_and_Genomics/Deep_Learning_Biomarkers/DQNalign/tool/RL/alignment.py:9">alignment.py:9</a>) reformulates sequence alignment as a Markov Decision Process (MDP) that observes only a forward-looking
+      Instead of materializing the full grid in memory, <strong>DQNAlign</strong> (<span class="src" title="kaist-grad-works: 2_Bioinformatics_and_Genomics/Deep_Learning_Biomarkers/DQNalign/tool/RL/alignment.py:9">alignment.py:9</span>) reformulates sequence alignment as a Markov Decision Process (MDP) that observes only a forward-looking
       <strong>$W \times W$ local subsequence window (Local Sliding Window)</strong> as state $s_t$ at the current alignment head $(x_t, y_t)$ and sequentially selects the optimal action $a_t$.
     </p>
 
@@ -59,7 +59,7 @@
           </marker>
         </defs>
         <rect x="4" y="4" width="1072" height="312" rx="12" class="f-surface" />
-        <text x="24" y="28" class="t-acc2">CLICKABLE PIPELINE · THEME 2 BIOINFORMATICS, DQNALIGN DRL &amp; GENOMIC MINING (21 SUBMODULES)</text>
+        <text x="24" y="28" class="t-acc2">CLICKABLE PIPELINE · THEME 2 BIOINFORMATICS, DQNALIGN DRL &amp; GENOMIC MINING (17 SUBMODULES)</text>
 
         <!-- Stage 1: Exact Skip & Local Window -->
         <g class="svg-node is-selected" data-node="bio-window">
@@ -93,7 +93,7 @@
           <text x="578" y="120" class="t-dim">Seed W=14 · Space=2 · Allow=1</text>
           <text x="578" y="140" class="t-dim">Greedy X-Drop = 30, L &gt;= 28</text>
           <text x="578" y="160" class="t-dim">PixelRE w=[7,8,10,12,14]</text>
-          <text x="578" y="180" class="t-dim">11 Win32 MFC RE_* Viewers</text>
+          <text x="578" y="180" class="t-dim">7 Win32 MFC RE_* Viewers</text>
           <text x="578" y="212" class="t-mono">Insilico.py · PixelRE.m</text>
         </g>
 
@@ -128,7 +128,7 @@
     <h3 id="sec-mdp-detail">MDP State, Action, Reward &amp; Exact Match Skip Formulation</h3>
     <ul>
       <li>
-        <strong>State Space ($\mathcal{S}$)</strong>: <a class="src" href="../../2_Bioinformatics_and_Genomics/Deep_Learning_Biomarkers/DQNalign/tool/RL/alignment.py#L110" target="_blank" rel="noopener" title="2_Bioinformatics_and_Genomics/Deep_Learning_Biomarkers/DQNalign/tool/RL/alignment.py:110">alignment.py:110</a> and <a class="src" href="../../2_Bioinformatics_and_Genomics/Deep_Learning_Biomarkers/DQNalign/tool/RL/alignment.py#L158" target="_blank" rel="noopener" title="2_Bioinformatics_and_Genomics/Deep_Learning_Biomarkers/DQNalign/tool/RL/alignment.py:158">alignment.py:158</a> encode the local subsequence window starting from the current alignment coordinate $(x_t, y_t)$ as a one-hot tensor or 2D match map for neural network input.
+        <strong>State Space ($\mathcal{S}$)</strong>: <span class="src" title="kaist-grad-works: 2_Bioinformatics_and_Genomics/Deep_Learning_Biomarkers/DQNalign/tool/RL/alignment.py:110">alignment.py:110</span> and <span class="src" title="kaist-grad-works: 2_Bioinformatics_and_Genomics/Deep_Learning_Biomarkers/DQNalign/tool/RL/alignment.py:158">alignment.py:158</span> encode the local subsequence window starting from the current alignment coordinate $(x_t, y_t)$ as a one-hot tensor or 2D match map for neural network input.
       </li>
       <li>
         <strong>Action Space ($\mathcal{A}$, <code>n_action = 3</code>)</strong>:
@@ -139,7 +139,7 @@
         $$r_t = \begin{cases} +r_{\text{match}} & \text{if } a_t = 0 \text{ and } s^{(1)}_{x_t} = s^{(2)}_{y_t} \\ -p_{\text{mismatch}} & \text{if } a_t = 0 \text{ and } s^{(1)}_{x_t} \neq s^{(2)}_{y_t} \\ -p_{\text{indel}} & \text{if } a_t \in \{1, 2\} \end{cases}$$
       </li>
       <li>
-        <strong>Exact Match Skip Accelerator (<a class="src" href="../../2_Bioinformatics_and_Genomics/Deep_Learning_Biomarkers/DQNalign/tool/RL/agent.py#L82" target="_blank" rel="noopener" title="2_Bioinformatics_and_Genomics/Deep_Learning_Biomarkers/DQNalign/tool/RL/agent.py:82">agent.py:82</a>, <a class="src" href="../../2_Bioinformatics_and_Genomics/Deep_Learning_Biomarkers/DQNalign/tool/RL/agent.py#L96" target="_blank" rel="noopener" title="2_Bioinformatics_and_Genomics/Deep_Learning_Biomarkers/DQNalign/tool/RL/agent.py:96">agent.py:96</a>, <a class="src" href="../../2_Bioinformatics_and_Genomics/Deep_Learning_Biomarkers/DQNalign/tool/RL/agent.py#L110" target="_blank" rel="noopener" title="2_Bioinformatics_and_Genomics/Deep_Learning_Biomarkers/DQNalign/tool/RL/agent.py:110">agent.py:110</a>)</strong>:
+        <strong>Exact Match Skip Accelerator (<span class="src" title="kaist-grad-works: 2_Bioinformatics_and_Genomics/Deep_Learning_Biomarkers/DQNalign/tool/RL/agent.py:82">agent.py:82</span>, <span class="src" title="kaist-grad-works: 2_Bioinformatics_and_Genomics/Deep_Learning_Biomarkers/DQNalign/tool/RL/agent.py:96">agent.py:96</span>, <span class="src" title="kaist-grad-works: 2_Bioinformatics_and_Genomics/Deep_Learning_Biomarkers/DQNalign/tool/RL/agent.py:110">agent.py:110</span>)</strong>:
         In homologous genomic regions, consecutive exact nucleotide matches (Exact Match Runs) occur frequently.
         <code>Agent.skip()</code> advances diagonally in a tight loop without invoking the neural network as long as $s^{(1)}_{x_t} = s^{(2)}_{y_t}$,
         calling the Dueling Double DQN agent only at mismatch or indel boundaries.
@@ -150,24 +150,24 @@
   <section id="sec-ddqn">
     <h2>Dueling Double DQN &amp; Depthwise Separable Conv Architecture</h2>
     <p>
-      <a class="src" href="../../2_Bioinformatics_and_Genomics/Deep_Learning_Biomarkers/DQNalign/tool/RL/Learning.py#L17" target="_blank" rel="noopener" title="2_Bioinformatics_and_Genomics/Deep_Learning_Biomarkers/DQNalign/tool/RL/Learning.py:17">Learning.py:17</a> implements the standard convolutional <code>Qnetwork</code> alongside the lightweight Depthwise Separable Convolution (<a class="src" href="../../2_Bioinformatics_and_Genomics/Deep_Learning_Biomarkers/DQNalign/tool/RL/Learning.py#L88" target="_blank" rel="noopener" title="2_Bioinformatics_and_Genomics/Deep_Learning_Biomarkers/DQNalign/tool/RL/Learning.py:88">Learning.py:88</a>)
-      <code>SSDnetwork</code> and differential-feature <code>DiffSSDnetwork</code> (<a class="src" href="../../2_Bioinformatics_and_Genomics/Deep_Learning_Biomarkers/DQNalign/tool/RL/Learning.py#L171" target="_blank" rel="noopener" title="2_Bioinformatics_and_Genomics/Deep_Learning_Biomarkers/DQNalign/tool/RL/Learning.py:171">Learning.py:171</a>).
+      <span class="src" title="kaist-grad-works: 2_Bioinformatics_and_Genomics/Deep_Learning_Biomarkers/DQNalign/tool/RL/Learning.py:17">Learning.py:17</span> implements the standard convolutional <code>Qnetwork</code> alongside the lightweight Depthwise Separable Convolution (<span class="src" title="kaist-grad-works: 2_Bioinformatics_and_Genomics/Deep_Learning_Biomarkers/DQNalign/tool/RL/Learning.py:88">Learning.py:88</span>)
+      <code>SSDnetwork</code> and differential-feature <code>DiffSSDnetwork</code> (<span class="src" title="kaist-grad-works: 2_Bioinformatics_and_Genomics/Deep_Learning_Biomarkers/DQNalign/tool/RL/Learning.py:171">Learning.py:171</span>).
     </p>
     <ol>
       <li>
-        <strong>Dueling Stream Split (<a class="src" href="../../2_Bioinformatics_and_Genomics/Deep_Learning_Biomarkers/DQNalign/tool/RL/Learning.py#L52" target="_blank" rel="noopener" title="2_Bioinformatics_and_Genomics/Deep_Learning_Biomarkers/DQNalign/tool/RL/Learning.py:52">Learning.py:52</a>)</strong>:
+        <strong>Dueling Stream Split (<span class="src" title="kaist-grad-works: 2_Bioinformatics_and_Genomics/Deep_Learning_Biomarkers/DQNalign/tool/RL/Learning.py:52">Learning.py:52</span>)</strong>:
         The final convolutional feature vector $h \in \mathbb{R}^{256}$ (<code>h_size = 256</code>) is split evenly into an
         action-advantage stream $\text{streamAC} \in \mathbb{R}^{128}$ and a state-value stream $\text{streamVC} \in \mathbb{R}^{128}$,
         which are recombined into $Q(s, a; \theta)$ via:
         $$Q(s, a; \theta) = V(s; \theta_V) + \left( A(s, a; \theta_A) - \frac{1}{|\mathcal{A}|} \sum_{a'=0}^{|\mathcal{A}|-1} A(s, a'; \theta_A) \right)$$
       </li>
       <li>
-        <strong>Double Q-Learning Target (<a class="src" href="../../2_Bioinformatics_and_Genomics/Deep_Learning_Biomarkers/DQNalign/tool/RL/agent.py#L77" target="_blank" rel="noopener" title="2_Bioinformatics_and_Genomics/Deep_Learning_Biomarkers/DQNalign/tool/RL/agent.py:77">agent.py:77</a>)</strong>:
+        <strong>Double Q-Learning Target (<span class="src" title="kaist-grad-works: 2_Bioinformatics_and_Genomics/Deep_Learning_Biomarkers/DQNalign/tool/RL/agent.py:77">agent.py:77</span>)</strong>:
         To prevent Q-value overestimation bias caused by single-network max operations, action selection uses the online network $\theta$ while value evaluation uses the target network $\theta^-$:
         $$y_t = r_t + \gamma \, Q\!\left(s_{t+1}, \arg\max_{a'} Q(s_{t+1}, a'; \theta_t);\; \theta^-_t\right), \quad \gamma = 0.99$$
       </li>
       <li>
-        <strong>Polyak Soft Target Updates &amp; Zipfian Indel Distribution (<a class="src" href="../../2_Bioinformatics_and_Genomics/Deep_Learning_Biomarkers/DQNalign/tool/RL/alignment.py#L42" target="_blank" rel="noopener" title="2_Bioinformatics_and_Genomics/Deep_Learning_Biomarkers/DQNalign/tool/RL/alignment.py:42">alignment.py:42</a>)</strong>:
+        <strong>Polyak Soft Target Updates &amp; Zipfian Indel Distribution (<span class="src" title="kaist-grad-works: 2_Bioinformatics_and_Genomics/Deep_Learning_Biomarkers/DQNalign/tool/RL/alignment.py:42">alignment.py:42</span>)</strong>:
         The target network is updated smoothly at every training step via $\theta^- \leftarrow \tau \theta + (1-\tau)\theta^-$ ($\tau = 0.001$),
         and indel lengths in synthetic training sequences are sampled from a biologically realistic Zipfian power-law distribution ($s = 1.6$):
         $$P(L_{\text{indel}} = k) = \frac{k^{-1.6}}{\sum_{n=1}^{L_{\max}} n^{-1.6}}, \quad k \in \{1, 2, \dots, L_{\max}\}$$
@@ -190,42 +190,42 @@
             <td>$B$</td>
             <td><code>batch_size</code></td>
             <td class="mono">32</td>
-            <td><a class="src" href="../../2_Bioinformatics_and_Genomics/Deep_Learning_Biomarkers/DQNalign/param/SSD.py#L2" target="_blank" rel="noopener" title="2_Bioinformatics_and_Genomics/Deep_Learning_Biomarkers/DQNalign/param/SSD.py:2">SSD.py:2</a></td>
+            <td><span class="src" title="kaist-grad-works: 2_Bioinformatics_and_Genomics/Deep_Learning_Biomarkers/DQNalign/param/SSD.py:2">SSD.py:2</span></td>
             <td>Experience Replay mini-batch sample size</td>
           </tr>
           <tr>
             <td>$\gamma$</td>
             <td><code>y</code></td>
             <td class="mono">0.99</td>
-            <td><a class="src" href="../../2_Bioinformatics_and_Genomics/Deep_Learning_Biomarkers/DQNalign/param/SSD.py#L2" target="_blank" rel="noopener" title="2_Bioinformatics_and_Genomics/Deep_Learning_Biomarkers/DQNalign/param/SSD.py:2">SSD.py:2</a></td>
+            <td><span class="src" title="kaist-grad-works: 2_Bioinformatics_and_Genomics/Deep_Learning_Biomarkers/DQNalign/param/SSD.py:2">SSD.py:2</span></td>
             <td>Discount factor for future alignment rewards</td>
           </tr>
           <tr>
             <td>$\epsilon_{\text{start}} \to \epsilon_{\text{end}}$</td>
             <td><code>startE</code>, <code>endE</code></td>
             <td class="mono">1 → 0.05</td>
-            <td><a class="src" href="../../2_Bioinformatics_and_Genomics/Deep_Learning_Biomarkers/DQNalign/param/SSD.py#L2" target="_blank" rel="noopener" title="2_Bioinformatics_and_Genomics/Deep_Learning_Biomarkers/DQNalign/param/SSD.py:2">SSD.py:2</a></td>
+            <td><span class="src" title="kaist-grad-works: 2_Bioinformatics_and_Genomics/Deep_Learning_Biomarkers/DQNalign/param/SSD.py:2">SSD.py:2</span></td>
             <td>$\epsilon$-Greedy exploration probability annealing range (<code>annealing_steps = 10000.0</code>)</td>
           </tr>
           <tr>
             <td>$D_{\text{hidden}}$</td>
             <td><code>h_size</code></td>
             <td class="mono">256</td>
-            <td><a class="src" href="../../2_Bioinformatics_and_Genomics/Deep_Learning_Biomarkers/DQNalign/param/SSD.py#L2" target="_blank" rel="noopener" title="2_Bioinformatics_and_Genomics/Deep_Learning_Biomarkers/DQNalign/param/SSD.py:2">SSD.py:2</a></td>
+            <td><span class="src" title="kaist-grad-works: 2_Bioinformatics_and_Genomics/Deep_Learning_Biomarkers/DQNalign/param/SSD.py:2">SSD.py:2</span></td>
             <td>Hidden feature dimension right before Dueling split ($128 + 128$ split)</td>
           </tr>
           <tr>
             <td>$\tau$</td>
             <td><code>tau</code></td>
             <td class="mono">0.001</td>
-            <td><a class="src" href="../../2_Bioinformatics_and_Genomics/Deep_Learning_Biomarkers/DQNalign/param/SSD.py#L2" target="_blank" rel="noopener" title="2_Bioinformatics_and_Genomics/Deep_Learning_Biomarkers/DQNalign/param/SSD.py:2">SSD.py:2</a></td>
+            <td><span class="src" title="kaist-grad-works: 2_Bioinformatics_and_Genomics/Deep_Learning_Biomarkers/DQNalign/param/SSD.py:2">SSD.py:2</span></td>
             <td>Target network soft-update coefficient (Polyak averaging)</td>
           </tr>
           <tr>
             <td>$|\mathcal{D}|$</td>
             <td><code>BUFFER_SIZE</code></td>
             <td class="mono">50,000</td>
-            <td><a class="src" href="../../2_Bioinformatics_and_Genomics/Deep_Learning_Biomarkers/DQNalign/tool/RL/Learning.py#L17" target="_blank" rel="noopener" title="2_Bioinformatics_and_Genomics/Deep_Learning_Biomarkers/DQNalign/tool/RL/Learning.py:17">Learning.py:17</a></td>
+            <td><span class="src" title="kaist-grad-works: 2_Bioinformatics_and_Genomics/Deep_Learning_Biomarkers/DQNalign/tool/RL/Learning.py:17">Learning.py:17</span></td>
             <td>Maximum transition storage capacity of the Experience Replay Buffer</td>
           </tr>
         </tbody>
@@ -292,20 +292,20 @@
     </p>
     <ul>
       <li>
-        <strong>REminerII (<a class="src" href="../../2_Bioinformatics_and_Genomics/Sequence_Mining_and_Alignment/REminerII/Insilico.py#L74" target="_blank" rel="noopener" title="2_Bioinformatics_and_Genomics/Sequence_Mining_and_Alignment/REminerII/Insilico.py:74">Insilico.py:74</a>)</strong>:
-        Built on a C++ core engine and Python pipeline, <code>Setparam()</code> (<a class="src" href="../../2_Bioinformatics_and_Genomics/Sequence_Mining_and_Alignment/REminerII/Insilico.py#L40" target="_blank" rel="noopener" title="2_Bioinformatics_and_Genomics/Sequence_Mining_and_Alignment/REminerII/Insilico.py:40">Insilico.py:40</a>) configures default parameters of
+        <strong>REminerII (<span class="src" title="kaist-grad-works: 2_Bioinformatics_and_Genomics/Sequence_Mining_and_Alignment/REminerII/Insilico.py:74">Insilico.py:74</span>)</strong>:
+        Built on a C++ core engine and Python pipeline, <code>Setparam()</code> (<span class="src" title="kaist-grad-works: 2_Bioinformatics_and_Genomics/Sequence_Mining_and_Alignment/REminerII/Insilico.py:40">Insilico.py:40</span>) configures default parameters of
         seed length <code>WORD_SIZE = 14</code>, mismatch tolerance <code>ALLOW_SIZE = 1</code>, merge spacing <code>SPACE_SIZE = 2</code>,
         minimum seed length <code>MIN_SEED_LEN = 28</code>, and early-termination threshold <code>GREEDY_X = 30</code>.
         During Greedy X-Drop extension, if the current alignment score drops by $X_{\text{drop}} = 30$ or more below the running maximum, extension terminates immediately to prune unproductive search branches.
       </li>
       <li>
-        <strong>PixelRE (<a class="src" href="../../2_Bioinformatics_and_Genomics/Sequence_Mining_and_Alignment/PixelRE/PixelRE.m#L3" target="_blank" rel="noopener" title="2_Bioinformatics_and_Genomics/Sequence_Mining_and_Alignment/PixelRE/PixelRE.m:3">PixelRE.m:3</a>)</strong>:
+        <strong>PixelRE (<span class="src" title="kaist-grad-works: 2_Bioinformatics_and_Genomics/Sequence_Mining_and_Alignment/PixelRE/PixelRE.m:3">PixelRE.m:3</span>)</strong>:
         Projects the sequence homology matrix into a 2D binary dot-plot image and applies multi-scale sliding windows <code>w = [7, 8, 10, 12, 14]</code>
         with morphological diagonal filtering to rapidly extract both forward and reverse-complement repeat clusters.
       </li>
       <li>
-        <strong>11 Win32 MFC / DirectX Visualization Suites (<code>RE_*</code>)</strong>:
-        Includes 11 standalone C++/MFC submodules—such as <code>RE_viewer</code>, <code>RE_heatmap</code>, and <code>RE_renderer</code>—for real-time desktop rendering of massive repeat density maps and heatmaps.
+        <strong>7 Win32 MFC / DirectX Visualization Suites (<code>RE_*</code>)</strong>:
+        Includes 7 C++/MFC visualization modules—such as <code>RE_viewer</code>, <code>RE_heatmap</code>, and <code>RE_renderer</code>—for real-time desktop rendering of massive repeat density maps and heatmaps.
       </li>
     </ul>
   </section>
@@ -365,8 +365,8 @@
     </p>
     <ul>
       <li>
-        <strong>REDNN &amp; RERNN (<a class="src" href="../../2_Bioinformatics_and_Genomics/Deep_Learning_Biomarkers/REDNN/REDNN.py#L74" target="_blank" rel="noopener" title="2_Bioinformatics_and_Genomics/Deep_Learning_Biomarkers/REDNN/REDNN.py:74">REDNN.py:74</a>, <a class="src" href="https://patents.google.com/patent/US20190385696A1/en" target="_blank" rel="noopener">US 2019/0385696 A1 ↗</a>)</strong>:
-        Takes a patient-specific $12{,}288$-dimensional genomic repeat-element feature vector $x \in \mathbb{R}^{12288}$ (<a class="src" href="../../2_Bioinformatics_and_Genomics/Deep_Learning_Biomarkers/REDNN/REDNN.py#L69" target="_blank" rel="noopener" title="2_Bioinformatics_and_Genomics/Deep_Learning_Biomarkers/REDNN/REDNN.py:69">REDNN.py:69</a>) and classifies 4 clinical risk groups via a
+        <strong>REDNN &amp; RERNN (<span class="src" title="kaist-grad-works: 2_Bioinformatics_and_Genomics/Deep_Learning_Biomarkers/REDNN/REDNN.py:74">REDNN.py:74</span>, <a class="src" href="https://patents.google.com/patent/US20190385696A1/en" target="_blank" rel="noopener">US 2019/0385696 A1 ↗</a>)</strong>:
+        Takes a patient-specific $12{,}288$-dimensional genomic repeat-element feature vector $x \in \mathbb{R}^{12288}$ (<span class="src" title="kaist-grad-works: 2_Bioinformatics_and_Genomics/Deep_Learning_Biomarkers/REDNN/REDNN.py:69">REDNN.py:69</span>) and classifies 4 clinical risk groups via a
         6-layer fully connected deep neural network ($12288 \to 512 \to 256 \to 128 \to 64 \to 32 \to 4$ with ReLU activations and Softmax cross-entropy loss) alongside a recurrent LSTM model (<code>RERNN</code>).
       </li>
       <li>

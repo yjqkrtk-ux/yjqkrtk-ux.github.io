@@ -485,10 +485,10 @@ window.BOOK_GLOSSARY = {
       ]
     },
     {
-      "ko": "4단계 조건부 확산 브리지 리파이너",
-      "en": "4-Step Conditional DDIM Bridge Refiner",
-      "abbr": "Conditional DDIM Bridge",
-      "def": "32×32 인코더 수용장 중첩으로 발생하는 잠재 패치 경계 위상 오차를 텍스처 환각 없이 교정하는 경량 4단계 조건부 브라운 브리지 잠재 확산(DDIM) 리파이너(Stage 6, 33.5K 파라미터, 201개 홀드아웃 DNG 학습)로, 10대 미학습 카메라 평균 PSNR을 24.46 dB(0-Net) 및 24.84 dB(1-Step DDIM)에서 25.16 dB(10/10 승리, 최대 30.30 dB · Intra-DB Indoor 30.88 dB)로 끌어올린다.",
+      "ko": "부분공간 잠금 플로우 사전",
+      "en": "Subspace-Locked Flow Prior",
+      "abbr": "Zero-Encode FluxSR-1S",
+      "def": "Stage 5 폐형식 2048-D 직교 RFF 동기화(RF-Sync, 0 신경망 층, 3.15 ms GPU, 27.96 dB) 출력을 318.1 ms VAE 인코드·디코드 왕복 없이 FLUX.1-dev + FluxSR(FP8 DiT, τ_c=0.12)에 직접 공급하되 3D 평균색(P_DC=0)을 엄격히 차단하고 Π_grad^6 ⊕ Π_curv^7 부분공간만 허용해, 512² 10대 미학습 카메라 평균 28.34 dB / 0.0947 LPIPS(0-Net 27.37 dB 대비 10/10 승리, 비제약 FluxSR 대비 −48.0% LPIPS)를 달성하는 Stage 6 연산.",
       "chapters": [
         "comp_lsp"
       ]

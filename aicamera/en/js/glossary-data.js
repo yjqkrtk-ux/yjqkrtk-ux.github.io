@@ -485,10 +485,10 @@ window.BOOK_GLOSSARY = {
       ]
     },
     {
-      "ko": "4-Step Conditional DDIM Bridge",
-      "en": "4-Step Conditional Latent Denoising Diffusion Bridge Refiner",
-      "abbr": "Conditional DDIM Bridge",
-      "def": "Lightweight 4-step conditional Brownian Bridge DDIM latent denoiser (Stage 6, 33.5K params, trained on 201 held-out DNGs) that resolves 32×32 encoder receptive-field boundary phase artifacts without texture hallucination, boosting 10-camera unseen mean PSNR from 24.46 dB (0-Net Math) and 24.84 dB (1-Step DDIM) to 25.16 dB (10/10 wins, up to 30.30 dB; Intra-DB Indoor 30.88 dB).",
+      "ko": "Subspace-Locked Flow Prior",
+      "en": "Zero-Encode Subspace-Locked FluxSR-1S",
+      "abbr": "Zero-Encode FluxSR-1S",
+      "def": "Stage 6 operator that feeds Stage 5 closed-form 2048-D Orthogonal RFF synchronization (RF-Sync, 0 neural layers, 3.15 ms GPU, 27.96 dB) directly into OpenDB FLUX.1-dev + FluxSR (FP8 DiT, τ_c=0.12, skipping 318.1 ms VAE IO) while strictly blocking 3D DC color drift (P_DC=0) and gating onto Π_grad^6 ⊕ Π_curv^7, lifting 512² 10-camera unseen mean to 28.34 dB / 0.0947 LPIPS (10/10 wins over 0-Net 27.37 dB, −48.0% LPIPS vs. unconstrained FluxSR).",
       "chapters": [
         "comp_lsp"
       ]

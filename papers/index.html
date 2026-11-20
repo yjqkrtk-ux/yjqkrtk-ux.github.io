@@ -889,21 +889,21 @@
         <div class="header-badges">
           <span class="badge">Paper III · IEEE/CVF CVPR 2027 Track</span>
           <span class="badge">FLUX.1 &amp; TAEF1 16-Ch VAE</span>
-          <span class="badge-green">Zero-Encode OpenDB FluxSR-1S &amp; 10 Cameras Verified</span>
+          <span class="badge-green">Stage 5 RF-Sync + Zero-Encode FluxSR-1S (10/10 Wins)</span>
         </div>
         <a class="hub-card-title" href="comp_lsp.html">
-          3. White-Box Computational Latent Signal Processing: Step-by-Step Radiometric &amp; Colorimetric Operators and Iterative Manifold Refinement in 16-Channel VAEs
+          3. White-Box Computational Latent Signal Processing: Step-by-Step Radiometric &amp; Colorimetric Operators and Subspace-Locked Flow Priors in 16-Channel VAEs
         </a>
         <div class="hub-card-authors">
           <strong>Authors:</strong> Yongjoon Song, Han-sol Lee, Jeisung Lee, Yeolmin Seong &bull; <em>Samsung Electronics, Republic of Korea</em>
         </div>
         <p class="hub-card-desc">
-          Generalizes the emergent 16-channel FLUX.1 latent color subspace (Pach et al., ICML 2026) into a 1st-Order Jet Bundle (<code>R<sup>16</sup> = S<sub>DC</sub><sup>3</sup> &oplus; S<sub>AC</sub><sup>13</sup></code>) that executes (I) Pointwise Linear/Affine, (II) Pointwise Non-Linear (<code>1:4:1</code> Simpson Quadrature + 3&times;3 Secant Jacobians), and (III) Spatial Neighborhood Kernels (13D AC Projectors + Dual-Tier Stage 6: Fast 33.5K Bridge [12.48 ms GPU @ 512&sup2;] &amp; Zero-Encode OpenDB <code>FluxSR-1S</code> under Biorthogonal Colorimetric Lock <code>P<sub>DC</sub>=0, P<sub>AC</sub>=&Pi;<sub>grad</sub><sup>6</sup>&oplus;&Pi;<sub>curv</sub><sup>7</sup></code>, skipping 322.7&ndash;1,422.1 ms VAE IO). Across 10 unseen cameras (201-DNG 0%-overlap), it achieves R&sup2;=0.9950 colorimetry, lifts 512&sup2; unseen PSNR from 27.37 dB (0-Net) and 28.65 dB (+4S Fast) to <strong>28.85 dB</strong> (10/10 wins, <strong>0.0935 LPIPS</strong>, &minus;31.2% vs. unconstrained FluxSR; 128&sup2;: 25.16 dB / 30.88 dB Intra-DB), with 128.4 dB Halide parity and 290.8&times; faster inverse 3A tuning.
+          Generalizes the emergent 16-channel FLUX.1 latent color subspace (Pach et al., ICML 2026) into a 1st-Order Jet Bundle (<code>R<sup>16</sup> = S<sub>DC</sub><sup>3</sup> &oplus; S<sub>AC</sub><sup>13</sup></code>) executing (I) Pointwise Linear/Affine, (II) Pointwise Non-Linear (<code>1:4:1</code> Simpson Quadrature + 3&times;3 Secant Jacobians), and (III) Spatial Kernels + closed-form Stage 5 <code>RF-Sync</code> (2048-D RFF + D<sub>4</sub>-3&times;3 Ridge, 27.96 dB), feeding Zero-Encode OpenDB <code>FluxSR-1S</code> (&tau;<sub>c</sub>=0.12) under Biorthogonal Colorimetric Lock (<code>P<sub>DC</sub>=0, P<sub>AC</sub>=&Pi;<sub>grad</sub><sup>6</sup>&oplus;&Pi;<sub>curv</sub><sup>7</sup></code>, skipping 318.1&ndash;1,407.0 ms VAE IO). Across 10 unseen cameras (201-DNG 0%-overlap), it achieves R&sup2;=0.9950 colorimetry, wins <strong>10/10 scenes</strong> at 512&sup2; (<code>27.37 &rarr; 28.34 dB</code>, <strong>0.0947 LPIPS</strong>, &minus;48.0% vs. unconstrained FluxSR and &minus;7.0% vs. scratch 4S DDIM ablation), with 128.4 dB Halide parity and 290.8&times; faster inverse 3A tuning.
         </p>
         <div class="hub-kpis">
-          <span class="hub-kpi">3-Class Operator Taxonomy + P_DC=0 Colorimetric Lock</span>
-          <span class="hub-kpi">512&sup2; Zero-Shot: 27.37 &rarr; 28.85 dB (0.0935 LPIPS, &minus;31.2% vs. Unc.)</span>
-          <span class="hub-kpi">128&sup2;: 24.46 &rarr; 25.16 dB (R&sup2;=0.9950, 30.88 dB Intra-DB)</span>
+          <span class="hub-kpi">Closed-Form RF-Sync + P_DC=0 Colorimetric Lock</span>
+          <span class="hub-kpi">512&sup2; Zero-Shot: 27.37 &rarr; 28.34 dB (0.0947 LPIPS, 10/10 Wins)</span>
+          <span class="hub-kpi">Stg 5 RF-Sync: 27.96 dB (0 Neural) · R&sup2;=0.9950</span>
           <span class="hub-kpi">6.24 ms @ 1MP · 50.78 ms @ 12MP (16.7&times;) · 0 ms VAE IO</span>
         </div>
         <div>

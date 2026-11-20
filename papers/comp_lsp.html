@@ -1179,12 +1179,12 @@
       <div class="span-all figure-card">
         <img src="figures/comp_fig9_step_by_step_math_and_consistency.webp" alt="Full-Width 512x512 Multi-Database Qualitative Matrix and Patch-Level Latent Verification" loading="lazy" decoding="async">
         <div class="figure-caption">
-          <strong>Fig. 4. Full-Width $512\times 512$ Qualitative Matrix and Latent Verification (100% Zero-Shot, Sec. 5).</strong> <strong>(a)</strong> Zero-shot 6-camera comparison across <strong>DB 1: OpenISP 10-bit RGGB</strong>, <strong>DB 2: MIT-Adobe FiveK 12/14-bit DSLRs</strong>, and <strong>DB 3: Google HDR+ 14-bit Mobile</strong>, displaying <code>Bayer RAW | Pixel GT</code> frames alongside $5\times$ artifact-hotspot $72\times 72$ ROIs comparing <code>0th-Order</code>, <code>Ours 0-Net</code>, <code>Unc. FluxSR</code> [$\tau_c=0.35$ drift/blur], and <code>Ours +FluxSR-1S</code> [$\tau_c=0.12$, <strong>$28.34\text{ dB}$</strong> / <strong>$0.0947$ LPIPS</strong> mean]; all 10 cameras &amp; stage dissections in <strong>Figs. 5&ndash;6</strong>; <strong>(b)</strong> 16-channel latent match ($c_0 \dots c_{15}$) at <code>Nikon D700</code> $(7,8)$; <strong>(c)</strong> Cross-scene mean RGB consistency ($210$ pts, $R^2 = 0.9950$, scatter MAE $= 0.0085$).
+          <strong>Fig. 4. Full-Width $512\times 512$ Qualitative Matrix and Latent Verification (100% Zero-Shot, Sec. 5).</strong> <strong>(a)</strong> Zero-shot 6-camera comparison across <strong>DB 1: OpenISP 10-bit RGGB</strong>, <strong>DB 2: MIT-Adobe FiveK 12/14-bit DSLRs</strong>, and <strong>DB 3: Google HDR+ 14-bit Mobile</strong>, displaying <code>Bayer RAW | Pixel GT</code> frames alongside 5 rows of $5\times$ artifact-hotspot $72\times 72$ ROIs comparing <code>0th-Order</code>, <code>Ours 0-Net</code>, <code>w/o Color Lock</code> [unconstrained <code>FluxSR</code> at $\tau_c=0.35$], <code>Ours +FluxSR-1S</code> [$\tau_c=0.12, P_{\text{DC}}=0$, <strong>$28.34\text{ dB}$</strong> / <strong>$0.0947$ LPIPS</strong> mean], and zoomed <code>Pixel-ISP GT</code>; all 10 cameras &amp; stage dissections in <strong>Figs. 5&ndash;6</strong>; <strong>(b)</strong> 16-channel latent match ($c_0 \dots c_{15}$) at <code>Nikon D700</code> $(7,8)$; <strong>(c)</strong> Cross-scene mean RGB consistency ($210$ pts, $R^2 = 0.9950$, scatter MAE $= 0.0085$).
         </div>
       </div>
 
       <div class="table-container span-all">
-        <div class="table-caption">Table 3: Complete 10-Camera Zero-Shot Hardware Sensor RAW Evaluation Using Authentic Native DNG Metadata (201-DNG Train, 0% Overlap): Single-Op PSNR, Unconstrained FluxSR ($\tau_c=0.35$) Failure on DSLRs, Progressive 0-Net &rarr; Stg5 RF-Sync &rarr; +FluxSR-1S ($\tau_c=0.12, P_{\text{DC}}=0$) PSNR (&uarr;), LPIPS (&darr;), MAE (&darr;), and Latency</div>
+        <div class="table-caption">Table 3: Complete 10-Camera Zero-Shot Hardware Sensor RAW Evaluation Using Authentic Native DNG Metadata (201-DNG Train, 0% Overlap): Single-Op PSNR, FluxSR w/o Color Lock ($\eta_{\text{DC}}=1, \tau_c=0.35$) Failure on DSLRs, Progressive 0-Net &rarr; Stg5 RF-Sync &rarr; +FluxSR-1S ($\tau_c=0.12, P_{\text{DC}}=0$) PSNR (&uarr;), LPIPS (&darr;), MAE (&darr;), and Latency</div>
         <table>
           <thead>
             <tr>
@@ -1196,7 +1196,7 @@
               <th>$\gamma$</th>
               <th>EEH</th>
               <th>NR</th>
-              <th>$512^2$ Unc.FSR</th>
+              <th>$512^2$ w/o Lock</th>
               <th>$512^2$ 0-Net</th>
               <th>$512^2$ Stg5 RF</th>
               <th>$512^2$ +FluxSR-1S</th>
@@ -1401,7 +1401,7 @@
               <th>Ablation Variant / Configuration</th>
               <th>Protocol / Prior</th>
               <th>0-Net / Base &uarr;</th>
-              <th>+1S / Unc. &uarr;</th>
+              <th>+1S / NoLock &uarr;</th>
               <th>+4S / Sub-FSR &uarr;</th>
               <th>LPIPS &darr; / MAE / Latency</th>
             </tr>
@@ -1489,7 +1489,7 @@
               <td><strong>Ours (Stg 1&ndash;5 <code>RF-Sync</code> + Subspace <code>FluxSR-1S</code>, Bal. / Real.)</strong></td>
               <td><strong>$\Pi_{\text{grad}}^6\oplus\Pi_{\text{curv}}^7$</strong></td>
               <td class="highlight-val">27.96 (RF)</td>
-              <td>25.64 (Unc.)</td>
+              <td>25.64 (NoLock)</td>
               <td class="highlight-val">28.34 / 28.32</td>
               <td class="highlight-val">LPIPS 0.0947 / 0.0948; 0.0095 MAE; 873.6 ms</td>
             </tr>
@@ -1976,7 +1976,7 @@
         <div class="figure-card span-all">
           <img src="figures/comp_fig_supp_gallery_10cam.webp" alt="Full-Page 512x512 Qualitative Gallery Across All 10 Unseen Hardware Cameras" loading="lazy" decoding="async">
           <div class="figure-caption">
-            <strong>Fig. 5 (Gallery I). Full-Page $512\times 512$ Qualitative Gallery Across All 10 Unseen Hardware Cameras and $5\times$ Zoomed Quads.</strong> Left metadata reports $512\times 512$ PSNR and LPIPS progression (<code>0-Net &rarr; +FluxSR-1S</code>); under-tile values report $512\times 512$ PSNR and LPIPS against Pixel-ISP GT (cf. <strong>Table 3</strong>). Each rightmost quad shows $5\times$ crops of the highlighted orange ROI (<code>TL</code>: Ours 0-Net, <code>TR</code>: Unconstrained FluxSR $\tau_c=0.35$, <code>BL</code>: Ours <code>+FluxSR-1S</code> $\tau_c=0.12$, <code>BR</code>: Pixel-ISP GT).
+            <strong>Fig. 5 (Gallery I). Full-Page $512\times 512$ Qualitative Gallery Across All 10 Unseen Hardware Cameras and $5\times$ Zoomed Quads.</strong> Left metadata reports $512\times 512$ PSNR and LPIPS progression (<code>0-Net &rarr; +FluxSR-1S</code>); under-tile values report $512\times 512$ PSNR and LPIPS against Pixel-ISP GT (cf. <strong>Table 3</strong>). Each rightmost quad shows $5\times$ crops of the highlighted orange ROI (<code>TL</code>: Ours 0-Net, <code>TR</code>: <code>FluxSR</code> w/o Color Lock $\tau_c=0.35$, <code>BL</code>: Ours <code>+FluxSR-1S</code> $\tau_c=0.12$, <code>BR</code>: Pixel-ISP GT).
           </div>
         </div>
         <div class="figure-card span-all">

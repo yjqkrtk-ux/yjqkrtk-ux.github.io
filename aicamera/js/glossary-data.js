@@ -424,7 +424,7 @@ window.BOOK_GLOSSARY = {
       "ko": "화이트박스 잠재 ISP",
       "en": "White-Box Computational LSP",
       "abbr": "Comp-LSP · Comp-LSP 2.0",
-      "def": "16채널 잠재 텐서(z₀ ∈ ℝ¹⁶)를 픽셀 공간으로 디코딩하지 않고, Class I 선형·Class II 비선형(1:4:1 심슨 구적법 & 3×3 할선 야코비안)·Class III 공간 커널 및 4단계 리파이너로 7단계 물리 ISP를 해석적으로 수행하는 아키텍처.",
+      "def": "16채널 잠재 텐서(z₀ ∈ ℝ¹⁶)를 픽셀 공간으로 디코딩하지 않고, Class I 선형·Class II 비선형(1:4:1 심슨 구적법 & 3×3 할선 야코비안)·Class III 공간 커널 + 폐형식 RF-Sync(27.96 dB) + Zero-Encode 부분공간 잠금 FluxSR-1S(28.34 dB, 0.0947 LPIPS)로 7단계 물리 ISP를 수행하는 아키텍처.",
       "chapters": [
         "overview",
         "comp_lsp"

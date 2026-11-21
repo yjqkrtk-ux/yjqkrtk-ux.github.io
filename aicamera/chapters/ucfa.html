@@ -304,7 +304,7 @@
     <section id="ucfa-results">
       <h2>4.5 시뮬레이션 벤치마크 결과 및 시각적 복원 비교</h2>
       <p>
-        평가 스위트와 0% 중복인 <code>DIV2K 0001..0774</code> 분리 학습 프로토콜 위에서, 호스트가 오직 <strong>64.0 KB INT8 잠재 텐서 <code>z</code> 단독으로만 복원</strong>한 다계층(<code>b16 / b32 / b64</code>)·4대 데이터셋(<code>BJDD_CVPR21</code>, <code>Kodak24</code>, <code>KLAP CIS</code>, <code>Remosaic Stress</code>) 정본 결과(<a class="src" href="https://github.com/yjqkrtk-ux/aicamera/blob/main/universal_cfa/experiments/results/se_universal_cfa_benchmark.json" title="universal_cfa/experiments/results/se_universal_cfa_benchmark.json" target="_blank" rel="noopener">se_universal_cfa_benchmark.json</a>)와 <code>DIV2K</code> 검증 요약(<a class="src" href="https://github.com/yjqkrtk-ux/aicamera/blob/main/universal_cfa/experiments/results/benchmark_summary.json" title="universal_cfa/experiments/results/benchmark_summary.json" target="_blank" rel="noopener">benchmark_summary.json</a>)을 함께 제시합니다.
+        평가 스위트와 0.0% 중복인 <code>DIV2K 0001..0774</code> 분리 학습 프로토콜 위에서, 호스트가 오직 <strong>64.0 KB INT8 잠재 텐서 <code>z</code> 단독으로만 복원</strong>한 다계층(<code>b16 / b32 / b64</code>)·4대 데이터셋(<code>BJDD_CVPR21</code>, <code>Kodak24</code>, <code>KLAP CIS</code>, <code>Remosaic Stress</code>) 정본 결과(<a class="src" href="https://github.com/yjqkrtk-ux/aicamera/blob/main/universal_cfa/experiments/results/se_universal_cfa_benchmark.json" title="universal_cfa/experiments/results/se_universal_cfa_benchmark.json" target="_blank" rel="noopener">se_universal_cfa_benchmark.json</a>)와 <code>DIV2K</code> 검증 요약(<a class="src" href="https://github.com/yjqkrtk-ux/aicamera/blob/main/universal_cfa/experiments/results/benchmark_summary.json" title="universal_cfa/experiments/results/benchmark_summary.json" target="_blank" rel="noopener">benchmark_summary.json</a>)을 함께 제시합니다.
       </p>
       <div class="tbl-wrap">
         <table class="tbl tbl-num">
@@ -397,7 +397,7 @@
     },
     teacher: {
       t: '[오프라인 학습] 16-Ch FLUX.1 / TAEF1 Teacher (E_FLUX)',
-      h: '<p>평가 세트와 0% 중복인 <code>DIV2K 0001..0774</code> 분리 학습 세트에서 정상 노출 RGB 영상 <code>X</code>로부터 16채널 목표 잠재 텐서 <code>z_teacher = E_FLUX(X) ∈ R^(16×64×64)</code>를 추출해 센서 압축기 <code>E_A^CFA</code>와 번역기 <code>T_B</code>에 잠재 증류 손실을 제공합니다.</p>'
+      h: '<p>평가 세트와 0.0% 중복인 <code>DIV2K 0001..0774</code> 분리 학습 세트에서 정상 노출 RGB 영상 <code>X</code>로부터 16채널 목표 잠재 텐서 <code>z_teacher = E_FLUX(X) ∈ R^(16×64×64)</code>를 추출해 센서 압축기 <code>E_A^CFA</code>와 번역기 <code>T_B</code>에 잠재 증류 손실을 제공합니다.</p>'
     },
     dec: {
       t: 'DemosaicPixelShuffleDecoder (D_rec · 동결 TAEF1 + SE-PixelShuffle)',

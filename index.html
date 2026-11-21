@@ -293,6 +293,26 @@
       line-height: 1.5
     }
 
+    .sub-ul {
+      list-style: none;
+      padding-left: 12px;
+      margin-top: 2px;
+    }
+
+    .sub-ul li {
+      position: relative;
+      padding-left: 10px;
+      margin-bottom: 1.5px;
+    }
+
+    .sub-ul li::before {
+      content: "–";
+      position: absolute;
+      left: 0;
+      color: #4a90c4;
+      font-weight: 700;
+    }
+
     /* Pub list */
     .pub-list {
       list-style: none;
@@ -564,19 +584,21 @@
         </div>
         <div class="eorg"><em>Samsung Electronics</em> · S.LSI Sensor Business Team · Hwaseong, South Korea</div>
         <ul>
-          <li>Leading Neural ISP algorithm development for <strong>ISOCELL HP5</strong> (0.5µm, 200MP, 1/1.56") —
-            world's smallest 200MP sensor — defining the DL-based S/W algorithm roadmap at mass-production scale.</li>
-          <li>Architecting End-to-End (E2E) imaging solutions from in-sensor H/W ISP to production C/C++ Neural S/W ISP
-            pipelines operating on Android Application Processors, driving technical strategy across hardware and software
-            organizations.</li>
-          <li>Developing 4th-generation E2E AI Remosaic: designing DL-based multi-frame reconstruction algorithms to
-            maximize remosaic and noise reduction performance while maintaining flagship-class detail fidelity, optimized
-            for cutting-edge flagship AP NPU architectures to deliver on-device 200MP multi-frame processing.</li>
-          <li>Collaborating across global R&amp;D centers (China &amp; India branches) and global OEM engineering teams
-            to drive on-device S/W optimization, sensor-specific algorithmic image quality (IQ) tuning, and commercial
-            shipping across flagship Android schedules.</li>
-          <li>Contributing to sensor silicon co-design through cross-functional collaboration with pixel physics,
-            circuit design, and image evaluation teams.</li>
+          <li>Lead software-based Neural ISP algorithm development and build the <strong>E2E AI Remosaic</strong>
+            roadmap for ISOCELL image sensors.</li>
+          <li>Drive cross-functional collaboration with global R&amp;D centers (China/India), OEM engineering teams,
+            and silicon/pixel teams on software optimization, IQ tuning, and sensor co-design.</li>
+          <li><strong>Key deliverables in MP:</strong>
+            <ul class="sub-ul">
+              <li>Integrate software-based ISP algorithms for <strong>ISOCELL sensors (HP5/KN1/HMB)</strong>.</li>
+              <li>Lead team development of <strong>4th-generation E2E AI Remosaic</strong>: DL-based multi-frame
+                reconstruction (joint remosaic &amp; noise reduction) optimized for industry-leading photo quality on
+                flagship Application Processors.</li>
+              <li>Deliver <strong>E2E AI Remosaic</strong> solutions across multiple OEMs and Application Processors in
+                the Android ecosystem.</li>
+            </ul>
+          </li>
+          <li><strong>Award:</strong> <strong>Samsung Best Paper Awards 2026</strong> (Silver Award, AI &amp; Software).</li>
         </ul>
       </div>
 
@@ -587,19 +609,22 @@
         </div>
         <div class="eorg"><em>Samsung Electronics</em> · S.LSI Sensor Business Team · Hwaseong, South Korea</div>
         <ul>
-          <li>Achieved the <strong>world's first commercialization of a DL-based Hexadeca (16-cell) Remosaic</strong> S/W
-            algorithm for ISOCELL HP3/HP9 (0.56µm, 200MP, 1/1.4") across flagship main and telephoto cameras.</li>
-          <li>Delivered <strong>E2E AI Remosaic S/W ISP turn-key solution</strong> for 200MP ISOCELL sensors — shipped
-            across <strong>30+ Android smartphones</strong> for multiple global OEM partners (HONOR, vivo, Xiaomi) as the
-            standard S/W ISP platform.</li>
-          <li>Engineered Gen 2 E2E AI Remosaic: accelerated 200MP CFA-to-YUV capture latency up to <strong>3×
-              faster</strong> (3s &rarr; 1s @ SM8550) through joint optimization and parallelization of DL Remosaic &amp;
-            S/W ISP pipelines on heterogeneous computing systems (CPU/GPU/DSP/NPU/ISP) across midrange-to-flagship
-            Application Processors.</li>
-          <li>Developed <strong>AI-based 4×4 Q-cell Remosaic (QMSC)</strong> for ISOCELL HP2 (0.6µm, 200MP, 1/1.3"),
-            enabling 4× in-sensor zoom for the Galaxy S23 Ultra main camera.</li>
-          <li>Awarded <strong>SEC Annual Award 2023 (Silver Award)</strong> by Samsung Electronics for outstanding
-            innovation on E2E AI Remosaic.</li>
+          <li>Key R&amp;D contributor developing DL-based remosaic algorithms and E2E S/W ISP turn-key solutions for
+            200MP ISOCELL image sensors.</li>
+          <li><strong>Key deliverables in MP:</strong>
+            <ul class="sub-ul">
+              <li>Prototyped a software-based ISP (<strong>E2E AI Remosaic</strong>) as a turn-key solution for 200MP
+                sensors, partnering with Android smartphone OEMs (Xiaomi, HONOR, vivo, etc.).</li>
+              <li>Optimized <strong>E2E AI Remosaic</strong> via DL remosaic &amp; S/W ISP parallelization on
+                heterogeneous SoCs (CPU/GPU/NPU/ISP) in collaboration with AP vendors (Qualcomm, MediaTek, etc.),
+                achieving <strong>2× faster</strong> 200MP CFA-to-YUV latency to meet capture time budgets.</li>
+              <li>Researched and developed the <strong>world's 1st commercial DL-based Hexadeca (16-cell)
+                  Remosaic</strong> S/W algorithm for ISOCELL HP3/HP9 (0.56µm, 200MP, 1/1.4").</li>
+              <li>Developed industry-leading in-sensor <strong>AI-based 4×4 Q-cell Remosaic (QMSC)</strong> for ISOCELL
+                HP2 (0.6µm, 200MP, 1/1.3"; Galaxy S23 Ultra 4× zoom).</li>
+            </ul>
+          </li>
+          <li><strong>Award:</strong> <strong>SEC Annual Award 2023</strong> (Silver Award, Software Development).</li>
         </ul>
       </div>
     </div>

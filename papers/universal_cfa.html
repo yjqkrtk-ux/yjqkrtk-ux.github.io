@@ -1237,7 +1237,7 @@
       <div class="span-all fig-card">
         <img src="figures/ucfa_fig3_kodak_diverse_scenes.webp" alt="Kodak24 Diverse Natural & Aliasing Scenes Gallery" loading="lazy" decoding="async">
         <div class="caption">
-          <strong>Fig. 3.</strong> Out-of-distribution natural scene generalization across unseen <strong><code>Kodak24</code></strong> ($18$ lossless scenes; representative gallery: <code>kodim19.png</code> lighthouse fence, <code>kodim01.png</code> stone masonry, <code>kodim23.png</code> macaw parrots, <code>kodim04.png</code> portrait, <code>kodim05.png</code> motocross spokes). From $64\text{ KB}$ INT8 single-channel mosaics, <code>SE-Universal-CFA</code> achieves <strong>$29.36\text{ dB}$ ($1\times 1$), $29.13\text{ dB}$ ($2\times 2$), and $28.30\text{ dB}$ ($4\times 4$)</strong> (MS-SSIM $0.9699 / 0.9653 / 0.9535$), reaching within $0.53\text{--}1.59\text{ dB}$ of the $29.89\text{ dB}$ 3-channel RGB <code>TAEF1</code> autoencoder ceiling.
+          <strong>Fig. 3.</strong> Out-of-distribution natural scene generalization across unseen <strong><code>Kodak24</code></strong> ($18$-image lossless subset; representative gallery: <code>kodim19.png</code> lighthouse fence, <code>kodim01.png</code> stone masonry, <code>kodim23.png</code> macaw parrots, <code>kodim04.png</code> portrait, <code>kodim05.png</code> motocross spokes). From $64\text{ KB}$ INT8 single-channel mosaics, <code>SE-Universal-CFA</code> achieves <strong>$29.36\text{ dB}$ ($1\times 1$), $29.13\text{ dB}$ ($2\times 2$), and $28.30\text{ dB}$ ($4\times 4$)</strong> (MS-SSIM $0.9699 / 0.9653 / 0.9535$), reaching within $0.53\text{--}1.59\text{ dB}$ of the $29.89\text{ dB}$ 3-channel RGB <code>TAEF1</code> autoencoder ceiling.
         </div>
       </div>
 
@@ -1251,15 +1251,15 @@
 
       <!-- Table 4 spanning all columns -->
       <div class="table-container span-all">
-        <div class="table-caption">Table 4: Multi-Suite Generalization Across Held-Out <code>DIV2K-Val</code>, <code>BJDD_CVPR21</code>, <code>Kodak24</code>, <code>KLAP_ICCV23 CIS</code>, <code>Remosaic Stress</code>, and Physical <code>ISO-200</code> Sensor Noise (PSNR in dB $\uparrow$).</div>
+        <div class="table-caption">Table 4: Multi-Suite Generalization Across Held-Out <code>DIV2K-Val</code>, <code>BJDD_CVPR21</code>, <code>Kodak24</code>, <code>KLAP_ICCV23 CIS</code>, <code>Remosaic Stress</code>, and Zero-Shot <code>ISO-200</code> Sensor Noise (PSNR in dB $\uparrow$; 29 unique scenes / 32 suite entries; 18-image <code>Kodak24</code> subset).</div>
         <table class="academic-table">
           <thead>
             <tr>
               <th>Benchmark Suite (Unseen Scenes)</th>
               <th><code>TAEF1</code> / <code>FLUX.1</code> RGB Ceiling</th>
-              <th>Directional + MHC (2×2 / 4×4)</th>
+              <th>Dir/Alg. + MHC (2×2 / 4×4)</th>
               <th><code>PIPNet</code> [25] (1×1 / 2×2)</th>
-              <th>Genuine <code>KLAP</code> [18] (1×1 / 2×2 / 4×4)</th>
+              <th>Genuine <code>KLAP</code> [17] (1×1 / 2×2 / 4×4)</th>
               <th>Ours <code>b16</code> INT8 (1×1 / 2×2 / 4×4)</th>
               <th>Ours <code>b32</code> INT8 (1×1 / 2×2 / 4×4)</th>
               <th><strong>Ours <code>b64</code> INT8 [FP32] (1×1 / 2×2 / 4×4)</strong></th>
@@ -1279,7 +1279,7 @@
             <tr>
               <td><code>BJDD_CVPR21</code>: <code>01952.bmp</code> (Candy)</td>
               <td>—</td>
-              <td>27.23 / 23.42</td>
+              <td>27.23 / 23.42 (Dir.)</td>
               <td>36.98 / 33.43</td>
               <td>31.59 / 27.44 / 26.43</td>
               <td>25.49 / 25.00 / 24.30</td>
@@ -1289,7 +1289,7 @@
             <tr>
               <td><code>BJDD_CVPR21</code>: <code>01690.bmp</code> (Farm Sign)</td>
               <td>—</td>
-              <td>28.97 / 26.09</td>
+              <td>28.97 / 26.09 (Dir.)</td>
               <td>38.25 / 33.83</td>
               <td>34.78 / 29.98 / 28.93</td>
               <td>27.14 / 26.75 / 26.15</td>
@@ -1299,7 +1299,7 @@
             <tr>
               <td><code>BJDD_CVPR21</code>: <code>02243.bmp</code> (Storefront)</td>
               <td>—</td>
-              <td>34.37 / 29.20</td>
+              <td>34.37 / 29.20 (Dir.)</td>
               <td>44.62 / 40.30</td>
               <td>40.61 / 33.12 / 31.53</td>
               <td>31.04 / 30.45 / 29.44</td>
@@ -1309,7 +1309,7 @@
             <tr class="highlight-row">
               <td><strong><code>BJDD_CVPR21</code> Mean (3 Scenes)</strong></td>
               <td>31.08 / 33.84</td>
-              <td>30.19 / 26.24</td>
+              <td>30.19 / 26.24 (Dir.)</td>
               <td>39.95 / 35.85</td>
               <td>35.66 / 30.18 / 28.97</td>
               <td>27.89 / 27.40 / 26.63</td>
@@ -1317,9 +1317,9 @@
               <td><strong>29.03 / 28.57 / 27.29</strong> <span class="dim-note">[29.05 / 28.59 / 27.30]</span></td>
             </tr>
             <tr class="highlight-row">
-              <td><strong><code>Kodak24</code> Mean (18 Lossless Scenes)</strong></td>
+              <td><strong><code>Kodak24</code> Subset (18 Lossless)</strong></td>
               <td>29.89 / 32.64</td>
-              <td>30.32 / 28.81</td>
+              <td>30.32 / 28.81 (Dir.)</td>
               <td>41.10 / 37.83</td>
               <td>37.61 / 33.34 / 32.52</td>
               <td>28.35 / 28.13 / 27.44</td>
@@ -1329,7 +1329,7 @@
             <tr class="highlight-row">
               <td><strong><code>KLAP_ICCV23 CIS</code> Mean (3 Real-CIS)</strong></td>
               <td>29.18 / 31.59</td>
-              <td>28.92 / 27.33</td>
+              <td>28.92 / 27.33 (Dir.)</td>
               <td>36.22 / 33.58</td>
               <td>33.92 / 31.23 / 30.29</td>
               <td>27.84 / 27.80 / 27.26</td>
@@ -1337,9 +1337,9 @@
               <td><strong>28.51 / 28.29 / 27.56</strong> <span class="dim-note">($\cos=0.912/0.910/0.903$)</span></td>
             </tr>
             <tr class="highlight-row">
-              <td><strong><code>Remosaic Stress</code> Mean (8 Charts)</strong></td>
+              <td><strong><code>Remosaic Stress</code> Mean (8 Entries)</strong></td>
               <td>24.73 / 28.23</td>
-              <td>24.63 / 22.71</td>
+              <td>24.63 / 22.71 (Dir.)</td>
               <td>33.57 / 30.80</td>
               <td>30.04 / 26.34 / 25.22</td>
               <td>22.91 / 22.71 / 22.04</td>
@@ -1347,7 +1347,7 @@
               <td><strong>23.75 / 23.55 / 22.65</strong> <span class="dim-note">[23.76 / 23.56 / 22.66]</span></td>
             </tr>
             <tr class="summary-row">
-              <td><strong><code>ISO-200 Noisy Sensor</code> (Shot+Read+10b ADC)</strong></td>
+              <td><strong><code>ISO-200 DIV2K-Val</code> (20 Held-Out)</strong></td>
               <td>31.34 (FLUX)</td>
               <td>26.69 / 24.93 (Alg.)</td>
               <td>—</td>

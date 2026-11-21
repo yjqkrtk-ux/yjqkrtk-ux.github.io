@@ -414,8 +414,8 @@
               \Delta\mathbf{z}_{\mathrm{kernel,intra}}(7,8) = \Delta g_x\,\mathbf{z}_x + \Delta g_y\,\mathbf{z}_y + \Delta g_{\mathrm{curv}}\,\mathbf{z}_{\mathrm{curv}}.
             \]
             <ul>
-              <li><strong>\(3\times 3\) 라플라시안 엣지 샤프닝 (<code>Only EEH</code>, \(\kappa_{\mathrm{eeh}}=0.45\))</strong>: 강한 차트 경계선(\(w_{\mathrm{edge}} = 0.9813 \approx 1\))이므로 주파수 대역별 증폭 계수가 \((\Delta g_x, \Delta g_y, \Delta g_{\mathrm{curv}}) = (\mathbf{+0.0309}, \mathbf{+0.0309}, \mathbf{+0.0442})\)로 작동하여, 16차원 잠재 벡터 이동량 \(\Delta\mathbf{z}_{\mathrm{EEH}}(7,8) = [+0.0365, -0.0376, -0.0006, +0.0125, -0.0108, -0.0451, \dots]^\top\)을 더해 줍니다. 신경망 가중치 0개로도 픽셀 도메인 \(3\times 3\) 라플라시안 샤프닝 정답 대비 <strong>10대 카메라 평균 30.02 dB (OpenISP 33.12 dB)</strong>의 정확도를 달성합니다.</li>
-              <li><strong>양방향 엣지 보존 노이즈 억제 (<code>Only NR</code>, \(\lambda_Y=0.35, \lambda_C=0.45\))</strong>: 양방향 레인지 가중치 \((1 - 0.5\,w_{\mathrm{edge}}) = 0.5094\) 덕분에 경계선 패치 \((7,8)\)에서는 감쇠율이 \((\Delta g_x, \Delta g_y, \Delta g_{\mathrm{curv}}) = (\mathbf{-0.0089}, \mathbf{-0.0089}, \mathbf{-0.0183})\)로 절반만 적용되어 엣지가 보존되고, 평탄한 노이즈 영역(\(w_{\mathrm{edge}} \to 0\))에서는 2배 강하게 고주파 곡률 성분 \(\mathbf{z}_{\mathrm{curv}}\)을 억제하여 <strong>10대 카메라 평균 32.20 dB (OpenISP 35.38 dB)</strong>를 기록합니다.</li>
+              <li><strong>\(3\times 3\) 라플라시안 엣지 샤프닝 (<code>Only EEH</code>, \(\kappa_{\mathrm{eeh}}=0.45\))</strong>: 강한 차트 경계선(\(w_{\mathrm{edge}} = 0.9813 \approx 1\))이므로 주파수 대역별 증폭 계수가 \((\Delta g_x, \Delta g_y, \Delta g_{\mathrm{curv}}) = (\mathbf{+0.0309}, \mathbf{+0.0309}, \mathbf{+0.0442})\)로 작동하여, 16차원 잠재 벡터 이동량 \(\Delta\mathbf{z}_{\mathrm{EEH}}(7,8) = [+0.0365, -0.0376, -0.0006, +0.0125, -0.0108, -0.0451, \dots]^\top\)을 더해 줍니다. 신경망 가중치 0개로도 픽셀 도메인 \(3\times 3\) 라플라시안 샤프닝 정답 대비 <strong>10대 카메라 평균 30.01 dB (OpenISP 33.04 dB)</strong>의 정확도를 달성합니다.</li>
+              <li><strong>양방향 엣지 보존 노이즈 억제 (<code>Only NR</code>, \(\lambda_Y=0.35, \lambda_C=0.45\))</strong>: 양방향 레인지 가중치 \((1 - 0.5\,w_{\mathrm{edge}}) = 0.5094\) 덕분에 경계선 패치 \((7,8)\)에서는 감쇠율이 \((\Delta g_x, \Delta g_y, \Delta g_{\mathrm{curv}}) = (\mathbf{-0.0089}, \mathbf{-0.0089}, \mathbf{-0.0183})\)로 절반만 적용되어 엣지가 보존되고, 평탄한 노이즈 영역(\(w_{\mathrm{edge}} \to 0\))에서는 2배 강하게 고주파 곡률 성분 \(\mathbf{z}_{\mathrm{curv}}\)을 억제하여 <strong>10대 카메라 평균 32.20 dB (OpenISP 35.32 dB)</strong>를 기록합니다.</li>
             </ul>
           </li>
           <li>
@@ -426,7 +426,7 @@
               Y_{\mathrm{base}}(7,8) = \frac{1}{9}\sum_{(u,v)\in\mathcal{N}_{3\times 3}} \bar{Y}_0(7+u,8+v) = \mathbf{0.6273}, \quad
               \Delta_{3\times 3} Y(7,8) = \bar{Y}_0 - Y_{\mathrm{base}} = \mathbf{-0.1901}.
             \]
-            주변 기저 휘도 \(Y_{\mathrm{base}} = 0.6273\)으로부터 로컬 톤 매핑 게인 \(G_{\mathrm{LTM}}(7,8) = 1 + \beta_{\mathrm{sh}}(1 - Y_{\mathrm{base}})^2 - \beta_{\mathrm{hi}}Y_{\mathrm{base}}^2 = \mathbf{0.9833}\)이 결정되며, 픽셀 도메인 Bilateral LTM 정답 대비 <strong>10대 카메라 평균 28.53 dB</strong>를 달성합니다.
+            주변 기저 휘도 \(Y_{\mathrm{base}} = 0.6273\)으로부터 로컬 톤 매핑 게인 \(G_{\mathrm{LTM}}(7,8) = 1 + \beta_{\mathrm{sh}}(1 - Y_{\mathrm{base}})^2 - \beta_{\mathrm{hi}}Y_{\mathrm{base}}^2 = \mathbf{0.9833}\)이 결정되며, 픽셀 도메인 Bilateral LTM 정답 대비 <strong>10대 카메라 평균 29.53 dB (OpenISP 29.44 dB)</strong>를 달성합니다.
           </li>
         </ol>
       </div>
@@ -441,7 +441,7 @@
         <div class="card">
           <h3>Halide SIMD · 폐형식 RF-Sync · Zero-Encode 지연시간</h3>
           <p>
-            \(1/64\) 공간 격자(\(\frac{H}{8}\times\frac{W}{8}\times 16\)) 위에서 융합된 <code>HalideLatentISP16Ch</code> 커널(Stage 1–4)은 PyTorch 대비 <strong><code>MSE = 1.44e-13</code> · <code>PSNR = 128.4 dB</code></strong> 수치 동치성을 유지하면서 \(256^2\) <strong><code>0.79 ms</code></strong> · \(512^2\) <strong><code>2.15 ms</code></strong> · <strong>1MP <code>6.24 ms</code></strong>(픽셀 ISP <code>59.91 ms</code> 대비 <code>9.6×</code>) · 12MP <strong><code>50.78 ms</code>(<code>16.7×</code> 가속)</strong>를 달성합니다. Stage 5 <code>RF-Sync</code>는 <code>2.00 / 3.15 / 10.07 ms</code> GPU(\(256^2/512^2/\text{1MP}\)), Stage 6 Zero-Encode FP8 <code>FluxSR-1S</code>는 <code>873.6 ms</code>(\(512^2\))로 실행되며 <strong><code>318.1 ms</code>(\(512^2\)) · <code>1,407.0 ms</code>(1MP)</strong> VAE IO를 생략합니다.
+            \(1/64\) 공간 격자(\(\frac{H}{8}\times\frac{W}{8}\times 16\)) 위에서 융합된 <code>HalideLatentISP16Ch</code> 커널(Stages 1–4)은 PyTorch 대비 <strong><code>MSE = 1.44e-13</code> · <code>PSNR = 128.4 dB</code></strong> 수치 동치성을 유지하면서 \(256^2\) <strong><code>0.79 ms</code></strong> · \(512^2\) <strong><code>2.15 ms</code></strong> · <strong>1MP <code>6.24 ms</code></strong>(픽셀 ISP <code>59.91 ms</code> 대비 <code>9.6×</code>) · 12MP <strong><code>50.78 ms</code>(픽셀 ISP <code>846.90 ms</code> 대비 <code>16.7×</code> 가속)</strong>를 달성합니다. Stage 5 <code>RF-Sync</code>는 <code>2.00 / 3.15 / 10.07 ms</code> GPU(\(256^2/512^2/\text{1MP}\)), Stage 6 Zero-Encode FP8 <code>FluxSR-1S</code>는 <code>873.6 ms</code>(\(512^2\))로 실행되며 <strong><code>318.1 ms</code>(\(512^2\)) · <code>1,407.0 ms</code>(1MP)</strong> VAE IO를 생략합니다.
           </p>
         </div>
         <div class="card">
@@ -687,7 +687,7 @@
 
   const segEngine = SB.seg({
     label: '디코더 엔진',
-    options: [['analytic','⚡ 수식 엔진 (야코비안 테일러 · 60FPS)'], ['taef1','🧠 옵션 B (TAEF1 ONNX 신경망)']],
+    options: [['analytic','⚡ 수식 엔진 (야코비안 테일러 · 60FPS)'], ['taef1','🧠 TAEF1 ONNX 신경망']],
     value: 'analytic',
     onChange: v => {
       state.engine = v;
@@ -1019,7 +1019,7 @@
     if(bG){ bG.style.left = (patchX*6.25)+'%'; bG.style.top = (patchY*6.25)+'%'; }
     document.getElementById('clsp-gt-sub').textContent = `선택 패치: (y=${patchY}, x=${patchX})`;
 
-    // Render Analytic (Option C) & GT on 128x128 canvases
+    // Render Analytic & GT on 128x128 canvases
     const x0 = RAW_PIXELS_128[curKey];
     if(x0){
       const cvO = document.getElementById('clsp-img-ours-cv');
@@ -1060,7 +1060,7 @@
       if(state.engine === 'analytic'){
         renderAnalyticView();
       } else {
-        document.getElementById('clsp-ours-lbl').textContent = 'Ours: 🧠 옵션 B TAEF1 신경망 실시간 복원';
+        document.getElementById('clsp-ours-lbl').textContent = 'Ours: 🧠 TAEF1 신경망 실시간 복원';
         ortRunId++;
         runTAEF1Guidebook(ispRes, ortRunId, renderAnalyticView);
       }

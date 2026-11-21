@@ -413,8 +413,8 @@
               \Delta\mathbf{z}_{\mathrm{kernel,intra}}(7,8) = \Delta g_x\,\mathbf{z}_x + \Delta g_y\,\mathbf{z}_y + \Delta g_{\mathrm{curv}}\,\mathbf{z}_{\mathrm{curv}}.
             \]
             <ul>
-              <li><strong>\(3\times 3\) Laplacian Edge Enhancement (<code>Only EEH</code>, \(\kappa_{\mathrm{eeh}}=0.45\))</strong>: Because patch \((7,8)\) lies on a strong chart edge (\(w_{\mathrm{edge}} = 0.9813 \approx 1\)), directional gains \((\Delta g_x, \Delta g_y, \Delta g_{\mathrm{curv}}) = (\mathbf{+0.0309}, \mathbf{+0.0309}, \mathbf{+0.0442})\) inject the 16-D latent update \(\Delta\mathbf{z}_{\mathrm{EEH}}(7,8) = [+0.0365, -0.0376, -0.0006, +0.0125, -0.0108, -0.0451, \dots]^\top\), achieving <strong>30.02 dB 10-camera mean PSNR (33.12 dB on OpenISP)</strong> with zero learned weights.</li>
-              <li><strong>Bilateral Edge-Preserving Noise Reduction (<code>Only NR</code>, \(\lambda_Y=0.35, \lambda_C=0.45\))</strong>: The bilateral range factor \((1 - 0.5\,w_{\mathrm{edge}}) = 0.5094\) halves high-frequency damping at edge patch \((7,8)\) to \((\Delta g_x, \Delta g_y, \Delta g_{\mathrm{curv}}) = (\mathbf{-0.0089}, \mathbf{-0.0089}, \mathbf{-0.0183})\) while applying \(2\times\) stronger curvature suppression on flat noisy patches (\(w_{\mathrm{edge}} \to 0\)), reaching <strong>32.20 dB 10-camera mean PSNR (35.38 dB on OpenISP)</strong>.</li>
+              <li><strong>\(3\times 3\) Laplacian Edge Enhancement (<code>Only EEH</code>, \(\kappa_{\mathrm{eeh}}=0.45\))</strong>: Because patch \((7,8)\) lies on a strong chart edge (\(w_{\mathrm{edge}} = 0.9813 \approx 1\)), directional gains \((\Delta g_x, \Delta g_y, \Delta g_{\mathrm{curv}}) = (\mathbf{+0.0309}, \mathbf{+0.0309}, \mathbf{+0.0442})\) inject the 16-D latent update \(\Delta\mathbf{z}_{\mathrm{EEH}}(7,8) = [+0.0365, -0.0376, -0.0006, +0.0125, -0.0108, -0.0451, \dots]^\top\), achieving <strong>30.01 dB 10-camera mean PSNR (33.04 dB on OpenISP)</strong> with zero learned weights.</li>
+              <li><strong>Bilateral Edge-Preserving Noise Reduction (<code>Only NR</code>, \(\lambda_Y=0.35, \lambda_C=0.45\))</strong>: The bilateral range factor \((1 - 0.5\,w_{\mathrm{edge}}) = 0.5094\) halves high-frequency damping at edge patch \((7,8)\) to \((\Delta g_x, \Delta g_y, \Delta g_{\mathrm{curv}}) = (\mathbf{-0.0089}, \mathbf{-0.0089}, \mathbf{-0.0183})\) while applying \(2\times\) stronger curvature suppression on flat noisy patches (\(w_{\mathrm{edge}} \to 0\)), reaching <strong>32.20 dB 10-camera mean PSNR (35.32 dB on OpenISP)</strong>.</li>
             </ul>
           </li>
           <li>
@@ -425,7 +425,7 @@
               Y_{\mathrm{base}}(7,8) = \frac{1}{9}\sum_{(u,v)\in\mathcal{N}_{3\times 3}} \bar{Y}_0(7+u,8+v) = \mathbf{0.6273}, \quad
               \Delta_{3\times 3} Y(7,8) = \bar{Y}_0 - Y_{\mathrm{base}} = \mathbf{-0.1901}.
             \]
-            Neighborhood base luminance \(Y_{\mathrm{base}} = 0.6273\) sets the local tone-mapping gain \(G_{\mathrm{LTM}}(7,8) = 1 + \beta_{\mathrm{sh}}(1 - Y_{\mathrm{base}})^2 - \beta_{\mathrm{hi}}Y_{\mathrm{base}}^2 = \mathbf{0.9833}\), achieving <strong>28.53 dB 10-camera mean PSNR</strong> against pixel-domain bilateral LTM.
+            Neighborhood base luminance \(Y_{\mathrm{base}} = 0.6273\) sets the local tone-mapping gain \(G_{\mathrm{LTM}}(7,8) = 1 + \beta_{\mathrm{sh}}(1 - Y_{\mathrm{base}})^2 - \beta_{\mathrm{hi}}Y_{\mathrm{base}}^2 = \mathbf{0.9833}\), achieving <strong>29.53 dB 10-camera mean PSNR (29.44 dB on OpenISP)</strong> against pixel-domain bilateral LTM.
           </li>
         </ol>
       </div>
@@ -507,7 +507,7 @@
           <p style="margin-top:0;">
             Real hardware camera RAW <strong>\(16\times 16\times 16\) latent tensors (\(\mathbf{z}_0\), 4,096 floats)</strong> and <strong>calibration matrices (\(W_{\mathrm{z2c,nb}}, W_{\mathrm{trans}}\))</strong> are embedded directly in this page.
             Adjust <strong>Digital Gain \(g\)</strong>, <strong>White Balance \(w_R, w_B\)</strong>, <strong>CCM Strength \(s\)</strong>, and <strong>Gamma \(\gamma\)</strong>, or <strong>click any \((y, x)\) patch on the image</strong>.
-            All 256 patches execute <strong>1:4:1 Simpson Quadrature</strong> and \(3\times 3\) <strong>Secant Jacobian</strong> matrices \(J_{3\times 3}\) live in JavaScript, decoded via <strong>⚡ Analytic Engine (Jacobian Taylor Sub-Patch Decoder · &lt;2ms)</strong> or <strong>🧠 Option B (TAEF1 Neural VAE Decoder · ONNX Runtime Web)</strong>.
+            All 256 patches execute <strong>1:4:1 Simpson Quadrature</strong> and \(3\times 3\) <strong>Secant Jacobian</strong> matrices \(J_{3\times 3}\) live in JavaScript, decoded via <strong>⚡ Analytic Engine (Jacobian Taylor Sub-Patch Decoder · &lt;2ms)</strong> or <strong>🧠 TAEF1 Neural Engine (ONNX Runtime Web)</strong>.
           </p>
           <div class="sim-controls" id="clsp-sim-ctrl"></div>
           <div style="display:grid; grid-template-columns: minmax(0,1fr) minmax(0,1fr) minmax(0,1.35fr); gap:12px; margin:12px 0; align-items:stretch;">
@@ -685,7 +685,7 @@
 
   const segEngine = SB.seg({
     label: 'Decoder Engine',
-    options: [['analytic','⚡ Analytic Engine (Jacobian Taylor · 60FPS)'], ['taef1','🧠 Option B (TAEF1 ONNX Neural)']],
+    options: [['analytic','⚡ Analytic Engine (Jacobian Taylor · 60FPS)'], ['taef1','🧠 TAEF1 ONNX Neural']],
     value: 'analytic',
     onChange: v => {
       state.engine = v;
@@ -1057,7 +1057,7 @@
       if(state.engine === 'analytic'){
         renderAnalyticView();
       } else {
-        document.getElementById('clsp-ours-lbl').textContent = 'Ours: 🧠 Option B TAEF1 Neural Live Decode';
+        document.getElementById('clsp-ours-lbl').textContent = 'Ours: 🧠 TAEF1 Neural Live Decode';
         ortRunId++;
         runTAEF1Guidebook(ispRes, ortRunId, renderAnalyticView);
       }

@@ -424,7 +424,7 @@ window.BOOK_GLOSSARY = {
       "ko": "White-Box Computational LSP",
       "en": "White-Box Latent ISP · Analytical Latent ISP",
       "abbr": "Comp-LSP · Comp-LSP 2.0",
-      "def": "An analytical latent-domain ISP architecture executing a 7-stage physical camera ISP directly on 16-channel latents (z₀ ∈ ℝ¹⁶) via Class I linear, Class II nonlinear (1:4:1 Simpson quadrature & 3×3 secant Jacobians), and Class III spatial kernel + 4-step refiner operators without pixel decoding.",
+      "def": "An analytical latent-domain ISP architecture executing a 7-stage physical camera ISP directly on 16-channel latents (z₀ ∈ ℝ¹⁶) via Class I linear, Class II nonlinear (1:4:1 Simpson quadrature & 3×3 secant Jacobians), and Class III spatial kernel + closed-form RF-Sync (27.96 dB) + Zero-Encode subspace-locked FluxSR-1S (28.34 dB, 0.0947 LPIPS) operators without pixel decoding.",
       "chapters": [
         "overview",
         "comp_lsp"

@@ -794,24 +794,24 @@
       <div class="kpi-card">
         <div class="kpi-label">BJDD_CVPR21 &amp; ISO-200 Sensor</div>
         <div class="kpi-value">29.03 / 28.57 / 27.29 dB</div>
-        <div class="kpi-sub">+0.98 / +1.96 dB vs. MHC @ ISO-200</div>
+        <div class="kpi-sub">+0.98 / +1.96 dB vs. Isotropic Alg.+MHC</div>
       </div>
       <div class="kpi-card">
         <div class="kpi-label">Sony IMX500 On-Chip SRAM</div>
-        <div class="kpi-value">0.84–4.65 / 8.00 MB</div>
-        <div class="kpi-sub">11%–59% Util. (All Tiers PASS)</div>
+        <div class="kpi-value">0.84–4.67 / 8.00 MB</div>
+        <div class="kpi-sub">11%–59% Util. (All 9 C=16 PASS)</div>
       </div>
       <div class="kpi-card">
         <div class="kpi-label">Single-Stream Bus &amp; Host AP</div>
         <div class="kpi-value">64 KB INT8 (5–8× RAW)</div>
-        <div class="kpi-sub">48× vs. FP32 · 30 FPS · Pure-z Host</div>
+        <div class="kpi-sub">2.90 ms Bus · BF16 Host: 4.01 / 34.82 ms</div>
       </div>
     </div>
 
     <div class="abstract-box">
       <div class="abstract-title">Abstract</div>
       <p>
-        High-resolution mobile sensors ($48\text{--}200\text{ MP}$) group $2\times 2$ (<strong>Tetracell</strong>, period $p=4$) or $4\times 4$ (<strong>Hexadecacell</strong>, period $p=8$) photodiodes under shared filters versus $1\times 1$ <strong>Bayer</strong> ($p=2$). Deploying monolithic host neural ISPs across heterogeneous Color Filter Arrays (CFAs) faces two bottlenecks: streaming uncompressed RAW ($320\text{--}512\text{ KB}$ packed or $3,072\text{ KB}$ FP32 RGB; $52.91\text{ ms}$, $14.9\text{ FPS}$) saturates the MIPI CSI-2 bus, while pattern changes force per-CFA host retraining or dynamic weight switching. We introduce <strong>SE-Universal-CFA</strong>, an asymmetric single-stream architecture unified on the 16-channel ($f=8, C=16$) <code>FLUX.1</code> / <code>TAEF1</code> manifold [3], [21] under strict <strong>No-Raw-Retention</strong>. Inside Sony IMX500 firmware ($0.84\text{--}4.65\text{ MB} / 8.00\text{ MB}$ SRAM), period-matched <code>PixelUnshuffle</code><sub>p</sub> ($p \in \{2,4,8\}$) and <code>SELayer</code> residual compressors [13], [14] emit a standardized $16\times 64\times 64$ INT8 bus tensor $\mathbf{r}$ ($64.0\text{ KB}$; $5.0\text{--}8.0\times$ smaller than RAW, $&lt;0.02\text{ dB}$ quantization drop). On the host AP, a sensor-invariant translator ($\mathcal{T}_B$: $16\to 16$, $1.36\text{M}$) aligns $\mathbf{r}$ onto frozen <code>FLUX.1</code> / <code>TAEF1</code> latents ($\cos = 0.88\text{--}0.91$), driving a <strong>100% CFA-agnostic</strong> pure-$\mathbf{z}$ lapped decoder ($\mathcal{D}_{\mathrm{rec}}$, $3.21\text{M}$). Trained solely on 774 disjoint <code>DIV2K</code> images ($0\%$ overlap), our $64\text{ KB}$ INT8 pipeline reaches <strong>29.03 / 28.57 / 27.29 dB</strong> on unseen <code>BJDD_CVPR21</code> and <strong>29.36 / 29.13 / 28.30 dB</strong> on all 18 <code>Kodak24</code> scenes—exceeding the rank-16 SVD bound ($27.86\text{ dB}$), beating classical remosaicing by $+0.98 / +1.96\text{ dB}$ under <strong>ISO-200 noise</strong>, and scaling to $34.20 / 31.73 / 31.03\text{ dB}$ at $C=48$.
+        High-resolution mobile sensors ($48\text{--}200\text{ MP}$) group $2\times 2$ (<strong>Tetracell</strong>, period $p=4$) or $4\times 4$ (<strong>Hexadecacell</strong>, period $p=8$) photodiodes under shared filters versus $1\times 1$ <strong>Bayer</strong> ($p=2$). Monolithic host ISPs face two bottlenecks across heterogeneous Color Filter Arrays (CFAs): streaming raw frames ($320\text{--}512\text{ KB}$ packed, $3,072\text{ KB}$ FP32; $52.91\text{ ms}$, $14.9\text{ FPS}$ on RPi 5) saturates MIPI CSI-2, while pattern shifts require per-CFA weights or dynamic masks. We introduce <strong>SE-Universal-CFA</strong>, an asymmetric single-stream architecture unified on the 16-channel ($f=8, C=16$) <code>FLUX.1</code> / <code>TAEF1</code> manifold [3], [21] under strict <strong>No-Raw-Retention</strong>. Inside Sony IMX500 firmware ($0.84\text{--}4.67\text{ MB}$ of $8.00\text{ MB}$ SRAM), strided permutation convolutions and <code>SELayer</code> residual blocks [12], [13] emit a standardized $16\times 64\times 64$ INT8 bus tensor $\mathbf{r}$ ($64.0\text{ KB}$; $5\text{--}8\times$ smaller than packed RAW, $&lt;0.02\text{ dB}$ INT8 drop, $2.90\text{ ms}$ CSI-2 bus). On the host, one sensor-invariant translator ($\mathcal{T}_B$, $1.36\text{M}$, $4.01\text{ ms}$ BF16 GPU) aligns $\mathbf{r}$ onto <code>FLUX.1</code> / <code>TAEF1</code> latents ($\cos = 0.88\text{--}0.91$), driving a <strong>100% CFA-agnostic</strong> pure-$\mathbf{z}$ lapped decoder ($\mathcal{D}_{\mathrm{rec}}$, $3.21\text{M}$, $34.82\text{ ms}$ BF16 vs. <code>KLAP</code> $55.35\text{ ms}$). Trained solely on 774 disjoint <code>DIV2K</code> images ($0\%$ overlap), our $64\text{ KB}$ INT8 stream reaches <strong>29.03 / 28.57 / 27.29 dB</strong> on unseen <code>BJDD_CVPR21</code> and <strong>29.36 / 29.13 / 28.30 dB</strong> on an 18-image <code>Kodak24</code> subset—exceeding the $27.86\text{ dB}$ SVD bound, outperforming isotropic <code>Alg.+MHC</code> by $+0.98 / +1.96\text{ dB}$ zero-shot at <strong>ISO-200</strong>, and reaching $34.20 / 31.73 / 31.03\text{ dB}$ at $C=48$.
       </p>
       <div class="keywords">
         <strong>Index Terms —</strong> Universal CFA, Bayer ($1\times 1$), Tetracell ($2\times 2$), Hexadecacell ($4\times 4$), In-Sensor Remosaicing, 16-Channel Latent Signal Processing, FLUX.1 / TAEF1, Sony IMX500, CVPR 2027.
@@ -821,28 +821,28 @@
     <div id="paper-body" class="paper-body two-col">
       <h2 class="sec-title">1. Introduction</h2>
       <p>
-        Modern mobile and edge CMOS image sensors spanning $48\text{ MP}$ to $200\text{ MP}$ routinely replace the classical $1\times 1$ Bayer Color Filter Array (CFA) of period $p=2$ [20] with <em>clustered CFAs</em>. By grouping $2\times 2$ (<strong>Tetracell / Quad-Bayer</strong>, $4$-in-$1$, $4\times 4$ RGGB macro-tile period $p=4$) or $4\times 4$ (<strong>Hexadecacell / $Q\times Q$</strong>, $16$-in-$1$, $8\times 8$ RGGB macro-tile period $p=8$) neighboring photodiodes beneath shared spectral filters—alongside $3\times 3$ Nonacell ($p=6$) configurations studied by Sharif <em>et al.</em> [26] and Lee <em>et al.</em> [18]—clustered sensors boost photon collection and SNR in dim scenes while requiring neural <em>remosaicing</em> and <em>JDD</em> under bright light [15], [25], [30].
+        Modern mobile and edge CMOS image sensors spanning $48\text{ MP}$ to $200\text{ MP}$ routinely replace the classical $1\times 1$ Bayer Color Filter Array (CFA) of period $p=2$ [20] with <em>clustered CFAs</em>. By grouping $2\times 2$ (<strong>Tetracell / Quad-Bayer</strong>, $4$-in-$1$, $4\times 4$ RGGB macro-tile period $p=4$) or $4\times 4$ (<strong>Hexadecacell / $Q\times Q$</strong>, $16$-in-$1$, $8\times 8$ RGGB macro-tile period $p=8$) neighboring photodiodes beneath shared spectral filters—alongside $3\times 3$ Nonacell ($p=6$) configurations studied by Sharif <em>et al.</em> [26] and Lee <em>et al.</em> [17]—clustered sensors boost photon collection and SNR in dim scenes while requiring neural <em>remosaicing</em> and <em>JDD</em> under bright light [14], [25], [29].
       </p>
       <p>
-        Despite progress from quad-Bayer JDD networks such as <code>PIPNet</code> (<code>BJDD</code>) [25] and <code>QRISP</code> [15] and unified demosaicing models such as <code>KLAP</code> [18], executing monolithic pixel-domain networks on the host Application Processor (AP) induces three systems bottlenecks (Table 1):
+        Despite progress from quad-Bayer JDD networks such as <code>PIPNet</code> (<code>BJDD</code>) [25] and <code>QRISP</code> [14] and unified demosaicing models such as <code>KLAP</code> [17], executing monolithic pixel-domain networks on the host Application Processor (AP) induces three systems bottlenecks (Table 1):
       </p>
       <ol>
-        <li><strong>MIPI CSI-2 Serial Bus Saturation:</strong> Full-resolution RAW ($320\text{ KB}$ 10-bit packed, $512\text{ KB}$ 16-bit RAW, or $3,072\text{ KB}$ unpacked FP32 at $512\times 512$) saturates serial DMA ($52.91\text{ ms}$, capping throughput at $14.9\text{ FPS}$).</li>
-        <li><strong>Host-Side Weight Coupling:</strong> Even <code>KLAP</code> [18] invokes FAIG dynamic pattern masks conditioned on sensor one-hot indicators inside every host convolution layer.</li>
+        <li><strong>MIPI CSI-2 Serial Bus Saturation:</strong> Full-resolution RAW ($320\text{ KB}$ 10-bit packed, $512\text{ KB}$ 16-bit RAW, or $3,072\text{ KB}$ unpacked FP32 at $512\times 512$) saturates serial DMA ($52.91\text{ ms}$, capping live transfer at $14.9\text{ FPS}$ on RPi 5).</li>
+        <li><strong>Host-Side Weight Coupling:</strong> Even <code>KLAP</code> [17] invokes FAIG dynamic pattern masks conditioned on sensor one-hot indicators inside every host convolution layer.</li>
         <li><strong>Redundant Pixel-to-Latent Re-Encoding:</strong> Pixel ISPs reconstruct $H\times W$ sRGB frames only for downstream $f=8$ latent generative models (<code>FLUX.1</code>, <code>TAEF1</code>, Stable Diffusion) [3], [21], [23] to re-encode them back into latents.</li>
       </ol>
       <p>
-        We propose <strong>SE-Universal-CFA</strong>, an asymmetric split-inference architecture unified on the 16-channel ($f=8, C=16$) <code>FLUX.1</code> / <code>TAEF1</code> manifold under strict <strong>No-Raw-Retention</strong>:
+        We propose <strong>SE-Universal-CFA</strong>, an asymmetric split-inference pipeline from raw $\mathbf{y}\in\mathbb{R}^{1\times H\times W}$ unified on the 16-channel ($f=8, C=16$) <code>FLUX.1</code> / <code>TAEF1</code> manifold under strict <strong>No-Raw-Retention</strong>:
       </p>
       <div class="equation">
-        $$\mathbf{y} \in \mathbb{R}^{1\times H\times W} \xrightarrow{\mathcal{E}_A^{\mathrm{CFA}}\,(\text{INT8 STE})} \mathbf{r} \in \mathbb{Z}_8^{16\times \frac{H}{8}\times \frac{W}{8}} \xrightarrow{\mathcal{T}_B} \mathbf{z} \in \mathbb{R}^{16\times \frac{H}{8}\times \frac{W}{8}} \xrightarrow{\mathcal{D}_{\mathrm{rec}}} \hat{\mathbf{X}} \in \mathbb{R}^{3\times H\times W}. \qquad (1)$$
+        $$\mathbf{y} \xrightarrow{\mathcal{E}_A^{\mathrm{CFA}}} \mathbf{r} \in \mathbb{Z}_8^{16\times H/8\times W/8} \xrightarrow{\mathcal{T}_B} \mathbf{z} \xrightarrow{\mathcal{D}_{\mathrm{rec}}} \hat{\mathbf{X}}. \qquad (1)$$
       </div>
 
       <!-- Figure 1 spanning all columns -->
       <div class="span-all fig-card">
         <img src="figures/ucfa_universal_cfa_architecture.webp" alt="Universal CFA 16-Channel Single-Stream LSP Architecture">
         <div class="caption">
-          <strong>Fig. 1.</strong> System Architecture of <strong><code>SE-Universal-CFA</code> (16-Channel Single-Stream LSP)</strong>. <strong>Zone 1 (Sony IMX500, $0.84\text{--}4.65\text{ MB} / 8.00\text{ MB}$ SRAM, $11\%\text{--}59\%$ util.):</strong> Heterogeneous CFAs ($1\times 1$ Bayer, $2\times 2$ Tetracell, $4\times 4$ Hexadecacell) undergo period-exact <code>PixelUnshuffle</code><sub>p</sub>, <code>SE-ResBlock</code> compression, and INT8 STE into $\mathbf{r} \in \mathbb{Z}_8^{16\times 64\times 64}$ ($64.0\text{ KB}$; $5\text{--}8\times$ smaller than RAW, $48\times$ vs. FP32 RGB) under <strong>No-Raw-Retention</strong>. <strong>Zone 2:</strong> Sensor-invariant $\mathcal{T}_B$ ($1.36\text{M}$) maps $\mathbf{r} \to \mathbf{z}$ ($\cos \le 0.912$). <strong>Zone 3:</strong> Resident $\mathbf{z}$ drives CFA-agnostic $\mathcal{D}_{\mathrm{rec}}$ ($3.21\text{M}$), stock VAEs, and diffusion.
+          <strong>Fig. 1.</strong> System Architecture of <strong><code>SE-Universal-CFA</code> (16-Channel Single-Stream LSP)</strong>. <strong>Zone 1 (Sony IMX500, $0.84\text{--}4.67\text{ MB}$ SRAM, $11\%\text{--}59\%$ util.):</strong> Heterogeneous CFAs ($1\times 1$ Bayer, $2\times 2$ Tetracell, $4\times 4$ Hexadecacell) undergo period-exact permutation unshuffling, <code>SE-ResBlock</code> compression, and INT8 STE into $\mathbf{r} \in \mathbb{Z}_8^{16\times 64\times 64}$ ($64.0\text{ KB}$; $2.90\text{ ms}$ CSI-2 bus vs. $52.91\text{ ms}$ FP32) under <strong>No-Raw-Retention</strong>. <strong>Zone 2:</strong> Sensor-invariant $\mathcal{T}_B$ ($1.36\text{M}$) maps $\mathbf{r} \to \mathbf{z}$ ($\cos \le 0.912$). <strong>Zone 3:</strong> Resident $\mathbf{z}$ drives CFA-agnostic $\mathcal{D}_{\mathrm{rec}}$ ($3.21\text{M}$), stock VAEs, and diffusion.
         </div>
       </div>
 
@@ -856,7 +856,7 @@
               <th>Evaluated CFAs</th>
               <th>Execution Locus</th>
               <th>MIPI Bus Payload ($512^2$) $\downarrow$</th>
-              <th>Bus Latency / FPS $\uparrow$</th>
+              <th>CSI-2 Bus Lat. / Sync FPS</th>
               <th>Host AP CFA Invariance</th>
               <th>16-Ch Latent Hub &amp; Zero-Shot</th>
             </tr>
@@ -867,52 +867,52 @@
               <td>Bayer (1×1) + Remosaic</td>
               <td>Host AP ISP</td>
               <td>320–512 KB RAW (3,072 KB FP32)</td>
-              <td>52.91 ms / 14.9 FPS</td>
+              <td>52.91 ms / 14.9</td>
               <td>Separate remosaic per CFA</td>
               <td>No (Pixel-Only)</td>
             </tr>
             <tr>
               <td><code>BJDD / PIPNet</code> (3.47M) [25] (<em>CVPRW'21</em>)</td>
               <td>Bayer (1×1), Tetra (2×2)</td>
-              <td>Host AP GPU/NPU</td>
+              <td>Host AP GPU</td>
               <td>320–512 KB RAW (3,072 KB FP32)</td>
-              <td>52.91 ms / 14.9 FPS</td>
+              <td>52.91 ms / 14.9</td>
               <td>No (Dedicated per-CFA model)</td>
               <td>No (Pixel-Only)</td>
             </tr>
             <tr>
-              <td><code>SAGAN</code> [26] / <code>QRISP</code> [15] (<em>2021–22</em>)</td>
+              <td><code>SAGAN</code> [26] / <code>QRISP</code> [14] (<em>2021–22</em>)</td>
               <td>Nona (3×3) / Quad (2×2)</td>
-              <td>Host AP GPU/NPU</td>
+              <td>Host AP GPU</td>
               <td>320–512 KB RAW (3,072 KB FP32)</td>
-              <td>52.91 ms / 14.9 FPS</td>
+              <td>52.91 ms / 14.9</td>
               <td>No (Pattern-specific weights)</td>
               <td>No (Pixel-Only)</td>
             </tr>
             <tr>
-              <td><code>KLAP Unified</code> (1.53M) [18] (<em>ICCV'23</em>)</td>
+              <td><code>KLAP Unified</code> (1.53M) [17] (<em>ICCV'23</em>)</td>
               <td>1×1, 2×2, 3×3, 4×4</td>
-              <td>Host AP GPU/NPU</td>
+              <td>Host AP GPU</td>
               <td>320–512 KB RAW (3,072 KB FP32)</td>
-              <td>52.91 ms / 14.9 FPS</td>
+              <td>52.91 ms / 14.9</td>
               <td>Partial (FAIG dynamic masks)</td>
               <td>No (Pixel-Only)</td>
             </tr>
             <tr>
               <td><code>Gen-1 4-Ch SA8 LSP</code> ($C=4$)</td>
               <td>1×1, 2×2, 4×4</td>
-              <td>Split Sensor + Host NPU</td>
+              <td>Split Sensor + AP</td>
               <td>16 KB INT8 / 64 KB FP32</td>
-              <td>2.90 ms / 30.0 FPS</td>
-              <td>Partial (4-ch bottlenecks quality)</td>
-              <td>SD 2.1 (22.3 dB cap)</td>
+              <td>2.90 ms / 30.0</td>
+              <td>Partial ($C=4$ cap)</td>
+              <td>SD 2.1 (22.3 dB)</td>
             </tr>
             <tr class="highlight-row">
-              <td><strong>Proposed <code>SE-Universal-CFA</code> (Ours, $C=16$)</strong></td>
+              <td><strong>Proposed <code>SE-Universal-CFA</code> ($C=16$)</strong></td>
               <td><strong>Bayer 1×1, Tetra 2×2, Hexa 4×4</strong></td>
               <td><strong>IMX500 $\mathcal{E}_A^{\mathrm{CFA}}$ + Host $\mathcal{T}_B, \mathcal{D}_{\mathrm{rec}}$</strong></td>
               <td><strong>64.0 KB INT8 (5–8× RAW; 48× FP32)</strong></td>
-              <td><strong>2.90 ms / 30.0 FPS</strong></td>
+              <td><strong>2.90 ms / 30.0</strong></td>
               <td><strong>100% Unified $\mathcal{T}_B$ + Pure-z $\mathcal{D}_{\mathrm{rec}}$</strong></td>
               <td><strong>Yes (FLUX.1 / TAEF1, $\cos \le 0.912$)</strong></td>
             </tr>
@@ -922,19 +922,19 @@
 
       <!-- Table 2: Sony IMX500 SRAM Audit -->
       <div class="table-container span-all">
-        <div class="table-caption">Table 2: Sony IMX500 In-Sensor Compiler (<code>mct</code> PTQ + <code>imxconv-tf</code>) SRAM Audit (<code>imx500_compile_audit.json</code>).</div>
+        <div class="table-caption">Table 2: Sony IMX500 Hardware Compiler (<code>mct</code> PTQ + <code>imxconv-tf</code>) SRAM Audit &amp; Host Latency Profile ($C=16$, <code>imx500_compile_audit.json</code>).</div>
         <table class="academic-table">
           <thead>
             <tr>
-              <th>Sensor CFA Topology</th>
-              <th>Compressor ($\mathcal{E}_A^{\mathrm{CFA}}$, $C=16$)</th>
-              <th>Params (<code>b16</code> / <code>b32</code> / <code>b64</code>) $\downarrow$</th>
-              <th>Keras Weight Mem</th>
-              <th>IMX500 SRAM Total ($\le 8.00\text{ MB}$)</th>
-              <th>Chip Util.</th>
+              <th>Sensor / Stage</th>
+              <th>Module ($C=16$)</th>
+              <th>PyTorch Params (<code>b16</code> / <code>b32</code> / <code>b64</code>) $\downarrow$</th>
+              <th>Weight Mem (Keras / PT)</th>
+              <th>IMX500 SRAM ($\le 8.00\text{ MB}$)</th>
+              <th>Chip Util. / Host Time</th>
               <th>Bus ($512^2$)</th>
               <th>Cos (<code>BJDD</code> / <code>CIS</code>) $\uparrow$</th>
-              <th>Compiler Status</th>
+              <th>Status</th>
             </tr>
           </thead>
           <tbody>
@@ -942,9 +942,9 @@
               <td>Bayer (1×1, $p=2$)</td>
               <td><code>BayerPhaseCompressor</code></td>
               <td>17,128 / 62,400 / 582,496</td>
-              <td>60.9–373.5 KB</td>
-              <td>3.02 / 4.65 / 3.37 MB</td>
-              <td>38% / 59% / 43%</td>
+              <td>80.4–611.7 KB</td>
+              <td>3.04 / 4.67 / 3.60 MB</td>
+              <td>39% / 59% / 45%</td>
               <td>64.0 KB INT8</td>
               <td><strong>0.8882 / 0.9122</strong></td>
               <td><span class="metric-pill pill-green">PASS (StridedConv)</span></td>
@@ -953,9 +953,9 @@
               <td>Tetracell (2×2, $p=4$)</td>
               <td><code>TetracellPhaseCompressor</code></td>
               <td>16,536 / 56,608* / 572,096</td>
-              <td>52.2–363.8 KB</td>
-              <td>1.05 / 1.56 / 3.36 MB</td>
-              <td>14% / 20% / 42%</td>
+              <td>71.7–601.9 KB</td>
+              <td>1.07 / 1.58 / 3.59 MB</td>
+              <td>14% / 20% / 45%</td>
               <td>64.0 KB INT8</td>
               <td><strong>0.8857 / 0.9098</strong></td>
               <td><span class="metric-pill pill-green">PASS (StridedConv)</span></td>
@@ -964,9 +964,9 @@
               <td>Hexadecacell (4×4, $p=8$)</td>
               <td><code>HexadecaPhaseCompressor</code></td>
               <td>16,340 / 61,184 / 413,676</td>
-              <td>56.8–352.8 KB</td>
-              <td>0.84 / 0.84 / 1.47 MB</td>
-              <td>11% / 11% / 19%</td>
+              <td>54.9–599.2 KB</td>
+              <td>0.84 / 0.86 / 1.71 MB</td>
+              <td>11% / 11% / 22%</td>
               <td>64.0 KB INT8</td>
               <td><strong>0.8767 / 0.9029</strong></td>
               <td><span class="metric-pill pill-green">PASS (StridedConv)</span></td>
@@ -974,10 +974,10 @@
             <tr class="summary-row">
               <td>Host Stage B ($\mathcal{T}_B$)</td>
               <td><code>UnifiedLatentTranslator</code></td>
-              <td>1,356,400 (1.36M shared)</td>
-              <td>1.36 MB (INT8)</td>
-              <td>Host NPU (Hailo-8)</td>
-              <td>&lt;1.3 ms</td>
+              <td>1,356,400 (shared)</td>
+              <td>5.43 MB (FP32)</td>
+              <td>Host GPU PyTorch</td>
+              <td>4.01 ms (BF16)</td>
               <td>$z \in \mathbb{R}^{16\times 64^2}$</td>
               <td>100% Sensor-Invar.</td>
               <td>Single Binary</td>
@@ -986,12 +986,12 @@
               <td>Host Decoder ($\mathcal{D}_{\mathrm{rec}}$)</td>
               <td><code>DemosaicPixelShuffleDecoder</code></td>
               <td>3,212,742 (1.23M + 1.98M)</td>
-              <td>3.21 MB (INT8)</td>
-              <td>Host NPU / GPU</td>
-              <td>30.0 FPS</td>
+              <td>12.85 MB (FP32)</td>
+              <td>Host GPU PyTorch</td>
+              <td>34.82 ms (BF16)</td>
               <td>$\hat{X} \in \mathbb{R}^{3\times 512^2}$</td>
               <td>100% Pure-z</td>
-              <td>Zero Raw Skip</td>
+              <td>vs. KLAP 55.4 ms</td>
             </tr>
           </tbody>
         </table>
@@ -999,10 +999,10 @@
 
       <h2 class="sec-title">2. Related Work</h2>
       <p>
-        <strong>Clustered CFA Remosaicing and Dedicated Host JDD:</strong> Classical interpolation by Malvar <em>et al.</em> [20] (<code>MHC</code>) and Hamilton-Adams [12] alongside deep Bayer JDD [4], [10], [22] exploit high green sampling density, whereas clustered architectures such as <code>PIPNet</code> (<code>BJDD</code>) [25], <code>SAGAN</code> [26], <code>QRISP</code> [15], MIPI [30], <code>NAFNet</code> [5], <code>TSANet</code> [7], and <code>VMamba</code> [19] raise clean-crop accuracy via full-resolution pixel skips, yet remain pattern-specific and consume $320\text{--}512\text{ KB}$ RAW ($5\text{--}8\times$ larger than our bus).
+        <strong>Clustered CFA Remosaicing and Dedicated Host JDD:</strong> Classical interpolation by Malvar <em>et al.</em> [20] (<code>MHC</code>) and Hamilton-Adams [11] alongside deep Bayer JDD [4], [9], [22] exploit high green sampling density, whereas clustered architectures such as <code>PIPNet</code> (<code>BJDD</code>) [25], <code>SAGAN</code> [26], <code>QRISP</code> [14], MIPI [29], <code>NAFNet</code> [5], and <code>VMamba</code> [19] raise clean-crop accuracy via full-resolution pixel skips, yet remain pattern-specific and consume $320\text{--}512\text{ KB}$ RAW ($5\text{--}8\times$ larger than our bus).
       </p>
       <p>
-        <strong>Unified Multi-Pattern Demosaicing &amp; 16-Ch Latent ISPs:</strong> Lee <em>et al.</em> [18] (<code>KLAP</code>) modulate shared <code>NAFNet</code> [5] filters dynamically via $W_{\mathrm{KLAP}}(\mathbf{g}) = W_{\mathrm{shared}} + \sum_c g_c (M_c \odot \Delta W_c)$ (reaching $35.66 / 30.18 / 28.97\text{ dB}$ on disjoint <code>DIV2K</code>). Conversely, prior LDM ISPs and 16-ch VAEs [2], [3], [6], [8], [9], [11], [16], [17], [21], [23], [24], [29], [31], [32] operate on host RAW or $f=8, C=4/16$ RGB encoders. By pairing period-matched strided permutation convs, <code>SENet</code> [13], <code>PixelShuffle</code> [27], and INT8 STE [14], we keep both host $\mathcal{T}_B$ and $\mathcal{D}_{\mathrm{rec}}(\mathbf{z})$ 100% sensor invariant under IMX500's $8.00\text{ MB}$ SRAM cap.
+        <strong>Unified Multi-Pattern Demosaicing &amp; 16-Ch Latent ISPs:</strong> Lee <em>et al.</em> [17] (<code>KLAP</code>) modulate shared <code>NAFNet</code> [5] filters dynamically via $W_{\mathrm{KLAP}}(\mathbf{g}) = W_{\mathrm{shared}} + \sum_c g_c (M_c \odot \Delta W_c)$ (reaching $35.66 / 30.18 / 28.97\text{ dB}$ on disjoint <code>DIV2K</code>). Conversely, prior LDM ISPs and 16-ch VAEs [2], [3], [6], [7], [8], [10], [15], [16], [18], [21], [23], [24], [30], [31] operate on host RAW or $f=8, C=4/16$ RGB encoders. By pairing period-matched strided permutation convs, <code>SENet</code> [12], <code>PixelShuffle</code> [27], and INT8 STE [13], we keep both host $\mathcal{T}_B$ and $\mathcal{D}_{\mathrm{rec}}(\mathbf{z})$ 100% sensor invariant under IMX500's $8.00\text{ MB}$ SRAM cap.
       </p>
 
       <h2 class="sec-title">3. Sensor Physics and Rate-Distortion Bounds</h2>
@@ -1031,56 +1031,57 @@
       <h2 class="sec-title">4. Single-Stream Universal CFA Architecture</h2>
       <h3 class="subsec-title">4.1 Zone 1: In-Sensor Phase-Aware Compression</h3>
       <p>
-        Each sensor variant compiles a matched compressor (<code>BayerPhaseCompressor</code> $582.5\text{K}$, <code>TetracellPhaseCompressor</code> $572.1\text{K}$, <code>HexadecaPhaseCompressor</code> $413.7\text{K}$ at <code>b64</code>) using IMX500-safe permutation strided convs, GAP+$1\times 1$ <code>SELayer</code> recalibration [13], and symmetric INT8 STE quantization ($s=\max(|\mathbf{r}_{\mathrm{fp32}}|)/127$) [14] into $64.0\text{ KB}$ inside $0.84\text{--}4.65\text{ MB}$ of SRAM:
+        Each sensor variant compiles a matched compressor (<code>BayerPhaseCompressor</code> $582.5\text{K}$, <code>TetracellPhaseCompressor</code> $572.1\text{K}$, <code>HexadecaPhaseCompressor</code> $413.7\text{K}$ at <code>b64</code>) using IMX500-safe permutation strided convs, GAP+$1\times 1$ <code>SELayer</code> recalibration [12], and symmetric INT8 STE quantization ($s=\max(|\mathbf{r}_{\mathrm{fp32}}|)/127$) [13] into $64.0\text{ KB}$ inside $0.84\text{--}4.67\text{ MB}$ of SRAM ($3.04\text{--}4.67\text{ MB}$ Bayer, $1.07\text{--}3.59\text{ MB}$ Tetracell, $0.84\text{--}1.71\text{ MB}$ Hexadecacell):
       </p>
       <div class="equation">
-        $$\mathbf{u} = \mathrm{PixelUnshuffle}_p(\tilde{\mathbf{y}}), \quad \mathrm{SE}(\mathbf{f}) = \mathbf{f} \odot \big(2\,\sigma(W_2\,\mathrm{LeakyReLU}_{0.1}(W_1\,\mathrm{GAP}(\mathbf{f})))\big), \qquad (4)$$
+        $$\mathbf{u} = \mathcal{U}_p(\tilde{\mathbf{y}}), \quad \mathrm{SE}(\mathbf{f}) = \mathbf{f} \odot 2\sigma\bigl(W_2\,\phi(W_1\,\mathrm{GAP}(\mathbf{f}))\bigr), \qquad (4)$$
         $$\mathbf{r}_{\mathrm{int8}} = s\,\mathrm{round}\!\left(\mathrm{clamp}(\mathbf{r}_{\mathrm{fp32}}/s, -127, 127)\right), \quad \mathbf{r} = \mathbf{r}_{\mathrm{fp32}} + \mathrm{sg}(\mathbf{r}_{\mathrm{int8}} - \mathbf{r}_{\mathrm{fp32}}). \qquad (5)$$
       </div>
 
       <h3 class="subsec-title">4.2 Zone 2: Sensor-Invariant Host Translator</h3>
       <p>
-        Receiving $\mathbf{r}$ with zero CFA flags, <code>UnifiedLatentTranslator</code> ($\mathcal{T}_B$: $16\to 16$, $1,356,400$ params, 8 pre-activation residual blocks at width 96, zero-init identity output) maps $\mathbf{z} = \mathbf{r} + f_{\theta}(\mathbf{r})$ onto frozen <code>TAEF1</code> / <code>FLUX.1</code> latents ($\cos = 0.8767\text{--}0.8882$ on <code>BJDD</code>; $0.9029\text{--}0.9122$ on real <code>KLAP CIS</code>).
+        Receiving $\mathbf{r}$ with zero CFA flags, <code>UnifiedLatentTranslator</code> ($\mathcal{T}_B$: $16\to 16$, $1,356,400$ params, $4.01\text{ ms}$ BF16 GPU, 8 pre-activation residual blocks at width 96, zero-init identity output) maps $\mathbf{z} = \mathbf{r} + f_{\theta}(\mathbf{r})$ onto frozen <code>TAEF1</code> / <code>FLUX.1</code> latents ($\cos = 0.8767\text{--}0.8882$ on <code>BJDD</code>; $0.9029\text{--}0.9122$ on real <code>KLAP CIS</code>).
       </p>
 
       <div class="algo-box">
-        <div class="algo-head">Algorithm 1: Disjoint Two-Stage Training and INT8 Split-Inference Execution of <code>SE-Universal-CFA</code>.</div>
+        <div class="algo-head">Algorithm 1: Disjoint Training and INT8 Split Inference of <code>SE-Universal-CFA</code>.</div>
         <div class="algo-sub">
-          <strong>Input:</strong> 774 disjoint <code>DIV2K</code> images; frozen <code>TAEF1</code> ($\mathcal{E}_{\mathrm{taef1}}, \mathcal{D}_{\mathrm{taef1}}$); sensor modes $\mathcal{M} = \{\text{Bayer } p{=}2, \text{Tetra } p{=}4, \text{Hexa } p{=}8\}$.<br>
-          <strong>Output:</strong> Sensor firmware $\mathcal{E}_A^{\mathrm{CFA}}$, single shared $\mathcal{T}_B(16{\to}16)$, and single pure-$\mathbf{z}$ decoder $\mathcal{D}_{\mathrm{rec}}(\mathbf{z})$.
+          <strong>Input:</strong> 774 disjoint <code>DIV2K</code> images; frozen <code>FLUX.1</code> enc. $\mathcal{E}_{\mathrm{flux}}$ &amp; <code>TAEF1</code> dec. $\mathcal{D}_{\mathrm{taef1}}$; modes $\mathcal{M} = \{\text{Bayer}, \text{Tetra}, \text{Hexa}\}$.<br>
+          <strong>Output:</strong> Sensor firmware $\mathcal{E}_A^{\mathrm{CFA}}$, single shared $\mathcal{T}_B(16{\to}16)$, and pure-$\mathbf{z}$ decoder $\mathcal{D}_{\mathrm{rec}}(\mathbf{z})$.
         </div>
         <div class="algo-body">
-          <div class="algo-line algo-phase"><span class="algo-ln">1:</span> <span class="algo-phase-accent">Stage A &mdash; Latent Manifold Alignment ($\mathcal{E}_A^{\mathrm{CFA}}, \mathcal{T}_B$):</span></div>
-          <div class="algo-line algo-indent"><span class="algo-ln">2:</span> <strong>for</strong> $m \in \mathcal{M}$ <strong>do</strong> $\mathbf{z}_{\mathrm{gt}} \leftarrow \mathcal{E}_{\mathrm{taef1}}(\mathbf{X})$; optimize $\mathcal{E}_A^{m}, \mathcal{T}_B$ with $\mathcal{L}_{\mathrm{lat}} = \|\mathbf{z}-\mathbf{z}_{\mathrm{gt}}\|_{\mathrm{SmoothL1}} + 0.15(1-\cos(\mathbf{z},\mathbf{z}_{\mathrm{gt}}))$</div>
-          <div class="algo-line algo-indent"><span class="algo-ln">3:</span> &nbsp;&nbsp;where $\mathbf{r} \leftarrow \mathcal{Q}_{\mathrm{INT8}}^{\mathrm{STE}}(\mathcal{E}_A^{m}(\mathbf{y}_m))$, $\mathbf{z} \leftarrow \mathcal{T}_B(\mathbf{r})$ <span class="algo-comment">// All CFAs aligned to shared 16&times;64&times;64 bus</span></div>
-          <div class="algo-line"><span class="algo-ln">4:</span> <strong>end for</strong></div>
-          <div class="algo-line algo-phase"><span class="algo-ln">5:</span> <span class="algo-phase-green">Stage B &mdash; Joint INT8 QAT + Pure-z Reconstruction ($\mathcal{D}_{\mathrm{rec}}$):</span></div>
-          <div class="algo-line algo-indent"><span class="algo-ln">6:</span> <strong>for</strong> iteration $t = 1 \dots N_{\mathrm{joint}}$ ($900$ steps at <code>b64</code>) <strong>do</strong></div>
-          <div class="algo-line algo-indent"><span class="algo-ln">7:</span> &nbsp;&nbsp;Sample crop $\mathbf{X}$ from <code>DIV2K 0001..0774</code>; simulate $\mathbf{y}_m \leftarrow \mathrm{CFA}_m(\mathbf{X})$ across $m \in \mathcal{M}$</div>
-          <div class="algo-line algo-indent"><span class="algo-ln">8:</span> &nbsp;&nbsp;$\mathbf{r}_m \leftarrow \mathrm{quantize\_bus\_int8}(\mathcal{E}_A^m(\mathbf{y}_m), \mathrm{ste}{=}\mathrm{True})$; $\mathbf{z}_m \leftarrow \mathcal{T}_B(\mathbf{r}_m)$; $\hat{\mathbf{X}}_m \leftarrow \mathcal{D}_{\mathrm{rec}}(\mathbf{z}_m)$</div>
-          <div class="algo-line algo-indent"><span class="algo-ln">9:</span> &nbsp;&nbsp;Optimize $\{\mathcal{E}_A^m, \mathcal{T}_B, \mathcal{D}_{\mathrm{rec}}\}$ using $\mathcal{L}_1 + 4\mathcal{L}_2 + 0.25\mathcal{L}_{\nabla} + 0.10\mathcal{L}_{\mathrm{opp}} + 0.08\mathcal{L}_{\mathrm{lat}} + 0.02\mathcal{L}_{\mathrm{LPIPS}}$</div>
-          <div class="algo-line"><span class="algo-ln">10:</span> <strong>end for</strong></div>
-          <div class="algo-line algo-phase"><span class="algo-ln">11:</span> <span class="algo-phase-purple">Edge Inference (Sensor IMX500 &rarr; Host NPU, No-Raw-Retention):</span></div>
-          <div class="algo-line algo-indent"><span class="algo-ln">12:</span> On Sensor: $\mathbf{r}_{\mathrm{int8}} \leftarrow \mathcal{E}_A^{\mathrm{sensor}}(\mathbf{y})$; discard $\mathbf{y}$; transmit $64.0\text{ KB}$ $\mathbf{r}_{\mathrm{int8}}$ over MIPI CSI-2 ($2.90\text{ ms}$)</div>
-          <div class="algo-line algo-indent"><span class="algo-ln">13:</span> On Host: $\mathbf{z} \leftarrow \mathcal{T}_B(\mathbf{r}_{\mathrm{int8}})$; Preview $\hat{\mathbf{X}} \leftarrow \mathcal{D}_{\mathrm{rec}}(\mathbf{z})$ ($30\text{ FPS}$) or ZSL Capture $\leftarrow \mathcal{D}_{\mathrm{flux}}(\mathrm{Diff}(\mathbf{z}))$</div>
+          <div class="algo-line algo-phase"><span class="algo-ln">1:</span> <span class="algo-phase-accent">Init &amp; Stage A &mdash; Alignment ($\mathcal{E}_A^{\mathrm{CFA}}, \mathcal{T}_B$, $900$ steps):</span></div>
+          <div class="algo-line algo-indent"><span class="algo-ln">2:</span> Supervised Ridge warm-start on $384$ <code>DIV2K</code> patches (<code>out_conv</code>)</div>
+          <div class="algo-line algo-indent"><span class="algo-ln">3:</span> <strong>for</strong> $m \in \mathcal{M}$ <strong>do</strong> $\mathbf{z}_{\mathrm{gt}} \leftarrow \mathcal{E}_{\mathrm{flux}}(\mathbf{X})$; $\mathbf{r} \leftarrow \mathcal{Q}_{\mathrm{INT8}}^{\mathrm{STE}}(\mathcal{E}_A^{m}(\mathbf{y}_m))$</div>
+          <div class="algo-line algo-indent"><span class="algo-ln">4:</span> &nbsp;&nbsp;$\mathbf{z} \leftarrow \mathcal{T}_B(\mathbf{r})$; min $\mathcal{L}_{\mathrm{SL1}}(\mathbf{z},\mathbf{z}_{\mathrm{gt}}) + 0.25(1-\cos) + \mathcal{L}_{\mathrm{unify}} + 5{\times}10^{-4}\|\mathbf{r}\|_\infty$</div>
+          <div class="algo-line"><span class="algo-ln">5:</span> <strong>end for</strong></div>
+          <div class="algo-line algo-phase"><span class="algo-ln">6:</span> <span class="algo-phase-green">Stage B &mdash; Mixed QAT ($80\%$ INT8 / $20\%$ FP32) + Decoding ($1{,}350$ steps at <code>b64</code>; $850$ at <code>b32/b16</code>):</span></div>
+          <div class="algo-line algo-indent"><span class="algo-ln">7:</span> <strong>for</strong> step $t = 1 \dots N_{\mathrm{joint}}$ <strong>do</strong></div>
+          <div class="algo-line algo-indent"><span class="algo-ln">8:</span> &nbsp;&nbsp;Sample crop $\mathbf{X}$ from <code>DIV2K 0001..0774</code>; simulate $\mathbf{y}_m \leftarrow \mathrm{CFA}_m(\mathbf{X})$ across $m \in \mathcal{M}$</div>
+          <div class="algo-line algo-indent"><span class="algo-ln">9:</span> &nbsp;&nbsp;$\mathbf{r}_m \leftarrow \mathcal{Q}_{\mathrm{bus}}(\mathcal{E}_A^m(\mathbf{y}_m))$; $\mathbf{z}_m \leftarrow \mathcal{T}_B(\mathbf{r}_m)$; $\hat{\mathbf{X}}_m \leftarrow \mathcal{D}_{\mathrm{rec}}(\mathbf{z}_m)$</div>
+          <div class="algo-line algo-indent"><span class="algo-ln">10:</span> &nbsp;&nbsp;Min $1.6(\mathcal{L}_{\mathrm{Charb}} + 3\mathcal{L}_2 + 0.2\mathcal{L}_{\nabla} + 0.08\mathcal{L}_{\mathrm{opp}}) + 0.22\mathcal{L}_{\mathrm{lat}} + \mathcal{L}_{\mathrm{unify}} + 4{\times}10^{-4}\|\mathbf{r}\|_\infty$</div>
+          <div class="algo-line"><span class="algo-ln">11:</span> <strong>end for</strong></div>
+          <div class="algo-line algo-phase"><span class="algo-ln">12:</span> <span class="algo-phase-purple">Edge Bus &amp; Host Consumer (IMX500 &rarr; Host, No-Raw-Retention):</span></div>
+          <div class="algo-line algo-indent"><span class="algo-ln">13:</span> Sensor: $\mathbf{r}_{\mathrm{int8}} \leftarrow \mathcal{E}_A^{\mathrm{sensor}}(\mathbf{y})$; discard $\mathbf{y}$; send $64.0\text{ KB}$ $\mathbf{r}_{\mathrm{int8}}$ via CSI-2 ($2.90\text{ ms}$)</div>
+          <div class="algo-line algo-indent"><span class="algo-ln">14:</span> Host: $\mathbf{z} \leftarrow \mathcal{T}_B(\mathbf{r}_{\mathrm{int8}})$; $\hat{\mathbf{X}} \leftarrow \mathcal{D}_{\mathrm{rec}}(\mathbf{z})$ or <code>TAEF1</code> / <code>FLUX</code> ZSL on resident $\mathbf{z}$</div>
         </div>
       </div>
 
       <h3 class="subsec-title">4.3 Zone 3: Pure-z Lapped Reconstruction</h3>
       <p>
-        Decoding purely from $\mathbf{z}$ (<code>subband_ch=0</code>), <code>DemosaicPixelShuffleDecoder</code> ($3,212,742$ params: $1,229,443$ frozen <code>TAEF1</code> trunk + $1,983,299$ trainable parameters) fuses a pretrained <code>TAEF1</code> prior $\mathbf{X}_{\mathrm{taef1}}(\mathbf{z})$, a 3-stage $128\to 96\to 64\to 32$ <code>SE-PixelShuffle(2)</code> pyramid $\mathcal{U}_{\mathrm{SE\text{-}PS}}(\mathbf{z})$, and a $5\times 5$ cross-block lapped synthesis branch $\mathcal{H}_{\mathrm{lap}}(\mathbf{z}) = \mathrm{PixelShuffle}_8(\mathrm{Conv}_{5\times 5}^{\mathrm{reflect}}(\mathbf{z}))$ integrating $25$ latent neighbors ($40\times 40$ pixels) across macro-block boundaries:
+        Decoding purely from $\mathbf{z}$ (<code>subband_ch=0</code>), <code>DemosaicPixelShuffleDecoder</code> ($3,212,742$ params: $1,229,443$ frozen <code>TAEF1</code> trunk + $1,983,299$ trainable parameters; $34.82\text{ ms}$ BF16 on RTX 5060 Ti vs. $55.35\text{ ms}$ for <code>KLAP</code>) fuses a pretrained <code>TAEF1</code> prior $\mathbf{X}_{\mathrm{taef1}}(\mathbf{z})$, a 3-stage $128\to 96\to 64\to 32$ <code>SE-PixelShuffle(2)</code> pyramid $\mathcal{U}_{\mathrm{SE\text{-}PS}}(\mathbf{z})$, and a $5\times 5$ cross-block lapped synthesis branch $\mathcal{H}_{\mathrm{lap}}(\mathbf{z}) = \mathrm{PixelShuffle}_8(\mathrm{Conv}_{5\times 5}^{\mathrm{reflect}}(\mathbf{z}))$ integrating $25$ latent neighbors ($40\times 40$ pixels) across macro-block boundaries:
       </p>
       <div class="equation">
         $$\hat{\mathbf{X}}(\mathbf{z}) = \mathrm{Clamp}_{\mathrm{STE}}\!\Big(\mathbf{X}_{\mathrm{taef1}}(\mathbf{z}) + \mathcal{H}_{\mathrm{lap}}(\mathbf{z}) + \mathcal{F}_{\mathrm{out}}\!\big([\mathcal{U}_{\mathrm{SE\text{-}PS}}(\mathbf{z}),\, \mathbf{X}_{\mathrm{taef1}}(\mathbf{z})]\big)\Big). \qquad (6)$$
       </div>
       <p>
-        Zero-shot stock <code>TAEF1</code> ($23.80 / 23.65 / 23.27\text{ dB}$) and <code>FLUX.1</code> ($23.56 / 23.48 / 23.02\text{ dB}$) preview compatibility, plus optional downstream generative synthesis via <code>OnePassDiffusionBridge</code>, comes natively from resident $\mathbf{z}$.
+        Zero-shot stock <code>TAEF1</code> ($23.80 / 23.65 / 23.27\text{ dB}$, $21.23\text{ ms}$ BF16) and <code>FLUX.1</code> ($23.56 / 23.48 / 23.02\text{ dB}$) preview compatibility, plus optional downstream generative synthesis via <code>OnePassDiffusionBridge</code>, comes natively from resident $\mathbf{z}$.
       </p>
 
       <h2 class="sec-title">5. Experimental Evaluation</h2>
       <h3 class="subsec-title">5.1 Disjoint Protocol and Baseline Setup</h3>
       <p>
-        All models are trained from scratch on an NVIDIA RTX 5060 Ti ($16\text{ GB}$ VRAM, peak $7.40\text{ GB}$) using strictly <strong>774 <code>DIV2K</code> training images (<code>0001..0774</code>)</strong> [1] and validated on <strong>20 held-out <code>DIV2K</code> scenes (<code>0775..0797</code> excluding <code>0780, 0785, 0792</code>)</strong>, ensuring <strong>0.0% overlap</strong> against all 32 evaluation images (<code>BJDD_CVPR21</code>, <code>Kodak24</code>, <code>KLAP_ICCV23 CIS</code> [18], and <code>Remosaic Stress</code>). We also reproduce genuine pixel-domain <code>KLAPUnifiedModel</code> ($1.53\text{M}$) [18] and <code>MobileRemosaicNet</code> ($0.25\text{M}$) end-to-end on the same 774-image split alongside pretrained official <code>PIPNet</code> ($3.47\text{M}$) [25], reporting PSNR, MS-SSIM [28], and AlexNet LPIPS [33].
+        All models are trained from scratch on an NVIDIA RTX 5060 Ti ($16\text{ GB}$ VRAM; peak $7.40\text{ GB}$, $1,415.3\text{ s}$ across all three capacity tiers with <code>b32</code>/<code>b16</code> host warm-started from <code>b64</code>) using strictly <strong>774 <code>DIV2K</code> training images (<code>0001..0774</code>)</strong> [1] and validated on <strong>20 held-out <code>DIV2K</code> scenes (<code>0775..0797</code> excluding <code>0780, 0785, 0792</code>)</strong>, maintaining <strong>0.0% overlap</strong> against all 29 distinct evaluation scenes ($32$ total suite entries across <code>BJDD_CVPR21</code>, 18-image <code>Kodak24</code> subset, <code>KLAP_ICCV23 CIS</code> [17], and <code>Remosaic Stress</code>). We also reproduce genuine pixel-domain <code>KLAPUnifiedModel</code> ($1.53\text{M}$) [17] and <code>MobileRemosaicNet</code> ($0.25\text{M}$) end-to-end on the same split alongside official <code>PIPNet</code> ($3.47\text{M}$) [25], reporting PSNR, MS-SSIM [28], and test-only AlexNet LPIPS [32].
       </p>
 
       <!-- Table 3 spanning all columns -->
@@ -1172,7 +1173,7 @@
             </tr>
             <tr>
               <td>6</td>
-              <td><strong>Genuine <code>KLAP Unified</code> (1.53M, ICCV 2023)</strong> [18]</td>
+              <td><strong>Genuine <code>KLAP Unified</code> (1.53M, ICCV 2023)</strong> [17]</td>
               <td>Host FAIG Dynamic Filter Masks</td>
               <td>320–512 KB RAW (14.9 FPS)</td>
               <td>35.66 dB / 0.9934</td>
@@ -1194,7 +1195,7 @@
               <td>8a</td>
               <td><strong>Ours <code>SE-Universal-CFA</code> (<code>b16</code>, 16.3K–17.1K)</strong></td>
               <td><strong>100% Unified 16-Ch Pure-$z$</strong></td>
-              <td><strong>64 KB INT8 (30.0 FPS)</strong></td>
+              <td><strong>64 KB INT8 (2.9 ms Bus)</strong></td>
               <td>27.89 dB / 0.9619</td>
               <td>27.40 dB / 0.9571 / 0.1453</td>
               <td>26.63 dB / 0.9470 / 0.1631</td>
@@ -1204,7 +1205,7 @@
               <td>8b</td>
               <td><strong>Ours <code>SE-Universal-CFA</code> (<code>b32</code>, 56.6K–62.4K)</strong></td>
               <td><strong>100% Unified 16-Ch Pure-$z$</strong></td>
-              <td><strong>64 KB INT8 (30.0 FPS)</strong></td>
+              <td><strong>64 KB INT8 (2.9 ms Bus)</strong></td>
               <td>28.33 dB / 0.9648</td>
               <td>27.83 dB / 0.9601 / 0.1295</td>
               <td>27.09 dB / 0.9507 / 0.1402</td>

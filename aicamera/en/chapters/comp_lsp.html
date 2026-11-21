@@ -146,19 +146,19 @@
 
       <div class="grid-3">
         <div class="card">
-          <h3>Type I · Pointwise Linear</h3>
+          <h3>Class I · Pointwise Linear</h3>
           <p>
             Because \(\mathcal{F}_{\mathrm{lin}}(\mathbf{x}) = A\mathbf{x} + \mathbf{b}\) has zero second derivative, evaluating at the single patch mean \(\bar{\mathbf{c}}_0\) is exact (\(\mathbb{E}[A\mathbf{x}+\mathbf{b}] = A\bar{\mathbf{c}}_0+\mathbf{b}\)), and the AC edge Jacobian \(J_{3\times 3} \equiv A\) is a brightness-independent constant matrix.
           </p>
         </div>
         <div class="card">
-          <h3>Type II · Pointwise Non-Linear</h3>
+          <h3>Class II · Pointwise Non-Linear</h3>
           <p>
             Because \(\mathcal{F}_{\mathrm{nonlin}}(\mathbf{x}) = \phi(\mathbf{x})\) has non-zero curvature (\(\phi'' \neq 0\)), intra-patch variance \(\boldsymbol{\sigma}_{\mathrm{AC}}^2\) shifts the mean color — requiring <strong>1:4:1 Simpson Quadrature</strong> for DC and brightness-dependent <strong>Secant Jacobian</strong> scaling \(J_{3\times 3}(\bar{\mathbf{c}}_0, \boldsymbol{\delta})\) for AC edges.
           </p>
         </div>
         <div class="card">
-          <h3>Type III · Spatial Neighborhood</h3>
+          <h3>Class III · Spatial Neighborhood</h3>
           <p>
             Sub-patch kernels (\(r \lt 8\text{ px}\)) execute via <strong>13D AC spectral projectors</strong> within a single cell, whereas wide or bilateral <strong>Class III Spatial Kernel</strong> operators (\(r \ge 8\text{ px}\)) combine \(3\times 3\) finite-difference stencils \(\nabla_{3\times 3}\mathbf{z}\) with chromatic range weights \(w_{\mathrm{range}}(\Delta\bar{\mathbf{c}}_0)\) on the \(\frac{H}{8}\times\frac{W}{8}\) grid.
           </p>
@@ -211,10 +211,10 @@
         <ul>
           <li>0th-order moment match: \(w_- + w_0 + w_+ = 1\)</li>
           <li>2nd-order variance moment match: \(\frac{1}{2}(w_- + w_+)\,\boldsymbol{\delta}^2 = \frac{1}{2}\,\boldsymbol{\sigma}_{\mathrm{AC}}^2 \implies (w_- + w_+)\,\boldsymbol{\delta}^2 = \boldsymbol{\sigma}_{\mathrm{AC}}^2\)</li>
-          <li>In numerical analysis, <strong>Simpson's 1/3 Rule and 3-Point Gauss-Legendre Quadrature</strong> integrate up to cubic polynomials exactly using center weight \(w_0 = \frac{4}{6}\) and outer weights \(w_- = w_+ = \frac{1}{6}\) (the canonical <code>1:4:1</code> ratio), which uniquely determines the sigma-point half-width \(\frac{2}{6}\boldsymbol{\delta}^2 = \boldsymbol{\sigma}_{\mathrm{AC}}^2 \implies \boldsymbol{\delta} = \sqrt{1.5}\,\boldsymbol{\sigma}_{\mathrm{AC}} \approx 1.2247\,\boldsymbol{\sigma}_{\mathrm{AC}}\)!</li>
+          <li>With <strong>Simpson's 1/3 Rule</strong> weights \(w_0 = \frac{4}{6}\) and \(w_- = w_+ = \frac{1}{6}\) (the canonical <code>1:4:1</code> ratio), exact 2nd-order moment matching \(w\kappa^2 = \frac{1}{2}\) yields \(\frac{2}{6}\boldsymbol{\delta}^2 = \boldsymbol{\sigma}_{\mathrm{AC}}^2 \implies \boldsymbol{\delta} = \sqrt{3}\,\boldsymbol{\sigma}_{\mathrm{AC}}\). Because concave gamma exhibits an unbounded curvature singularity \(\phi''(x)\to -\infty\) near \(x\to 0^+\), we apply the boundary-damped excursion \(\boldsymbol{\delta} = \mathrm{clip}(\sqrt{1.5}\,\boldsymbol{\sigma}_{\mathrm{AC}},\, 0.015,\, 0.35) \approx 1.2247\,\boldsymbol{\sigma}_{\mathrm{AC}}\) to prevent dark-shadow \([0,1]\) clipping and keep \(J_{3\times 3}\) well-conditioned.</li>
         </ul>
         <div class="formula">
-          $$\bar{\mathbf{c}}_4 = \frac{1}{6}\,f_{\mathrm{ISP}}(\bar{\mathbf{c}}_0 - \sqrt{1.5}\,\boldsymbol{\sigma}_{\mathrm{AC}}) + \frac{4}{6}\,f_{\mathrm{ISP}}(\bar{\mathbf{c}}_0) + \frac{1}{6}\,f_{\mathrm{ISP}}(\bar{\mathbf{c}}_0 + \sqrt{1.5}\,\boldsymbol{\sigma}_{\mathrm{AC}})$$
+          $$\bar{\mathbf{c}}_4 = \frac{1}{6}\,f_{\mathrm{ISP}}(\bar{\mathbf{c}}_0 - \boldsymbol{\delta}) + \frac{4}{6}\,f_{\mathrm{ISP}}(\bar{\mathbf{c}}_0) + \frac{1}{6}\,f_{\mathrm{ISP}}(\bar{\mathbf{c}}_0 + \boldsymbol{\delta}), \qquad \boldsymbol{\delta} = \mathrm{clip}\!\big(\sqrt{1.5}\,\boldsymbol{\sigma}_{\mathrm{AC}},\, 0.015,\, 0.35\big)$$
         </div>
         <p style="margin-bottom:0">
           Consequently, <strong>1:4:1 Simpson Quadrature</strong> reproduces the true 64-pixel non-linear gamma average using just 3 function evaluations (<code>1:4:1</code>), achieving patch DC MAE <code>0.0007</code> and improving patch DC PSNR by <strong>+3.60 to +7.47 dB</strong>.
@@ -432,7 +432,7 @@
 
       <figure class="diagram" id="fig-clsp-patch-verify">
         <img src="../../assets/img/fig9_step_by_step_math_and_consistency.webp" alt="512x512 multi-database qualitative matrix and 5x artifact hotspot ROIs across OpenISP, MIT-FiveK, and Google HDR+, 16-channel vector match, and 210-point RGB consistency" class="paper-fig-img" loading="lazy" decoding="async">
-        <figcaption><b>Figure 5-4 (Paper Fig. 4).</b> 512×512 Multi-Database Zero-Shot Qualitative Matrix &amp; 5× Artifact-Hotspot ROI Verification (Source: <a class="src" href="https://github.com/yjqkrtk-ux/aicamera/blob/main/comp_lsp/paper/generate_fig4_patch_verification_svg.py#L81" title="comp_lsp/paper/generate_fig4_patch_verification_svg.py (line 81)" target="_blank" rel="noopener">generate_fig4_patch_verification_svg.py:81</a>). <b>(a)</b> Evaluated strictly Zero-Shot across three independent hardware RAW databases (<b>DB 1: OpenISP 10-bit RGGB</b>, <b>DB 2: MIT-Adobe FiveK 12/14-bit DSLRs</b>, and <b>DB 3: Google HDR+ 14-bit Mobile</b>), pairing full <code>Bayer RAW | Pixel GT</code> scenes with 5 rows of 5× zoomed <code>72×72</code> artifact-hotspot ROIs comparing <code>0th-Order [10]</code>, <code>Ours 0-Net</code>, <code>w/o Color Lock</code> (unconstrained <code>FluxSR</code> at <code>τ_c=0.35</code>), <code>Ours +FluxSR-1S</code> (<code>τ_c=0.12, P_DC=0</code>; <b>28.34 dB / 0.0947 LPIPS mean, 10/10 wins over 0-Net</b>), and zoomed <code>Pixel-ISP GT</code>. <b>(b)</b> Across all 16 latent channels (\(c_0 \dots c_{15}\)) of <code>Nikon D700</code> patch \((7,8)\), <code>Stage 0</code> → <code>0-Net</code> → <code>Stg5 RF</code> → <code>FluxSR-1S</code> converges onto oracle \(\mathcal{E}_{\mathrm{VAE}}(\mathbf{x}_{\mathrm{gt}})\). <b>(c)</b> <b>210 RGB stage-points</b> (10 unseen cameras × 7 stages × 3 channels) align along the \(1:1\) diagonal with <b>\(R^2 = 0.9950\)</b> (<code>0.9931</code> at 512²).</figcaption>
+        <figcaption><b>Figure 5-4 (Paper Fig. 4).</b> 512×512 Multi-Database Zero-Shot Qualitative Matrix &amp; 5× Artifact-Hotspot ROI Verification (Source: <a class="src" href="https://github.com/yjqkrtk-ux/aicamera/blob/main/comp_lsp/paper/generate_fig4_patch_verification_svg.py#L81" title="comp_lsp/paper/generate_fig4_patch_verification_svg.py (line 81)" target="_blank" rel="noopener">generate_fig4_patch_verification_svg.py:81</a>). <b>(a)</b> Evaluated strictly Zero-Shot across three independent hardware RAW databases (<b>DB 1: OpenISP 10-bit RGGB</b>, <b>DB 2: MIT-Adobe FiveK 12/14-bit DSLRs</b>, and <b>DB 3: Google HDR+ 14-bit Mobile</b>), pairing full <code>Bayer RAW | Pixel GT</code> scenes with 5 rows of 5× zoomed <code>72×72</code> artifact-hotspot ROIs comparing <code>0th-Order Subsp.</code>, <code>Ours 0-Net</code>, <code>w/o Color Lock</code> (unconstrained <code>FluxSR</code> at <code>τ_c=0.35</code>), <code>Ours +FluxSR-1S</code> (<code>τ_c=0.12, P_DC=0</code>; <b>28.34 dB / 0.0947 LPIPS mean, 10/10 wins over 0-Net</b>), and zoomed <code>Pixel-ISP GT</code>. <b>(b)</b> Across all 16 latent channels (\(c_0 \dots c_{15}\)) of <code>Nikon D700</code> patch \((7,8)\), <code>Stage 0</code> → <code>0-Net</code> → <code>Stg5 RF</code> → <code>FluxSR-1S</code> converges onto oracle \(\mathcal{E}_{\mathrm{VAE}}(\mathbf{x}_{\mathrm{gt}})\). <b>(c)</b> <b>210 RGB stage-points</b> (10 unseen scenes × 7 stages × 3 channels) align along the \(1:1\) diagonal with <b>\(R^2 = 0.9950\)</b> (<code>0.9931</code> at 512²).</figcaption>
       </figure>
 
       <h3>System Latency, Differentiable Inverse 3A Auto-Tuning &amp; Cross-VAE Generalization</h3>
@@ -457,7 +457,7 @@
         </div>
       </div>
 
-      <h3>10-Camera Hardware RAW Benchmark (Single-Stage Operator Accuracy &amp; 128² Scratch Bridge Ablations)</h3>
+      <h3>10-Scene Hardware RAW Benchmark (Single-Stage Operator Accuracy &amp; 128² Scratch Bridge Ablations)</h3>
       <p>
         Primary 512² full-resolution progression (<code>0-Net 27.37 → Stg5 RF-Sync 27.96 → FluxSR-1S 28.34 dB / 0.0947 LPIPS</code>, <code>10/10</code> wins) appears in <a class="src" href="/papers/comp_lsp.html" title="comp_lsp/paper/comp_lsp_paper.html" target="_blank" rel="noopener">📄 Paper III (Comp-LSP HTML)</a> Table 3. Below, Columns 3–8 evaluate standalone single-stage operator PSNR against \(\mathbf{x}_{\mathrm{gt},k} = f_k(\mathbf{x}_0)\), while Columns 9–12 summarize the canonical 128² legacy scratch bridge ablation baseline (<strong>Full 0-Net</strong>, <strong>+1S Abl.</strong>, <strong>+4S Abl.</strong>, <strong>RGB MAE</strong>).
       </p>

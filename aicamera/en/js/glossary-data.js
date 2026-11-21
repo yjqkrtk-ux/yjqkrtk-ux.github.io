@@ -424,7 +424,7 @@ window.BOOK_GLOSSARY = {
       "ko": "White-Box Computational LSP",
       "en": "White-Box Latent ISP · Analytical Latent ISP",
       "abbr": "Comp-LSP · Comp-LSP 2.0",
-      "def": "An analytical latent-domain ISP architecture executing a 7-stage physical camera ISP directly on 16-channel latents (z₀ ∈ ℝ¹⁶) via Class I linear, Class II nonlinear (1:4:1 Simpson quadrature & 3×3 secant Jacobians), and Class III spatial kernel + closed-form RF-Sync (27.96 dB) + Zero-Encode AC-subspace FluxSR-1S (28.34 dB, 0.0947 LPIPS) operators without pixel decoding.",
+      "def": "An analytical latent-domain ISP architecture executing a 7-stage physical camera ISP directly on 16-channel latents (z₀ ∈ ℝ¹⁶) via Class I linear, Class II nonlinear (1:4:1 Simpson quadrature & 3×3 secant Jacobians), and Class III spatial kernel operators, plus Pure 1-Step Zero-Encode OpenDB FluxSR on white-box z₄ (27.79 dB, 0.8745 SSIM, 0.0987 LPIPS) without pixel decoding.",
       "chapters": [
         "overview",
         "comp_lsp"
@@ -485,10 +485,10 @@ window.BOOK_GLOSSARY = {
       ]
     },
     {
-      "ko": "AC-Subspace Flow Prior",
-      "en": "Zero-Encode AC-Subspace FluxSR-1S",
-      "abbr": "Zero-Encode FluxSR-1S",
-      "def": "Stage 6 operator that feeds Stage 5 closed-form 2048-D Orthogonal RFF synchronization (RF-Sync, 0 neural layers, 3.15 ms GPU, 27.96 dB) directly into OpenDB FLUX.1-dev + FluxSR (FP8 DiT, τ_c=0.12, skipping 318.1 ms VAE IO) projected strictly onto Π_grad^6 ⊕ Π_curv^7 inside S_AC¹³, preserving Stages 1–5 3D DC colorimetry and lifting 512² 10-camera unseen mean to 28.34 dB / 0.0947 LPIPS (10/10 wins over 0-Net 27.37 dB, −14.4% LPIPS).",
+      "ko": "Zero-Encode OpenDB Flow Prior",
+      "en": "Pure 1-Step Zero-Encode OpenDB FluxSR",
+      "abbr": "Zero-Encode FluxSR",
+      "def": "Stage 6 operator that feeds white-box Stage 4 0-Net latents z₄ directly into OpenDB FLUX.1-dev + FluxSR (FP8 DiT, τ_c=0.05 calibrated strictly on 8 held-out train DNGs, skipping 318.1 ms VAE IO) via ẑ = z₄ − τ_c·F_FluxSR(z₄, τ_c) with zero auxiliary networks, projections, or gates, winning 10/10 unseen cameras at 512² across PSNR, SSIM, and LPIPS (27.37 → 27.79 dB, 0.8745 SSIM, 0.0987 LPIPS, −10.8% vs. 0-Net).",
       "chapters": [
         "comp_lsp"
       ]

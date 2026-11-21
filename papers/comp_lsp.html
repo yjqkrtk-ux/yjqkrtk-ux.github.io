@@ -778,7 +778,7 @@
       <div class="header-badges">
         <span class="badge">Paper III &middot; IEEE/CVF CVPR 2027 Format</span>
         <span class="badge">FLUX.1 &amp; TAEF1 16-Ch VAE</span>
-        <span class="badge-green">Stage 5 RF-Sync &amp; Zero-Encode FluxSR-1S (10/10 Wins)</span>
+        <span class="badge-green">Pure 1-Step OpenDB FluxSR on 0-Net (10/10 Wins)</span>
       </div>
       <h1 class="paper-title">White-Box Computational Latent Signal Processing: Step-by-Step Radiometric &amp; Colorimetric Operators and Zero-Encode Flow Priors in 16-Channel VAEs</h1>
       <div class="paper-authors">Yongjoon Song &nbsp;&bull;&nbsp; Han-sol Lee &nbsp;&bull;&nbsp; Jeisung Lee &nbsp;&bull;&nbsp; Yeolmin Seong</div>
@@ -793,28 +793,28 @@
       </div>
       <div class="kpi-card">
         <div class="kpi-label">Zero-Shot RGB Consistency</div>
-        <div class="kpi-value">R&sup2; = 0.9950</div>
-        <div class="kpi-sub">MAE = 0.0086 (128&sup2;) / 0.0095 (512&sup2;) Across 10 Cameras</div>
+        <div class="kpi-value">R&sup2; = 0.9936</div>
+        <div class="kpi-sub">150-pt 0-Net (0.9914 +FluxSR, MAE 0.0100 @ 512&sup2;)</div>
       </div>
       <div class="kpi-card">
         <div class="kpi-label">512&sup2; PSNR &amp; OpenDB LPIPS</div>
-        <div class="kpi-value">27.37 &rarr; 28.34 dB</div>
-        <div class="kpi-sub">0.0947 LPIPS (10/10 Wins; &minus;14.4% vs. 0-Net)</div>
+        <div class="kpi-value">27.37 &rarr; 27.79 dB</div>
+        <div class="kpi-sub">0.0987 LPIPS (10/10 Wins; &minus;10.8% vs. 0-Net)</div>
       </div>
       <div class="kpi-card">
         <div class="kpi-label">1/64 Grid Speed &amp; Zero-Enc IO</div>
         <div class="kpi-value">6.24 ms @ 1MP</div>
-        <div class="kpi-sub">16.7&times; @ 12MP Halide &bull; FluxSR-1S 874 ms (Skips 318 ms IO)</div>
+        <div class="kpi-sub">16.7&times; @ 12MP Halide &bull; FluxSR 879.5 ms (Skips 318 ms IO)</div>
       </div>
     </div>
 
     <div class="abstract-box">
       <div class="abstract-title">Abstract</div>
       <p>
-        Modern generative models standardize on $8\times$-downsampled <strong>16-channel VAEs</strong> (e.g., <code>FLUX.1</code>, <code>TAEF1</code>), packing each $8\times 8\times 3$ patch into $\mathbb{R}^{16} = \mathcal{S}_{\text{DC}}^3 \oplus \mathcal{S}_{\text{AC}}^{13}$. On sensor Bayer RAWs, 0th-order sRGB subspace steering ($\mathbf{z} + W_{\text{DC}}^+\Delta\mathbf{c}$) [15] fails due to curved chromatic manifolds, concave gamma Jensen bias, and untransformed 13D AC edges, whereas diffusion ISPs take $&gt;500\text{ ms}$ and neural pixel ISPs run at full $H\times W$. We present <strong>White-Box Computational Latent Signal Processing (Comp-LSP)</strong>, executing camera ISPs directly on $\frac{H}{8}\times\frac{W}{8}\times 16$ latents with a frozen decoder ($\Delta\theta_{\text{dec}} = 0$): <strong>(I) Pointwise Linear</strong> (<code>BLC</code>, <code>Gain</code>, <code>WB</code>, $3\times 3$ <code>CCM</code>) via exact 1-point evaluation; <strong>(II) Pointwise Non-Linear</strong> (<code>Gamma</code>, <code>LUTs</code>) via <strong>3-Point Simpson (<code>1:4:1</code>) Quadrature</strong> ($+3.6\text{--}7.5\text{ dB}$ DC gain) and <strong>$3\times 3$ Secant Jacobians</strong> with $144\text{-D}$ Kronecker AC transport; and <strong>(III) Spatial Kernels</strong> (<code>EEH</code>, <code>NR</code>, <code>LTM</code>) via 13D Legendre projectors and closed-form receptive-field synchronization (<code>RF-Sync</code>, $27.96\text{ dB}$), feeding a <strong>Zero-Encode OpenDB 1-Step Flow Prior (<code>FluxSR-1S</code>, $\tau_c=0.12$)</strong> applied strictly within the 13D AC subspace $\Pi_{\text{grad}}^6\oplus\Pi_{\text{curv}}^7$ (skipping $318\text{--}1,407\text{ ms}$ VAE IO). Across 10 unseen scenes ($201$-DNG $0\%$-overlap), Comp-LSP preserves $R^2 = 0.9950$ ($0.9931$ at $512^2$) colorimetry, lifts $512^2$ unseen PSNR from $18.80$ (0th-order) and $27.37$ (<code>0-Net</code>) to <strong>$28.34\text{ dB}$</strong> ($10/10$ wins), cuts LPIPS from $0.3361$ (0th-order) and $0.1106$ (<code>0-Net</code>) to <strong>$0.0947$</strong> ($-14.4\%$ vs. <code>0-Net</code>, $-7.0\%$ vs. scratch <code>4S</code> ablation), runs Stages 1&ndash;4 in $6.24\text{ ms}$ at 1MP in Halide ($16.7\times$ @ 12MP), and speeds up inverse 3A tuning by $290.8\times$.
+        Modern generative models standardize on $8\times$-downsampled <strong>16-channel VAEs</strong> (e.g., <code>FLUX.1</code>, <code>TAEF1</code>), packing each $8\times 8\times 3$ patch into $\mathbb{R}^{16} = \mathcal{S}_{\text{DC}}^3 \oplus \mathcal{S}_{\text{AC}}^{13}$. On sensor Bayer RAWs, 0th-order sRGB subspace steering ($\mathbf{z} + W_{\text{DC}}^+\Delta\mathbf{c}$) [15] fails due to curved chromatic manifolds, concave gamma Jensen bias, and untransformed 13D AC edges, whereas diffusion ISPs take $&gt;500\text{ ms}$ and neural pixel ISPs run at full $H\times W$. We present <strong>White-Box Computational Latent Signal Processing (Comp-LSP)</strong>, executing camera ISPs directly on $\frac{H}{8}\times\frac{W}{8}\times 16$ latents with a frozen decoder ($\Delta\theta_{\text{dec}} = 0$): <strong>(I) Pointwise Linear</strong> (<code>BLC</code>, <code>Gain</code>, <code>WB</code>, $3\times 3$ <code>CCM</code>) via exact 1-point evaluation; <strong>(II) Pointwise Non-Linear</strong> (<code>Gamma</code>, <code>LUTs</code>) via <strong>3-Point Simpson (<code>1:4:1</code>) Quadrature</strong> ($+3.6\text{--}7.5\text{ dB}$ DC gain) and <strong>$3\times 3$ Secant Jacobians</strong> with $144\text{-D}$ Kronecker AC transport; and <strong>(III) Spatial Kernels</strong> (<code>EEH</code>, <code>NR</code>, <code>LTM</code>) via 13D Legendre projectors and $3\times 3$ cross-cell stencils (zero-network <code>0-Net</code>, $\mathbf{z}_4$), feeding a <strong>Pure 1-Step OpenDB Flow Prior (<code>FluxSR</code>, $\tau_c=0.05$)</strong> applied directly on $\mathbf{z}_4$ ($\hat{\mathbf{z}}_{\text{sRGB}} = \mathbf{z}_4 - \tau_c\,\mathcal{F}_\theta^{\text{FluxSR}}(\mathbf{z}_4, \tau_c)$) before frozen decoding $\mathcal{D}_{\text{sRGB}}$ (skipping $82\text{--}1,407\text{ ms}$ VAE IO, with zero auxiliary networks, zero test-time projections, and zero gating). Across 10 unseen scenes ($201$-DNG $0\%$-overlap, $\tau_c=0.05$ calibrated strictly on 8 held-out training DNGs), Comp-LSP preserves $R^2 = 0.9936$ ($0.9914$ with <code>FluxSR</code> at $512^2$) colorimetry, lifts $512^2$ unseen PSNR from $18.80$ (0th-order) and $27.37$ (<code>0-Net</code>) to <strong>$27.79\text{ dB}$</strong> ($10/10$ wins, $0.8745$ SSIM), cuts LPIPS from $0.3361$ (0th-order) and $0.1106$ (<code>0-Net</code>) to <strong>$0.0987$</strong> ($10/10$ wins; $-10.8\%$ vs. <code>0-Net</code>, $-3.0\%$ vs. scratch <code>4S</code> ablation), runs Stages 1&ndash;4 in $6.24\text{ ms}$ at 1MP in Halide ($16.7\times$ @ 12MP), and speeds up inverse 3A tuning by $290.8\times$.
       </p>
       <div class="keywords">
-        <strong>Index Terms &mdash;</strong> White-Box Computational LSP, Latent Color Subspace (FLUX.1 / TAEF1), 3-Point Simpson Quadrature, $3\times 3$ Secant Jacobian, Legendre Spatial Projectors, Zero-Encode FluxSR-1S Flow Prior.
+        <strong>Index Terms &mdash;</strong> White-Box Computational LSP, Latent Color Subspace (FLUX.1 / TAEF1), 3-Point Simpson Quadrature, $3\times 3$ Secant Jacobian, Legendre Spatial Projectors, Zero-Encode OpenDB FluxSR Prior.
       </div>
     </div>
 
@@ -838,8 +838,8 @@
       </p>
       <ul>
         <li><strong>Universal 16-Channel Latent Operator Taxonomy (Sec. 3, Table 2, Fig. 1):</strong> We formalize arbitrary camera ISP stages on the decomposed latent bundle $\mathbb{R}^{16} = \mathcal{S}_{\text{DC}}^3 \oplus \mathcal{S}_{\text{AC}}^{13}$ into three closed-form operator families: <em>Class I Pointwise Linear</em> ($\mathcal{F}_{\text{lin}}$), <em>Class II Pointwise Non-Linear</em> ($\mathcal{F}_{\text{nonlin}}$), and <em>Class III Two-Scale Spatial Kernel</em> ($\mathcal{F}_{\text{kernel}}$).</li>
-        <li><strong>Simpson Quadrature, Secant Jacobian AC Transport &amp; Closed-Form <code>Stage 5</code> (Sec. 4, Algorithm 1, Fig. 3):</strong> We derive a zero-network white-box operator (<code>Stages 1&ndash;4: 0-Net</code>, $0.79\text{ ms}$ at $256^2$ / $6.24\text{ ms}$ at 1MP in Halide [16], $\text{MSE} \le 1.78\times 10^{-13}$) that integrates concave tone curves via <code>1:4:1</code> Simpson quadrature ($+3.60\text{--}7.47\text{ dB}$ patch DC gain, Eq. 3), transports 13D spatial edges via a $3\times 3$ Secant Jacobian matrix $J_{3\times 3}$ (Eq. 4) lifted through $\mathbf{z}_{\text{AC}} \otimes \operatorname{vec}(J_{3\times 3} - I_3)$, and applies 13D orthonormal projectors plus closed-form Ridge RFF [20] receptive-field synchronization ($27.96\text{ dB}$ at $512^2$, $3.15\text{ ms}$ GPU).</li>
-        <li><strong>Zero-Encode AC-Subspace OpenDB <code>FluxSR-1S</code> (Sec. 5, Tables 3&ndash;4, Figs. 2&amp;4):</strong> Feeding $\mathbf{z}_5$ directly into open-weight 1-step <code>FluxSR-1S</code> [13] at native-grid flow time $\tau_c=0.12$ projected onto $\Pi_{\text{grad}}^6 \oplus \Pi_{\text{curv}}^7$ (skipping $318\text{--}1,407\text{ ms}$ VAE IO) outperforms both closed-form <code>0-Net</code> ($+0.97\text{ dB}$, $-14.4\%$ LPIPS) and scratch iterative DDIM bridge ablations ($-7.0\%$ LPIPS), winning <strong>10/10</strong> unseen scenes at $512^2$ (<strong>$28.34\text{ dB}$, $0.0947$ LPIPS</strong>, $R^2 = 0.9950$).</li>
+        <li><strong>Simpson Quadrature &amp; Secant Jacobian AC Transport (Sec. 4, Algorithm 1, Fig. 3):</strong> We derive a zero-network white-box operator (<code>Stages 1&ndash;4: 0-Net</code>, $0.79\text{ ms}$ at $256^2$ / $6.24\text{ ms}$ at 1MP in Halide [16], $\text{MSE} \le 1.78\times 10^{-13}$) that integrates concave tone curves via <code>1:4:1</code> Simpson quadrature ($+3.60\text{--}7.47\text{ dB}$ patch DC gain, Eq. 3), transports 13D spatial edges via a $3\times 3$ Secant Jacobian matrix $J_{3\times 3}$ (Eq. 4) lifted through $\mathbf{z}_{\text{AC}} \otimes \operatorname{vec}(J_{3\times 3} - I_3)$, and applies 13D orthonormal projectors plus $3\times 3$ cross-cell stencils.</li>
+        <li><strong>Zero-Encode Pure 1-Step OpenDB <code>FluxSR</code> Prior (Sec. 5, Tables 3&ndash;4, Figs. 2&amp;4):</strong> Feeding the white-box <code>0-Net</code> latent $\mathbf{z}_4$ directly into open-weight 1-step <code>FluxSR</code> [13] at flow conditioning $\tau_c=0.05$ ($\hat{\mathbf{z}}_{\text{sRGB}} = \mathbf{z}_4 - \tau_c\,\mathcal{F}_\theta^{\text{FluxSR}}(\mathbf{z}_4, \tau_c)$, skipping $82\text{--}1,407\text{ ms}$ VAE IO) before frozen decoding $\mathcal{D}_{\text{sRGB}}$ eliminates latent blocking and compression artifacts without auxiliary networks, test-time projections, or gating, winning <strong>10/10</strong> unseen scenes on PSNR, SSIM, and LPIPS at $512^2$ (<strong>$27.79\text{ dB}$, $0.8745\text{ SSIM}$, $0.0987\text{ LPIPS}$</strong>, $-10.8\%$ vs. <code>0-Net</code> and $-3.0\%$ vs. scratch <code>4S</code> DDIM ablation, $R^2 = 0.9936$).</li>
       </ul>
 
       <h2>2. Related Work</h2>
@@ -850,10 +850,10 @@
         <strong>VAE Latent Color Subspaces for sRGB Steering.</strong> Understanding how high-dimensional autoencoders represent color is critical for training-free latent manipulation. Pach et al. [15] discovered that uniform sRGB patches in 16-channel VAEs (<code>FLUX.1</code> [2], <code>SD 3.5</code> [8]) project onto a 3D linear subspace $\mathcal{S}_{\text{DC}} \subset \mathbb{R}^{16}$, enabling sRGB palette steering during text-to-image generation. Concurrently, Santamaria et al. [17] characterized a shared luminance and opponent-color subspace via linear encoder approximation, enabling training-free closed-form sRGB color steering. While our work shares the foundational subspace decomposition $\mathbb{R}^{16} = \mathcal{S}_{\text{DC}}^3 \oplus \mathcal{S}_{\text{AC}}^{13}$ of Pach et al. [15], our formulation differs by generalizing from <em>0th-order flat sRGB DC shifts</em> ($\mathbf{z}' = \mathbf{z} + W_{\text{DC}}^+\Delta\mathbf{c}$) to a <em>1st-order curved-manifold RAW Jet operator</em> that integrates concave tone curves across $8\times 8$ patches via 3-point Simpson quadrature and transforms the 13D AC spatial edge fiber via a $3\times 3$ Secant Jacobian $J_{3\times 3}$.
       </p>
       <p>
-        <strong>Generative Latent Diffusion ISPs &amp; Open-Weight Flow Priors.</strong> Recent latent diffusion imaging models such as <code>LDM-ISP</code> [19] (for low-light neural ISP) and <code>RawGen</code> [11] (for diffusion-based camera RAW generation) run multi-step U-Net diffusion inside VAE latent space ($&gt;500\text{ ms}$) without closed-form camera physics, while open-weight flow priors like <code>FluxSR</code> [13] enable 1-step restoration in <code>FLUX.1</code> latents. However, <code>FluxSR</code> assumes $4\times$-upsampled blurry images at $\tau_c=0.35$; feeding RAW latents directly into default <code>FluxSR</code> causes severe color drift and smoothing (Table 4), while pixel wrapping incurs $318\text{--}1,407\text{ ms}$ VAE IO. We resolve both via white-box DNG operators ($2.15\text{ ms}$@$512^2$, $6.24\text{ ms}$@1MP) followed by Zero-Encode AC-subspace <code>FluxSR-1S</code> at native-grid $\tau_c=0.12$.
+        <strong>Generative Latent Diffusion ISPs &amp; Open-Weight Flow Priors.</strong> Recent latent diffusion imaging models such as <code>LDM-ISP</code> [19] (for low-light neural ISP) and <code>RawGen</code> [11] (for diffusion-based camera RAW generation) run multi-step U-Net diffusion inside VAE latent space ($&gt;500\text{ ms}$) without closed-form camera physics, while open-weight flow priors like <code>FluxSR</code> [13] enable 1-step restoration in <code>FLUX.1</code> latents. However, <code>FluxSR</code> assumes $4\times$-upsampled blurry images at $\tau_c=0.35$; feeding RAW latents directly into default <code>FluxSR</code> causes severe color drift and smoothing (Table 4), while pixel wrapping incurs $82\text{--}1,407\text{ ms}$ VAE IO. We resolve both via white-box DNG operators ($2.15\text{ ms}$@$512^2$, $6.24\text{ ms}$@1MP) followed by Zero-Encode 1-Step <code>FluxSR</code> directly on $\mathbf{z}_4$ at $\tau_c=0.05$.
       </p>
       <p>
-        <strong>Universal Pixel-Domain Grids and Controllable Neural ISPs.</strong> In pixel-domain imaging, Gharbi et al. (<code>HDRNet</code>) [9] unified tone and color operators through bilateral-grid affine slicing, while controllable neural ISPs including <code>ParamISP</code> [12], <code>CtrlISP</code> [21], and <code>NILUT</code> [6] condition CNNs or implicit 3D LUTs on camera parameters. Complementarily, <code>RAW-Adapter</code> [7] and <code>ReRAW</code> [1] adapt vision backbones to sensor RAW inputs. Unlike these approaches that require <em>full-resolution $H\times W$ pixel-grid execution</em>, Comp-LSP establishes a <em>$1/64$-grid 16-channel latent operator algebra</em> that reduces spatial grid volume by $64\times$.
+        <strong>Universal Pixel-Domain Grids and Controllable Neural ISPs.</strong> In pixel-domain imaging, Gharbi et al. (<code>HDRNet</code>) [9] unified tone and color operators through bilateral-grid affine slicing, while controllable neural ISPs including <code>ParamISP</code> [12], <code>CtrlISP</code> [20], and <code>NILUT</code> [6] condition CNNs or implicit 3D LUTs on camera parameters. Complementarily, <code>RAW-Adapter</code> [7] and <code>ReRAW</code> [1] adapt vision backbones to sensor RAW inputs. Unlike these approaches that require <em>full-resolution $H\times W$ pixel-grid execution</em>, Comp-LSP establishes a <em>$1/64$-grid 16-channel latent operator algebra</em> that reduces spatial grid volume by $64\times$.
       </p>
 
       <div class="table-container span-all">
@@ -881,7 +881,7 @@
               <td>$\sim 6\text{--}12\text{ ms}$</td>
             </tr>
             <tr>
-              <td><strong>ParamISP</strong> <em>(CVPR&rsquo;24)</em> [12] / <strong>CtrlISP</strong> <em>(CVPR-F&rsquo;26)</em> [21]</td>
+              <td><strong>ParamISP</strong> <em>(CVPR&rsquo;24)</em> [12] / <strong>CtrlISP</strong> <em>(CVPR-F&rsquo;26)</em> [20]</td>
               <td>Pixel ($H \times W$, $1\times$)</td>
               <td>Yes (Black-Box CNN)</td>
               <td>N/A ($1\times 1$ px)</td>
@@ -937,29 +937,20 @@
             <tr>
               <td><strong>Comp-LSP (Ours, Stages 1&ndash;4: 0-Net Math)</strong></td>
               <td><strong>16-Ch FLUX / TAEF1 ($1/64\times$)</strong></td>
-              <td class="highlight-val">Yes (White-Box Exact)</td>
+              <td class="highlight-val">Yes (27.37 dB / 0.1106 LPIPS)</td>
               <td class="highlight-val">Yes (<code>1:4:1</code> Simpson)</td>
               <td class="highlight-val">Yes ($J_{3\times 3} \otimes \mathbf{z}_{\text{AC}}$)</td>
-              <td>$3\times 3$ Secant + Neighborhood</td>
+              <td>$\Pi_{x,y,\text{curv}}$ + $3\times 3$ Stencils</td>
               <td class="highlight-val">2.15 ms ($512^2$) / 6.24 ms (1MP)</td>
             </tr>
             <tr>
-              <td><strong>Comp-LSP + Stage 5 RF-Sync (0-NN)</strong></td>
+              <td><strong>Comp-LSP + 1-Step FluxSR (Stage 6)</strong></td>
               <td><strong>16-Ch FLUX / TAEF1 ($1/64\times$)</strong></td>
-              <td class="highlight-val">Yes (27.96 dB / 0.108 LPIPS)</td>
+              <td class="highlight-val">Yes (27.79 dB / 0.0987 LPIPS)</td>
               <td class="highlight-val">Yes (<code>1:4:1</code> Simpson)</td>
               <td class="highlight-val">Yes (144-D Kronecker)</td>
-              <td class="highlight-val">Yes ($\Pi_{x,y,\text{curv}}$ + Closed-Form RFF)</td>
-              <td class="highlight-val">3.15 ms GPU ($512^2$, 0 Neural)</td>
-            </tr>
-            <tr>
-              <td><strong>Comp-LSP + FluxSR-1S (Stage 6)</strong></td>
-              <td><strong>16-Ch FLUX / TAEF1 ($1/64\times$)</strong></td>
-              <td class="highlight-val">Yes (28.34 dB / 0.095 LPIPS)</td>
-              <td class="highlight-val">Yes ($\Pi_{\text{grad}}^6 \oplus \Pi_{\text{curv}}^7, \tau_c=0.12$)</td>
-              <td class="highlight-val">Yes ($\Pi_{\text{grad}}^6\oplus\Pi_{\text{curv}}^7$)</td>
-              <td class="highlight-val">Yes (Zero-Enc OpenDB FP8 DiT)</td>
-              <td class="highlight-val">873.6 ms ($512^2$, 0 ms VAE IO)</td>
+              <td class="highlight-val">Yes (Zero-Enc FP8 DiT on $\mathbf{z}_4$, $\tau_c=0.05$)</td>
+              <td class="highlight-val">879.5 ms ($512^2$, 0 ms VAE IO)</td>
             </tr>
           </tbody>
         </table>
@@ -998,7 +989,7 @@
         <li><strong>Class III &mdash; Spatial Neighborhood / Kernel Operators ($\mathcal{F}_{\text{kernel}}[\mathbf{x}](p) = \sum_{q\in\mathcal{N}_r(p)} K(p,q;\mathbf{x})\mathbf{x}(q)$):</strong> Includes Unsharp Masking (EEH/USM), Gaussian/Box Smoothing, Bilateral Denoising, Local Tone Mapping, and $32\times 32$ Encoder Receptive-Field Alignment. Because each latent cell $\mathbf{z}_0(i,j)$ packs an $8\times 8$ pixel patch, a spatial kernel of pixel radius $r$ splits into a <strong>two-scale latent operator</strong>:
           <ul>
             <li><em>Sub-Patch Intra-Cell Scale ($r &lt; 8\text{ px}$):</em> Preserves $\bar{\mathbf{c}}_0$ and applies orthonormal 13D AC directional projectors ($\Pi_x, \Pi_y, \Pi_{\text{curv}}$): $\Delta\mathbf{z}_{\text{AC}} = (\Delta g_x\Pi_x + \Delta g_y\Pi_y + \Delta g_{\text{curv}}\Pi_{\text{curv}})\mathbf{z}_{\text{AC}}$.</li>
-            <li><em>Inter-Patch Cross-Cell Scale ($r \ge 8\text{ px}$):</em> Aggregates across the $3\times 3$ latent grid stencil $\mathcal{N}_{3\times 3}(i,j)$ via finite-difference operators $\nabla_{3\times 3}\mathbf{z} = [\partial_x\mathbf{z}, \partial_y\mathbf{z}, \nabla^2_{3\times 3}\mathbf{z}]$, bilateral range weights $w_{\text{range}} = \exp(-\|\bar{\mathbf{c}}_0(i,j)-\bar{\mathbf{c}}_0(i',j')\|_2^2/2\sigma_r^2)$, and closed-form Orthogonal Random Fourier Feature [20] (<code>RF-Sync</code>) Ridge regression before Stage 6 flow refinement.</li>
+            <li><em>Inter-Patch Cross-Cell Scale ($r \ge 8\text{ px}$):</em> Aggregates across the $3\times 3$ latent grid stencil $\mathcal{N}_{3\times 3}(i,j)$ via finite-difference operators $\nabla_{3\times 3}\mathbf{z} = [\partial_x\mathbf{z}, \partial_y\mathbf{z}, \nabla^2_{3\times 3}\mathbf{z}]$ and bilateral range weights $w_{\text{range}} = \exp(-\|\bar{\mathbf{c}}_0(i,j)-\bar{\mathbf{c}}_0(i',j')\|_2^2/2\sigma_r^2)$ across neighboring patches.</li>
           </ul>
         </li>
       </ul>
@@ -1039,10 +1030,10 @@
             </tr>
             <tr>
               <td><strong>III-B. Inter-Patch &amp; Flow Prior</strong><br>($r \ge 8\text{ px}$ / Generative Prior)</td>
-              <td>Bilateral Denoise, Local Tone Map, $32\times 32$ RF Sync, OpenDB Refiner</td>
-              <td><strong>Range-Weighted Neighbor Conv</strong>:<br>+ 3D DC Preservation</td>
-              <td><strong>Closed-Form RFF &amp; AC-Subspace Flow</strong>:<br>$(\eta_{\text{grad}}\Pi_{\text{grad}}^6 + \eta_{\text{curv}}\Pi_{\text{curv}}^7)(\tau_c\mathbf{v}_\theta)$</td>
-              <td class="highlight-val"><strong>Stage 5 RF-Sync + Stage 6 <code>FluxSR-1S</code></strong>:<br>$D_4$-$3\times 3$ RFF Ridge + OpenDB FP8 DiT</td>
+              <td>Bilateral Denoise, Local Tone Map, Stage 6 OpenDB Refiner</td>
+              <td><strong>Range-Weighted Neighbor Conv</strong>:<br>+ White-Box $\mathbf{z}_4$ DC Anchor</td>
+              <td><strong>Pure 1-Step OpenDB Flow Prior</strong>:<br>$\hat{\mathbf{z}}_{\text{sRGB}} = \mathbf{z}_4 - \tau_c\,\mathcal{F}_\theta^{\text{FluxSR}}(\mathbf{z}_4, \tau_c)$</td>
+              <td class="highlight-val"><strong>Stage 6 Pure 1-Step <code>FluxSR</code> ($\tau_c=0.05$)</strong>:<br>Direct FP8 DiT on $\mathbf{z}_4$ ($0$ projections/gates)</td>
             </tr>
           </tbody>
         </table>
@@ -1051,21 +1042,21 @@
       <div class="span-all figure-card">
         <img src="figures/comp_fig6_latent_geometry_linear_vs_srgb.webp" alt="Overview of Comp-LSP on 16-Channel Latent Space">
         <div class="figure-caption">
-          <strong>Fig. 1. Overview of Comp-LSP on $\mathbb{R}^{16} = \mathcal{S}_{\text{DC}}^3 \oplus \mathcal{S}_{\text{AC}}^{13}$.</strong> <strong>(a)</strong> Prior pixel CNNs [9, 12], black-box diffusion ISPs [11, 19], and 0th-order sRGB subspace shifts [15] incur $64\times$/iterative compute overhead or Bayer green casts and concave $\gamma$ Jensen bias; <strong>(b)</strong> Driven by DNG metadata $\Theta_{\text{ISP}}$, our $1/64$-grid operator executes <em>Class I Linear</em> (<code>BLC</code>, <code>WB</code>, <code>CCM</code>), <em>Class II Non-Linear</em> (<code>1:4:1</code> Simpson quadrature + $3\times 3$ Secant Jacobian Kronecker AC transport), <em>Class III Spatial Kernels</em> ($\Pi_{x,y,\text{curv}}$ + $3\times 3$ LTM + <code>RF-Sync</code>), and Stage 6 Zero-Encode OpenDB <code>FluxSR-1S</code> [13] ($\tau_c=0.12$ inside $\Pi_{\text{grad}}^6\oplus\Pi_{\text{curv}}^7$, $874\text{ ms}$@$512^2$, skipping $318\text{--}1,407\text{ ms}$ VAE IO); <strong>(c)</strong> $5\times$ zoomed $512^2$ zero-shot ROIs and $27.37\to\mathbf{28.34\text{ dB}}$ / $0.0947$ LPIPS ($R^2{=}0.9931$; $0.9950$ at $128^2$) and $16.7\times$ 12MP / $290.8\times$ 3A speedups.
+          <strong>Fig. 1. Overview of Comp-LSP on $\mathbb{R}^{16} = \mathcal{S}_{\text{DC}}^3 \oplus \mathcal{S}_{\text{AC}}^{13}$.</strong> <strong>(a)</strong> Prior pixel CNNs [9, 12], black-box diffusion ISPs [11, 19], and 0th-order sRGB subspace shifts [15] incur $64\times$/iterative compute overhead or Bayer green casts and concave $\gamma$ Jensen bias; <strong>(b)</strong> Driven by DNG metadata $\Theta_{\text{ISP}}$, our $1/64$-grid operator executes <em>Class I Linear</em> (<code>BLC</code>, <code>WB</code>, <code>CCM</code>), <em>Class II Non-Linear</em> (<code>1:4:1</code> Simpson quadrature + $3\times 3$ Secant Jacobian Kronecker AC transport), <em>Class III Spatial Kernels</em> ($\Pi_{x,y,\text{curv}}$ + $3\times 3$ LTM), and <code>Stage 6</code> Pure 1-Step Zero-Encode OpenDB <code>FluxSR</code> [13] directly on $\mathbf{z}_4$ ($\tau_c=0.05$, $879.5\text{ ms}$@$512^2$, skipping $82\text{--}1,407\text{ ms}$ VAE IO, zero projections/gates); <strong>(c)</strong> $5\times$ zoomed $512^2$ zero-shot ROIs and $27.37\to\mathbf{27.79\text{ dB}}$ / $0.8745$ SSIM / $0.0987$ LPIPS ($R^2{=}0.9936$ <code>0-Net</code>, $0.9914$ <code>+FluxSR</code>) and $16.7\times$ 12MP / $290.8\times$ 3A speedups.
         </div>
       </div>
 
       <div class="span-all figure-card">
         <img src="figures/comp_fig8_pipeline_block_by_block_flow.webp" alt="Full-Width 7-Stage Visual Evolution Across Three Unseen Cameras" loading="lazy" decoding="async">
         <div class="figure-caption">
-          <strong>Fig. 2. Full-Width 7-Stage Visual Evolution (<code>Stages 0&ndash;6</code>) Across Three Unseen Sensors (<code>Nikon D700</code>, <code>Canon EOS 40D</code>, <code>OpenISP test.RAW</code>).</strong> <strong>(a)</strong> Classes I&ndash;III chain (<code>0:RAW</code> &rarr; <code>1:BLC</code> &rarr; <code>2:WB</code> &rarr; <code>3:CCM</code> &rarr; <code>4:&gamma;</code> &rarr; <code>5:NR/EEH/RF</code> &rarr; <code>6:FluxSR-1S</code>) with decoded $512\times 512$ sRGB outputs, PSNR/LPIPS, and normalized R/G/B balance bars; <strong>(b)</strong> 16-ch latent barcode $\mathbf{z}_k(7,8)\in\mathbb{R}^{16}$ showing clean energy compression across stages.
+          <strong>Fig. 2. Full-Width 7-Stage Visual Evolution (<code>Stages 0&ndash;6</code>) Across Three Unseen Sensors (<code>Nikon D700</code>, <code>Canon EOS 40D</code>, <code>OpenISP test.RAW</code>).</strong> <strong>(a)</strong> Classes I&ndash;III chain (<code>0:RAW</code> &rarr; <code>1:BLC</code> &rarr; <code>2:WB</code> &rarr; <code>3:CCM</code> &rarr; <code>4:&gamma;</code> &rarr; <code>5:NR/EEH/LTM</code> &rarr; <code>6:+FluxSR</code>) with decoded $512\times 512$ sRGB outputs, PSNR/LPIPS, and normalized R/G/B balance bars; <strong>(b)</strong> 16-ch latent barcode $\mathbf{z}_k(7,8)\in\mathbb{R}^{16}$ showing clean energy compression across stages.
         </div>
       </div>
 
-      <h2>4. Method: Unpacked Patch Equations and AC-Subspace Stage 6 Flow</h2>
+      <h2>4. Method: Unpacked Patch Equations and Pure 1-Step Stage 6 Flow</h2>
       <h3>4.1 Problem Setup and 201-DNG Zero-Shot Cross-Dataset Calibration</h3>
       <p>
-        Given a single-channel sensor Bayer RAW frame $\mathbf{I}_{\text{Bayer}} \in \mathbb{R}^{B\times 1\times H\times W}$ and its native DNG metadata $\Theta_{\text{ISP}} = (\mathbf{b}, g, \mathbf{w}_{\text{WB}}, \operatorname{CCM}_{3\times 3}, \gamma, \boldsymbol{\theta}_{\text{spat}})$, Stage 0 applies $5\times 5$ Malvar-He-Cutler linear demosaicing [14] followed by the frozen 16-channel VAE encoder $\mathcal{E}_{\text{VAE}}$ and a lightweight $1\times 1$ linear residual adapter $\mathcal{A}_{1\times 1}$ ($1.7\text{K}$ parameters, trained strictly on synthetic patches) to produce the initial RAW latent $\mathbf{z}_0 \in \mathbb{R}^{B\times 16\times (H/8)\times (W/8)}$. To guarantee strict zero-shot cross-dataset generalization and prevent spatial texture memorization, we partition our camera datasets into two strictly disjoint splits ($0\%$ scene or file overlap): (i) a <strong>201-DNG Zero-Shot Calibration &amp; Stage 5 Solver Set</strong> comprising $170$ held-out MIT-Adobe FiveK DSLR DNGs and $31$ held-out Google Pixel HDR+ [10] 14-bit mobile DNGs ($51,456$ non-overlapping $8\times 8$ patches, $205,824$ stage-patch pairs), and (ii) <strong>9 distinct physical hardware captures across 6 sensor models yielding 10 unseen ROI test scenes</strong> evaluated in Section 5 (<code>OpenISP</code> 10-bit RGGB <code>test.RAW</code> full chart + 1:1 center detail crop with zero training scenes from the OpenISP domain, $6$ held-out FiveK DSLR scenes, and $2$ held-out Google Pixel 14-bit mobile DNGs). The linear readout matrices ($\Psi \in \mathbb{R}^{16\times 16}$, $W_{\text{z2c,nb}} \in \mathbb{R}^{185\times 3}$), anisotropic Tikhonov transition matrices ($W_{\text{trans,lin}}, W_{\text{trans,}\gamma} \in \mathbb{R}^{230\times 16}$), and closed-form Stage 5 <code>RF-Sync</code> ($2048$-D Orthogonal RFF [20] + $D_4$-$3\times 3$ Ridge, $\lambda=0.01$ validated on a disjoint $193\to 8$ held-out split) are solved once analytically and held 100% frozen across all $10$ unseen test scenes (scratch bridges $\mathcal{R}_{1\text{-step}}, \mathcal{R}_{4\text{-step}}$ are evaluated strictly as ablation baselines in Sec. 5.3). We support <strong>Mode A (On-Chip Sensor Stats)</strong> ($+3.6\text{--}7.5\text{ dB}$ DC gain) and <strong>Mode B (Latent-Only Readout)</strong> ($+1.1\text{--}2.3\text{ dB}$).
+        Given a single-channel sensor Bayer RAW frame $\mathbf{I}_{\text{Bayer}} \in \mathbb{R}^{B\times 1\times H\times W}$ and its native DNG metadata $\Theta_{\text{ISP}} = (\mathbf{b}, g, \mathbf{w}_{\text{WB}}, \operatorname{CCM}_{3\times 3}, \gamma, \boldsymbol{\theta}_{\text{spat}})$, Stage 0 applies $5\times 5$ Malvar-He-Cutler linear demosaicing [14] followed by the frozen 16-channel VAE encoder $\mathcal{E}_{\text{VAE}}$ and a lightweight $1\times 1$ linear residual adapter $\mathcal{A}_{1\times 1}$ ($1.7\text{K}$ parameters, trained strictly on synthetic patches) to produce the initial RAW latent $\mathbf{z}_0 \in \mathbb{R}^{B\times 16\times (H/8)\times (W/8)}$. To guarantee strict zero-shot cross-dataset generalization and prevent spatial texture memorization, we partition our camera datasets into two strictly disjoint splits ($0\%$ scene or file overlap): (i) a <strong>201-DNG Zero-Shot Calibration Set</strong> comprising $170$ held-out MIT-Adobe FiveK DSLR DNGs and $31$ held-out Google Pixel HDR+ [10] 14-bit mobile DNGs ($51,456$ non-overlapping $8\times 8$ patches, $205,824$ stage-patch pairs), and (ii) <strong>9 distinct physical hardware captures across 6 sensor models yielding 10 unseen ROI test scenes</strong> evaluated in Section 5 (<code>OpenISP</code> 10-bit RGGB <code>test.RAW</code> full chart + 1:1 center detail crop with zero training scenes from the OpenISP domain, $6$ held-out FiveK DSLR scenes, and $2$ held-out Google Pixel 14-bit mobile DNGs). The linear readout matrices ($\Psi \in \mathbb{R}^{16\times 16}$, $W_{\text{z2c,nb}} \in \mathbb{R}^{185\times 3}$) and anisotropic Tikhonov transition matrices ($W_{\text{trans,lin}}, W_{\text{trans,}\gamma} \in \mathbb{R}^{230\times 16}$) are solved once analytically, and the single scalar Stage 6 conditioning $\tau_c = 0.05$ is calibrated cleanly on an 8-DNG held-out validation slice of the 201 training DNGs ($0\%$ test overlap) and held 100% frozen across all $10$ unseen test scenes (scratch bridges $\mathcal{R}_{1\text{-step}}, \mathcal{R}_{4\text{-step}}$ are evaluated strictly as ablation baselines in Sec. 5.3). We support <strong>Mode A (On-Chip Sensor Stats)</strong> ($+3.6\text{--}7.5\text{ dB}$ DC gain) and <strong>Mode B (Latent-Only Readout)</strong> ($+1.1\text{--}2.3\text{ dB}$).
       </p>
 
       <h3>4.2 Step-by-Step Closed-Form Patch Equations ($\mathbf{z}_0 \in \mathbb{R}^{16}$)</h3>
@@ -1100,13 +1091,13 @@
         In <strong>Fig. 3b</strong>, the <strong>diagonal entries</strong> ($J_{RR}=+2.697, J_{GG}=+1.226, J_{BB}=+2.219$) amplify weak raw red/blue edges by the compounded Gain $\times$ WB ($w_R=2.129, w_B=1.547$) $\times$ Gamma shadow slope, while the <strong>off-diagonal entries</strong> ($J_{RG}=-0.342, J_{GB}=-0.412$) perform cross-channel $3\times 3$ CCM edge decontamination.
       </p>
       <p>
-        <strong>Step 4 &mdash; Coupled 16-Ch Reconstruction (<code>0-Net</code>), Closed-Form Stage 5 <code>RF-Sync</code> &amp; AC-Subspace Stage 6 Flow (<code>FluxSR-1S</code>):</strong> Let $\mathbf{dJ}_9 = \operatorname{vec}(J_{3\times 3} - I_3)$ and let $\tilde{\boldsymbol{\phi}} = \operatorname{tanh\text{-}bnd}([\Delta\operatorname{poly}_3^{\text{loc}}(\bar{\mathbf{c}})\,(19\text{D}) \;\|\; \Delta\operatorname{poly}_3^{\text{nb}}(\bar{\mathbf{c}})\,(19\text{D}) \;\|\; \mathbf{z}_{\text{AC}} \otimes \mathbf{dJ}_9\,(144\text{D}) \;\|\; \mathbf{z}_0 \otimes \Delta\bar{\mathbf{c}}\,(48\text{D})])$ (<strong>Alg. 1</strong>). Projecting through $W_{\text{trans}}(\alpha_{\text{nl}}) = (1-\alpha_{\text{nl}})W_{\text{trans,lin}} + \alpha_{\text{nl}}W_{\text{trans,}\gamma}$ ($\alpha_{\text{nl}} \in [0, 1]$ ramps smoothly from linear to tone-curve stages) yields $\mathbf{z}_4 = \mathbf{z}_0 + \tilde{\boldsymbol{\phi}}\,W_{\text{trans}}(\alpha_{\text{nl}})$ (<code>Stage 4: 0-Net</code>, $27.37\text{ dB}$@$512^2$, $2.15\text{ ms}$@$512^2$ / $6.24\text{ ms}$@1MP in Halide [16]), followed by Class III spatial projectors plus closed-form 2048-D Orthogonal RFF + $D_4$-$3\times 3$ Ridge RF synchronization $\mathbf{z}_5$ gated by $\gamma_{\text{dev}} = \tanh(10\|\boldsymbol{\theta}_{\text{dev}}\|_2)$ ($0$ neural layers, $0.0$ neutral identity, $3.15\text{ ms}$ GPU, $27.96\text{ dB}$@$512^2$). <code>Stage 6</code> feeds $\mathbf{z}_5$ directly into FP8 <code>FLUX.1-dev</code> fused with rank-64 <code>FluxSR</code> [13] at native-grid flow time $\tau_c = 0.12$ ($120/1000$, avoiding $4\times$-SR smoothing at $\tau_c=0.35$; $0\text{ ms}$ VAE IO, skipping $82.2\text{--}1,407\text{ ms}$) projected strictly onto the 13D AC spatial subspace ($P_{\text{AC}} = \Pi_{\text{grad}}^6 \oplus \Pi_{\text{curv}}^7 \subset \mathcal{S}_{\text{AC}}^{13}$, $\Pi_{\text{grad}}^6 \equiv \Pi_x^3 \oplus \Pi_y^3$):
+        <strong>Step 4 &mdash; Coupled 16-Ch Reconstruction (<code>0-Net</code>, $\mathbf{z}_4$) &amp; Pure 1-Step Zero-Encode OpenDB <code>FluxSR</code>:</strong> Let $\mathbf{dJ}_9 = \operatorname{vec}(J_{3\times 3} - I_3)$ and let $\tilde{\boldsymbol{\phi}} = \operatorname{tanh\text{-}bnd}([\Delta\operatorname{poly}_3^{\text{loc}}(\bar{\mathbf{c}})\,(19\text{D}) \;\|\; \Delta\operatorname{poly}_3^{\text{nb}}(\bar{\mathbf{c}})\,(19\text{D}) \;\|\; \mathbf{z}_{\text{AC}} \otimes \mathbf{dJ}_9\,(144\text{D}) \;\|\; \mathbf{z}_0 \otimes \Delta\bar{\mathbf{c}}\,(48\text{D})])$ (<strong>Alg. 1</strong>). Projecting through $W_{\text{trans}}(\alpha_{\text{nl}}) = (1-\alpha_{\text{nl}})W_{\text{trans,lin}} + \alpha_{\text{nl}}W_{\text{trans,}\gamma}$ ($\alpha_{\text{nl}} \in [0, 1]$ ramps smoothly from linear to tone-curve stages) yields $\mathbf{z}_4 = \mathbf{z}_0 + \tilde{\boldsymbol{\phi}}\,W_{\text{trans}}(\alpha_{\text{nl}})$ (<code>Stage 4: 0-Net</code>, $27.37\text{ dB}$@$512^2$, $2.15\text{ ms}$@$512^2$ / $6.24\text{ ms}$@1MP in Halide [16]). <code>Stage 6</code> passes white-box $\mathbf{z}_4$ directly into FP8 <code>FLUX.1-dev</code> fused with rank-64 <code>FluxSR</code> [13] at flow conditioning $\tau_c = 0.05$ ($50/1000$, avoiding $4\times$-SR smoothing at $\tau_c=0.35$; $0\text{ ms}$ intermediate VAE IO, skipping $82.2\text{--}1,407.0\text{ ms}$) before frozen decoding $\mathcal{D}_{\text{sRGB}}$:
       </p>
       <div class="equation">
-        $$\hat{\mathbf{z}}_{\text{sRGB}} = \mathbf{z}_5 + s_{\text{ISP}}(\Theta_{\text{ISP}})\,w_{\text{struct}}(\mathbf{z}_5)\!\left(\eta_{\text{grad}}\Pi_{\text{grad}}^6 + \eta_{\text{curv}}\Pi_{\text{curv}}^7\right)\!(\tau_c\mathbf{v}_\theta), \qquad \mathbf{v}_\theta = -\mathcal{F}_\theta^{\text{FluxSR}}(\mathbf{z}_5, \tau_c), \qquad (5)$$
+        $$\hat{\mathbf{z}}_{\text{sRGB}} = \mathbf{z}_4 - \tau_c\,\mathcal{F}_\theta^{\text{FluxSR}}(\mathbf{z}_4, \tau_c), \qquad \hat{\mathbf{x}}_{\text{sRGB}} = \mathcal{D}_{\text{sRGB}}(\hat{\mathbf{z}}_{\text{sRGB}}), \qquad (5)$$
       </div>
       <p>
-        where $s_{\text{ISP}}(\Theta_{\text{ISP}}) \in [0, 1]$ vanishes at neutral metadata, $w_{\text{struct}}(\mathbf{z}_5) = \operatorname{clip}((\operatorname{RMS}_c(\mathbf{z}_5 - \operatorname{Avg}_3(\mathbf{z}_5)) - 0.01)/0.06,\, 0,\, 1)$ gates textures, the AC projection leaves the 3D DC colorimetry of Stages 1&ndash;5 invariant by $\mathcal{S}_{\text{DC}}^3 \perp \mathcal{S}_{\text{AC}}^{13}$ (Eq. 1), and $(\eta_{\text{grad}}, \eta_{\text{curv}})$ are calibrated cleanly on 8 held-out training DNGs ($0\%$ test overlap) as $(0.30, 0.50)$ (<em>Balanced</em>) or $(0.20, 0.55)$ (<em>Realism</em>), lifting $512^2$ unseen PSNR across 10/10 scenes from $27.37\text{ dB}$ (<code>0-Net</code>) to <strong>$28.34\text{ dB}$</strong> (<strong>$0.0947$ LPIPS</strong>, $-14.4\%$ vs. <code>0-Net</code>, <strong>Fig. 4a&ndash;c</strong>).
+        with zero auxiliary neural layers, zero test-time subspace projections, and zero heuristics or gating. Here $\tau_c = 0.05$ is selected strictly on an 8-DNG held-out training calibration split ($0\%$ test overlap; minimum calibration LPIPS $0.1347$, tie-broken over $0.04$ by calibration PSNR $27.07$ vs. $27.05\text{ dB}$ and peak SSIM $0.8568$), lifting $512^2$ unseen quality unanimously across $10/10$ cameras from $27.37\text{ dB}$ / $0.8604$ SSIM / $0.1106$ LPIPS (<code>0-Net</code>) to <strong>$27.79\text{ dB}$ / $0.8745$ SSIM / $0.0987$ LPIPS</strong> ($-10.8\%$ LPIPS vs. <code>0-Net</code>, <strong>Fig. 4a&ndash;c</strong>).
       </p>
 
       <h3>4.3 Worked Numerical Example of Class III Spatial Kernel Execution</h3>
@@ -1125,9 +1116,9 @@
 
       <div class="span-all algo-box">
         <div class="algo-head">
-          Algorithm 1: End-to-End 16-Channel White-Box Computational Latent ISP ($\mathcal{E}_{\text{raw}} \to \mathcal{T}_{\text{LSP}} \to \mathrm{RF\text{-}Sync} \to \texttt{FluxSR-1S} \to \mathcal{D}_{\text{sRGB}}$)
+          Algorithm 1: End-to-End 16-Channel White-Box Computational Latent ISP ($\mathcal{E}_{\text{raw}} \to \mathcal{T}_{\text{LSP}} \to \texttt{FluxSR} \to \mathcal{D}_{\text{sRGB}}$)
         </div>
-        <div class="algo-sub"><strong>Input:</strong> Sensor Bayer RAW $\mathbf{I}_{\text{Bayer}} \in \mathbb{R}^{B\times 1\times H\times W}$; Native DNG metadata $\Theta_{\text{ISP}} = (\mathbf{b},\, g,\, \mathbf{w}_{\text{WB}},\, \operatorname{CCM}_{3\times 3},\, \gamma,\, \boldsymbol{\theta}_{\text{spat}})$; Frozen 16-Ch VAE ($\mathcal{E}_{\text{VAE}}, \mathcal{D}_{\text{sRGB}}$: <code>FLUX.1 AutoencoderKL</code> or <code>TAEF1</code>, $f=8, C=16$) + $1\times 1$ Adapter $\mathcal{A}_{1\times 1}$; Matrices $(\Psi,\, W_{\text{z2c,nb}},\, W_{\text{trans}},\, \Pi_{\text{grad}}^6,\, \Pi_{\text{curv}}^7,\, \Omega_{\text{RFF}})$; OpenDB $\mathcal{F}_\theta^{\text{FluxSR}}$ ($\tau_c=0.12$).</div>
+        <div class="algo-sub"><strong>Input:</strong> Sensor Bayer RAW $\mathbf{I}_{\text{Bayer}} \in \mathbb{R}^{B\times 1\times H\times W}$; Native DNG metadata $\Theta_{\text{ISP}} = (\mathbf{b},\, g,\, \mathbf{w}_{\text{WB}},\, \operatorname{CCM}_{3\times 3},\, \gamma,\, \boldsymbol{\theta}_{\text{spat}})$; Frozen 16-Ch VAE ($\mathcal{E}_{\text{VAE}}, \mathcal{D}_{\text{sRGB}}$: <code>FLUX.1 AutoencoderKL</code> or <code>TAEF1</code>, $f=8, C=16$) + $1\times 1$ Adapter $\mathcal{A}_{1\times 1}$; Matrices $(\Psi,\, W_{\text{z2c,nb}},\, W_{\text{trans}})$; OpenDB $\mathcal{F}_\theta^{\text{FluxSR}}$ ($\tau_c=0.05$).</div>
         <div class="algo-sub"><strong>Output:</strong> Refined sRGB latent $\hat{\mathbf{z}}_{\text{sRGB}} \in \mathbb{R}^{B\times 16\times (H/8)\times (W/8)}$ and final decoded sRGB image $\hat{\mathbf{x}}_{\text{sRGB}} \in \mathbb{R}^{B\times 3\times H\times W}$.</div>
         <div class="algo-body">
           <div class="algo-line algo-phase algo-phase-bright"><span class="algo-ln">1:</span>&#9655; Stage 0: Sensor Bayer RAW Encoding via Frozen 16-Ch VAE Encoder $\mathcal{E}_{\text{VAE}}$ + $1\times 1$ Linear Adapter $\mathcal{A}_{1\times 1}$ ($\mathcal{E}_{\text{raw}}$)</div>
@@ -1148,43 +1139,42 @@
           <div class="algo-line"><span class="algo-ln">16:</span>$\mathbf{z}_{\text{AC}} \leftarrow \tau_z\tanh\!\big((\mathbf{z}_0 - \operatorname{AvgPool}_{3\times 3}(\mathbf{z}_0))/\tau_z\big) \in \mathbb{R}^{N\times 16}$, $\quad \mathbf{dJ}_9 \leftarrow \tau_J\tanh\!\big(\operatorname{vec}(J_{3\times 3} - I_3)/\tau_J\big) \in \mathbb{R}^{N\times 9}$</div>
           <div class="algo-line"><span class="algo-ln">17:</span>$\tilde{\boldsymbol{\phi}} \leftarrow \operatorname{tanh\text{-}bnd}\!\big(\big[\,\Delta\operatorname{poly}_3^{\text{loc}}\; (19\text{D})\;\,\|\,\; \Delta\operatorname{poly}_3^{\text{nb}}\; (19\text{D})\;\,\|\,\; \mathbf{z}_{\text{AC}} \otimes \mathbf{dJ}_9\; (144\text{D})\;\,\|\,\; \mathbf{z}_0 \otimes \Delta\bar{\mathbf{c}}\; (48\text{D})\,\big]\big) \in \mathbb{R}^{N\times 230}$</div>
           <div class="algo-line"><span class="algo-ln">18:</span>$\mathbf{z}_4 \leftarrow \mathbf{z}_0 + \operatorname{Reshape}(\tilde{\boldsymbol{\phi}}\, W_{\text{trans}}(\alpha_{\text{nl}})) \in \mathbb{R}^{B\times 16\times h\times w}$ <span class="algo-comment">&#9655; Stage 4 0-Net ($27.37\text{ dB}$ @ $512^2$, $2.15\text{ ms}$ @ $512^2$ / $6.24\text{ ms}$ @ 1MP Halide)</span></div>
-          <div class="algo-line algo-phase algo-phase-green"><span class="algo-ln">19:</span>&#9655; Stage 5 (Class III Spatial Kernels): 13D Legendre Projectors &amp; Closed-Form Orthogonal RFF Sync ($\mathbf{z}_5$)</div>
-          <div class="algo-line"><span class="algo-ln">20:</span>$\mathbf{z}_{5\mathrm{a}} \leftarrow \mathbf{z}_4 + \sum_{k\in\{x,y,\text{curv}\}} \Delta g_k(w_{\text{edge}})\,\Pi_k\mathbf{z}_{\text{AC}}$;\; $\mathbf{s}_{92} \leftarrow \mathcal{N}_{3\times 3}^{D_4}(\mathbf{z}_{5\mathrm{a}}, \Theta_{\text{ISP}})$ <span class="algo-comment">&#9655; Bilateral NR ($32.20\text{ dB}$) &amp; EEH ($30.01\text{ dB}$)</span></div>
-          <div class="algo-line"><span class="algo-ln">21:</span>$\mathbf{z}_5 \leftarrow \mathbf{z}_{5\mathrm{a}} + \gamma_{\text{dev}}\,\mathrm{RFF}_{2048}(\mathbf{s}_{92})W_{\text{RF}}$ <span class="algo-comment">&#9655; 0 Neural Layers, Exact $0.0$ Neutral Identity, $3.15\text{ ms}$ GPU ($27.96\text{ dB}$)</span></div>
-          <div class="algo-line algo-phase algo-phase-accent"><span class="algo-ln">22:</span>&#9655; Stage 6: Zero-Encode AC-Subspace <code>FluxSR-1S</code> ($\tau_c = 0.12$) &amp; Frozen $\mathcal{D}_{\text{sRGB}}$ ($\Delta\theta_{\text{dec}}=0$)</div>
-          <div class="algo-line"><span class="algo-ln">23:</span>$\mathbf{v}_\theta \leftarrow -\mathcal{F}_\theta^{\text{FluxSR}}(\mathbf{z}_5, \tau_c)$, $\quad P_{\text{AC}}^{\eta} \leftarrow \eta_{\text{grad}}\Pi_{\text{grad}}^6 + \eta_{\text{curv}}\Pi_{\text{curv}}^7$ <span class="algo-comment">&#9655; Zero-Encode OpenDB FP8 DiT (13D AC subspace, skips $318.1\text{ ms}$ VAE IO)</span></div>
-          <div class="algo-line"><span class="algo-ln">24:</span>$\hat{\mathbf{z}}_{\text{sRGB}} \leftarrow \mathbf{z}_5 + s_{\text{ISP}}(\Theta_{\text{ISP}})w_{\text{struct}}(\mathbf{z}_5)\,P_{\text{AC}}^{\eta}(\tau_c\mathbf{v}_\theta)$, $\quad \hat{\mathbf{x}}_{\text{sRGB}} \leftarrow \mathcal{D}_{\text{sRGB}}(\hat{\mathbf{z}}_{\text{sRGB}}) \in \mathbb{R}^{B\times 3\times H\times W}$</div>
-          <div class="algo-line"><span class="algo-ln">25:</span><strong>return</strong> $\hat{\mathbf{z}}_{\text{sRGB}},\, \hat{\mathbf{x}}_{\text{sRGB}}$ <span class="algo-comment">&#9655; Final Refined sRGB ($512^2$: $28.34\text{ dB}$ / $0.0947$ LPIPS, $10/10$ wins over 0-Net)</span></div>
+          <div class="algo-line algo-phase algo-phase-green"><span class="algo-ln">19:</span>&#9655; Stage 5 (Class III Spatial Kernels): 13D Legendre Projectors &amp; $3\times 3$ Stencils (Standalone Ops)</div>
+          <div class="algo-line"><span class="algo-ln">20:</span>$\Delta\mathbf{z}_{\text{kern}} \leftarrow \sum_{k\in\{x,y,\text{curv}\}} \Delta g_k(w_{\text{edge}})\,\Pi_k\mathbf{z}_{\text{AC}} + \Delta\mathbf{z}_{\text{LTM}}$ <span class="algo-comment">&#9655; Bilateral NR ($32.20\text{ dB}$), EEH ($30.01\text{ dB}$), LTM ($29.53\text{ dB}$)</span></div>
+          <div class="algo-line algo-phase algo-phase-accent"><span class="algo-ln">21:</span>&#9655; Stage 6: Pure 1-Step Zero-Encode OpenDB <code>FluxSR</code> ($\tau_c = 0.05$) &amp; Frozen $\mathcal{D}_{\text{sRGB}}$ ($\Delta\theta_{\text{dec}}=0$)</div>
+          <div class="algo-line"><span class="algo-ln">22:</span>$\hat{\mathbf{z}}_{\text{sRGB}} \leftarrow \mathbf{z}_4 - \tau_c\,\mathcal{F}_\theta^{\text{FluxSR}}(\mathbf{z}_4, \tau_c)$ <span class="algo-comment">&#9655; Direct 1-Step OpenDB FP8 DiT on $\mathbf{z}_4$ (skips $318.1\text{ ms}$ VAE IO; 0 projections/gates)</span></div>
+          <div class="algo-line"><span class="algo-ln">23:</span>$\hat{\mathbf{x}}_{\text{sRGB}} \leftarrow \mathcal{D}_{\text{sRGB}}(\hat{\mathbf{z}}_{\text{sRGB}}) \in \mathbb{R}^{B\times 3\times H\times W}$ <span class="algo-comment">&#9655; Frozen VAE Decoder ($\Delta\theta_{\text{dec}}=0$)</span></div>
+          <div class="algo-line"><span class="algo-ln">24:</span><strong>return</strong> $\hat{\mathbf{z}}_{\text{sRGB}},\, \hat{\mathbf{x}}_{\text{sRGB}}$ <span class="algo-comment">&#9655; Final Refined sRGB ($512^2$: $27.79\text{ dB}$ / $0.8745$ SSIM / $0.0987$ LPIPS, $10/10$ wins)</span></div>
         </div>
       </div>
 
       <div class="span-all figure-card">
         <img src="figures/comp_fig10_algorithm_chain_dataflow.webp" alt="End-to-End 7-Stage Architecture and Algorithm 1 Execution Chain in 16-Channel Latent Space" loading="lazy" decoding="async">
         <div class="figure-caption">
-          <strong>Fig. 3. End-to-End 7-Stage Architecture (<code>Stages 0&ndash;6</code>) &amp; Algorithm 1 Execution Chain Inside the 16-Channel Latent Space ($h=H/8, w=W/8$, Sec. 4).</strong> <strong>(a)</strong> Complete architectural dataflow from <code>Stage 0: RAW Encoder</code> ($\mathcal{E}_{\text{raw}}$) through <code>Stages 1&ndash;5: White-Box 16-Ch Latent ISP</code> ($\mathcal{T}_{\text{LSP}}$, Eqs. 3, 4, 6) + closed-form <code>RF-Sync</code> ($3.15\text{ ms}$ GPU) and <code>Stage 6</code> (Zero-Encode AC-subspace OpenDB <code>FluxSR-1S</code> at $\tau_c=0.12$ [$873.6\text{ ms}$@$512^2$, $28.34\text{ dB}$], Eq. 5) to the 100% frozen sRGB VAE Decoder ($\mathcal{D}_{\text{sRGB}}$); <strong>(b)</strong> <strong>Stages 1&ndash;4 (Classes I &amp; II)</strong> column-by-column construction of $J_{3\times 3}$ at <code>Nikon D700</code> patch $(7,8)$; <strong>(c)</strong> <strong>Stage 4</strong> $144$-D Kronecker outer product $\mathbf{z}_{\text{AC}} \otimes \operatorname{vec}(J_{3\times 3} - I_3)$ and <strong>Stage 5</strong> 13D orthonormal Legendre projectors ($\Pi_x + \Pi_y + \Pi_{\text{curv}} = P_{\text{AC}}$; <code>NR</code> $32.20$, <code>EEH</code> $30.01$, <code>LTM</code> $29.53\text{ dB}$).
+          <strong>Fig. 3. End-to-End 7-Stage Architecture (<code>Stages 0&ndash;6</code>) &amp; Algorithm 1 Execution Chain Inside the 16-Channel Latent Space ($h=H/8, w=W/8$, Sec. 4).</strong> <strong>(a)</strong> Complete architectural dataflow from <code>Stage 0: RAW Encoder</code> ($\mathcal{E}_{\text{raw}}$) through <code>Stages 1&ndash;4: White-Box 16-Ch Latent ISP</code> ($\mathcal{T}_{\text{LSP}}$, Eqs. 3&ndash;4) and <code>Stage 6</code> (Pure 1-Step Zero-Encode OpenDB <code>FluxSR</code> directly on $\mathbf{z}_4$ at $\tau_c=0.05$ [$879.5\text{ ms}$@$512^2$, $27.79\text{ dB}$ / $0.0987$ LPIPS], Eq. 5) to the 100% frozen sRGB VAE Decoder ($\mathcal{D}_{\text{sRGB}}$); <strong>(b)</strong> <strong>Stages 1&ndash;4 (Classes I &amp; II)</strong> column-by-column construction of $J_{3\times 3}$ at <code>Nikon D700</code> patch $(7,8)$; <strong>(c)</strong> <strong>Stage 4</strong> $144$-D Kronecker outer product $\mathbf{z}_{\text{AC}} \otimes \operatorname{vec}(J_{3\times 3} - I_3)$ and <strong>Stage 5</strong> 13D orthonormal Legendre projectors ($\Pi_x + \Pi_y + \Pi_{\text{curv}} = P_{\text{AC}}$; <code>NR</code> $32.20$, <code>EEH</code> $30.01$, <code>LTM</code> $29.53\text{ dB}$).
         </div>
       </div>
 
       <h2>5. Experiments and Results: 10-Scene Hardware RAW Evaluation</h2>
       <h3>5.1 Experimental Setup and 201-DNG Zero-Shot Benchmark</h3>
       <p>
-        We evaluate Comp-LSP under a <strong>100% Zero-Shot cross-dataset protocol</strong>: all linear subspace transition matrices ($W_{\text{trans,lin}}, W_{\text{trans,}\gamma}$), the deterministic closed-form Stage 5 <code>RF-Sync</code> ($2048$-D Orthogonal RFF + $D_4$-$3\times 3$ Ridge $W_{\text{RF}}$), and the legacy scratch ablation bridges ($\mathcal{R}_{1\text{-step}}^{\text{DDIM}}$ [$20.0\text{K}$], $\mathcal{R}_{4\text{-step}}^{\text{DDIM}}$ [$33.5\text{K}$], Table 4) are calibrated once on <strong>201 held-out real camera DNGs</strong> ($170$ MIT-Adobe FiveK DSLR DNGs + $31$ Google Pixel HDR+ [10] 14-bit mobile DNGs = $51,456$ non-overlapping $8\times 8$ patches) and evaluated without any per-camera or per-image adaptation across <strong>9 distinct physical hardware captures across 6 sensor models yielding 10 strictly unseen ROI test scenes</strong> ($0\%$ overlap) spanning three independent RAW databases: <code>OpenISP</code> 10-bit RGGB (<code>test.RAW</code> full chart and 1:1 center detail crop, representing a completely unseen camera domain with zero training scenes), <code>MIT-Adobe FiveK</code> [5] 12-bit/14-bit DSLRs ($6$ held-out scenes: <code>Nikon D700</code> BGGR, <code>FiveK DSLR</code> RGGB, <code>Canon EOS 5D</code>, <code>Canon 1Ds MkII</code>, and two <code>Canon EOS 40D</code> captures), and <code>Google Pixel</code> 14-bit BGGR mobile DNGs ($2$ held-out captures: Daylight and Indoor tungsten).
+        We evaluate Comp-LSP under a <strong>100% Zero-Shot cross-dataset protocol</strong>: all linear subspace transition matrices ($W_{\text{trans,lin}}, W_{\text{trans,}\gamma}$), the single scalar conditioning $\tau_c = 0.05$ (validated on an 8-DNG held-out slice of the 201 training DNGs), and the legacy scratch ablation bridges ($\mathcal{R}_{1\text{-step}}^{\text{DDIM}}$ [$20.0\text{K}$], $\mathcal{R}_{4\text{-step}}^{\text{DDIM}}$ [$33.5\text{K}$], Table 4) are calibrated once on <strong>201 held-out real camera DNGs</strong> ($170$ MIT-Adobe FiveK DSLR DNGs + $31$ Google Pixel HDR+ [10] 14-bit mobile DNGs = $51,456$ non-overlapping $8\times 8$ patches) and evaluated without any per-camera or per-image adaptation across <strong>9 distinct physical hardware captures across 6 sensor models yielding 10 strictly unseen ROI test scenes</strong> ($0\%$ overlap) spanning three independent RAW databases: <code>OpenISP</code> 10-bit RGGB (<code>test.RAW</code> full chart and 1:1 center detail crop, representing a completely unseen camera domain with zero training scenes), <code>MIT-Adobe FiveK</code> [5] 12-bit/14-bit DSLRs ($6$ held-out scenes: <code>Nikon D700</code> BGGR, <code>FiveK DSLR</code> RGGB, <code>Canon EOS 5D</code>, <code>Canon 1Ds MkII</code>, and two <code>Canon EOS 40D</code> captures), and <code>Google Pixel</code> 14-bit BGGR mobile DNGs ($2$ held-out captures: Daylight and Indoor tungsten).
       </p>
 
       <h3>5.2 Single-Stage Operator Accuracy and Full-Pipeline Progression</h3>
       <p>
-        <strong>Table 3</strong>, <strong>Fig. 4</strong>, and full-page supplementary galleries (<strong>Figs. S1&ndash;S2</strong>, Appendix D) report both <strong>standalone single-stage PSNR (&uarr;)</strong> across Classes I&ndash;III and <strong>end-to-end combined performance</strong> on the native $512\times 512$ grid under each camera&rsquo;s authentic DNG metadata (PSNR, SSIM [18], and LPIPS [22]). Individual 0-Net stages reach <strong>$30.45\text{ dB}$</strong> (BLC/Gain), <strong>$24.67\text{ dB}$</strong> (WB), <strong>$26.78\text{ dB}$</strong> (CCM), <strong>$25.45\text{ dB}$</strong> (Gamma), <strong>$30.01\text{ dB}$</strong> (<code>EEH</code>), <strong>$32.20\text{ dB}$</strong> (<code>NR</code>), and <strong>$29.53\text{ dB}$</strong> (<code>LTM</code>). At the native $512^2$ grid, closed-form Stage 5 <code>RF-Sync</code> ($0$ neural layers, $0.0$ neutral identity) lifts mean PSNR from $27.37\text{ dB}$ (<code>0-Net</code>) to <strong>$27.96\text{ dB}$</strong> (MAE $0.0148 \to 0.0091$, $R^2=0.993$), and Stage 6 Zero-Encode AC-subspace <code>FluxSR-1S</code> ($\tau_c = 0.12$) improves all 10 unseen scenes simultaneously over <code>0-Net</code> (<strong>$10/10$ PSNR &amp; LPIPS wins</strong>) to <strong>$28.34\text{ dB}$</strong> (<strong>$0.8667$ SSIM</strong>), cutting perceptual LPIPS from $0.1106$ to <strong>$0.0947$</strong> ($-14.4\%$ vs. <code>0-Net</code>, $-12.6\%$ vs. <code>Stg5 RF-Sync</code>, $-7.0\%$ vs. scratch <code>4S</code> ablation) at $0.0095$ MAE ($R^2=0.9931$; $0.9950$ at $128^2$).
+        <strong>Table 3</strong>, <strong>Fig. 4</strong>, and full-page supplementary galleries (<strong>Figs. S1&ndash;S2</strong>, Appendix D) report both <strong>standalone single-stage PSNR (&uarr;)</strong> across Classes I&ndash;III and <strong>end-to-end combined performance</strong> on the native $512\times 512$ grid under each camera&rsquo;s authentic DNG metadata (PSNR, SSIM [18], and LPIPS [21]). Individual 0-Net stages reach <strong>$30.45\text{ dB}$</strong> (BLC/Gain), <strong>$24.67\text{ dB}$</strong> (WB), <strong>$26.78\text{ dB}$</strong> (CCM), <strong>$25.45\text{ dB}$</strong> (Gamma), <strong>$30.01\text{ dB}$</strong> (<code>EEH</code>), <strong>$32.20\text{ dB}$</strong> (<code>NR</code>), and <strong>$29.53\text{ dB}$</strong> (<code>LTM</code>). At the native $512^2$ grid, applying pure 1-step Zero-Encode OpenDB <code>FluxSR</code> ($\tau_c = 0.05$) directly to white-box <code>0-Net</code> ($\mathbf{z}_4$) improves all 10 unseen scenes unanimously across every quality metric (<strong>$10/10$ PSNR, $10/10$ SSIM, and $10/10$ LPIPS wins</strong>), lifting mean PSNR from $27.37\text{ dB}$ to <strong>$27.79\text{ dB}$</strong> and SSIM from $0.8604$ to <strong>$0.8745$</strong> while cutting perceptual LPIPS by $-10.8\%$ from $0.1106$ to <strong>$0.0987$</strong> ($-3.0\%$ vs. scratch <code>4S</code> ablation $0.1018$) at $0.0151$ RGB MAE and $R^2=0.9914$ ($512^2$ 180-pt scatter; $R^2=0.9936$ on 150-pt white-box Stages 1&ndash;5). Against Full Camera ISP GT, <code>FluxSR</code> lifts <code>0-Net</code> from $26.14\text{ dB}$ / $0.8679$ SSIM / $0.1208$ LPIPS to <strong>$26.28\text{ dB}$ / $0.8823$ SSIM / $0.1061$ LPIPS</strong>.
       </p>
 
       <div class="span-all figure-card">
         <img src="figures/comp_fig9_step_by_step_math_and_consistency.webp" alt="Full-Width 512x512 Multi-Database Qualitative Matrix and Patch-Level Latent Verification" loading="lazy" decoding="async">
         <div class="figure-caption">
-          <strong>Fig. 4. Full-Width $512\times 512$ Qualitative Matrix and Latent Verification (100% Zero-Shot, Sec. 5).</strong> <strong>(a)</strong> Zero-shot 6-camera comparison across <strong>DB 1: OpenISP 10-bit RGGB</strong>, <strong>DB 2: MIT-Adobe FiveK 12/14-bit DSLRs</strong>, and <strong>DB 3: Google HDR+ 14-bit Mobile</strong>, displaying <code>Bayer RAW | Pixel GT</code> frames alongside 4 rows of $5\times$ artifact-hotspot ROIs comparing <code>0th-Order</code> [15], <code>Ours 0-Net</code>, <code>Ours +FluxSR-1S</code> [<strong>$28.34\text{ dB}$</strong> / <strong>$0.0947$ LPIPS</strong> mean], and <code>Pixel-ISP GT</code>; all 10 scenes &amp; stage dissections in <strong>Figs. S1&ndash;S2</strong>; <strong>(b)</strong> 16-channel latent match ($c_0 \dots c_{15}$) at <code>Nikon D700</code> $(7,8)$; <strong>(c)</strong> Cross-scene mean RGB consistency ($210$ pts, $R^2 = 0.9950$, scatter MAE $= 0.0085$).
+          <strong>Fig. 4. Full-Width $512\times 512$ Qualitative Matrix and Latent Verification (100% Zero-Shot, Sec. 5).</strong> <strong>(a)</strong> Zero-shot 6-camera comparison across <strong>DB 1: OpenISP 10-bit RGGB</strong>, <strong>DB 2: MIT-Adobe FiveK 12/14-bit DSLRs</strong>, and <strong>DB 3: Google HDR+ 14-bit Mobile</strong>, displaying <code>Bayer RAW | Pixel GT</code> frames alongside 4 rows of $5\times$ artifact-hotspot ROIs comparing <code>0th-Order</code> [15], <code>Ours 0-Net</code>, <code>Ours +FluxSR</code> [<strong>$27.79\text{ dB}$</strong> / <strong>$0.8745$ SSIM</strong> / <strong>$0.0987$ LPIPS</strong> mean, $10/10$ wins], and <code>Pixel-ISP GT</code>; all 10 scenes &amp; stage dissections in <strong>Figs. S1&ndash;S2</strong>; <strong>(b)</strong> 16-channel latent match ($c_0 \dots c_{15}$) at <code>Nikon D700</code> $(7,8)$; <strong>(c)</strong> Cross-scene mean RGB consistency ($180$-pt $512^2$ scatter $R^2 = 0.9914$, $\text{MAE} = 0.0100$; white-box $150$-pt $R^2 = 0.9936$, $\text{MAE} = 0.0096$).
         </div>
       </div>
 
       <div class="table-container span-all">
-        <div class="table-caption">Table 3: Complete 10-Scene Zero-Shot Hardware Sensor RAW Evaluation Using Authentic Native DNG Metadata (9 raw captures across 6 sensors, 201-DNG Train, 0% Overlap): Single-Op PSNR, Progressive 0-Net &rarr; Stg5 RF-Sync &rarr; +FluxSR-1S ($\tau_c=0.12$ inside $\Pi_{\text{grad}}^6\oplus\Pi_{\text{curv}}^7$) PSNR (&uarr;), LPIPS (&darr;), MAE (&darr;), and Latency</div>
+        <div class="table-caption">Table 3: Complete 10-Scene Zero-Shot Hardware Sensor RAW Evaluation Using Authentic Native DNG Metadata (9 raw captures across 6 sensors, 201-DNG Train, 0% Overlap): Single-Op PSNR, Progressive 0-Net &rarr; +FluxSR ($\tau_c=0.05$, Eq. 5) PSNR (&uarr;), SSIM (&uarr;), LPIPS (&darr;), MAE (&darr;), and Latency</div>
         <table>
           <thead>
             <tr>
@@ -1197,8 +1187,7 @@
               <th>EEH</th>
               <th>NR</th>
               <th>$512^2$ 0-Net</th>
-              <th>$512^2$ Stg5 RF</th>
-              <th>$512^2$ +FluxSR-1S</th>
+              <th>$512^2$ +FluxSR</th>
               <th>$512^2$ LPIPS (0N&rarr;FSR)</th>
             </tr>
           </thead>
@@ -1213,9 +1202,8 @@
               <td>33.04</td>
               <td>35.32</td>
               <td>25.52</td>
-              <td>26.40</td>
-              <td class="highlight-val">26.53</td>
-              <td>$0.118\to\mathbf{0.096}$</td>
+              <td class="highlight-val">25.90</td>
+              <td>$0.1176\to\mathbf{0.1081}$</td>
             </tr>
             <tr>
               <td>2. <strong>OpenISP 10-bit Crop</strong> (<code>test.RAW</code>)</td>
@@ -1227,9 +1215,8 @@
               <td>29.77</td>
               <td>31.70</td>
               <td>25.59</td>
-              <td>26.24</td>
-              <td class="highlight-val">26.42</td>
-              <td>$0.118\to\mathbf{0.094}$</td>
+              <td class="highlight-val">26.00</td>
+              <td>$0.1176\to\mathbf{0.1033}$</td>
             </tr>
             <tr>
               <td>3. <strong>Nikon D700</strong> (12-bit BGGR <code>.DNG</code>)</td>
@@ -1241,9 +1228,8 @@
               <td>30.77</td>
               <td>33.31</td>
               <td>26.83</td>
-              <td>27.05</td>
-              <td class="highlight-val">27.32</td>
-              <td>$0.132\to\mathbf{0.117}$</td>
+              <td class="highlight-val">27.05</td>
+              <td>$0.1318\to\mathbf{0.1157}$</td>
             </tr>
             <tr>
               <td>4. <strong>FiveK DSLR</strong> (14-bit RGGB <code>.DNG</code>)</td>
@@ -1255,9 +1241,8 @@
               <td>31.05</td>
               <td>33.35</td>
               <td>27.09</td>
-              <td>28.67</td>
-              <td class="highlight-val">28.68</td>
-              <td>$0.092\to\mathbf{0.076}$</td>
+              <td class="highlight-val">27.34</td>
+              <td>$0.0925\to\mathbf{0.0837}$</td>
             </tr>
             <tr>
               <td>5. <strong>Canon EOS 5D</strong> (14-bit RGGB <code>.DNG</code>)</td>
@@ -1269,9 +1254,8 @@
               <td>25.42</td>
               <td>27.92</td>
               <td>25.34</td>
-              <td>25.33</td>
-              <td class="highlight-val">25.78</td>
-              <td>$0.118\to\mathbf{0.108}$</td>
+              <td class="highlight-val">25.92</td>
+              <td>$0.1178\to\mathbf{0.1058}$</td>
             </tr>
             <tr>
               <td>6. <strong>Canon 1Ds MkII</strong> (12-bit RGGB <code>.DNG</code>)</td>
@@ -1283,9 +1267,8 @@
               <td>27.79</td>
               <td>30.37</td>
               <td>26.75</td>
-              <td>27.25</td>
-              <td class="highlight-val">27.60</td>
-              <td>$0.120\to\mathbf{0.119}$</td>
+              <td class="highlight-val">27.07</td>
+              <td>$0.1205\to\mathbf{0.1202}$</td>
             </tr>
             <tr>
               <td>7. <strong>Canon EOS 40D #1</strong> (14-bit RGGB <code>.DNG</code>)</td>
@@ -1297,9 +1280,8 @@
               <td>28.53</td>
               <td>30.86</td>
               <td>28.53</td>
-              <td>29.59</td>
-              <td class="highlight-val">30.16</td>
-              <td>$0.094\to\mathbf{0.075}$</td>
+              <td class="highlight-val">29.04</td>
+              <td>$0.0943\to\mathbf{0.0737}$</td>
             </tr>
             <tr>
               <td>8. <strong>Canon EOS 40D #2</strong> (14-bit RGGB <code>.DNG</code>)</td>
@@ -1311,9 +1293,8 @@
               <td>26.57</td>
               <td>29.14</td>
               <td>26.73</td>
-              <td>26.88</td>
-              <td class="highlight-val">27.27</td>
-              <td>$0.120\to\mathbf{0.109}$</td>
+              <td class="highlight-val">27.37</td>
+              <td>$0.1200\to\mathbf{0.1193}$</td>
             </tr>
             <tr>
               <td>9. <strong>Google Pixel Daylight</strong> (14-bit <code>.DNG</code>)</td>
@@ -1325,9 +1306,8 @@
               <td>31.45</td>
               <td>33.56</td>
               <td>29.55</td>
-              <td>29.81</td>
-              <td class="highlight-val">31.18</td>
-              <td>$0.110\to\mathbf{0.080}$</td>
+              <td class="highlight-val">30.00</td>
+              <td>$0.1104\to\mathbf{0.0862}$</td>
             </tr>
             <tr>
               <td>10. <strong>Google Pixel Indoor</strong> (14-bit <code>.DNG</code>)</td>
@@ -1339,13 +1319,12 @@
               <td>35.75</td>
               <td>36.51</td>
               <td>31.77</td>
-              <td class="highlight-val">32.41</td>
-              <td class="highlight-val">32.41</td>
-              <td>$0.084\to\mathbf{0.072}$</td>
+              <td class="highlight-val">32.21</td>
+              <td>$0.0838\to\mathbf{0.0712}$</td>
             </tr>
             <tr class="summary-row">
               <td><strong>10-Scene Unseen Mean</strong></td>
-              <td><em>MAE $0.0148\to 0.0095$</em></td>
+              <td><em>MAE $0.0148\to 0.0151$</em></td>
               <td class="highlight-val">30.45</td>
               <td class="highlight-val">24.67</td>
               <td class="highlight-val">26.78</td>
@@ -1353,18 +1332,16 @@
               <td class="highlight-val">30.01</td>
               <td class="highlight-val">32.20</td>
               <td class="highlight-val">27.37</td>
-              <td class="highlight-val">27.96</td>
-              <td class="highlight-val">28.34 (+0.97)</td>
-              <td class="highlight-val">$0.111\to 0.095$</td>
+              <td class="highlight-val">27.79 (+0.42)</td>
+              <td class="highlight-val">$0.1106\to\mathbf{0.0987}$</td>
             </tr>
             <tr class="subtotal-row">
-              <td><strong>Latency ($512^2$ / 1MP)</strong></td>
+              <td><strong>Latency / SSIM ($512^2$)</strong></td>
               <td><em>Skips 318.1 ms VAE IO</em></td>
               <td colspan="6"><em>Halide 0-Net Stages 1&ndash;4:</em> <strong>2.15 ms ($512^2$) / 6.24 ms (1MP)</strong></td>
               <td>2.15 ms CPU</td>
-              <td class="highlight-val">3.15 ms GPU</td>
-              <td class="highlight-val">873.6 ms FP8 DiT</td>
-              <td>$0.1106\to\mathbf{0.0947}$</td>
+              <td class="highlight-val">879.5 ms FP8 DiT</td>
+              <td class="highlight-val">SSIM $0.8604\to\mathbf{0.8745}$</td>
             </tr>
           </tbody>
         </table>
@@ -1376,20 +1353,20 @@
       </p>
       <ul>
         <li><strong>0th-Order Scalar Subspace Shift vs. 1st-Order Simpson-Jacobian Jet (Mode B vs. Mode A, Part A):</strong> On the cumulative <code>Stages 1&ndash;4</code> benchmark, unprocessed sensor RAW yields $13.38\text{ dB}$ and flat 0th-order scalar subspace steering [15] reaches $22.59\text{ dB}$ ($\text{MSE}_z = 0.190$; $18.80\text{ dB}$ / $0.3361$ LPIPS at $512^2$) because it omits concave gamma quadrature and leaves the 13D AC edge fiber untouched. Introducing <code>1:4:1</code> Simpson quadrature and $144\text{-D}$ Secant Jacobian Kronecker transport improves 0-Net PSNR to $24.30\text{ dB}$ in <strong>Mode B</strong> ($\mathbf{z}_0$-only readout, zero auxiliary metadata) and <strong>$25.16\text{ dB}$ in Mode A</strong> (on-chip sensor patch stats, reducing latent error by $36.8\%$ to $\text{MSE}_z = 0.120$ at $0.79\text{ ms}$ [$256^2$]; per-stage breakdown in <strong>Table S2</strong>).</li>
-        <li><strong>Scratch Bridge Ablations vs. Closed-Form <code>RF-Sync</code> and OpenDB <code>FluxSR-1S</code> (Part B):</strong> Legacy scratch iterative bridges ($\mathcal{R}_{1\text{-step}}^{\text{DDIM}}$ [$20.0\text{K}$], $\mathcal{R}_{4\text{-step}}^{\text{DDIM}}$ [$33.5\text{K}$]) score $24.84$ / $25.16\text{ dB}$ at $128^2$ and $28.65\text{ dB}$ / $0.1018$ LPIPS at $512^2$ ($9.18\text{ ms}$ GPU). Feeding Bayer RAW ($10.09\text{ dB}$) or 0th-order [15] ($17.39\text{ dB}$) latents directly into vanilla OpenDB <code>FluxSR</code> [13] causes severe chromatic shifts and painterly smoothing, whereas pairing closed-form Stage 5 <code>RF-Sync</code> with AC-subspace <code>FluxSR-1S</code> at native-grid $\tau_c=0.12$ on $\Pi_{\text{grad}}^6\oplus\Pi_{\text{curv}}^7$ (Eq. 5) reaches <strong>$0.0947$ LPIPS</strong> (<em>Balanced</em>; $28.32\text{ dB} / 0.0948$ <em>Realism</em>) at <strong>$28.34\text{ dB}$</strong>, beating the retired scratch <code>4S</code> baseline ($0.1018$) by $-7.0\%$ LPIPS without task-specific U-Net training.</li>
+        <li><strong>Scratch Bridge Ablations vs. Pure 1-Step OpenDB <code>FluxSR</code> Conditioning ($\tau_c$ Sweep, Part B):</strong> Legacy scratch iterative bridges ($\mathcal{R}_{1\text{-step}}^{\text{DDIM}}$ [$20.0\text{K}$], $\mathcal{R}_{4\text{-step}}^{\text{DDIM}}$ [$33.5\text{K}$]) score $24.84$ / $25.16\text{ dB}$ at $128^2$ and $28.65\text{ dB}$ / $0.1018$ LPIPS at $512^2$ ($9.18\text{ ms}$ GPU). Feeding Bayer RAW ($10.09\text{ dB}$) or 0th-order [15] ($17.39\text{ dB}$) latents directly into vanilla OpenDB <code>FluxSR</code> [13] causes severe chromatic shifts and painterly smoothing. Sweeping conditioning $\tau_c \in [0.02, 0.25]$ strictly on the 8 held-out training calibration DNGs selects $\tau_c = 0.05$ (minimum calibration LPIPS $0.1347$, tie-broken over $0.04$ via higher calibration PSNR $27.07$ vs. $27.05\text{ dB}$ and peak SSIM $0.8568$), where Eq. (5) on white-box $\mathbf{z}_4$ achieves <strong>$27.79\text{ dB}$ / $0.8745$ SSIM / $0.0987$ LPIPS</strong> on the 10 unseen cameras ($10/10$ unanimous wins over <code>0-Net</code>, beating the retired scratch <code>4S</code> baseline by $-3.0\%$ LPIPS with zero auxiliary networks, projections, or gating; excessive $\tau_c \ge 0.12$ over-smooths texture to $0.1152\text{--}0.1559$ LPIPS).</li>
         <li><strong>Intra-DB Held-Out vs. Cross-DB vs. Unified All-DB &amp; Metadata Sensitivity (Part C &amp; Appendix B):</strong> Evaluated in canonical $128^2$ scratch ablation mode across three sensor families, linear ridge <code>0-Net</code> peaks on homogeneous <strong>Intra-DB</strong> matches (<code>Pixel-31</code>: $28.38\to\mathbf{28.99\text{ dB}}$, <strong>$30.88\text{ dB}$</strong> Indoor), whereas <strong>Unified-201</strong> improves zero-shot <code>OpenISP</code> transfer ($23.84\text{ dB}$). Replacing each camera&rsquo;s native DNG metadata $\Theta_{\text{ISP}}$ with a fixed global preset degrades final $128^2$ PSNR by $-4.08\text{ dB}$ ($21.08$ vs. $25.16\text{ dB}$) and raises MAE by $5.84\times$ ($0.0502$ vs. $0.0086$).</li>
       </ul>
 
       <div class="table-container span-all">
-        <div class="table-caption">Table 4: Factorized Ablation Study (Part A: Subspace Mode B/A; Part B: Scratch Bridge Ablation Baselines [$128^2$/$512^2$] vs. Stage 5 <code>RF-Sync</code> &amp; OpenDB <code>FluxSR-1S</code> [$512^2$, 10-Scene]; Part C: Intra-DB Held-Out vs. Cross-DB vs. Unified All-DB Validation; 1MP Halide = $6.24\text{ ms}$)</div>
+        <div class="table-caption">Table 4: Factorized Ablation Study (Part A: Subspace Mode B/A; Part B: Scratch Bridge Ablation Baselines [$128^2$/$512^2$] vs. Pure 1-Step OpenDB <code>FluxSR</code> $\tau_c$ Sweep on <code>0-Net</code> [$512^2$, 10-Scene]; Part C: Intra-DB Held-Out vs. Cross-DB vs. Unified All-DB Validation; 1MP Halide = $6.24\text{ ms}$)</div>
         <table>
           <thead>
             <tr>
               <th>Ablation Variant / Configuration</th>
               <th>Protocol / Prior</th>
               <th>0-Net / Base &uarr;</th>
-              <th>+1S Abl. &uarr;</th>
-              <th>+4S / Sub-FSR &uarr;</th>
+              <th>+1S / SSIM &uarr;</th>
+              <th>+4S / +FluxSR &uarr;</th>
               <th>LPIPS &darr; / MAE / Latency</th>
             </tr>
           </thead>
@@ -1430,7 +1407,7 @@
               <td class="highlight-val">$\text{MSE}_z = 0.120$ / 0.79 ms ($256^2$)</td>
             </tr>
             <tr class="section-row">
-              <td colspan="6">Part B: Scratch Bridge Ablation Baselines ($128^2$/$512^2$) vs. Stage 5 <code>RF-Sync</code> &amp; OpenDB <code>FluxSR-1S</code> ($512^2$, 10-Scene)</td>
+              <td colspan="6">Part B: Scratch Bridge Ablation Baselines ($128^2$/$512^2$) vs. Pure 1-Step OpenDB <code>FluxSR</code> $\tau_c$ Sweep on $\mathbf{z}_4$ ($512^2$, 10-Scene)</td>
             </tr>
             <tr>
               <td>Scratch Fixed Global / Pointwise $1\times 1$ ($128^2$)</td>
@@ -1457,20 +1434,36 @@
               <td>LPIPS $0.414 / 0.334$; MAE $0.282 / 0.069$</td>
             </tr>
             <tr>
-              <td>Comp-LSP <code>0-Net</code> + AC-Subspace <code>FluxSR-1S</code> ($0$ RF wts)</td>
-              <td>$\Pi_{\text{grad}}^6\oplus\Pi_{\text{curv}}^7, \tau_c=0.12$</td>
+              <td>Pure <code>0-Net</code> ($\mathbf{z}_4$) + <code>FluxSR</code> ($\tau_c = 0.02$ / $0.04$)</td>
+              <td>1-Step Eq. (5)</td>
               <td>27.37</td>
-              <td>&mdash;</td>
-              <td>27.67 (+0.30)</td>
-              <td>LPIPS $0.1106\to\mathbf{0.0993}$; 0.0148 MAE</td>
+              <td>0.8668 / 0.8725</td>
+              <td>27.55 / 27.72</td>
+              <td>LPIPS $0.1041 / 0.0996$; 879.5 ms ($512^2$)</td>
             </tr>
             <tr class="highlight-row">
-              <td><strong>Ours (Stg 1&ndash;5 <code>RF-Sync</code> + AC-Subspace <code>FluxSR-1S</code>, Bal. / Real.)</strong></td>
-              <td><strong>$\Pi_{\text{grad}}^6\oplus\Pi_{\text{curv}}^7$</strong></td>
-              <td class="highlight-val">27.96 (RF)</td>
-              <td>&mdash;</td>
-              <td class="highlight-val">28.34 / 28.32</td>
-              <td class="highlight-val">LPIPS 0.0947 / 0.0948; 0.0095 MAE; 873.6 ms</td>
+              <td><strong>Ours Pure <code>0-Net</code> + 1-Step <code>FluxSR</code> ($\tau_c=0.05$, Calib.-Selected)</strong></td>
+              <td><strong>8-DNG Calib. ($0\%$ ovl.)</strong></td>
+              <td class="highlight-val">27.37 (0-Net)</td>
+              <td class="highlight-val">0.8745 SSIM</td>
+              <td class="highlight-val">27.79 (+0.42)</td>
+              <td class="highlight-val">LPIPS 0.0987 (10/10); 0.0151 MAE; 879.5 ms</td>
+            </tr>
+            <tr>
+              <td>Pure <code>0-Net</code> ($\mathbf{z}_4$) + <code>FluxSR</code> ($\tau_c = 0.06$ / $0.08$)</td>
+              <td>1-Step Eq. (5)</td>
+              <td>27.37</td>
+              <td>0.8756 / 0.8752</td>
+              <td>27.83 / 27.85</td>
+              <td>LPIPS $0.0987$ (8/10) / $0.1021$; over-denoise $\ge 0.08$</td>
+            </tr>
+            <tr>
+              <td>Pure <code>0-Net</code> ($\mathbf{z}_4$) + <code>FluxSR</code> ($\tau_c = 0.12$ / $0.25$)</td>
+              <td>1-Step Eq. (5)</td>
+              <td>27.37</td>
+              <td>0.8676 / 0.8332</td>
+              <td>27.65 / 26.24</td>
+              <td>LPIPS $0.1152 / 0.1559$; over-smoothed texture</td>
             </tr>
             <tr class="section-row">
               <td colspan="6">Part C: Intra-DB Held-Out vs. Cross-DB vs. Unified All-DB Validation Across 3 Sensor Families (0% Scene Overlap)</td>
@@ -1540,12 +1533,12 @@
         <strong>Cross-Backbone Generalization (<code>FLUX.1</code> vs. <code>TAEF1</code>):</strong> To verify that our formulation is not overfitted to a single encoder, we evaluate the exact same 16-channel Jet-Jacobian pipeline on both <code>FLUX.1</code> and the lightweight distilled <code>TAEF1</code> [3] 16-channel autoencoder (<strong>Table S2</strong>). On the full chained ISP benchmark, Comp-LSP improves <code>FLUX.1</code> from $14.33\text{ dB}$ ($\text{MSE}_z=2.376$) to $23.30\text{ dB}$ ($\text{MSE}_z=0.063$, $\text{SSIM}=0.8520$) and <code>TAEF1</code> from $15.10\text{ dB}$ ($\text{MSE}_z=2.454$) to $22.79\text{ dB}$ ($\text{MSE}_z=0.059$, $\text{SSIM}=0.8373$).
       </p>
       <p>
-        <strong>Multi-Resolution Latency, Zero-Encode IO Savings, and $290.8\times$ Faster Inverse 3A Auto-Tuning:</strong> Because Comp-LSP operates on the $1/64$ spatial grid ($\frac{H}{8}\times\frac{W}{8}\times 16$), our fused Halide [16] kernel executes <code>Stages 1&ndash;4</code> ($\text{MSE} \le 1.78\times 10^{-13}$ vs. PyTorch) in $0.79\text{ ms}$@$256^2$, $2.15\text{ ms}$@$512^2$, $6.24\text{ ms}$@1MP ($9.6\times$ vs. $59.91\text{ ms}$ pixel ISP), and $50.78\text{ ms}$@12MP ($16.7\times$ vs. $846.90\text{ ms}$). Closed-form Stage 5 <code>RF-Sync</code> runs in $2.00 / 3.15 / 10.07\text{ ms}$ GPU ($256^2 / 512^2 / \text{1MP}$), while Zero-Encode FP8 <code>FluxSR-1S</code> executes directly on $\mathbf{z}_5$ in $527.3\text{ ms}$@$256^2$, $873.6\text{ ms}$@$512^2$, and $2,616.3\text{ ms}$@1MP, eliminating the redundant intermediate $\mathcal{D}_{\mathrm{sRGB}}(\mathbf{z}_5)+\mathcal{E}_{\mathrm{VAE}}$ VAE encode+decode IO round-trip ($82.2 / 318.1 / 1,407.0\text{ ms}$, <strong>Table S3</strong>; Stage 0 encode and final decode run once for full RAW-to-sRGB). Furthermore, 40-step multi-core CPU Adam inverse 3A auto-tuning executes in $1,170.65\text{ ms}$ ($29.27\text{ ms/step}$) vs. $340,381.16\text{ ms}$ via VAE decode&mdash;a <strong>$290.8\times$ speedup</strong> ($12.72\to 22.56\text{ dB}$). Limitations: extreme highlight saturation ($\bar{\mathbf{c}}_0 + \boldsymbol{\delta} &gt; 1$) clips the Secant chord, and kernels $&gt;72\text{ px}$ radius require multiscale pooling.
+        <strong>Multi-Resolution Latency, Zero-Encode IO Savings, and $290.8\times$ Faster Inverse 3A Auto-Tuning:</strong> Because Comp-LSP operates on the $1/64$ spatial grid ($\frac{H}{8}\times\frac{W}{8}\times 16$), our fused Halide [16] kernel executes <code>Stages 1&ndash;4</code> ($\text{MSE} \le 1.78\times 10^{-13}$ vs. PyTorch) in $0.79\text{ ms}$@$256^2$, $2.15\text{ ms}$@$512^2$, $6.24\text{ ms}$@1MP ($9.6\times$ vs. $59.91\text{ ms}$ pixel ISP), and $50.78\text{ ms}$@12MP ($16.7\times$ vs. $846.90\text{ ms}$). Pure 1-Step Zero-Encode OpenDB FP8 <code>FluxSR</code> executes directly on white-box $\mathbf{z}_4$ in $527.3\text{ ms}$@$256^2$, $879.5\text{ ms}$@$512^2$ ($879.45\text{ ms}$ measured, $11.38\text{ GB}$ peak VRAM), and $2,616.3\text{ ms}$@1MP, eliminating the redundant intermediate $\mathcal{D}_{\mathrm{sRGB}}(\mathbf{z}_4)+\mathcal{E}_{\mathrm{VAE}}$ VAE encode+decode IO round-trip ($82.2 / 318.1 / 1,407.0\text{ ms}$, <strong>Table S3</strong>; Stage 0 encode and final decode run once for full RAW-to-sRGB). Furthermore, 40-step multi-core CPU Adam inverse 3A auto-tuning executes in $1,170.65\text{ ms}$ ($29.27\text{ ms/step}$) vs. $340,381.16\text{ ms}$ via VAE decode&mdash;a <strong>$290.8\times$ speedup</strong> ($12.72\to 22.56\text{ dB}$). Limitations: extreme highlight saturation ($\bar{\mathbf{c}}_0 + \boldsymbol{\delta} &gt; 1$) clips the Secant chord, and kernels $&gt;72\text{ px}$ radius require multiscale pooling.
       </p>
 
       <h2>6. Conclusion</h2>
       <p>
-        We presented <strong>White-Box Computational Latent Signal Processing (Comp-LSP)</strong>, establishing the 16-channel counterpart to <strong>HDRNet</strong> [9] that executes <em>Pointwise Linear</em>, <em>Pointwise Non-Linear</em>, and <em>Two-Scale Spatial Kernel</em> ISP operators directly on $\frac{H}{8} \times \frac{W}{8} \times 16$ frozen VAE latents (<code>FLUX.1</code>, <code>TAEF1</code>). Combining <strong>3-Point Simpson (<code>1:4:1</code>) Quadrature</strong>, <strong>$3\times 3$ Secant Jacobians</strong>, 13D Legendre projectors with closed-form <code>RF-Sync</code> ($3.15\text{ ms}$ GPU@$512^2$), and <strong>Zero-Encode OpenDB <code>FluxSR-1S</code></strong> ($\tau_c=0.12$ inside $\Pi_{\text{grad}}^6\oplus\Pi_{\text{curv}}^7$) eliminates Bayer casts ($R^2 = 0.9950$, final $\text{MAE} = 0.0095$@$512^2$), wins <strong>10/10</strong> unseen test scenes ($27.37\to\mathbf{28.34\text{ dB}}$, <strong>$0.0947$ LPIPS</strong>, $-14.4\%$ vs. <code>0-Net</code>, $-7.0\%$ vs. scratch <code>4S</code> ablation), skips $318\text{--}1,407\text{ ms}$ intermediate VAE IO, runs Stages 1&ndash;4 in $6.24\text{ ms}$@1MP, and accelerates 3A tuning by $290.8\times$.
+        We presented <strong>White-Box Computational Latent Signal Processing (Comp-LSP)</strong>, establishing the 16-channel counterpart to <strong>HDRNet</strong> [9] that executes <em>Pointwise Linear</em>, <em>Pointwise Non-Linear</em>, and <em>Two-Scale Spatial Kernel</em> ISP operators directly on $\frac{H}{8} \times \frac{W}{8} \times 16$ frozen VAE latents (<code>FLUX.1</code>, <code>TAEF1</code>). Combining <strong>3-Point Simpson (<code>1:4:1</code>) Quadrature</strong>, <strong>$3\times 3$ Secant Jacobians</strong>, 13D Legendre projectors, and <strong>Pure 1-Step Zero-Encode OpenDB <code>FluxSR</code></strong> ($\tau_c=0.05$ directly on $\mathbf{z}_4$, zero auxiliary networks, projections, or gating) eliminates Bayer casts ($R^2 = 0.9936$ <code>0-Net</code>, $0.9914$ <code>+FluxSR</code> at $512^2$, $\text{MAE} = 0.0151$), wins <strong>10/10</strong> unseen test scenes across PSNR, SSIM, and LPIPS ($27.37\to\mathbf{27.79\text{ dB}}$, <strong>$0.8745$ SSIM</strong>, <strong>$0.0987$ LPIPS</strong>, $-10.8\%$ vs. <code>0-Net</code>, $-3.0\%$ vs. scratch <code>4S</code> ablation), skips $82\text{--}1,407\text{ ms}$ intermediate VAE IO, runs Stages 1&ndash;4 in $6.24\text{ ms}$@1MP, and accelerates 3A tuning by $290.8\times$.
       </p>
 
       <h2>LLM Usage Statement</h2>
@@ -1574,7 +1567,6 @@
         <li>J. D. Santamaria, K. Wang, J. Malo, J. Vazquez-Corral, and A. G&oacute;mez-Villa, &ldquo;On color alignment in VAE latent spaces and its applications,&rdquo; <em>arXiv:2610.07072</em>, 2026.</li>
         <li>Z. Wang, A. C. Bovik, H. R. Sheikh, and E. P. Simoncelli, &ldquo;Image quality assessment: From error visibility to structural similarity,&rdquo; <em>IEEE Trans. Image Process.</em>, vol. 13, no. 4, pp. 600&ndash;612, 2004.</li>
         <li>Q. Wen, Y. Xing, Z. Rao, and Q. Chen, &ldquo;LDM-ISP: Enhancing neural ISP for low light with latent diffusion models,&rdquo; <em>IEEE ICRA</em> (<em>arXiv:2412.01112</em>), 2025.</li>
-        <li>F. X. Yu, A. T. Suresh, K. M. Choromanski, D. N. Holtmann-Rice, and S. Kumar, &ldquo;Orthogonal random features,&rdquo; <em>NeurIPS</em>, pp. 1975&ndash;1983, 2016.</li>
         <li>C. Zhang, Y. Li, H. Du, S. Yang, D. Xie, J. Zhu, and Y. Yang, &ldquo;CtrlISP: Rescuing low-light RAW images via controllable neural ISP,&rdquo; <em>IEEE/CVF CVPR Findings</em>, 2026.</li>
         <li>R. Zhang, P. Isola, A. A. Efros, E. Shechtman, and O. Wang, &ldquo;The unreasonable effectiveness of deep features as a perceptual metric,&rdquo; <em>IEEE/CVF CVPR</em>, pp. 586&ndash;595, 2018.</li>
       </ol>
@@ -1798,7 +1790,7 @@
 
         <h3>Appendix C: Stage-by-Stage Subspace Ablation, 3-Point Simpson Quadrature, Cross-VAE Generalization, and Multi-Resolution Runtime Scaling</h3>
         <p>
-          <strong>Table S2</strong> provides the stage-by-stage breakdown comparing 0th-Order Scalar Subspace Steering [15] against Comp-LSP (Mode B and Mode A), the 5-scene patch DC PSNR quadrature ablation, and cross-VAE generalization between <code>FLUX.1</code> and <code>TAEF1</code>. <strong>Table S3</strong> reports multi-resolution execution latency across $256\times 256$, $512\times 512$, $1024\times 1024$ (1MP), and $4000\times 3000$ (12MP), intermediate VAE IO savings for Zero-Encode <code>FluxSR-1S</code>, and $290.8\times$ inverse 3A speedup.
+          <strong>Table S2</strong> provides the stage-by-stage breakdown comparing 0th-Order Scalar Subspace Steering [15] against Comp-LSP (Mode B and Mode A), the 5-scene patch DC PSNR quadrature ablation, and cross-VAE generalization between <code>FLUX.1</code> and <code>TAEF1</code>. <strong>Table S3</strong> reports multi-resolution execution latency across $256\times 256$, $512\times 512$, $1024\times 1024$ (1MP), and $4000\times 3000$ (12MP), intermediate VAE IO savings for Zero-Encode Pure 1-Step <code>FluxSR</code>, and $290.8\times$ inverse 3A speedup.
         </p>
 
         <div class="table-container span-all">
@@ -1911,16 +1903,16 @@
         </div>
 
         <div class="table-container span-all">
-          <div class="table-caption">Table S3: Supplementary Experiment C2 &mdash; Multi-Resolution Execution Latency (&darr;), Zero-Encode OpenDB <code>FluxSR-1S</code> Intermediate VAE IO Savings, &amp; $290.8\times$ Inverse 3A Speedup (&uarr;)</div>
+          <div class="table-caption">Table S3: Supplementary Experiment C2 &mdash; Multi-Resolution Execution Latency (&darr;), Zero-Encode Pure 1-Step OpenDB <code>FluxSR</code> Intermediate VAE IO Savings, &amp; $290.8\times$ Inverse 3A Speedup (&uarr;)</div>
           <table>
             <thead>
               <tr>
                 <th>Resolution / Latent Grid</th>
                 <th>Pixel ISP (CPU / GPU)</th>
                 <th>PyTorch <code>0-Net</code></th>
-                <th>Stg 5 <code>RF-Sync</code> / <code>4S</code></th>
+                <th>Scratch <code>4S</code> Abl.</th>
                 <th>Halide <code>0-Net</code> (Stg 1&ndash;4)</th>
-                <th>Stg 6 <code>FluxSR-1S</code> (FP8 DiT)</th>
+                <th>Stg 6 Pure <code>FluxSR</code> (FP8 DiT)</th>
                 <th>Speedup / Intermediate VAE IO Saved</th>
               </tr>
             </thead>
@@ -1929,7 +1921,7 @@
                 <td>$256\times 256$ ($\to 32\times 32\times 16$)</td>
                 <td>Pixel CPU: 9.58 / GPU 16.2</td>
                 <td>PyTorch: 6.59 ms</td>
-                <td>RF GPU: 2.00 ms</td>
+                <td>&mdash;</td>
                 <td class="highlight-val">Halide: 0.79 ms</td>
                 <td class="highlight-val">FluxSR: 527.3 ms</td>
                 <td class="highlight-val">Saves 82.2 ms VAE IO</td>
@@ -1938,16 +1930,16 @@
                 <td>$512\times 512$ ($\to 64\times 64\times 16$)</td>
                 <td>Pixel CPU: 43.5 / GPU 11.4</td>
                 <td>VAE IO: 109.0+209.1 ms</td>
-                <td class="highlight-val">RF: 3.15 / 4S: 9.18 ms</td>
+                <td class="highlight-val">9.18 ms GPU</td>
                 <td class="highlight-val">Halide: 2.15 ms</td>
-                <td class="highlight-val">FluxSR: 873.6 ms</td>
+                <td class="highlight-val">FluxSR: 879.5 ms</td>
                 <td class="highlight-val">Saves 318.1 ms VAE IO</td>
               </tr>
               <tr>
                 <td>$1024\times 1024$ 1MP ($\to 128\times 128\times 16$)</td>
                 <td>Pixel ISP: 59.91 ms (opt.)</td>
                 <td>PyTorch: 30.43 ms</td>
-                <td>RF GPU: 10.07 ms</td>
+                <td>&mdash;</td>
                 <td class="highlight-val">Halide: 6.24 ms</td>
                 <td class="highlight-val">FluxSR: 2,616 ms</td>
                 <td class="highlight-val">Saves 1,407 ms VAE IO</td>
@@ -1978,13 +1970,13 @@
         <div class="figure-card span-all">
           <img src="figures/comp_fig_supp_gallery_10cam.webp" alt="Full-Page 512x512 Qualitative Gallery Across All 10 Unseen Hardware RAW Scenes" loading="lazy" decoding="async">
           <div class="figure-caption">
-            <strong>Fig. S1 (Gallery I). Full-Page $512\times 512$ Qualitative Gallery Across All 10 Unseen Hardware RAW Scenes and $5\times$ Zoomed Quads.</strong> Left metadata reports $512\times 512$ PSNR and LPIPS progression (<code>0-Net &rarr; +FluxSR-1S</code>); under-tile values report $512\times 512$ PSNR and LPIPS against Pixel-ISP GT (cf. <strong>Table 3</strong>). Each rightmost quad shows $5\times$ crops of the highlighted orange ROI (<code>TL</code>: 0th-Order [15], <code>TR</code>: Ours 0-Net, <code>BL</code>: Ours <code>+FluxSR-1S</code> $\tau_c=0.12$, <code>BR</code>: Pixel-ISP GT).
+            <strong>Fig. S1 (Gallery I). Full-Page $512\times 512$ Qualitative Gallery Across All 10 Unseen Hardware RAW Scenes and $5\times$ Zoomed Quads.</strong> Left metadata reports $512\times 512$ PSNR and LPIPS progression (<code>0-Net &rarr; +FluxSR</code>); under-tile values report $512\times 512$ PSNR and LPIPS against Pixel-ISP GT (cf. <strong>Table 3</strong>). Each rightmost quad shows $5\times$ crops of the highlighted orange ROI (<code>TL</code>: 0th-Order [15], <code>TR</code>: Ours 0-Net, <code>BL</code>: Ours <code>+FluxSR</code> $\tau_c=0.05$, <code>BR</code>: Pixel-ISP GT).
           </div>
         </div>
         <div class="figure-card span-all">
           <img src="figures/comp_fig_supp_stage_and_ops.webp" alt="Full-Page Pipeline Evolution Across Stages 0-6 and Class II / III Operator Dissections" loading="lazy" decoding="async">
           <div class="figure-caption">
-            <strong>Fig. S2 (Gallery II). Full-Page Pipeline Evolution Across <code>Stages 0&ndash;6</code> and Class II / Class III Operator Dissections.</strong> <strong>(a)</strong> Progressive latent execution from unprocessed Bayer RAW through Class I linear operators (<code>Stages 1&ndash;3</code>), Class II <code>1:4:1</code> Simpson + $J_{3\times 3}$ (<code>Stage 4</code>), Class III spatial kernels (<code>Stage 5</code>), and Zero-Encode AC-subspace <code>FluxSR-1S</code> refinement (<code>Stage 6</code>) on 5 diverse cameras at $512\times 512$; <strong>(b-1)</strong> Standalone Class II Jensen bias heatmaps ($8\times 8$ DC error reduced by $+2.95$ to $+7.11\text{ dB}$) and $3\times 3$ Secant AC cast removal (<code>Pixel Daylight</code> $+8.25\text{ dB}$, <code>OpenISP</code> $+5.26\text{ dB}$); <strong>(b-2)</strong> Standalone Class III $13$-D Legendre projectors and $3\times 3$ bilateral NR, Laplacian EEH, and local tone mapping operating strictly on the $1/64$ latent grid.
+            <strong>Fig. S2 (Gallery II). Full-Page Pipeline Evolution Across <code>Stages 0&ndash;6</code> and Class II / Class III Operator Dissections.</strong> <strong>(a)</strong> Progressive latent execution from unprocessed Bayer RAW through Class I linear operators (<code>Stages 1&ndash;3</code>), Class II <code>1:4:1</code> Simpson + $J_{3\times 3}$ (<code>Stage 4</code>), Class III spatial kernels (<code>Stage 5</code>), and Pure 1-Step Zero-Encode OpenDB <code>FluxSR</code> refinement directly on $\mathbf{z}_4$ (<code>Stage 6</code>) on 5 diverse cameras at $512\times 512$; <strong>(b-1)</strong> Standalone Class II Jensen bias heatmaps ($8\times 8$ DC error reduced by $+2.95$ to $+7.11\text{ dB}$) and $3\times 3$ Secant AC cast removal (<code>Pixel Daylight</code> $+8.25\text{ dB}$, <code>OpenISP</code> $+5.26\text{ dB}$); <strong>(b-2)</strong> Standalone Class III $13$-D Legendre projectors and $3\times 3$ bilateral NR, Laplacian EEH, and local tone mapping operating strictly on the $1/64$ latent grid.
           </div>
         </div>
       </div>

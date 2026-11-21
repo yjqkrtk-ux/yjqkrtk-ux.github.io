@@ -424,7 +424,7 @@ window.BOOK_GLOSSARY = {
       "ko": "White-Box Computational LSP",
       "en": "White-Box Latent ISP · Analytical Latent ISP",
       "abbr": "Comp-LSP · Comp-LSP 2.0",
-      "def": "An analytical latent-domain ISP architecture executing a 7-stage physical camera ISP directly on 16-channel latents (z₀ ∈ ℝ¹⁶) via Class I linear, Class II nonlinear (1:4:1 Simpson quadrature & 3×3 secant Jacobians), and Class III spatial kernel + closed-form RF-Sync (27.96 dB) + Zero-Encode subspace-locked FluxSR-1S (28.34 dB, 0.0947 LPIPS) operators without pixel decoding.",
+      "def": "An analytical latent-domain ISP architecture executing a 7-stage physical camera ISP directly on 16-channel latents (z₀ ∈ ℝ¹⁶) via Class I linear, Class II nonlinear (1:4:1 Simpson quadrature & 3×3 secant Jacobians), and Class III spatial kernel + closed-form RF-Sync (27.96 dB) + Zero-Encode AC-subspace FluxSR-1S (28.34 dB, 0.0947 LPIPS) operators without pixel decoding.",
       "chapters": [
         "overview",
         "comp_lsp"
@@ -485,10 +485,10 @@ window.BOOK_GLOSSARY = {
       ]
     },
     {
-      "ko": "Subspace-Locked Flow Prior",
-      "en": "Zero-Encode Subspace-Locked FluxSR-1S",
+      "ko": "AC-Subspace Flow Prior",
+      "en": "Zero-Encode AC-Subspace FluxSR-1S",
       "abbr": "Zero-Encode FluxSR-1S",
-      "def": "Stage 6 operator that feeds Stage 5 closed-form 2048-D Orthogonal RFF synchronization (RF-Sync, 0 neural layers, 3.15 ms GPU, 27.96 dB) directly into OpenDB FLUX.1-dev + FluxSR (FP8 DiT, τ_c=0.12, skipping 318.1 ms VAE IO) while strictly blocking 3D DC color drift (P_DC=0) and gating onto Π_grad^6 ⊕ Π_curv^7, lifting 512² 10-camera unseen mean to 28.34 dB / 0.0947 LPIPS (10/10 wins over 0-Net 27.37 dB, −48.0% LPIPS vs. unconstrained FluxSR).",
+      "def": "Stage 6 operator that feeds Stage 5 closed-form 2048-D Orthogonal RFF synchronization (RF-Sync, 0 neural layers, 3.15 ms GPU, 27.96 dB) directly into OpenDB FLUX.1-dev + FluxSR (FP8 DiT, τ_c=0.12, skipping 318.1 ms VAE IO) projected strictly onto Π_grad^6 ⊕ Π_curv^7 inside S_AC¹³, preserving Stages 1–5 3D DC colorimetry and lifting 512² 10-camera unseen mean to 28.34 dB / 0.0947 LPIPS (10/10 wins over 0-Net 27.37 dB, −14.4% LPIPS).",
       "chapters": [
         "comp_lsp"
       ]

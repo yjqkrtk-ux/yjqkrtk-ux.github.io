@@ -424,7 +424,7 @@ window.BOOK_GLOSSARY = {
       "ko": "화이트박스 잠재 ISP",
       "en": "White-Box Computational LSP",
       "abbr": "Comp-LSP · Comp-LSP 2.0",
-      "def": "16채널 잠재 텐서(z₀ ∈ ℝ¹⁶)를 픽셀 공간으로 디코딩하지 않고, Class I 선형·Class II 비선형(1:4:1 심슨 구적법 & 3×3 할선 야코비안)·Class III 공간 커널 + 폐형식 RF-Sync(27.96 dB) + Zero-Encode 부분공간 잠금 FluxSR-1S(28.34 dB, 0.0947 LPIPS)로 7단계 물리 ISP를 수행하는 아키텍처.",
+      "def": "16채널 잠재 텐서(z₀ ∈ ℝ¹⁶)를 픽셀 공간으로 디코딩하지 않고, Class I 선형·Class II 비선형(1:4:1 심슨 구적법 & 3×3 할선 야코비안)·Class III 공간 커널 + 폐형식 RF-Sync(27.96 dB) + Zero-Encode AC 부분공간 FluxSR-1S(28.34 dB, 0.0947 LPIPS)로 7단계 물리 ISP를 수행하는 아키텍처.",
       "chapters": [
         "overview",
         "comp_lsp"
@@ -485,10 +485,10 @@ window.BOOK_GLOSSARY = {
       ]
     },
     {
-      "ko": "부분공간 잠금 플로우 사전",
-      "en": "Subspace-Locked Flow Prior",
+      "ko": "AC 부분공간 플로우 사전",
+      "en": "AC-Subspace Flow Prior",
       "abbr": "Zero-Encode FluxSR-1S",
-      "def": "Stage 5 폐형식 2048-D 직교 RFF 동기화(RF-Sync, 0 신경망 층, 3.15 ms GPU, 27.96 dB) 출력을 318.1 ms VAE 인코드·디코드 왕복 없이 FLUX.1-dev + FluxSR(FP8 DiT, τ_c=0.12)에 직접 공급하되 3D 평균색(P_DC=0)을 엄격히 차단하고 Π_grad^6 ⊕ Π_curv^7 부분공간만 허용해, 512² 10대 미학습 카메라 평균 28.34 dB / 0.0947 LPIPS(0-Net 27.37 dB 대비 10/10 승리, 비제약 FluxSR 대비 −48.0% LPIPS)를 달성하는 Stage 6 연산.",
+      "def": "Stage 5 폐형식 2048-D 직교 RFF 동기화(RF-Sync, 0 신경망 층, 3.15 ms GPU, 27.96 dB) 출력을 318.1 ms VAE 인코드·디코드 왕복 없이 FLUX.1-dev + FluxSR(FP8 DiT, τ_c=0.12)에 직접 공급하되 13D AC 공간 부분공간(Π_grad^6 ⊕ Π_curv^7 ⊂ S_AC^13)으로만 업데이트를 사영해 3D 평균 색도를 보존하며, 512² 10대 미학습 카메라 평균 28.34 dB / 0.0947 LPIPS(0-Net 27.37 dB 대비 10/10 승리, −14.4% LPIPS)를 달성하는 Stage 6 연산.",
       "chapters": [
         "comp_lsp"
       ]
